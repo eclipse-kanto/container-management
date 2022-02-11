@@ -1,0 +1,28 @@
+// Copyright (c) 2021 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0
+//
+// SPDX-License-Identifier: EPL-2.0
+
+syntax = "proto3";
+
+package github.com.eclipse_kanto.container_management.containerm.api.types.sysinfo;
+
+option go_package = "github.com/eclipse-kanto/container-management/containerm/api/types/sysinfo;sysinfo";
+
+// Represents the atomic version of the Containerm instance
+message ProjectInfo {
+
+    string project_version = 1;
+
+    string build_time = 2;
+
+    string api_version = 3;
+
+    string git_commit = 4;
+}

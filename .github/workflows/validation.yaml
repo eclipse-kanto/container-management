@@ -1,0 +1,45 @@
+name: Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "**/*.md"
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/*.md"
+
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.17.2'
+      - name: Setup
+        run: |
+          go mod download
+          go install golang.org/x/lint/golint@latest
+          go get -t ./...
+      - name: Format
+        run: |
+          unformatted_code=$(gofmt -l .)
+          if [ -n "$unformatted_code" ]; then
+            echo "Improperly formatted code:"
+            echo "$unformatted_code"
+            exit 1
+          fi
+      - name: Lint
+        run: |
+          golint -set_exit_status ./...
+      - name: Vet
+        run: |
+          go vet ./...
+      - name: Test
+        run: |
+          go test ./... -coverprofile coverage.out -covermode count
+          go tool cover -func coverage.out

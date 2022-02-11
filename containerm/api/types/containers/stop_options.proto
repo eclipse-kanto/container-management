@@ -1,0 +1,29 @@
+// Copyright (c) 2021 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0
+//
+// SPDX-License-Identifier: EPL-2.0
+
+syntax = "proto3";
+
+package github.com.eclipse_kanto.container_management.containerm.api.types.containers;
+
+option go_package = "github.com/eclipse-kanto/container-management/containerm/api/types/containers;containers";
+
+// StopOptions represent options for stoping a container.
+message StopOptions {
+
+    // Timeout period in seconds to gracefully stop the container.
+    int64 timeout = 1;
+
+    // Force determines whether a SIGKILL signal will be send to the container's process if it does not finish within the timeout specified.
+    bool force = 2;
+
+	// Signal to be send to the container's process. Signal could be specified by using their names or numbers, e.g. SIGINT or 2.
+    string signal = 3;
+}

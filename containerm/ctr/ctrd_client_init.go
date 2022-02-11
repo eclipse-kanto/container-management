@@ -1,0 +1,61 @@
+// Copyright (c) 2021 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0
+//
+// SPDX-License-Identifier: EPL-2.0
+
+package ctr
+
+import (
+	"path/filepath"
+
+	"github.com/containerd/containerd"
+	"github.com/eclipse-kanto/container-management/containerm/log"
+	"github.com/eclipse-kanto/container-management/containerm/registry"
+	"github.com/eclipse-kanto/container-management/containerm/util"
+)
+
+func newContainerdClient(namespace string, socket string, rootExec string, metaPath string, registryConfigs map[string]*RegistryConfig) (ContainerAPIClient, error) {
+
+	//ensure storage
+	err := util.MkDir(rootExec)
+	if err != nil {
+		return nil, err
+	}
+	err = util.MkDir(metaPath)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Debug("starting container client with default namespace = %s", namespace)
+	ctrdClientSpi, err := newContainerdSpi(socket, namespace, containerd.DefaultSnapshotter /*overlayfs for now - TODO add client config*/, metaPath)
+	if err != nil {
+		return nil, err
+	}
+
+	ctrdClient := &containerdClient{
+		rootExec:           rootExec,
+		metaPath:           metaPath,
+		ctrdCache:          newContainerInfoCache(),
+		registriesResolver: newContainerImageRegistriesResolver(registryConfigs),
+		spi:                ctrdClientSpi,
+		ioMgr:              newContainerIOManager(filepath.Join(rootExec, "fifo"), newCache()),
+		logsMgr:            newContainerLogsManager(filepath.Join(metaPath, "containers")),
+	}
+	go ctrdClient.processEvents(namespace)
+	return ctrdClient, nil
+}
+
+func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, error) {
+	createOpts := registryCtx.Config.([]ContainerOpts)
+	var opts = &ctrOpts{}
+	applyOptsCtr(opts, createOpts...)
+
+	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs)
+
+}

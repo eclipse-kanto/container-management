@@ -1,0 +1,119 @@
+// Copyright (c) 2021 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0
+//
+// SPDX-License-Identifier: EPL-2.0
+
+package main
+
+import "github.com/eclipse-kanto/container-management/containerm/log"
+
+// config refers to daemon's whole configurations.
+type config struct {
+	Log *log.Config `json:"log,omitempty"`
+
+	ManagerConfig *managerConfig `json:"manager,omitempty"`
+
+	ContainerClientConfig *containerRuntimeConfig `json:"containers,omitempty"`
+
+	NetworkConfig *networkConfig `json:"network,omitempty"`
+
+	GrpcServerConfig *grpcServerConfig `json:"grpc_server,omitempty"`
+
+	ThingsConfig *thingsConfig `json:"things,omitempty"`
+}
+
+// container mgr config
+type managerConfig struct {
+	MgrMetaPath               string `json:"home_dir,omitempty"`
+	MgrExecPath               string `json:"exec_root_dir,omitempty"`
+	MgrCtrClientServiceID     string `json:"container_client_sid,omitempty"`
+	MgrNetMgrServiceID        string `json:"network_manager_sid,omitempty"`
+	MgrDefaultCtrsStopTimeout int64  `json:"default_ctrs_stop_timeout,omitempty"`
+}
+
+// container client config- e.g. containerd
+type containerRuntimeConfig struct {
+	CtrNamespace          string                     `json:"default_ns,omitempty"`
+	CtrAddressPath        string                     `json:"address_path,omitempty"`
+	CtrRegistryConfigs    map[string]*registryConfig `json:"registry_configurations,omitempty"`
+	CtrInsecureRegistries []string                   `json:"insecure_registries,omitempty"`
+	CtrRootExec           string                     `json:"exec_root_dir,omitempty"`
+	CtrMetaPath           string                     `json:"home_dir,omitempty"`
+}
+
+// registry config
+type registryConfig struct {
+	Credentials *authCredentials `json:"credentials,omitempty"`
+	Transport   *tlsConfig       `json:"transport"`
+}
+
+// basic authentication config
+type authCredentials struct {
+	UserID   string `json:"user_id,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
+// tls-secured communication config
+type tlsConfig struct {
+	RootCA     string `json:"root_ca"`
+	ClientCert string `json:"client_cert"`
+	ClientKey  string `json:"client_key"`
+}
+
+// network manager config - e.g. for the Libnetwork client
+type networkConfig struct {
+	NetType                    string               `json:"type,omitempty"`
+	NetMetaPath                string               `json:"home_dir,omitempty"`
+	NetExecRoot                string               `json:"exec_root_dir,omitempty"`
+	DefaultBridgeNetworkConfig *bridgeNetworkConfig `json:"default_bridge,omitempty"`
+}
+
+// network default bridge network config - gw0
+type bridgeNetworkConfig struct {
+	NetBridgeDisableBridge bool   `json:"disable,omitempty"`
+	NetBridgeName          string `json:"name,omitempty"`
+	NetBridgeIPV4          string `json:"ip4,omitempty"`
+	NetBridgeFixedCIDRv4   string `json:"fcidr4,omitempty"`
+	NetBridgeGatewayIPv4   string `json:"gwip4,omitempty"`
+	NetBridgeEnableIPv6    bool   `json:"enable_ip6,omitempty"`
+
+	NetBridgeMtu           int  `json:"mtu,omitempty"`
+	NetBridgeIcc           bool `json:"icc,omitempty"`
+	NetBridgeIPTables      bool `json:"ip_tables,omitempty"`
+	NetBridgeIPForward     bool `json:"ip_forward,omitempty"`
+	NetBridgeIPMasq        bool `json:"ip_masq,omitempty"`
+	NetBridgeUserlandProxy bool `json:"userland_proxy,omitempty"`
+}
+
+// grpc server config
+type grpcServerConfig struct {
+	GrpcServerNetworkProtocol string `json:"protocol,omitempty"`
+	GrpcServerAddressPath     string `json:"address_path,omitempty"`
+}
+
+// things client configuration
+type thingsConfig struct {
+	ThingsEnable           bool                    `json:"enable,omitempty"`
+	ThingsMetaPath         string                  `json:"home_dir,omitempty"`
+	Features               []string                `json:"features,omitempty"`
+	ThingsConnectionConfig *thingsConnectionConfig `json:"connection,omitempty"`
+}
+
+// things service connection config
+type thingsConnectionConfig struct {
+	BrokerURL          string `json:"broker_url,omitempty"`
+	KeepAlive          int64  `json:"keep_alive,omitempty"`
+	DisconnectTimeout  int64  `json:"disconnect_timeout,omitempty"`
+	ClientUsername     string `json:"client_username,omitempty"`
+	ClientPassword     string `json:"client_password,omitempty"`
+	ConnectTimeout     int64  `json:"connect_timeout,omitempty"`
+	AcknowledgeTimeout int64  `json:"acknowledge_timeout,omitempty"`
+	SubscribeTimeout   int64  `json:"subscribe_timeout,omitempty"`
+	UnsubscribeTimeout int64  `json:"unsubscribe_timeout,omitempty"`
+}

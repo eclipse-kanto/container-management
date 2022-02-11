@@ -1,0 +1,83 @@
+// Copyright (c) 2021 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0
+//
+// SPDX-License-Identifier: EPL-2.0
+
+syntax = "proto3";
+
+package github.com.eclipse_kanto.container_management.containerm.api.types.containers;
+
+import "api/types/containers/container_config.proto";
+import "api/types/containers/image.proto";
+import "api/types/containers/mount_point.proto";
+import "api/types/containers/hook.proto";
+import "api/types/containers/host_config.proto";
+import "api/types/containers/io_config.proto";
+import "api/types/containers/network_settings.proto";
+import "api/types/containers/state.proto";
+
+option go_package = "github.com/eclipse-kanto/container-management/containerm/api/types/containers;containers";
+
+message Container {
+	// ID is the user-specified identifier.
+	//
+	// This field may not be updated.
+	string id = 1;
+
+    //The name of the container
+	string name = 2;
+
+    // The image information for the container
+	Image image = 3;
+
+	// Hostname for the container
+	string host_name = 4;
+
+	// Domain name for the container
+	string domain_name = 5;
+
+	// The path to the container's resolv.conf file
+	string resolv_conf_path = 6;
+
+    // The path to the container's hosts file
+    string hosts_path = 7;
+
+    // The path to the container's hostname file
+    string hostname_path = 8;
+
+    // Mounts for the container
+	repeated MountPoint mounts = 9;
+
+    // Hooks to perform on container start/stop, etc.
+    repeated Hook hooks = 10;
+
+    // Host configuration for the container
+    HostConfig host_config = 11;
+
+    // IO configuration for the container
+    IOConfig io_config = 12;
+
+    // Configuration of the container's root process
+    ContainerConfiguration config = 13;
+
+    // Network settings for the container
+    NetworkSettings network_settings = 14;
+
+    // The container's state
+    State state = 15;
+
+    // The time of the container's creation
+    string created = 16;
+
+    // A flag indicating whether the container has been manually stopped or internally by the system due to errors
+    bool manually_stopped = 17;
+
+    // A metric for the container showing how many restart retries have been performed on it
+    int64 restart_count = 18;
+}

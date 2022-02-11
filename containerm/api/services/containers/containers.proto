@@ -1,0 +1,171 @@
+// Copyright (c) 2021 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0
+//
+// SPDX-License-Identifier: EPL-2.0
+
+syntax = "proto3";
+
+package github.com.eclipse_kanto.container_management.containerm.api.services.containers;
+
+import "api/types/containers/container.proto";
+import "api/types/containers/stop_options.proto";
+import "api/types/containers/update_options.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/eclipse-kanto/container-management/containerm/api/services/containers;containers";
+
+// Containers provides a containers management operations
+service Containers {
+    rpc Create(CreateContainerRequest) returns (CreateContainerResponse);
+	rpc Get(GetContainerRequest) returns (GetContainerResponse);
+	rpc List(ListContainersRequest) returns (ListContainersResponse);
+	rpc ListStream(ListContainersRequest) returns (stream ListContainerMessage);
+	rpc Start(StartContainerRequest) returns (google.protobuf.Empty);
+	rpc Attach(stream AttachContainerRequest) returns (stream AttachContainerResponse);
+	rpc Stop(StopContainerRequest) returns (google.protobuf.Empty);
+	rpc Update(UpdateContainerRequest) returns (google.protobuf.Empty);
+	rpc Restart(RestartContainerRequest) returns (google.protobuf.Empty);
+	rpc Pause(PauseContainerRequest) returns (google.protobuf.Empty);
+	rpc Unpause(UnpauseContainerRequest) returns (google.protobuf.Empty);
+	rpc Rename(RenameContainerRequest) returns (google.protobuf.Empty);
+	rpc Remove(RemoveContainerRequest) returns (google.protobuf.Empty);
+}
+
+
+message ListContainersRequest {
+}
+
+message CreateContainerRequest {
+	github.com.eclipse_kanto.container_management.containerm.api.types.containers.Container container = 1;
+}
+
+message CreateContainerResponse {
+	github.com.eclipse_kanto.container_management.containerm.api.types.containers.Container container = 1;
+}
+
+message GetContainerRequest {
+	string id = 1;
+}
+
+message GetContainerResponse {
+	github.com.eclipse_kanto.container_management.containerm.api.types.containers.Container container = 1;
+}
+
+message ListContainersResponse {
+	repeated github.com.eclipse_kanto.container_management.containerm.api.types.containers.Container containers = 1;
+}
+
+message ListContainerMessage {
+	github.com.eclipse_kanto.container_management.containerm.api.types.containers.Container container = 1;
+}
+
+message StartContainerRequest {
+    string id = 1;
+}
+
+message AttachContainerRequest {
+    // The id of the container to attach to
+    string id = 1;
+
+    // Whether the connection should be interactive - i.e. user input is allowed
+    bool std_in = 2;
+
+    // The offset from the beginning of the resource at which the data should be
+    // written. It is required on all `WriteRequest`s.
+    //
+    // In the first `WriteRequest` of a `Write()` action, it indicates
+    // the initial offset for the `Write()` call. The value **must** be equal to
+    // the `committed_size` that a call to `QueryWriteStatus()` would return.
+    //
+    // On subsequent calls, this value **must** be set and **must** be equal to
+    // the sum of the first `write_offset` and the sizes of all `data` bundles
+    // sent previously on this stream.
+    //
+    // An incorrect value will cause an error.
+    int64 write_offset = 3;
+
+    // If `true`, this indicates that the write is complete. Sending any
+    // `WriteRequest`s subsequent to one in which `finish_write` is `true` will
+    // cause an error.
+    bool finish_write = 4;
+
+    // A portion of the data for the resource. The client **may** leave `data`
+    // empty for any given `WriteRequest`. This enables the client to inform the
+    // service that the request is still live while it is running an operation to
+    // generate more data.
+    bytes data_to_write = 10;
+
+    // The offset for the first byte to return in the read, relative to the start
+    // of the resource.
+    //
+    // A `read_offset` that is negative or greater than the size of the resource
+    // will cause an `OUT_OF_RANGE` error.
+    int64 read_offset = 5;
+
+    // The maximum number of `data` bytes the server is allowed to return in the
+    // sum of all `ReadResponse` messages. A `read_limit` of zero indicates that
+    // there is no limit, and a negative `read_limit` will cause an error.
+    //
+    // If the stream returns fewer bytes than allowed by the `read_limit` and no
+    // error occurred, the stream includes all data from the `read_offset` to the
+    // end of the resource.
+    int64 read_limit = 6;
+}
+
+message AttachContainerResponse {
+    // The id of the container to attach to
+    string id = 1;
+
+    // Whether the connection should be interactive - i.e. user input is allowed
+    bool std_in = 2;
+
+    // The number of bytes that have been processed for the given resource.
+    int64 write_committed_size = 3;
+
+    // A portion of the data for the resource. The service **may** leave `data`
+    // empty for any given `ReadResponse`. This enables the service to inform the
+    // client that the request is still live while it is running an operation to
+    // generate more data.
+    bytes read_data = 10;
+}
+
+
+message StopContainerRequest {
+    string id = 1;
+    github.com.eclipse_kanto.container_management.containerm.api.types.containers.StopOptions stopOptions = 2;
+}
+
+message UpdateContainerRequest {
+    string id = 1;
+    github.com.eclipse_kanto.container_management.containerm.api.types.containers.UpdateOptions updateOptions = 2;
+}
+
+message RestartContainerRequest {
+    string id = 1;
+}
+
+message PauseContainerRequest {
+    string id = 1;
+}
+
+message UnpauseContainerRequest {
+    string id = 1;
+}
+
+message RenameContainerRequest {
+    string id = 1;
+    string name = 2;
+}
+
+message RemoveContainerRequest {
+    string id = 1;
+
+    // Whether the container should be removed disregarding its current state.
+    bool force = 2;
+}

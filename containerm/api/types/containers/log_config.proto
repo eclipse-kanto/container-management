@@ -1,0 +1,44 @@
+// Copyright (c) 2021 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0
+//
+// SPDX-License-Identifier: EPL-2.0
+
+syntax = "proto3";
+
+package github.com.eclipse_kanto.container_management.containerm.api.types.containers;
+
+option go_package = "github.com/eclipse-kanto/container-management/containerm/api/types/containers;containers";
+
+// Log configuration for the container
+message LogConfiguration {
+    // The full log driver configuration
+   	LogDriverConfiguration driver_config = 1;
+   	// The full log mode configuration
+   	LogModeConfiguration mode_config = 2;
+}
+
+// Configures which of the available log drivers to be used and how
+message LogDriverConfiguration {
+    // The type of the driver - json-file, none
+    string type = 1;
+    // Max number of files before rotating the log files
+    int64 max_files = 2;
+    // Max size of the logs in the form of 1.2M, 5k, etc.
+    string max_size = 3;
+    // Specify a root directory for the container's log files to be stored
+    string root_dir = 4;
+}
+
+// Configures which of the supported log modes to be applied for the chosen log driver
+message LogModeConfiguration {
+    // The logging mode - blocking, non-blocking
+    string mode = 1;
+    // The size of the buffer used in the form of 1.2M, 5k, etc. - applicable for non-blocking mode
+    string max_buffer_size = 2;
+}

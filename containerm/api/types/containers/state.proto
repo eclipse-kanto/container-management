@@ -1,0 +1,56 @@
+// Copyright (c) 2021 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0
+//
+// SPDX-License-Identifier: EPL-2.0
+
+syntax = "proto3";
+
+package github.com.eclipse_kanto.container_management.containerm.api.types.containers;
+
+option go_package = "github.com/eclipse-kanto/container-management/containerm/api/types/containers;containers";
+
+// State represents a container's state
+message State {
+    // pid represents the container's process's PID
+  	int64 pid = 1;
+
+  	// started_at defines the time when this container was last started
+  	string started_at = 2;
+
+  	// error indicates whether there was a problem that has occurred while changing the state of a container
+  	string error = 3;
+
+  	// exit_code represents the last exit code of the container's internal root process
+    int64 exit_code = 4;
+
+  	// finished_at defines a timestamp of the last container's exit
+  	string finished_at = 5;
+
+  	// exited defines whether the container has exited on its own for some reason - daemon reboot or internal error - distinguishes between manual stop and internal exit
+  	bool exited = 6;
+
+  	// dead identifies whether the underlying container is dead
+  	bool dead = 7;
+
+  	// restarting identifies whether the underlying container is currently restarting
+  	bool restarting = 8;
+
+  	// paused indicates whether this container is paused
+  	bool paused = 9;
+
+  	// running indicates whether this container is running
+  	// Note: paused and running are not mutually exclusive as pausing actually requires the process to be running - it's only 'freezed' but still running
+  	bool running = 10;
+
+  	// status represents the status of this container
+  	string status = 11;
+
+    // oomKilled indicates whether this container is killed due to out of memory
+	  bool oomKilled = 12;
+}

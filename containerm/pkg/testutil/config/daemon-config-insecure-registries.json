@@ -1,0 +1,70 @@
+{
+  "debug": {
+  },
+  "manager": {
+    "home_dir": "/var/lib/container-management",
+    "exec_root_dir": "/var/run/container-management",
+    "container_client_sid": "container-management.service.local.v1.service-containerd-client",
+    "network_manager_sid": "container-management.service.local.v1.service-libnetwork-manager",
+    "default_ctrs_stop_timeout" : 30
+  },
+  "containers": {
+    "default_ns": "container-management",
+    "address_path": "/run/containerd/containerd.sock",
+    "exec_root_dir": "/var/run/container-management",
+    "home_dir": "/var/lib/container-management",
+    "insecure_registries" : ["my-insecure-host.acme","192.101.1.101:500"],
+    "registry_configurations" :{
+      "my-basic-auth-host.acme" : {
+        "credentials" :{
+          "user_id" : "my-username",
+          "password" : "my-plaintext-password"
+        }
+      },
+      "my-tls-host.acme" : {
+        "transport" : {
+          "root_ca":"/my/secure/path/ca.crt",
+          "client_cert" : "/my/secure/path/client.cert",
+          "client_key":"/my/secure/path/client.key"
+        }
+      },
+      "my-tls-with-basic-auth-host.acme" : {
+        "credentials" :{
+          "user_id" : "my-username",
+          "password" : "my-plaintext-password"
+        },
+        "transport" : {
+          "root_ca":"/my/secure/path/ca.crt",
+          "client_cert" : "/my/secure/path/client.cert",
+          "client_key":"/my/secure/path/client.key"
+        }
+      }
+    }
+  },
+  "network": {
+    "type": "bridge",
+    "home_dir": "/var/lib/container-management",
+    "exec_root_dir": "/var/run/container-management",
+    "default_bridge": {
+      "name": "kanto-cm0",
+      "mtu": 1500,
+      "icc": true,
+      "ip_tables": true,
+      "ip_forward": true,
+      "ip_masq": true
+    }
+  },
+  "grpc_server": {
+    "protocol": "unix",
+    "address_path": "/run/container-management/container-management.sock"
+  },
+  "things": {
+    "enable": true,
+    "home_dir": "/var/lib/container-management",
+    "connection": {
+      "broker_url": "tcp://localhost:1883",
+      "keep_alive": 20000,
+      "disconnect_timeout": 250
+    }
+  }
+}
