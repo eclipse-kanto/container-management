@@ -1,0 +1,82 @@
+// Copyright (c) 2021 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0
+//
+// SPDX-License-Identifier: EPL-2.0
+
+package main
+
+import (
+	"github.com/spf13/cobra"
+)
+
+func setupCommandFlags(cmd *cobra.Command) {
+	flagSet := cmd.Flags()
+
+	// init daemon general config flag
+	flagSet.String(daemonConfigFileFlagID, "", "Specify the configuration file of container-management")
+
+	// init daemon log flags
+	flagSet.StringVar(&cfg.Log.LogLevel, "log-level", cfg.Log.LogLevel, "Set the daemon's log level - possible values are ERROR, WARN, INFO, DEBUG, TRACE")
+	flagSet.StringVar(&cfg.Log.LogFile, "log-file", cfg.Log.LogFile, "Set the daemon's log file")
+	flagSet.IntVar(&cfg.Log.LogFileSize, "log-file-size", cfg.Log.LogFileSize, "Set the maximum size in megabytes of the log file before it gets rotated")
+	flagSet.IntVar(&cfg.Log.LogFileCount, "log-file-count", cfg.Log.LogFileCount, "Set the maximum number of old log files to retain")
+	flagSet.IntVar(&cfg.Log.LogFileMaxAge, "log-file-max-age", cfg.Log.LogFileMaxAge, "Set the maximum number of days to retain old log files based on the timestamp encoded in their filename")
+	flagSet.BoolVar(&cfg.Log.Syslog, "log-syslog", cfg.Log.Syslog, "Enable logging in the local syslog (e.g. /dev/log, /var/run/syslog, /var/run/log)")
+
+	// init container manager flags
+	flagSet.StringVar(&cfg.ManagerConfig.MgrMetaPath, "cm-home-dir", cfg.ManagerConfig.MgrMetaPath, "Specify the root directory of the container manager service")
+	flagSet.StringVar(&cfg.ManagerConfig.MgrExecPath, "cm-exec-root-dir", cfg.ManagerConfig.MgrExecPath, "Specify the exec root directory of the container manager service")
+	flagSet.StringVar(&cfg.ManagerConfig.MgrCtrClientServiceID, "cm-cc-sid", cfg.ManagerConfig.MgrCtrClientServiceID, "Specify the ID of the container runtime client service to be used by the container manager service")
+	flagSet.StringVar(&cfg.ManagerConfig.MgrNetMgrServiceID, "cm-net-sid", cfg.ManagerConfig.MgrNetMgrServiceID, "Specify the ID of the network manager service to be used by container manager service")
+	flagSet.Int64Var(&cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "cm-deflt-ctrs-stop-timeout", cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "Specify the default timeout that the container manager service will wait before killing the container's process")
+
+	// init container client flags
+	flagSet.StringVar(&cfg.ContainerClientConfig.CtrNamespace, "ccl-default-ns", cfg.ContainerClientConfig.CtrNamespace, "Specify the default namespace to be used for container management isolation")
+	flagSet.StringVar(&cfg.ContainerClientConfig.CtrAddressPath, "ccl-ap", cfg.ContainerClientConfig.CtrAddressPath, "Specify the address path to communicate with the desired container runtime")
+	flagSet.StringSliceVar(&cfg.ContainerClientConfig.CtrInsecureRegistries, "ccl-insecure-registries", cfg.ContainerClientConfig.CtrInsecureRegistries, "Specify insecure image registries - <ip/hostname>[:<port>]")
+	flagSet.StringVar(&cfg.ContainerClientConfig.CtrRootExec, "ccl-exec-root-dir", cfg.ContainerClientConfig.CtrRootExec, "Specify the exec root dir to be used for container runtime management data")
+	flagSet.StringVar(&cfg.ContainerClientConfig.CtrMetaPath, "ccl-home-dir", cfg.ContainerClientConfig.CtrMetaPath, "Specify the home directory to be used for container runtime management data")
+
+	// init network manager flags
+	flagSet.StringVar(&cfg.NetworkConfig.NetType, "net-type", cfg.NetworkConfig.NetType, "Specify the default network management type for containers")
+	flagSet.StringVar(&cfg.NetworkConfig.NetMetaPath, "net-home-dir", cfg.NetworkConfig.NetMetaPath, "Specify the home directory for containers network management data handling")
+	flagSet.StringVar(&cfg.NetworkConfig.NetExecRoot, "net-exec-root-dir", cfg.NetworkConfig.NetExecRoot, "Specify the exec root for the network management operations")
+
+	// init default bridge network flags
+	flagSet.BoolVar(&cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeDisableBridge, "net-tbr-disable", cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeDisableBridge, "Disables the default container management bridge network")
+	flagSet.StringVar(&cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeName, "net-br-name", cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeName, "The name of the default bridge network interface")
+	flagSet.StringVar(&cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeIPV4, "net-br-ip4", cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeIPV4, "The IP v4 for the default bridge network interface")
+	flagSet.StringVar(&cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeFixedCIDRv4, "net-br-fcidr4", cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeFixedCIDRv4, "The fixed container ids range for the default bridge network interface used with IP v4")
+	flagSet.StringVar(&cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeGatewayIPv4, "net-br-gwip4", cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeGatewayIPv4, "The IP v4 of the gateway to be configured for the default bridge network interface")
+	flagSet.BoolVar(&cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeEnableIPv6, "net-br-enable-ip6", cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeEnableIPv6, "Specifies whether IP v6 must be enabled for the default bridge network interface")
+	flagSet.IntVar(&cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeMtu, "net-br-mtu", cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeMtu, "Specifies the MTU for the default bridge network interface")
+	flagSet.BoolVar(&cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeIcc, "net-br-icc", cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeIcc, "Enable inter-container communication on the default bridge network interface")
+	flagSet.BoolVar(&cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeIPTables, "net-br-ipt", cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeIPTables, "Enable Ip Tables management on the default bridge network interface")
+	flagSet.BoolVar(&cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeIPForward, "net-br-ipfw", cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeIPForward, "Enable IP forwarding on the default bridge network interface")
+	flagSet.BoolVar(&cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeIPMasq, "net-br-ipmasq", cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeIPMasq, "Enable IP Masquerade on the default bridge network interface")
+	flagSet.BoolVar(&cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeUserlandProxy, "net-br-ulp", cfg.NetworkConfig.DefaultBridgeNetworkConfig.NetBridgeUserlandProxy, "Enable userland-proxy on the default bridge network interface")
+
+	// init grpc server flags
+	flagSet.StringVar(&cfg.GrpcServerConfig.GrpcServerNetworkProtocol, "grpc-serv-netp", cfg.GrpcServerConfig.GrpcServerNetworkProtocol, "Specify the communication protocol with the container management grpc server")
+	flagSet.StringVar(&cfg.GrpcServerConfig.GrpcServerAddressPath, "grpc-serv-ap", cfg.GrpcServerConfig.GrpcServerAddressPath, "Specify the address for communication with the container management grpc server")
+
+	// init things client
+	flagSet.BoolVar(&cfg.ThingsConfig.ThingsEnable, "things-enable", cfg.ThingsConfig.ThingsEnable, "Enable the things container management service providing remote containers management and their representation via the Bosch IoT Things service")
+	flagSet.StringVar(&cfg.ThingsConfig.ThingsMetaPath, "things-home-dir", cfg.ThingsConfig.ThingsMetaPath, "Specify the home directory for the things container management service persistent storage")
+	flagSet.StringSliceVar(&cfg.ThingsConfig.Features, "things-features", cfg.ThingsConfig.Features, "Specify the desired Ditto features that will be registered for the containers Ditto thing")
+	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.BrokerURL, "things-conn-broker", cfg.ThingsConfig.ThingsConnectionConfig.BrokerURL, "Specify the MQTT broker URL to connect to")
+	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.KeepAlive, "things-conn-keep-alive", cfg.ThingsConfig.ThingsConnectionConfig.KeepAlive, "Specify the keep alive duration for the MQTT requests in milliseconds")
+	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.DisconnectTimeout, "things-conn-disconnect-timeout", cfg.ThingsConfig.ThingsConnectionConfig.DisconnectTimeout, "Specify the disconnection timeout for the MQTT connection in milliseconds")
+	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.ClientUsername, "things-conn-client-username", cfg.ThingsConfig.ThingsConnectionConfig.ClientUsername, "Specify the MQTT client username to authenticate with")
+	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.ClientPassword, "things-conn-client-password", cfg.ThingsConfig.ThingsConnectionConfig.ClientPassword, "Specify the MQTT client password to authenticate with")
+	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.ConnectTimeout, "things-conn-connect-timeout", cfg.ThingsConfig.ThingsConnectionConfig.ConnectTimeout, "Specify the connect timeout for the MQTT in milliseconds")
+	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout, "things-conn-ack-timeout", cfg.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout, "Specify the acknowledgement timeout for the MQTT requests in milliseconds")
+	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout, "things-conn-sub-timeout", cfg.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout, "Specify the subscribe timeout for the MQTT requests in milliseconds")
+	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout, "things-conn-unsub-timeout", cfg.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout, "Specify the unsubscribe timeout for the MQTT requests in milliseconds")
+}

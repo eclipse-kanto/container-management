@@ -1,0 +1,35 @@
+// Copyright (c) 2021 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0
+//
+// SPDX-License-Identifier: EPL-2.0
+
+syntax = "proto3";
+
+package github.com.eclipse_kanto.container_management.containerm.api.types.containers;
+
+option go_package = "github.com/eclipse-kanto/container-management/containerm/api/types/containers;containers";
+
+// Represents a single runC hook
+message Hook {
+
+   // The path for the execution of the hook
+   string path = 1;
+
+   // The hook arguments
+   repeated string args = 2;
+
+   // The environmental variables needed for the hook
+   repeated string env = 3;
+
+   // Timeout for the hook's execution
+   int32 timeout = 4;
+
+   // The type of the Hook - prestart, poststart, poststop, etc.
+   string type = 5;
+}

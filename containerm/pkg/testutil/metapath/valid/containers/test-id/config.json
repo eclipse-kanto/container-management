@@ -1,0 +1,99 @@
+{
+  "container_id": "test-id",
+  "container_name": "name",
+  "image": {
+    "name": "image.url"
+  },
+  "domain_name": "domain",
+  "host_name": "host",
+  "mount_points": [
+    {
+      "destination": "/proc",
+      "source": "/proc",
+      "propagation_mode": "rprivate"
+    }
+  ],
+  "hooks": [
+    {
+      "path": "hookPath",
+      "args": [
+        "arg1"
+      ],
+      "env": [
+        "env1"
+      ],
+      "timeout": 10000,
+      "type": 1
+    }
+  ],
+  "config": {
+    "env": [
+      "env1"
+    ]
+  },
+  "host_config": {
+    "devices": [
+      {
+        "path_on_host": "/dev/ttyACM0",
+        "path_in_container": "/dev/ttyACM1",
+        "cgroup_permissions": "rwm"
+      }
+    ],
+    "network_mode": "bridge",
+    "privileged": true,
+    "restart_policy": {
+      "maximum_retry_count": 5,
+      "retry_timeout": 30000000000,
+      "type": "on-failure"
+    },
+    "runtime": "some-runtime-config",
+    "extra_hosts": [
+      "ctrhost:host_ip"
+    ],
+    "port_mappings": [
+      {
+        "proto": "tcp",
+        "container_port": 80,
+        "host_ip": "192.168.1.101",
+        "host_port": 81,
+        "host_port_end": 82
+      }
+    ],
+    "log_config": {
+      "driver_config": {
+        "type": "json-file",
+        "max_files": 2,
+        "max_size": "100M"
+      },
+      "mode_config": {
+        "mode": "non-blocking",
+        "max_buffer_size": "5M"
+      }
+    }
+  },
+  "io_config": {
+    "attach_stderr": true,
+    "attach_stdin": true,
+    "attach_stdout": true,
+    "open_stdin": true,
+    "stdin_once": true,
+    "tty": true
+  },
+  "network_settings": null,
+  "state": {
+    "pid": 11672,
+    "started_at": "2021-01-12T09:10:37.757318676Z",
+    "error": "",
+    "exit_code": 0,
+    "finished_at": "2021-01-10T20:06:42.358787194Z",
+    "exited": false,
+    "dead": false,
+    "restarting": false,
+    "paused": true,
+    "running": false,
+    "status": 4
+  },
+  "restart_count": 0,
+  "manually_stopped": false,
+  "started_successfully_before": false
+}

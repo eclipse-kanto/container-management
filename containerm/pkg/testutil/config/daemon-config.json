@@ -1,0 +1,62 @@
+{
+  "log": {
+    "log_file": "log/container-management.log",
+    "log_level": "INFO",
+    "log_file_count": 5,
+    "log_file_size": 2,
+    "log_file_max_age": 28,
+    "syslog": false
+  },
+  "manager": {
+    "home_dir": "/var/lib/container-management",
+    "exec_root_dir": "/var/run/container-management",
+    "container_client_sid": "container-management.service.local.v1.service-containerd-client",
+    "network_manager_sid": "container-management.service.local.v1.service-libnetwork-manager",
+    "default_ctrs_stop_timeout": 30
+  },
+  "containers": {
+    "default_ns": "kanto-cm",
+    "address_path": "/run/containerd/containerd.sock",
+    "insecure_registries": [
+      "localhost"
+    ],
+    "exec_root_dir": "/var/run/container-management",
+    "home_dir": "/var/lib/container-management"
+  },
+  "network": {
+    "type": "bridge",
+    "home_dir": "/var/lib/container-management",
+    "exec_root_dir": "/var/run/container-management",
+    "default_bridge": {
+      "name": "kanto-cm0",
+      "mtu": 1500,
+      "icc": true,
+      "ip_tables": true,
+      "ip_forward": true,
+      "ip_masq": true
+    }
+  },
+  "grpc_server": {
+    "protocol": "unix",
+    "address_path": "/run/container-management/container-management.sock"
+  },
+  "things": {
+    "enable": true,
+    "home_dir": "/var/lib/container-management",
+    "features": [
+      "ContainerFactory",
+      "SoftwareUpdatable"
+    ],
+    "connection": {
+      "broker_url": "tcp://localhost:1883",
+      "keep_alive": 20000,
+      "disconnect_timeout": 250,
+      "client_username": "",
+      "client_password": "",
+      "connect_timeout": 30000,
+      "acknowledge_timeout": 15000,
+      "subscribe_timeout": 15000,
+      "unsubscribe_timeout": 5000
+    }
+  }
+}

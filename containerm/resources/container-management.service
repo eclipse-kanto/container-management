@@ -1,0 +1,15 @@
+[Unit]
+Description=Eclipse Kanto - Container Management
+Documentation=https://eclipse.org/kanto/docs/
+After=network.target containerd.service
+Requires=network.target
+Requires=containerd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/container-management --cfg-file /etc/container-management/config.json
+Restart=always
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target

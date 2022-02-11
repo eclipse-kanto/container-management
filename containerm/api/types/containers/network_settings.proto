@@ -1,0 +1,34 @@
+// Copyright (c) 2021 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0
+//
+// SPDX-License-Identifier: EPL-2.0
+
+syntax = "proto3";
+
+package github.com.eclipse_kanto.container_management.containerm.api.types.containers;
+
+import "api/types/containers/endpoint_settings.proto";
+
+option go_package = "github.com/eclipse-kanto/container-management/containerm/api/types/containers;containers";
+
+// Represents the network settings of a container
+message NetworkSettings {
+
+    // A map - network id to endpoint settings for all the joined networks
+    map<string, EndpointSettings> networks = 1;
+
+    // The container's network sandbox id
+    string sandbox_id = 2;
+
+    // The container's network sandbox key
+    string sandbox_key = 3;
+
+    // The container's network controller id
+    string network_controller_id = 4;
+}
