@@ -171,11 +171,11 @@ gogo/protobuf (v1.3.2)
 * Project: https://github.com/gogo/protobuf
 * Source:  https://github.com/gogo/protobuf/releases/tag/v1.3.2
 
-golang/mock (1.4.1)
+golang/mock (1.6.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/golang/mock
-* Source:  https://github.com/golang/mock/tree/v1.4.1
+* Source:  https://github.com/golang/mock/tree/v1.6.0
 
 golang/protobuf (1.5.0)
 
@@ -423,6 +423,13 @@ vishvananda/netns (0.0.0-20200728191858-db3c7e526aae)
 * Project: https://github.com/vishvananda/netns
 * Source:  https://github.com/vishvananda/netns/tree/db3c7e526aae966c4ccfa6c8189b693d6ac5d202
 
+golang/crypto (0.0.0-20210322153248-0c34fe9e7dc2)
+
+* License: BSD 3-Clause "New" or "Revised" License
+* Project: https://github.com/golang/crypto
+* Source:  https://github.com/golang/crypto/tree/0c34fe9e7dc2486962ef9867e3edb3503537209f
+
+
 golang/net (0.0.0-20210726213435-c6fcb2dbf985)
 
 * License: BSD 3-Clause "New" or "Revised" License
@@ -434,6 +441,18 @@ golang/sync (0.0.0-20210220032951-036812b2e83c)
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sync
 * Source:  https://github.com/golang/sync/tree/036812b2e83c0ddf193dd5a34e034151da389d09
+
+golang/sys (0.0.0-20211116061358-0a5406a5449c)
+
+* License: BSD 3-Clause "New" or "Revised" License
+* Project: https://github.com/golang/sys
+* Source:  https://github.com/golang/sys/tree/0a5406a5449cd9832275d0f9f1460f17d19301f0
+
+golang/term (0.0.0-20201126162022-7de9c90e9dd1)
+
+* License: BSD 3-Clause "New" or "Revised" License
+* Project: https://github.com/golang/term
+* Source:  https://github.com/golang/term/tree/7de9c90e9dd184706b838f536a1cbf40a296ddb7
 
 golang/text (0.3.6)
 
@@ -459,17 +478,17 @@ protocolbuffers/protobuf-go (1.27.1)
 * Project: https://github.com/protocolbuffers/protobuf-go
 * Source:  https://github.com/protocolbuffers/protobuf-go/releases/tag/v1.27.1
 
-golang/go (1.17.2)
-
-* License: BSD 3-Clause "New" or "Revised" License
-* Project: https://github.com/golang/go
-* Source:  https://github.com/golang/go/releases/tag/go1.17.2
-
 natefinch/lumberjack (2.0.0)
 
 * License: MIT License
 * Project: https://github.com/natefinch/lumberjack
 * Source:  https://github.com/natefinch/lumberjack/releases/tag/v2.0.0
+
+golang/go (1.17.2)
+
+* License: BSD 3-Clause "New" or "Revised" License
+* Project: https://github.com/golang/go
+* Source:  https://github.com/golang/go/releases/tag/go1.17.2
 
 ## Cryptography
 
