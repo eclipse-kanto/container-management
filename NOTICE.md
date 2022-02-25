@@ -1,4 +1,4 @@
-i# Notices for Eclipse Kanto - Container Management
+# Notices for Eclipse Kanto - Container Management
 
 This content is produced and maintained by the Eclipse Kanto project.
 
