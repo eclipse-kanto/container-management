@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/opencontainers/runc/libcontainer/configs"
 	"github.com/opencontainers/runc/libcontainer/devices"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
@@ -32,7 +31,7 @@ func u32Ptr(i int64) *uint32     { u := uint32(i); return &u }
 func fmPtr(i int64) *os.FileMode { fm := os.FileMode(i); return &fm }
 
 // Device transforms a libcontainer configs.Device to a specs.LinuxDevice object.
-func Device(d *configs.Device) specs.LinuxDevice {
+func Device(d *devices.Device) specs.LinuxDevice {
 	return specs.LinuxDevice{
 		Type:     string(d.Type),
 		Path:     d.Path,
@@ -44,14 +43,14 @@ func Device(d *configs.Device) specs.LinuxDevice {
 	}
 }
 
-func deviceCgroup(d *configs.Device) specs.LinuxDeviceCgroup {
+func deviceCgroup(d *devices.Device) specs.LinuxDeviceCgroup {
 	t := string(d.Type)
 	return specs.LinuxDeviceCgroup{
 		Allow:  true,
 		Type:   t,
 		Major:  &d.Major,
 		Minor:  &d.Minor,
-		Access: d.Permissions,
+		Access: string(d.Permissions),
 	}
 }
 
