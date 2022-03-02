@@ -26,7 +26,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/oci/linux"
 	"github.com/eclipse-kanto/container-management/containerm/util"
 	"github.com/opencontainers/runc/libcontainer/devices"
-	rsystem "github.com/opencontainers/runc/libcontainer/system"
+	ruserns "github.com/opencontainers/runc/libcontainer/userns"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -189,7 +189,7 @@ func WithDevices(c *types.Container) crtdoci.SpecOpts {
 		var devs []specs.LinuxDevice
 		devPermissions := s.Linux.Resources.Devices
 
-		if c.HostConfig.Privileged && !rsystem.RunningInUserNS() {
+		if c.HostConfig.Privileged && !ruserns.RunningInUserNS() {
 			hostDevices, err := devices.HostDevices()
 			if err != nil {
 				return err
