@@ -180,14 +180,14 @@ func (createTc *createCommandTest) commandConfigDefault() interface{} {
 	}
 }
 
-func (createTc *createCommandTest) prepareCommand(flagsCfg map[string]string) {
+func (createTc *createCommandTest) prepareCommand(flagsCfg map[string]string) error {
 	// setup command to test
 	cmd := &createCmd{}
 	createTc.cmdCreate, createTc.baseCmd = cmd, cmd
 
 	createTc.cmdCreate.init(createTc.mockRootCommand)
 	// setup command flags
-	setCmdFlags(flagsCfg, createTc.cmdCreate.cmd)
+	return setCmdFlags(flagsCfg, createTc.cmdCreate.cmd)
 }
 
 func (createTc *createCommandTest) runCommand(args []string) error {
@@ -496,20 +496,6 @@ func (createTc *createCommandTest) generateRunExecutionConfigs() map[string]test
 			mockExecution: createTc.mockExecCreateWithRestartPolicyWhenNoFlagsAreIgnored,
 		},
 		// Test env vars
-		"test_create_env_vars_err_format_no_val": {
-			args: createCmdArgs,
-			flags: map[string]string{
-				createCmdFlagEnv: "VAR=",
-			},
-			mockExecution: createTc.mockExecEnvVarIncorrectFormatNoVal,
-		},
-		"test_create_env_vars_err_format_no_eq": {
-			args: createCmdArgs,
-			flags: map[string]string{
-				createCmdFlagEnv: "VAR",
-			},
-			mockExecution: createTc.mockExecEnvVarIncorrectFormatNoEq,
-		},
 		"test_create_env_vars_err_format_start_digit": {
 			args: createCmdArgs,
 			flags: map[string]string{
@@ -538,19 +524,40 @@ func (createTc *createCommandTest) generateRunExecutionConfigs() map[string]test
 			},
 			mockExecution: createTc.mockExecEnvVarDefault,
 		},
-		"test_create_env_vars_default_with_underscore": {
+		"test_create_env_vars_no_val": {
+			args: createCmdArgs,
+			flags: map[string]string{
+				createCmdFlagEnv: "VAR=",
+			},
+			mockExecution: createTc.mockExecEnvVarNoVal,
+		},
+		"test_create_env_vars_no_eq": {
+			args: createCmdArgs,
+			flags: map[string]string{
+				createCmdFlagEnv: "VAR",
+			},
+			mockExecution: createTc.mockExecEnvVarNoEq,
+		},
+		"test_create_env_vars_with_underscore": {
 			args: createCmdArgs,
 			flags: map[string]string{
 				createCmdFlagEnv: "_VAR=1",
 			},
-			mockExecution: createTc.mockExecEnvVarDefaultWithUnderscore,
+			mockExecution: createTc.mockExecEnvVarWithUnderscore,
 		},
-		"test_create_env_vars_default_with_string": {
+		"test_create_env_vars_with_comma": {
+			args: createCmdArgs,
+			flags: map[string]string{
+				createCmdFlagEnv: "VAR=1,2",
+			},
+			mockExecution: createTc.mockExecEnvVarWithComma,
+		},
+		"test_create_env_vars_with_string": {
 			args: createCmdArgs,
 			flags: map[string]string{
 				createCmdFlagEnv: "VAR=\"a b\"",
 			},
-			mockExecution: createTc.mockExecEnvVarDefaultWithString,
+			mockExecution: createTc.mockExecEnvVarWithString,
 		},
 		// Test args
 		"test_create_args_command": {
@@ -1053,16 +1060,6 @@ func initExpectedCtr(ctr *types.Container) *types.Container {
 	return ctr
 }
 
-func (createTc *createCommandTest) mockExecEnvVarIncorrectFormatNoVal(args []string) error {
-	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
-	return log.NewErrorf("invalid environmental variable declaration provided : %s", "VAR=")
-}
-
-func (createTc *createCommandTest) mockExecEnvVarIncorrectFormatNoEq(args []string) error {
-	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
-	return log.NewErrorf("invalid environmental variable declaration provided : %s", "VAR")
-}
-
 func (createTc *createCommandTest) mockExecEnvVarIncorrectFormatStartDigit(args []string) error {
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
 	return log.NewErrorf("invalid environmental variable declaration provided : %s", "1VAR=1")
@@ -1090,7 +1087,34 @@ func (createTc *createCommandTest) mockExecEnvVarDefault(args []string) error {
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(1).Return(container, nil)
 	return nil
 }
-func (createTc *createCommandTest) mockExecEnvVarDefaultWithUnderscore(args []string) error {
+
+func (createTc *createCommandTest) mockExecEnvVarNoVal(args []string) error {
+	container := initExpectedCtr(&types.Container{
+		Image: types.Image{
+			Name: args[0],
+		},
+		Config: &types.ContainerConfiguration{
+			Env: []string{"VAR="},
+		},
+	})
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
+	return nil
+}
+
+func (createTc *createCommandTest) mockExecEnvVarNoEq(args []string) error {
+	container := initExpectedCtr(&types.Container{
+		Image: types.Image{
+			Name: args[0],
+		},
+		Config: &types.ContainerConfiguration{
+			Env: []string{"VAR"},
+		},
+	})
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
+	return nil
+}
+
+func (createTc *createCommandTest) mockExecEnvVarWithUnderscore(args []string) error {
 	container := initExpectedCtr(&types.Container{
 		Image: types.Image{
 			Name: args[0],
@@ -1099,11 +1123,24 @@ func (createTc *createCommandTest) mockExecEnvVarDefaultWithUnderscore(args []st
 			Env: []string{"_VAR=1"},
 		},
 	})
-	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(1).Return(container, nil)
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
 	return nil
 }
 
-func (createTc *createCommandTest) mockExecEnvVarDefaultWithString(args []string) error {
+func (createTc *createCommandTest) mockExecEnvVarWithComma(args []string) error {
+	container := initExpectedCtr(&types.Container{
+		Image: types.Image{
+			Name: args[0],
+		},
+		Config: &types.ContainerConfiguration{
+			Env: []string{"VAR=1,2"},
+		},
+	})
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
+	return nil
+}
+
+func (createTc *createCommandTest) mockExecEnvVarWithString(args []string) error {
 	container := initExpectedCtr(&types.Container{
 		Image: types.Image{
 			Name: args[0],
@@ -1112,7 +1149,7 @@ func (createTc *createCommandTest) mockExecEnvVarDefaultWithString(args []string
 			Env: []string{"VAR=\"a b\""},
 		},
 	})
-	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(1).Return(container, nil)
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
 	return nil
 }
 

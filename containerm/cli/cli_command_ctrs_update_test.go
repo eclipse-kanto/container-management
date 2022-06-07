@@ -149,14 +149,14 @@ func (updateTc *updateCommandTest) commandConfigDefault() interface{} {
 	}
 }
 
-func (updateTc *updateCommandTest) prepareCommand(flagsCfg map[string]string) {
+func (updateTc *updateCommandTest) prepareCommand(flagsCfg map[string]string) error {
 	// setup command to test
 	cmd := &updateCmd{}
 	updateTc.updateCmd, updateTc.baseCmd = cmd, cmd
 
 	updateTc.updateCmd.init(updateTc.mockRootCommand)
 	// setup command flags
-	setCmdFlags(flagsCfg, updateTc.updateCmd.cmd)
+	return setCmdFlags(flagsCfg, updateTc.updateCmd.cmd)
 }
 
 func (updateTc *updateCommandTest) runCommand(args []string) error {

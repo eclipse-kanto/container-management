@@ -91,14 +91,14 @@ func (renameTc *renameCommandTest) commandConfigDefault() interface{} {
 	return renameConfig{}
 }
 
-func (renameTc *renameCommandTest) prepareCommand(flagsCfg map[string]string) {
+func (renameTc *renameCommandTest) prepareCommand(flagsCfg map[string]string) error {
 	// setup command to test
 	cmd := &renameCtrCmd{}
 	renameTc.renameCmd, renameTc.baseCmd = cmd, cmd
 
 	renameTc.renameCmd.init(renameTc.mockRootCommand)
 	// setup command flags
-	setCmdFlags(flagsCfg, renameTc.renameCmd.cmd)
+	return setCmdFlags(flagsCfg, renameTc.renameCmd.cmd)
 }
 
 func (renameTc *renameCommandTest) runCommand(args []string) error {

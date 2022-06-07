@@ -90,14 +90,14 @@ func (rmTc *removeCommandTest) commandConfigDefault() interface{} {
 	}
 }
 
-func (rmTc *removeCommandTest) prepareCommand(flagsCfg map[string]string) {
+func (rmTc *removeCommandTest) prepareCommand(flagsCfg map[string]string) error {
 	// setup command to test
 	cmd := &removeCmd{}
 	rmTc.cmdRemove, rmTc.baseCmd = cmd, cmd
 
 	rmTc.cmdRemove.init(rmTc.mockRootCommand)
 	// setup command flags
-	setCmdFlags(flagsCfg, rmTc.cmdRemove.cmd)
+	return setCmdFlags(flagsCfg, rmTc.cmdRemove.cmd)
 }
 
 func (rmTc *removeCommandTest) runCommand(args []string) error {

@@ -85,14 +85,14 @@ func (getInfoTc *getInfoCommandTest) commandConfigDefault() interface{} {
 	}
 }
 
-func (getInfoTc *getInfoCommandTest) prepareCommand(flagsCfg map[string]string) {
+func (getInfoTc *getInfoCommandTest) prepareCommand(flagsCfg map[string]string) error {
 	// setup command to test
 	cmd := &getCtrInfoCmd{}
 	getInfoTc.getInfoCmd, getInfoTc.baseCmd = cmd, cmd
 
 	getInfoTc.getInfoCmd.init(getInfoTc.mockRootCommand)
 	// setup command flags
-	setCmdFlags(flagsCfg, getInfoTc.getInfoCmd.cmd)
+	return setCmdFlags(flagsCfg, getInfoTc.getInfoCmd.cmd)
 }
 
 func (getInfoTc *getInfoCommandTest) runCommand(args []string) error {

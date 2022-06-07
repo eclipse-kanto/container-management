@@ -109,14 +109,14 @@ func (stopTc *stopCommandTest) commandConfigDefault() interface{} {
 	}
 }
 
-func (stopTc *stopCommandTest) prepareCommand(flagsCfg map[string]string) {
+func (stopTc *stopCommandTest) prepareCommand(flagsCfg map[string]string) error {
 	// setup command to test
 	cmd := &stopCmd{}
 	stopTc.cmdStop, stopTc.baseCmd = cmd, cmd
 
 	stopTc.cmdStop.init(stopTc.mockRootCommand)
 	// setup command flags
-	setCmdFlags(flagsCfg, stopTc.cmdStop.cmd)
+	return setCmdFlags(flagsCfg, stopTc.cmdStop.cmd)
 }
 
 func (stopTc *stopCommandTest) runCommand(args []string) error {

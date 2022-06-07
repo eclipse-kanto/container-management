@@ -34,7 +34,7 @@ type cliCommandTest interface {
 	commandConfigDefault() interface{}
 	commandFlags() map[string]string
 	commandFlagsDefault() map[string]string
-	prepareCommand(flagsCfg map[string]string)
+	prepareCommand(flagsCfg map[string]string) error
 	generateRunExecutionConfigs() map[string]testRunExecutionConfig
 	runCommand(args []string) error
 }
@@ -82,7 +82,8 @@ func (cliBase *cliCommandTestBase) init() {
 }
 
 func execTestInit(t *testing.T, cliTest cliCommandTest) {
-	cliTest.prepareCommand(nil)
+	err := cliTest.prepareCommand(nil)
+	testutil.AssertNil(t, err)
 
 	defaultCfg := cliTest.commandConfigDefault()
 	defaultFlags := cliTest.commandFlagsDefault()
@@ -98,7 +99,8 @@ func execTestInit(t *testing.T, cliTest cliCommandTest) {
 }
 
 func execTestSetupFlags(t *testing.T, cliTest cliCommandTest, flagsToApply map[string]string, expectedCommandCfg interface{}) {
-	cliTest.prepareCommand(flagsToApply)
+	err := cliTest.prepareCommand(flagsToApply)
+	testutil.AssertNil(t, err)
 
 	currentCfg := cliTest.commandConfig()
 
@@ -112,7 +114,8 @@ func execTestsRun(t *testing.T, cliTest cliCommandTest) {
 		t.Run(testName, func(t *testing.T) {
 			t.Log(testName)
 			// config command
-			cliTest.prepareCommand(testCase.flags)
+			err := cliTest.prepareCommand(testCase.flags)
+			testutil.AssertNil(t, err)
 			// prepare mocks
 			expectedRunErr := testCase.mockExecution(testCase.args)
 			// perform the real call
@@ -123,10 +126,14 @@ func execTestsRun(t *testing.T, cliTest cliCommandTest) {
 	}
 }
 
-func setCmdFlags(flagValues map[string]string, cmd *cobra.Command) {
+func setCmdFlags(flagValues map[string]string, cmd *cobra.Command) error {
 	if flagValues != nil {
 		for flagKey, flagValue := range flagValues {
-			cmd.Flag(flagKey).Value.Set(flagValue)
+			err := cmd.Flag(flagKey).Value.Set(flagValue)
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }

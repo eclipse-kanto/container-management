@@ -38,14 +38,14 @@ type sysInfoCommandTest struct {
 	sysInfoCmd *sysInfoCmd
 }
 
-func (sysInfoTc *sysInfoCommandTest) prepareCommand(flagsCfg map[string]string) {
+func (sysInfoTc *sysInfoCommandTest) prepareCommand(flagsCfg map[string]string) error {
 	// setup command to test
 	cmd := &sysInfoCmd{}
 	sysInfoTc.sysInfoCmd, sysInfoTc.baseCmd = cmd, cmd
 
 	sysInfoTc.sysInfoCmd.init(sysInfoTc.mockRootCommand)
 	// setup command flags
-	setCmdFlags(flagsCfg, sysInfoTc.sysInfoCmd.cmd)
+	return setCmdFlags(flagsCfg, sysInfoTc.sysInfoCmd.cmd)
 }
 
 func (sysInfoTc *sysInfoCommandTest) runCommand(args []string) error {

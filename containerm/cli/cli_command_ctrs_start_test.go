@@ -95,14 +95,14 @@ func (startTc *startCommandTest) commandConfigDefault() interface{} {
 	}
 }
 
-func (startTc *startCommandTest) prepareCommand(flagsCfg map[string]string) {
+func (startTc *startCommandTest) prepareCommand(flagsCfg map[string]string) error {
 	// setup command to test
 	cmd := &startCmd{}
 	startTc.cmdStart, startTc.baseCmd = cmd, cmd
 
 	startTc.cmdStart.init(startTc.mockRootCommand)
 	// setup command flags
-	setCmdFlags(flagsCfg, startTc.cmdStart.cmd)
+	return setCmdFlags(flagsCfg, startTc.cmdStart.cmd)
 }
 
 func (startTc *startCommandTest) runCommand(args []string) error {

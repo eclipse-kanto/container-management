@@ -53,22 +53,6 @@ func WithCommonOptions(c *types.Container) crtdoci.SpecOpts {
 	}
 }
 
-// WithProcessOptions sets the container's root process configuration
-// - env variables
-// - etc.
-func WithProcessOptions(c *types.Container) crtdoci.SpecOpts {
-	return func(ctx context.Context, _ crtdoci.Client, _ *containers.Container, s *crtdoci.Spec) error {
-		if c.Config != nil && c.Config.Env != nil && len(c.Config.Env) > 0 {
-			//setup env hostname
-			if s.Process.Env == nil {
-				s.Process.Env = []string{}
-			}
-			s.Process.Env = append(s.Process.Env, c.Config.Env...)
-		}
-		return nil
-	}
-}
-
 // WithMounts sets the network resolution files generated
 //e.g. c.getRootResourceDir("resolv.conf"), "hostname", "hosts"
 func WithMounts(container *types.Container) crtdoci.SpecOpts {
