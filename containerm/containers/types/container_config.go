@@ -13,5 +13,6 @@ package types
 
 // ContainerConfiguration holds environment variables for the containers
 type ContainerConfiguration struct {
-	Env []string `json:"env"`
+	Env []string `json:"env,omitempty"`
+	Cmd []string `json:"cmd,omitempty"`
 }

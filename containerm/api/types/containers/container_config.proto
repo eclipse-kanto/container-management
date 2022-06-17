@@ -20,4 +20,6 @@ message ContainerConfiguration {
 
     // Provides the environmental configuration of the container's process - i.e. environmental variables
     repeated string env = 1;
+    // Provides the command to be run upon container start
+    repeated string cmd = 2;
 }

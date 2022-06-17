@@ -546,6 +546,15 @@ func (createTc *createCommandTest) generateRunExecutionConfigs() map[string]test
 			},
 			mockExecution: createTc.mockExecEnvVarDefaultWithString,
 		},
+		// Test args
+		"test_create_args_command": {
+			args:          append(createCmdArgs, "echo"),
+			mockExecution: createTc.mockExecArgsDefault,
+		},
+		"test_create_args_command_with_arguments": {
+			args:          append(createCmdArgs, "echo", "test", "execution!"),
+			mockExecution: createTc.mockExecArgsDefault,
+		},
 		"test_create_name": {
 			args: createCmdArgs,
 			flags: map[string]string{
@@ -1092,6 +1101,19 @@ func (createTc *createCommandTest) mockExecEnvVarDefaultWithString(args []string
 	return nil
 }
 
+func (createTc *createCommandTest) mockExecArgsDefault(args []string) error {
+	container := initExpectedCtr(&types.Container{
+		Image: types.Image{
+			Name: args[0],
+		},
+		Config: &types.ContainerConfiguration{
+			Cmd: args[1:],
+		},
+	})
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
+	return nil
+}
+
 func (createTc *createCommandTest) mockExecCreateName(args []string) error {
 	container := initExpectedCtr(&types.Container{
 		Image: types.Image{
@@ -1172,7 +1194,7 @@ func (createTc *createCommandTest) mockExecCreateLogBlockingBuffFlagIgnored(args
 			},
 		},
 	})
-	createTc.mockClient.EXPECT().Create(context.Background(), container).Times(1).Return(container, nil)
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
 	return nil
 }
 
@@ -1185,7 +1207,7 @@ func (createTc *createCommandTest) mockExecCreateNetworkModeHost(args []string) 
 			NetworkMode: types.NetworkModeHost,
 		},
 	})
-	createTc.mockClient.EXPECT().Create(context.Background(), container).Times(1).Return(container, nil)
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
 	return nil
 }
 func (createTc *createCommandTest) mockExecCreateNetworkModeInvalid(args []string) error {

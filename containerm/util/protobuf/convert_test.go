@@ -95,7 +95,11 @@ var (
 	}}
 
 	configEnv               = []string{configEnv1}
-	internalContainerConfig = internaltypes.ContainerConfiguration{Env: configEnv}
+	configArg               = []string{"echo", "test", "command"}
+	internalContainerConfig = internaltypes.ContainerConfiguration{
+		Env: configEnv,
+		Cmd: configArg,
+	}
 
 	hostConfigExtraHosts = []string{"ctrhost:host_ip"}
 	internalHostConfig   = &internaltypes.HostConfig{

@@ -208,6 +208,7 @@ func ToProtoConfig(internalConfig *internaltypes.ContainerConfiguration) *apityp
 	}
 	return &apitypescontainers.ContainerConfiguration{
 		Env: internalConfig.Env,
+		Cmd: internalConfig.Cmd,
 	}
 }
 

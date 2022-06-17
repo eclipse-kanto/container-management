@@ -68,21 +68,26 @@ type createConfig struct {
 func (cc *createCmd) init(cli *cli) {
 	cc.cli = cli
 	cc.cmd = &cobra.Command{
-		Use:   "create container-image-id",
+		Use:   "create [option]... container-image-id [command] [command-arg]...",
 		Short: "Create a container.",
 		Long:  "Create a container.",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cc.run(args)
 		},
-		Example: "create container-id container-image-id",
+		Example: "create container-image-id",
 	}
+	cc.cmd.Flags().SetInterspersed(false)
 	cc.setupFlags()
 }
 
 func (cc *createCmd) run(args []string) error {
 	// parse parameters
 	imageID := args[0]
+	var command []string
+	if len(args) > 1 {
+		command = args[1:]
+	}
 
 	if cc.config.privileged && cc.config.devices != nil {
 		return log.NewError("cannot create the container as privileged and with specified devices at the same time - choose one of the options")
@@ -104,13 +109,18 @@ func (cc *createCmd) run(args []string) error {
 		},
 	}
 
-	if cc.config.env != nil {
-		if err := validateEnvVars(cc.config.env); err != nil {
-			return err
+	if cc.config.env != nil || command != nil {
+		containerConfig := &types.ContainerConfiguration{}
+		if cc.config.env != nil {
+			if err := validateEnvVars(cc.config.env); err != nil {
+				return err
+			}
+			containerConfig.Env = cc.config.env
 		}
-		ctrToCreate.Config = &types.ContainerConfiguration{
-			Env: cc.config.env,
+		if command != nil {
+			containerConfig.Cmd = command
 		}
+		ctrToCreate.Config = containerConfig
 	}
 
 	if cc.config.devices != nil {
