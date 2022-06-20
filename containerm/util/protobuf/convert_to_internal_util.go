@@ -179,6 +179,7 @@ func ToInternalConfig(grpcConfig *apitypescontainers.ContainerConfiguration) *in
 	}
 	return &internaltypes.ContainerConfiguration{
 		Env: grpcConfig.Env,
+		Cmd: grpcConfig.Cmd,
 	}
 }
 
