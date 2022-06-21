@@ -28,21 +28,25 @@ const (
 	testClientKeyPath       = "../pkg/testutil/certs/testClientKey.key"
 )
 
-var (
-	defaultTLSConfig = &tls.Config{
-		MinVersion:               tls.VersionTLS12,
-		PreferServerCipherSuites: true,
-		CipherSuites:             serverAcceptedCiphers,
-		InsecureSkipVerify:       false,
-	}
-)
-
 func TestCreateDefaultTLSConfig(t *testing.T) {
 	t.Run("test_create_default_tls_config", func(t *testing.T) {
 		var testDefaultConfig = &tls.Config{}
 		testDefaultConfig = createDefaultTLSConfig(false)
-
-		testutil.AssertEqual(t, defaultTLSConfig, testDefaultConfig)
+		testutil.AssertEqual(t, uint16(tls.VersionTLS12), testDefaultConfig.MinVersion)
+		testutil.AssertEqual(t, uint16(tls.VersionTLS13), testDefaultConfig.MaxVersion)
+		testutil.AssertFalse(t, testDefaultConfig.InsecureSkipVerify)
+		testutil.AssertTrue(t, len(testDefaultConfig.CipherSuites) > 0)
+		// assert that cipher suites identifiers are contained in tls.CipherSuites
+		for _, csID := range testDefaultConfig.CipherSuites {
+			testutil.AssertTrue(t, func() bool {
+				for _, cs := range tls.CipherSuites() {
+					if cs.ID == csID {
+						return true
+					}
+				}
+				return false
+			}())
+		}
 	})
 }
 
@@ -164,6 +168,12 @@ func TestValidateTLSConfig(t *testing.T) {
 }
 
 func TestApplyTLSConfig(t *testing.T) {
+	defaultTLSConfig := &tls.Config{
+		MinVersion:         tls.VersionTLS12,
+		MaxVersion:         tls.VersionTLS13,
+		CipherSuites:       supportedCipherSuites(),
+		InsecureSkipVerify: false,
+	}
 	testRootCertAbsPath, _ := filepath.Abs(testRootCertPath)
 	testClientCertAbsPath, _ := filepath.Abs(testClientCertPath)
 	testClientKeyAbsPath, _ := filepath.Abs(testClientKeyPath)
