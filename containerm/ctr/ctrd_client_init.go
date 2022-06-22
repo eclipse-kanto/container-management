@@ -20,7 +20,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-func newContainerdClient(namespace string, socket string, rootExec string, metaPath string, registryConfigs map[string]*RegistryConfig) (ContainerAPIClient, error) {
+func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string) (ContainerAPIClient, error) {
 
 	//ensure storage
 	err := util.MkDir(rootExec)
@@ -37,6 +37,10 @@ func newContainerdClient(namespace string, socket string, rootExec string, metaP
 	if err != nil {
 		return nil, err
 	}
+	decryptMgr, decrErr := newContainerDecryptManager(imageDecKeys, imageDecRecipients)
+	if decrErr != nil {
+		return nil, decrErr
+	}
 
 	ctrdClient := &containerdClient{
 		rootExec:           rootExec,
@@ -46,6 +50,7 @@ func newContainerdClient(namespace string, socket string, rootExec string, metaP
 		spi:                ctrdClientSpi,
 		ioMgr:              newContainerIOManager(filepath.Join(rootExec, "fifo"), newCache()),
 		logsMgr:            newContainerLogsManager(filepath.Join(metaPath, "containers")),
+		decMgr:             decryptMgr,
 	}
 	go ctrdClient.processEvents(namespace)
 	return ctrdClient, nil
@@ -56,6 +61,6 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 	var opts = &ctrOpts{}
 	applyOptsCtr(opts, createOpts...)
 
-	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs)
+	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients)
 
 }

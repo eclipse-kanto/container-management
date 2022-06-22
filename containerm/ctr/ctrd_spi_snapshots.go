@@ -13,7 +13,6 @@ package ctr
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -28,7 +27,7 @@ import (
 )
 
 func (spi *ctrdSpi) GetSnapshotID(containerID string) string {
-	return fmt.Sprintf(snapshotIDTemplate, containerID)
+	return spi.generateSnapshotID(containerID)
 }
 
 func (spi *ctrdSpi) GetSnapshot(ctx context.Context, containerID string) (snapshots.Info, error) {
@@ -36,7 +35,7 @@ func (spi *ctrdSpi) GetSnapshot(ctx context.Context, containerID string) (snapsh
 	return spi.snapshotService.Stat(ctx, spi.generateSnapshotID(containerID))
 }
 
-func (spi *ctrdSpi) PrepareSnapshot(ctx context.Context, containerID string, image containerd.Image) error {
+func (spi *ctrdSpi) PrepareSnapshot(ctx context.Context, containerID string, image containerd.Image, opts ...containerd.UnpackOpt) error {
 	ctx = spi.setContext(ctx, false)
 	originalCtx := ctx
 	ctx = leases.WithLease(ctx, spi.lease.ID)
@@ -58,6 +57,7 @@ func (spi *ctrdSpi) PrepareSnapshot(ctx context.Context, containerID string, ima
 	if err == nil || !errdefs.IsNotFound(err) {
 		return err
 	}
+
 	log.Debug("checking unpack status for image %s on %s snapshotter...", image.Name(), spi.snapshotterType)
 
 	// check unpacked
@@ -73,7 +73,7 @@ func (spi *ctrdSpi) PrepareSnapshot(ctx context.Context, containerID string, ima
 		// NOTE!: don't use container-management lease ID here because container-management lease ID
 		// will hold the snapshotter forever, which means that the
 		// snapshotter will not be removed if we remove the image
-		if werr = image.Unpack(originalCtx, spi.snapshotterType); werr != nil {
+		if werr = spi.UnpackImage(originalCtx, image, opts...); werr != nil {
 			log.WarnErr(werr, "failed to unpack image %s on %s snapshotter", image.Name(), spi.snapshotterType)
 			return werr
 		}

@@ -131,7 +131,19 @@ func ToProtoImage(internalImage *internaltypes.Image) *apitypescontainers.Image 
 		return nil
 	}
 	return &apitypescontainers.Image{
-		Name: internalImage.Name,
+		Name:          internalImage.Name,
+		DecryptConfig: ToProtoDecryptConfig(internalImage.DecryptConfig),
+	}
+}
+
+// ToProtoDecryptConfig converts an internal DecryptDate instance to a types.DecryptDate one
+func ToProtoDecryptConfig(DecryptConfig *internaltypes.DecryptConfig) *apitypescontainers.DecryptConfig {
+	if DecryptConfig == nil {
+		return nil
+	}
+	return &apitypescontainers.DecryptConfig{
+		Keys:       DecryptConfig.Keys,
+		Recipients: DecryptConfig.Recipients,
 	}
 }
 

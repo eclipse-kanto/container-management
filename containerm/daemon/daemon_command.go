@@ -42,6 +42,8 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.StringSliceVar(&cfg.ContainerClientConfig.CtrInsecureRegistries, "ccl-insecure-registries", cfg.ContainerClientConfig.CtrInsecureRegistries, "Specify insecure image registries - <ip/hostname>[:<port>]")
 	flagSet.StringVar(&cfg.ContainerClientConfig.CtrRootExec, "ccl-exec-root-dir", cfg.ContainerClientConfig.CtrRootExec, "Specify the exec root dir to be used for container runtime management data")
 	flagSet.StringVar(&cfg.ContainerClientConfig.CtrMetaPath, "ccl-home-dir", cfg.ContainerClientConfig.CtrMetaPath, "Specify the home directory to be used for container runtime management data")
+	flagSet.StringSliceVar(&cfg.ContainerClientConfig.CtrImageDecKeys, "ccl-image-dec-keys", cfg.ContainerClientConfig.CtrImageDecKeys, "Specify a list of private keys filenames (GPG private key ring, JWE and PKCS7 private key). Each entry can include an optional password separated by a colon after the filename.")
+	flagSet.StringSliceVar(&cfg.ContainerClientConfig.CtrImageDecRecipients, "ccl-image-dec-recipients", cfg.ContainerClientConfig.CtrImageDecRecipients, "Specify a recipients certificates list of the image (used only for PKCS7 and must be an x509)")
 
 	// init network manager flags
 	flagSet.StringVar(&cfg.NetworkConfig.NetType, "net-type", cfg.NetworkConfig.NetType, "Specify the default network management type for containers")

@@ -27,36 +27,117 @@ import (
 	"github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/runtime"
+	"github.com/containerd/imgcrypt"
+	"github.com/containerd/imgcrypt/images/encryption"
 	"github.com/containerd/typeurl"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-func (ctrdClient *containerdClient) generateNewContainerOpts(container *types.Container, containerImage containerd.Image) []containerd.NewContainerOpts {
+func (ctrdClient *containerdClient) generateRemoteOpts(imageInfo types.Image) []containerd.RemoteOpt {
+	remoteOpts := []containerd.RemoteOpt{
+		containerd.WithSchema1Conversion,
+	}
+	resolver := ctrdClient.registriesResolver.ResolveImageRegistry(util.GetImageHost(imageInfo.Name))
+	if resolver != nil {
+		remoteOpts = append(remoteOpts, containerd.WithResolver(resolver))
+	} else {
+		log.Warn("the default resolver by containerd will be used for image %s", imageInfo.Name)
+	}
+	return remoteOpts
+}
+
+func (ctrdClient *containerdClient) generateUnpackOpts(imageInfo types.Image) ([]containerd.UnpackOpt, error) {
+	decryptCfg, dcErr := ctrdClient.decMgr.GetDecryptConfig(imageInfo.DecryptConfig)
+	if dcErr != nil {
+		return nil, dcErr
+	}
+	var unpackOpts []containerd.UnpackOpt
+	unpackOpts = append(unpackOpts,
+		encryption.WithUnpackConfigApplyOpts(encryption.WithDecryptedUnpack(&imgcrypt.Payload{DecryptConfig: *decryptCfg})),
+	)
+	log.Debug("created decrypt unpack options for image %s", imageInfo.Name)
+
+	return unpackOpts, nil
+}
+
+func (ctrdClient *containerdClient) generateNewContainerOpts(container *types.Container, containerImage containerd.Image) ([]containerd.NewContainerOpts, error) {
 	createOpts := []containerd.NewContainerOpts{}
 	createOpts = append(createOpts, WithSnapshotOpts(ctrdClient.spi.GetSnapshotID(container.ID), containerd.DefaultSnapshotter)...) // NB! It's very important to apply the snapshot configs prior to the OCI Spec ones as they are dependent
 	createOpts = append(createOpts,
 		WithRuntimeOpts(container, ctrdClient.rootExec),
 		WithSpecOpts(container, containerImage, ctrdClient.rootExec))
-	return createOpts
+
+	decryptCfg, err := ctrdClient.decMgr.GetDecryptConfig(container.Image.DecryptConfig)
+	if err != nil {
+		return nil, err
+	}
+	createOpts = append(createOpts, encryption.WithAuthorizationCheck(decryptCfg))
+
+	return createOpts, nil
 }
 
-func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageRef string) (containerd.Image, error) {
-	image, err := ctrdClient.spi.GetImage(ctx, imageRef)
+func (ctrdClient *containerdClient) getImage(ctx context.Context, imageInfo types.Image) (containerd.Image, error) {
+	decryptConfig, err := ctrdClient.decMgr.GetDecryptConfig(imageInfo.DecryptConfig)
+	if err != nil {
+		return nil, err
+	}
+	ctrdImage, err := ctrdClient.spi.GetImage(ctx, imageInfo.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = ctrdClient.decMgr.CheckAuthorization(ctx, ctrdImage, decryptConfig); err != nil {
+		return nil, err
+	}
+	return ctrdImage, nil
+}
+
+func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageInfo types.Image) (containerd.Image, error) {
+	dc, dcErr := ctrdClient.decMgr.GetDecryptConfig(imageInfo.DecryptConfig)
+	if dcErr != nil {
+		return nil, dcErr
+	}
+	ctrdImage, err := ctrdClient.spi.GetImage(ctx, imageInfo.Name)
 	if err != nil {
 		// if the image is not present locally - pull it
 		if errdefs.IsNotFound(err) {
-			return ctrdClient.spi.PullImage(ctx, imageRef, ctrdClient.registriesResolver.ResolveImageRegistry(util.GetImageHost(imageRef)))
+			ctrdImage, err = ctrdClient.spi.PullImage(ctx, imageInfo.Name, ctrdClient.generateRemoteOpts(imageInfo)...)
+			if err != nil {
+				return nil, err
+			}
+			// NB! It's really important to have the logic of pulling and unpacking separate
+			// Reasoning - before unpacking the content (which is a consuming operation to revert)
+			// it's essential to perform an authorization check to prevent leased content leaks
+			if checkErr := ctrdClient.decMgr.CheckAuthorization(ctx, ctrdImage, dc); checkErr != nil {
+				return nil, checkErr
+			}
+			unpackOpts, optsErr := ctrdClient.generateUnpackOpts(imageInfo)
+			if optsErr != nil {
+				return nil, optsErr
+			}
+			if unpackErr := ctrdClient.spi.UnpackImage(ctx, ctrdImage, unpackOpts...); unpackErr != nil {
+				return nil, unpackErr
+			}
+		}
+	} else {
+		if checkErr := ctrdClient.decMgr.CheckAuthorization(ctx, ctrdImage, dc); checkErr != nil {
+			return nil, checkErr
 		}
 	}
-	return image, err
+	return ctrdImage, err
 }
 
-func (ctrdClient *containerdClient) createSnapshot(ctx context.Context, containerID string, image containerd.Image) error {
-	err := ctrdClient.spi.PrepareSnapshot(ctx, containerID, image)
+func (ctrdClient *containerdClient) createSnapshot(ctx context.Context, containerID string, image containerd.Image, imageInfo types.Image) error {
+	unpackOpts, err := ctrdClient.generateUnpackOpts(imageInfo)
 	if err != nil {
-		log.ErrorErr(err, "error while trying to create a snapshot for container image with ID = %s ", image.Name)
+		log.ErrorErr(err, "error while generating unpack opts for image ID = %s used by container ID = %s", image.Name, containerID)
+		return err
+	}
+	err = ctrdClient.spi.PrepareSnapshot(ctx, containerID, image, unpackOpts...)
+	if err != nil {
+		log.ErrorErr(err, "error while trying to create a snapshot for container ID = %s with image ID = %s ", containerID, image.Name)
 		return err
 	}
 	err = ctrdClient.spi.MountSnapshot(ctx, containerID, rootFSPathDefault)
@@ -78,7 +159,7 @@ func (ctrdClient *containerdClient) clearSnapshot(ctx context.Context, container
 
 func (ctrdClient *containerdClient) createTask(ctx context.Context, ctrIOCfg *types.IOConfig, containerID, checkpointDir string, ctrdContainer containerd.Container) (*containerInfo, error) {
 	/*if checkpointDir != "" {
-		//TODO add checkpoint support for tasks
+		//TODO: add checkpoint support for tasks
 		checkpoint, err = createCheckpointDescriptor(ctx, checkpointDir, ctrdClient)
 		if err != nil {
 			return nil, err

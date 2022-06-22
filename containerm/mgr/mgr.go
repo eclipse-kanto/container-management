@@ -415,7 +415,7 @@ func (mgr *containerMgr) Rename(ctx context.Context, id string, name string) err
 }
 
 // Remove removes a container, it may be running or stopped and so on.
-func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool /*TODO add options*/) error {
+func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool) error {
 	container := mgr.getContainerFromCache(id)
 	if container == nil {
 		return log.NewErrorf(noSuchContainerErrorMsg, id)

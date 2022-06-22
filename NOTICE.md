@@ -63,11 +63,11 @@ BurntSushi/toml (0.3.1)
 * Project: https://github.com/BurntSushi/toml
 * Source:  https://github.com/BurntSushi/toml/releases/tag/v0.3.1
 
-containerd/containerd (1.5.8)
+containerd/containerd (1.5.13)
 
 * License: Apache License 2.0
 * Project: https://github.com/containerd/containerd
-* Source:  https://github.com/containerd/containerd/releases/tag/v1.5.8
+* Source:  https://github.com/containerd/containerd/releases/tag/v1.5.13
 
 containerd/continuity (0.1.0)
 
@@ -81,6 +81,12 @@ containerd/fifo (1.0.0)
 * Project: https://github.com/containerd/fifo
 * Source:  https://github.com/containerd/fifo/releases/tag/v1.0.0
 
+containerd/imgcrypt (1.1.6)
+
+* License: Apache License 2.0
+* Project: https://github.com/containerd/imgcrypt
+* Source:  https://github.com/containerd/imgcrypt/releases/tag/v1.1.6
+
 containerd/ttrpc (1.1.0)
 
 * License: Apache License 2.0
@@ -92,6 +98,12 @@ containerd/typeurl (1.0.2)
 * License: Apache License 2.0
 * Project: https://github.com/containerd/typeurl
 * Source:  https://github.com/containerd/typeurl/releases/tag/v1.0.2
+
+containers/ocicrypt (1.1.5)
+
+* License: Apache License 2.0
+* Project: https://github.com/containers/ocicrypt
+* Source:  https://github.com/containers/ocicrypt/releases/tag/v1.1.5
 
 etcd-io/etcd (3.3.18)
 
@@ -165,7 +177,7 @@ gogo/googleapis (1.4.0)
 * Project: https://github.com/gogo/googleapis
 * Source:  https://github.com/gogo/googleapis/releases/tag/v1.4.0
 
-gogo/protobuf (v1.3.2)
+gogo/protobuf (1.3.2)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/gogo/protobuf
@@ -177,11 +189,11 @@ golang/mock (1.6.0)
 * Project: https://github.com/golang/mock
 * Source:  https://github.com/golang/mock/tree/v1.6.0
 
-golang/protobuf (1.5.0)
+golang/protobuf (1.5.2)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/protobuf
-* Source:  https://github.com/golang/protobuf/releases/tag/v1.5.0
+* Source:  https://github.com/golang/protobuf/releases/tag/v1.5.2
 
 google/btree (1.0.0)
 
@@ -309,6 +321,12 @@ miekg/dns (1.1.46)
 * Project: https://github.com/miekg/dns
 * Source:  https://github.com/miekg/dns/releases/tag/v1.1.46
 
+miekg/pkcs11 (1.1.1)
+
+* License: BSD 3-Clause "New" or "Revised" License
+* Project: https://github.com/miekg/pkcs11
+* Source:  https://github.com/miekg/pkcs11/releases/tag/v1.1.1
+
 mitchellh/mapstructure (1.1.2)
 
 * License: MIT License
@@ -351,11 +369,11 @@ opencontainers/go-digest (1.0.0)
 * Project: https://github.com/opencontainers/go-digest
 * Source:  https://github.com/opencontainers/go-digest/releases/tag/v1.0.0
 
-opencontainers/image-spec (1.0.2)
+opencontainers/image-spec (1.0.3-0.20211202183452-c5a74bcca799)
 
 * License: Apache License 2.0
 * Project: https://github.com/opencontainers/image-spec
-* Source:  https://github.com/opencontainers/image-spec/releases/tag/v1.0.2
+* Source:  https://github.com/opencontainers/image-spec/tree/c5a74bcca799bef045e7fbe74e1b75580fd18d4c
 
 opencontainers/runc (1.1.0)
 
@@ -363,7 +381,7 @@ opencontainers/runc (1.1.0)
 * Project: https://github.com/opencontainers/image-spec
 * Source:  https://github.com/opencontainers/image-spec/releases/tag/v1.1.0
 
-opencontainers/runtime-spec (v1.0.3-0.20210326190908-1c3f411f0417)
+opencontainers/runtime-spec (1.0.3-0.20210326190908-1c3f411f0417)
 
 * License: Apache License 2.0
 * Project: https://github.com/opencontainers/runtime-spec
@@ -411,6 +429,12 @@ spf13/pflag (1.0.5)
 * Project: https://github.com/spf13/pflag
 * Source:  https://github.com/spf13/pflag/releases/tag/v1.0.5
 
+stefanberger/go-pkcs11uri (0.0.0-20201008174630-78d3cae3a980)
+
+* License: Apache License 2.0
+* Project: https://github.com/stefanberger/go-pkcs11uri
+* Source:  https://github.com/stefanberger/go-pkcs11uri/tree/78d3cae3a9805d89aa4fa80a362ca944c89a1b99
+
 vishvananda/netlink (1.1.1-0.20201029203352-d40f9887b852)
 
 * License: Apache License 2.0
@@ -429,12 +453,11 @@ golang/crypto (0.0.0-20210322153248-0c34fe9e7dc2)
 * Project: https://github.com/golang/crypto
 * Source:  https://github.com/golang/crypto/tree/0c34fe9e7dc2486962ef9867e3edb3503537209f
 
-
-golang/net (0.0.0-20210726213435-c6fcb2dbf985)
+golang/net (0.0.0-20210825183410-e898025ed96a)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/net
-* Source:  https://github.com/golang/net/tree/c6fcb2dbf98596caad8f56c0c398c1c6ff1fcff9
+* Source:  https://github.com/golang/net/tree/e898025ed96aa6d08e98132b8dca210e9e7a0cd2
 
 golang/sync (0.0.0-20210220032951-036812b2e83c)
 
@@ -442,11 +465,11 @@ golang/sync (0.0.0-20210220032951-036812b2e83c)
 * Project: https://github.com/golang/sync
 * Source:  https://github.com/golang/sync/tree/036812b2e83c0ddf193dd5a34e034151da389d09
 
-golang/sys (0.0.0-20211116061358-0a5406a5449c)
+golang/sys (0.0.0-20220412211240-33da011f77ad)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sys
-* Source:  https://github.com/golang/sys/tree/0a5406a5449cd9832275d0f9f1460f17d19301f0
+* Source:  https://github.com/golang/sys/tree/33da011f77ade50ff5b6a6fb4a9a1e6d6b285809
 
 golang/term (0.0.0-20201126162022-7de9c90e9dd1)
 
@@ -459,6 +482,12 @@ golang/text (0.3.6)
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/text
 * Source:  https://github.com/golang/text/releases/tag/v0.3.6
+
+mozilla-services/pkcs7 (0.0.0-20200128120323-432b2356ecb1)
+
+* License: MIT License
+* Project: https://github.com/mozilla-services
+* Source:  https://github.com/mozilla-services/pkcs7/tree/432b2356ecb18209c1cec25680b8a23632794f21
 
 googleapis/go-genproto (0.0.0-20201110150050-8816d57aaa9a)
 
@@ -483,6 +512,18 @@ natefinch/lumberjack (2.0.0)
 * License: MIT License
 * Project: https://github.com/natefinch/lumberjack
 * Source:  https://github.com/natefinch/lumberjack/releases/tag/v2.0.0
+
+square/go-jose (2.5.1)
+
+* License: Apache License 2.0
+* Project: https://github.com/square/go-jose
+* Source:  https://github.com/square/go-jose/releases/tag/v2.5.1
+
+go-yaml/yaml (3.0.0)
+
+* License: Apache License 2.0
+* Project: https://github.com/go-yaml/yaml
+* Source:  https://github.com/go-yaml/yaml/releases/tag/v3.0.0
 
 golang/go (1.17.2)
 

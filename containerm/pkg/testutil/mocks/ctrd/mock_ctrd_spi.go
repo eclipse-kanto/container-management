@@ -13,7 +13,7 @@
 // Source: containerm/ctr/ctrd_spi.go
 
 // Package mocks is a generated GoMock package.
-package ctrd
+package mocks
 
 import (
 	context "context"
@@ -23,7 +23,6 @@ import (
 	cio "github.com/containerd/containerd/cio"
 	events "github.com/containerd/containerd/events"
 	leases "github.com/containerd/containerd/leases"
-	remotes "github.com/containerd/containerd/remotes"
 	snapshots "github.com/containerd/containerd/snapshots"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -349,32 +348,42 @@ func (mr *MockcontainerdSpiMockRecorder) MountSnapshot(ctx, containerID, rootFS 
 }
 
 // PrepareSnapshot mocks base method.
-func (m *MockcontainerdSpi) PrepareSnapshot(ctx context.Context, containerID string, image containerd.Image) error {
+func (m *MockcontainerdSpi) PrepareSnapshot(ctx context.Context, containerID string, image containerd.Image, opts ...containerd.UnpackOpt) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PrepareSnapshot", ctx, containerID, image)
+	varargs := []interface{}{ctx, containerID, image}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PrepareSnapshot", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PrepareSnapshot indicates an expected call of PrepareSnapshot.
-func (mr *MockcontainerdSpiMockRecorder) PrepareSnapshot(ctx, containerID, image interface{}) *gomock.Call {
+func (mr *MockcontainerdSpiMockRecorder) PrepareSnapshot(ctx, containerID, image interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PrepareSnapshot", reflect.TypeOf((*MockcontainerdSpi)(nil).PrepareSnapshot), ctx, containerID, image)
+	varargs := append([]interface{}{ctx, containerID, image}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PrepareSnapshot", reflect.TypeOf((*MockcontainerdSpi)(nil).PrepareSnapshot), varargs...)
 }
 
 // PullImage mocks base method.
-func (m *MockcontainerdSpi) PullImage(ctx context.Context, imageRef string, resolver remotes.Resolver) (containerd.Image, error) {
+func (m *MockcontainerdSpi) PullImage(ctx context.Context, imageRef string, opts ...containerd.RemoteOpt) (containerd.Image, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PullImage", ctx, imageRef, resolver)
+	varargs := []interface{}{ctx, imageRef}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PullImage", varargs...)
 	ret0, _ := ret[0].(containerd.Image)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // PullImage indicates an expected call of PullImage.
-func (mr *MockcontainerdSpiMockRecorder) PullImage(ctx, imageRef, resolver interface{}) *gomock.Call {
+func (mr *MockcontainerdSpiMockRecorder) PullImage(ctx, imageRef interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullImage", reflect.TypeOf((*MockcontainerdSpi)(nil).PullImage), ctx, imageRef, resolver)
+	varargs := append([]interface{}{ctx, imageRef}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullImage", reflect.TypeOf((*MockcontainerdSpi)(nil).PullImage), varargs...)
 }
 
 // RemoveSnapshot mocks base method.
@@ -423,4 +432,23 @@ func (m *MockcontainerdSpi) UnmountSnapshot(ctx context.Context, containerID, ro
 func (mr *MockcontainerdSpiMockRecorder) UnmountSnapshot(ctx, containerID, rootFS interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnmountSnapshot", reflect.TypeOf((*MockcontainerdSpi)(nil).UnmountSnapshot), ctx, containerID, rootFS)
+}
+
+// UnpackImage mocks base method.
+func (m *MockcontainerdSpi) UnpackImage(ctx context.Context, image containerd.Image, opts ...containerd.UnpackOpt) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, image}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UnpackImage", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnpackImage indicates an expected call of UnpackImage.
+func (mr *MockcontainerdSpiMockRecorder) UnpackImage(ctx, image interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, image}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnpackImage", reflect.TypeOf((*MockcontainerdSpi)(nil).UnpackImage), varargs...)
 }

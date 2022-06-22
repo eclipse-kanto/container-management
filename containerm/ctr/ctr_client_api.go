@@ -25,7 +25,7 @@ type ContainerExitHook func(*types.Container, int64, error, bool, func() error) 
 // ContainerAPIClient provides access to containerd container features
 type ContainerAPIClient interface {
 	// DestroyContainer kill container and delete it
-	DestroyContainer(ctx context.Context, container *types.Container, stopOpts *types.StopOpts, clearIOs bool /*TODO add clearing as DestroyOpts*/) (int64, time.Time, error)
+	DestroyContainer(ctx context.Context, container *types.Container, stopOpts *types.StopOpts, clearIOs bool) (int64, time.Time, error)
 
 	// CreateContainer creates all resources needed in the underlying container management so that a container can be successfully started
 	CreateContainer(ctx context.Context, container *types.Container, checkpointDir string) error

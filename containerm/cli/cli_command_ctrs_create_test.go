@@ -47,6 +47,8 @@ const (
 	createCmdFlagMemory                = "memory"
 	createCmdFlagMemoryReservation     = "memory-reservation"
 	createCmdFlagMemorySwap            = "memory-swap"
+	createCmdFlagKeys                  = "dec-keys"
+	createCmdFlagDecRecipients         = "dec-recipients"
 
 	// test input constants
 	createContainerImageName = "host/group/image:latest"
@@ -95,6 +97,8 @@ func TestCreateCmdSetupFlags(t *testing.T) {
 			memoryReservation: "300M",
 			memorySwap:        "800M",
 		},
+		decKeys:       []string{"key_filepath:password"},
+		decRecipients: []string{"pkcs7:cert_filepath"},
 	}
 	flagsToApply := map[string]string{
 		createCmdFlagName:                  expectedCfg.name,
@@ -118,6 +122,8 @@ func TestCreateCmdSetupFlags(t *testing.T) {
 		createCmdFlagMemory:                expectedCfg.memory,
 		createCmdFlagMemoryReservation:     expectedCfg.memoryReservation,
 		createCmdFlagMemorySwap:            expectedCfg.memorySwap,
+		createCmdFlagKeys:                  strings.Join(expectedCfg.decKeys, ","),
+		createCmdFlagDecRecipients:         strings.Join(expectedCfg.decRecipients, ","),
 	}
 
 	execTestSetupFlags(t, createCliTest, flagsToApply, expectedCfg)
@@ -648,6 +654,15 @@ func (createTc *createCommandTest) generateRunExecutionConfigs() map[string]test
 				createCmdFlagMemorySwap:        "500M",
 			},
 			mockExecution: createTc.mockExecCreateMemoryFullyConfigured,
+		},
+		// Test decryption
+		"test_create_decryption_configured": {
+			args: createCmdArgs,
+			flags: map[string]string{
+				createCmdFlagKeys:          "key_filepath:password",
+				createCmdFlagDecRecipients: "pkcs7:cert_filepath",
+			},
+			mockExecution: createTc.mockExecCreateImageDecryptionConfigured,
 		},
 	}
 }
@@ -1228,6 +1243,19 @@ func (createTc *createCommandTest) mockExecCreateMemoryFullyConfigured(args []st
 				Memory:            "200M",
 				MemoryReservation: "100M",
 				MemorySwap:        "500M",
+			},
+		},
+	})
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
+	return nil
+}
+func (createTc *createCommandTest) mockExecCreateImageDecryptionConfigured(args []string) error {
+	container := initExpectedCtr(&types.Container{
+		Image: types.Image{
+			Name: args[0],
+			DecryptConfig: &types.DecryptConfig{
+				Keys:       []string{"key_filepath:password"},
+				Recipients: []string{"pkcs7:cert_filepath"},
 			},
 		},
 	})

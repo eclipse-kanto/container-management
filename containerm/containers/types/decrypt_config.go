@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Contributors to the Eclipse Foundation
+// Copyright (c) 2022 Contributors to the Eclipse Foundation
 //
 // See the NOTICE file(s) distributed with this work for additional
 // information regarding copyright ownership.
@@ -11,8 +11,8 @@
 
 package types
 
-// Image represents an image information for the container
-type Image struct {
-	Name          string         `json:"name"`
-	DecryptConfig *DecryptConfig `json:"decrypt_config,omitempty"`
+// DecryptConfig hold the data needed for image decryption
+type DecryptConfig struct {
+	Keys       []string `json:"keys,omitempty"`
+	Recipients []string `json:"recipients,omitempty"`
 }
