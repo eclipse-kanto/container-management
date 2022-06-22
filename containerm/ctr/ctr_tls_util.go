@@ -23,20 +23,6 @@ import (
 	errorUtil "github.com/eclipse-kanto/container-management/containerm/util/error"
 )
 
-// known weak algorithms removed
-var serverAcceptedCiphers = []uint16{
-	// client preferred TLS cipher suites
-	tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-	tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-	tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-	// accepted CBC cipher suites - will phase out in the future
-	tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-	tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-	tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-	tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-}
-
 const (
 	fileExtRootCA        = ".crt"
 	fileExtClientCert    = ".cert"
@@ -45,10 +31,10 @@ const (
 
 func createDefaultTLSConfig(skipVerify bool) *tls.Config {
 	return &tls.Config{
-		MinVersion:               tls.VersionTLS12,
-		PreferServerCipherSuites: true,
-		CipherSuites:             serverAcceptedCiphers,
-		InsecureSkipVerify:       skipVerify,
+		MinVersion:         tls.VersionTLS12,
+		MaxVersion:         tls.VersionTLS13,
+		CipherSuites:       supportedCipherSuites(),
+		InsecureSkipVerify: skipVerify,
 	}
 }
 
@@ -122,4 +108,14 @@ func validateTLSConfigFile(file, expectedFileExt string) error {
 		return log.NewErrorf("unsupported file format %s - must be %s", ext, expectedFileExt)
 	}
 	return nil
+}
+
+// excludes cipher suites with security issues
+func supportedCipherSuites() []uint16 {
+	cs := tls.CipherSuites()
+	cid := make([]uint16, len(cs))
+	for i := range cs {
+		cid[i] = cs[i].ID
+	}
+	return cid
 }
