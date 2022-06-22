@@ -27,7 +27,7 @@ import (
 const (
 	containerFeatureIDPrefix                 = "Container:"
 	containerFeatureIDTemplate               = containerFeatureIDPrefix + "%s"
-	containerFeatureDefinition               = "com.bosch.iot.suite.edge.containers:Container:1.3.0"
+	containerFeatureDefinition               = "com.bosch.iot.suite.edge.containers:Container:1.4.0"
 	containerFeaturePropertyStatus           = "status"
 	containerFeaturePropertyPathStatusState  = containerFeaturePropertyStatus + "/state"
 	containerFeaturePropertyPathStatusName   = containerFeaturePropertyStatus + "/name"

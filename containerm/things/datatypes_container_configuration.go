@@ -17,6 +17,7 @@ type configuration struct {
 	DomainName  string        `json:"domainName,omitempty"`
 	MountPoints []*mountPoint `json:"mountPoints,omitempty"`
 	Env         []string      `json:"env,omitempty"`
+	Cmd         []string      `json:"cmd,omitempty"`
 	// host resources
 	Devices       []*device      `json:"devices,omitempty"`
 	Privileged    bool           `json:"privileged,omitempty"`
@@ -76,6 +77,9 @@ func fromAPIContainerConfig(ctr *types.Container) *configuration {
 		if ctr.Config.Env != nil && len(ctr.Config.Env) > 0 {
 			cfg.Env = ctr.Config.Env
 		}
+		if ctr.Config.Cmd != nil && len(ctr.Config.Cmd) > 0 {
+			cfg.Cmd = ctr.Config.Cmd
+		}
 	}
 	return cfg
 }
@@ -126,9 +130,13 @@ func toAPIContainerConfig(cfg *configuration) *types.Container {
 	if cfg.Resources != nil {
 		ctr.HostConfig.Resources = toAPIResources(cfg.Resources)
 	}
-	if cfg.Env != nil && len(cfg.Env) > 0 {
-		ctr.Config = &types.ContainerConfiguration{
-			Env: cfg.Env,
+	if (cfg.Env != nil && len(cfg.Env) > 0) || (cfg.Cmd != nil && len(cfg.Cmd) > 0) {
+		ctr.Config = &types.ContainerConfiguration{}
+		if cfg.Env != nil && len(cfg.Env) > 0 {
+			ctr.Config.Env = cfg.Env
+		}
+		if cfg.Cmd != nil && len(cfg.Cmd) > 0 {
+			ctr.Config.Cmd = cfg.Cmd
 		}
 	}
 	return ctr
