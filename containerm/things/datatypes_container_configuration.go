@@ -131,12 +131,9 @@ func toAPIContainerConfig(cfg *configuration) *types.Container {
 		ctr.HostConfig.Resources = toAPIResources(cfg.Resources)
 	}
 	if (cfg.Env != nil && len(cfg.Env) > 0) || (cfg.Cmd != nil && len(cfg.Cmd) > 0) {
-		ctr.Config = &types.ContainerConfiguration{}
-		if cfg.Env != nil && len(cfg.Env) > 0 {
-			ctr.Config.Env = cfg.Env
-		}
-		if cfg.Cmd != nil && len(cfg.Cmd) > 0 {
-			ctr.Config.Cmd = cfg.Cmd
+		ctr.Config = &types.ContainerConfiguration{
+			Env: cfg.Env,
+			Cmd: cfg.Cmd,
 		}
 	}
 	return ctr
