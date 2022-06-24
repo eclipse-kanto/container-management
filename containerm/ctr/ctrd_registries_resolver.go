@@ -98,7 +98,6 @@ func (resolver *ctrImagesResolver) processImageRegistries() {
 
 		//needed for insecure registries with self-signed certificates
 		var httpConfig docker.RegistryHost
-		var tr *http.Transport
 
 		tlsConfig := createDefaultTLSConfig(config.IsInsecure)
 		if config.Transport != nil && config.IsInsecure {
@@ -117,20 +116,6 @@ func (resolver *ctrImagesResolver) processImageRegistries() {
 			if config.Credentials != nil {
 				httpConfig.Authorizer = docker.NewDockerAuthorizer(docker.WithAuthClient(http.DefaultClient), docker.WithAuthCreds(resolver.getRegistryAuthCreds))
 			}
-
-			tr = &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-				DialContext: (&net.Dialer{
-					Timeout:   registryResolverDialContextTimeout,
-					KeepAlive: registryResolverDialContextKeepAlive,
-					DualStack: true,
-				}).DialContext,
-				MaxIdleConns:          registryResolverTransportMaxIdeConns,
-				IdleConnTimeout:       registryResolverTransportIdleConnTimeout,
-				TLSHandshakeTimeout:   registryResolverTransportTLSHandshakeTimeout,
-				TLSClientConfig:       tlsConfig,
-				ExpectContinueTimeout: registryResolverTransportExpectContinueTimeout,
-			}
 		} else {
 			if config.Transport != nil {
 				if err := applyLocalTLSConfig(config.Transport, tlsConfig); err != nil {
@@ -140,19 +125,20 @@ func (resolver *ctrImagesResolver) processImageRegistries() {
 					log.Debug("successfully applied TLS configuration for registry host %s", host)
 				}
 			}
-			tr = &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-				DialContext: (&net.Dialer{
-					Timeout:   registryResolverDialContextTimeout,
-					KeepAlive: registryResolverDialContextKeepAlive,
-					DualStack: true,
-				}).DialContext,
-				MaxIdleConns:          registryResolverTransportMaxIdeConns,
-				IdleConnTimeout:       registryResolverTransportIdleConnTimeout,
-				TLSHandshakeTimeout:   registryResolverTransportTLSHandshakeTimeout,
-				TLSClientConfig:       tlsConfig,
-				ExpectContinueTimeout: registryResolverTransportExpectContinueTimeout,
-			}
+		}
+
+		tr := &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   registryResolverDialContextTimeout,
+				KeepAlive: registryResolverDialContextKeepAlive,
+				DualStack: true,
+			}).DialContext,
+			MaxIdleConns:          registryResolverTransportMaxIdeConns,
+			IdleConnTimeout:       registryResolverTransportIdleConnTimeout,
+			TLSHandshakeTimeout:   registryResolverTransportTLSHandshakeTimeout,
+			TLSClientConfig:       tlsConfig,
+			ExpectContinueTimeout: registryResolverTransportExpectContinueTimeout,
 		}
 
 		httpsClient := &http.Client{Transport: tr}
