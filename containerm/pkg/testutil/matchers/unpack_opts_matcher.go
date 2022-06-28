@@ -25,7 +25,7 @@ type unpackOptsMatcher struct {
 	msg  string
 }
 
-// MatchesUnpackOpts returns a Matcher interface for the containerd.UnpackOpt
+// MatchesUnpackOpts returns a Matcher interface for the provided list of containerd.UnpackOpt
 func MatchesUnpackOpts(opts ...containerd.UnpackOpt) gomock.Matcher {
 	return &unpackOptsMatcher{opts, ""}
 }

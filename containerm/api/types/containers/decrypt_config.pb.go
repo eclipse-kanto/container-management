@@ -20,11 +20,11 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-// Represents resource limitation of a container
+// Represents container image's decryption configuration
 type DecryptConfig struct {
-	// Private key filepath with an optional password separated by colon
+	// Private key filepath with an optional password separated by a colon
 	Keys []string `protobuf:"bytes,1,rep,name=keys,proto3" json:"keys,omitempty"`
-	// Recipient protocol(pkcs7) and filepath to a x509 certificate separated by colon
+	// Recipient protocol(pkcs7) and filepath to a x509 certificate separated by a colon
 	Recipients           []string `protobuf:"bytes,2,rep,name=recipients,proto3" json:"recipients,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`

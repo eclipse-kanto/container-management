@@ -22,7 +22,7 @@ func (spi *ctrdSpi) GetImage(ctx context.Context, imageRef string) (containerd.I
 	return spi.client.GetImage(ctx, imageRef)
 }
 
-// PullImage pulls and unpacks an image locally
+// PullImage downloads the provided content and returns an image object
 func (spi *ctrdSpi) PullImage(ctx context.Context, imageRef string, opts ...containerd.RemoteOpt) (containerd.Image, error) {
 	ctx = spi.setContext(ctx, true)
 	return spi.client.Pull(ctx, imageRef, opts...)

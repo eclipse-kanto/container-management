@@ -11,7 +11,7 @@
 
 package types
 
-// DecryptConfig hold the data needed for image decryption
+// DecryptConfig holds the data needed for image decryption
 type DecryptConfig struct {
 	Keys       []string `json:"keys,omitempty"`
 	Recipients []string `json:"recipients,omitempty"`

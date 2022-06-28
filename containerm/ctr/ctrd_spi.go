@@ -37,6 +37,7 @@ type containerClientWrapper interface {
 	SnapshotService(snapshotterName string) snapshots.Snapshotter
 	// LeasesService returns the current leases manager instance
 	LeasesService() leases.Manager
+	// Pull downloads the provided content and returns an image object
 	Pull(ctx context.Context, ref string, opts ...containerd.RemoteOpt) (_ containerd.Image, retErr error)
 	// Close closes the internal communication channel
 	Close() error
@@ -49,7 +50,7 @@ type containerdSpi interface {
 	// Wrapper section for managing the OCI images
 	// GetImage returns a locally existing image
 	GetImage(ctx context.Context, imageRef string) (containerd.Image, error)
-	// PullImage pulls
+	// PullImage downloads the provided content and returns an image object
 	PullImage(ctx context.Context, imageRef string, opts ...containerd.RemoteOpt) (containerd.Image, error)
 	// UnpackImage unpacks the contents of the provided image locally
 	UnpackImage(ctx context.Context, image containerd.Image, opts ...containerd.UnpackOpt) error

@@ -29,16 +29,16 @@ const testImageRef = "testImageRef"
 
 func TestGetImage(t *testing.T) {
 	testCases := map[string]struct {
-		mapExec func(*ctrdMocks.MockcontainerClientWrapper, *containerdMocks.MockImage) (containerd.Image, error)
+		mockExec func(*ctrdMocks.MockcontainerClientWrapper, *containerdMocks.MockImage) (containerd.Image, error)
 	}{
 		"test_no_err": {
-			mapExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, image *containerdMocks.MockImage) (containerd.Image, error) {
+			mockExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, image *containerdMocks.MockImage) (containerd.Image, error) {
 				ctrdWrapper.EXPECT().GetImage(gomock.Any(), testImageRef).Times(1).Return(image, nil)
 				return image, nil
 			},
 		},
 		"test_err": {
-			mapExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, _ *containerdMocks.MockImage) (containerd.Image, error) {
+			mockExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, _ *containerdMocks.MockImage) (containerd.Image, error) {
 				err := log.NewError("test get image error")
 				ctrdWrapper.EXPECT().GetImage(gomock.Any(), testImageRef).Times(1).Return(nil, err)
 				return nil, err
@@ -55,7 +55,7 @@ func TestGetImage(t *testing.T) {
 			mockCtrdWrapper := ctrdMocks.NewMockcontainerClientWrapper(mockCtrl)
 			mockImage := containerdMocks.NewMockImage(mockCtrl)
 			// mock exec
-			expectedImage, expectedErr := testData.mapExec(mockCtrdWrapper, mockImage)
+			expectedImage, expectedErr := testData.mockExec(mockCtrdWrapper, mockImage)
 			// init spi under test
 			testSpi := &ctrdSpi{
 				client: mockCtrdWrapper,

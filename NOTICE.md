@@ -81,11 +81,11 @@ containerd/fifo (1.0.0)
 * Project: https://github.com/containerd/fifo
 * Source:  https://github.com/containerd/fifo/releases/tag/v1.0.0
 
-containerd/imgcrypt (1.1.6)
+containerd/imgcrypt (1.1.5)
 
 * License: Apache License 2.0
 * Project: https://github.com/containerd/imgcrypt
-* Source:  https://github.com/containerd/imgcrypt/releases/tag/v1.1.6
+* Source:  https://github.com/containerd/imgcrypt/releases/tag/v1.1.5
 
 containerd/ttrpc (1.1.0)
 
@@ -195,11 +195,11 @@ golang/protobuf (1.5.2)
 * Project: https://github.com/golang/protobuf
 * Source:  https://github.com/golang/protobuf/releases/tag/v1.5.2
 
-google/btree (1.0.0)
+google/btree (1.0.1)
 
 * License: Apache License 2.0
 * Project: https://github.com/google/btree
-* Source:  https://github.com/google/btree/tree/v1.0.0
+* Source:  https://github.com/google/btree/tree/v1.0.1
 
 google/uuid (1.2.0)
 
@@ -219,11 +219,11 @@ hashicorp/consul/api (1.12.0)
 * Project: https://github.com/hashicorp/consul/tree/main/api
 * Source:  https://github.com/hashicorp/consul/releases/tag/api/v1.12.0
 
-hashicorp/errwrap (1.0.0)
+hashicorp/errwrap (1.1.0)
 
 * License: Mozilla Public License 2.0
 * Project: https://github.com/hashicorp/errwrap
-* Source:  https://github.com/hashicorp/errwrap/releases/tag/v1.0.0
+* Source:  https://github.com/hashicorp/errwrap/releases/tag/v1.1.0
 
 hashicorp/go-cleanhttp (0.5.1)
 
@@ -369,11 +369,11 @@ opencontainers/go-digest (1.0.0)
 * Project: https://github.com/opencontainers/go-digest
 * Source:  https://github.com/opencontainers/go-digest/releases/tag/v1.0.0
 
-opencontainers/image-spec (1.0.3-0.20211202183452-c5a74bcca799)
+opencontainers/image-spec (1.0.2)
 
 * License: Apache License 2.0
 * Project: https://github.com/opencontainers/image-spec
-* Source:  https://github.com/opencontainers/image-spec/tree/c5a74bcca799bef045e7fbe74e1b75580fd18d4c
+* Source:  https://github.com/opencontainers/image-spec/releases/tag/v1.0.2
 
 opencontainers/runc (1.1.0)
 
@@ -453,11 +453,11 @@ golang/crypto (0.0.0-20210322153248-0c34fe9e7dc2)
 * Project: https://github.com/golang/crypto
 * Source:  https://github.com/golang/crypto/tree/0c34fe9e7dc2486962ef9867e3edb3503537209f
 
-golang/net (0.0.0-20210825183410-e898025ed96a)
+golang/net (0.0.0-20211216030914-fe4d6282115f)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/net
-* Source:  https://github.com/golang/net/tree/e898025ed96aa6d08e98132b8dca210e9e7a0cd2
+* Source:  https://github.com/golang/net/tree/fe4d6282115f0528fd5bc04b5644ce8ba1f43a50
 
 golang/sync (0.0.0-20210220032951-036812b2e83c)
 
@@ -471,17 +471,17 @@ golang/sys (0.0.0-20220412211240-33da011f77ad)
 * Project: https://github.com/golang/sys
 * Source:  https://github.com/golang/sys/tree/33da011f77ade50ff5b6a6fb4a9a1e6d6b285809
 
-golang/term (0.0.0-20201126162022-7de9c90e9dd1)
+golang/term (0.0.0-20210615171337-6886f2dfbf5b)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/term
-* Source:  https://github.com/golang/term/tree/7de9c90e9dd184706b838f536a1cbf40a296ddb7
+* Source:  https://github.com/golang/term/tree/6886f2dfbf5b25f595b4fe4279c49956e867c59b
 
-golang/text (0.3.6)
+golang/text (0.3.7)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/text
-* Source:  https://github.com/golang/text/releases/tag/v0.3.6
+* Source:  https://github.com/golang/text/releases/tag/v0.3.7
 
 mozilla-services/pkcs7 (0.0.0-20200128120323-432b2356ecb1)
 
