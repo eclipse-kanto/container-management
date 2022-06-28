@@ -29,7 +29,7 @@ const (
 	// ContainerFactoryFeatureID is the feature ID of the container factory
 	ContainerFactoryFeatureID = "ContainerFactory"
 	// containerFactoryFeatureDefinition is the feature definition of the container factory
-	containerFactoryFeatureDefinition = "com.bosch.iot.suite.edge.containers:ContainerFactory:1.1.0"
+	containerFactoryFeatureDefinition = "com.bosch.iot.suite.edge.containers:ContainerFactory:1.2.0"
 	// containerFactoryFeatureOperationCreate is the name of the operation that the feature implements
 	// based on the Vorto model provided in the feature's definition of the create operation
 	containerFactoryFeatureOperationCreate = "create"
