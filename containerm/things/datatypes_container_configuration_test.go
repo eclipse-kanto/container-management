@@ -26,6 +26,7 @@ const (
 	domain               = "domain"
 	host                 = "host"
 	env                  = "test-env"
+	cmd                  = "test-cmd"
 	mountSrc             = "/proc"
 	mountDest            = "/proc"
 	mountPropagationMode = string(types.RPrivatePropagationMode)
@@ -61,6 +62,7 @@ var (
 		PropagationMode: mountPropagationMode,
 	}}
 	envVar               = []string{env}
+	cmdVar               = []string{cmd}
 	hostConfigExtraHosts = []string{"ctrhost:host_ip"}
 	internalHostConfig   = &types.HostConfig{
 		Privileged:  hostConfigPrivileged,
@@ -112,6 +114,7 @@ var (
 
 	internalContainerConfig = &types.ContainerConfiguration{
 		Env: envVar,
+		Cmd: cmdVar,
 	}
 )
 
@@ -168,6 +171,9 @@ func TestFromAPIContainerConfig(t *testing.T) {
 	t.Run("test_from_api_container_config_env", func(t *testing.T) {
 		testutil.AssertEqual(t, ctr.Config.Env, ctrParsed.Env)
 	})
+	t.Run("test_from_api_container_config_cmd", func(t *testing.T) {
+		testutil.AssertEqual(t, ctr.Config.Cmd, ctrParsed.Cmd)
+	})
 	t.Run("test_from_api_container_config_resources", func(t *testing.T) {
 		testutil.AssertEqual(t, ctr.HostConfig.Resources, toAPIResources(ctrParsed.Resources))
 	})
@@ -182,6 +188,7 @@ var (
 			PropagationMode: rprivate,
 		}},
 		Env:        envVar,
+		Cmd:        cmdVar,
 		Devices:    []*device{{}},
 		Privileged: hostConfigPrivileged,
 		RestartPolicy: &restartPolicy{
@@ -248,6 +255,9 @@ func TestToAPIContainerConfig(t *testing.T) {
 	})
 	t.Run("test_to_api_container_config_env", func(t *testing.T) {
 		testutil.AssertEqual(t, testContainerConfig.Env, ctrParsed.Config.Env)
+	})
+	t.Run("test_to_api_container_config_cmd", func(t *testing.T) {
+		testutil.AssertEqual(t, testContainerConfig.Cmd, ctrParsed.Config.Cmd)
 	})
 	t.Run("test_to_api_container_config_resources", func(t *testing.T) {
 		testutil.AssertEqual(t, testContainerConfig.Resources, fromAPIResources(ctrParsed.HostConfig.Resources))
