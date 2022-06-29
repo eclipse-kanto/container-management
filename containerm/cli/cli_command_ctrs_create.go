@@ -61,6 +61,8 @@ type createConfig struct {
 	logRootDirPath   string
 	logMode          string
 	logMaxBufferSize string
+	decKeys          []string
+	decRecipients    []string
 	restartPolicy
 	resources
 }
@@ -203,6 +205,7 @@ func (cc *createCmd) run(args []string) error {
 	}
 
 	ctrToCreate.HostConfig.Resources = getResourceLimits(cc.config.resources)
+	ctrToCreate.Image.DecryptConfig = getDecryptConfig(cc.config)
 
 	if err := util.ValidateContainer(ctrToCreate); err != nil {
 		return err
@@ -213,6 +216,16 @@ func (cc *createCmd) run(args []string) error {
 		fmt.Println(ctr.ID)
 	}
 	return err
+}
+
+func getDecryptConfig(config createConfig) *types.DecryptConfig {
+	if len(config.decKeys) == 0 && len(config.decRecipients) == 0 {
+		return nil
+	}
+	return &types.DecryptConfig{
+		Keys:       config.decKeys,
+		Recipients: config.decRecipients,
+	}
 }
 
 func getResourceLimits(r resources) *types.Resources {
@@ -297,6 +310,8 @@ func (cc *createCmd) setupFlags() {
 		"If set must not be smaller than --memory. If equal to --memory, than the container will not have access to swap.\n"+
 		"If not set and --memory is set, than the container can use as much swap as the --memory setting.\n"+
 		"If set to -1, the container can use unlimited swap, up to the amount available on the host.")
+	flagSet.StringSliceVar(&cc.config.decKeys, "dec-keys", nil, "Sets a list of private keys filenames (GPG private key ring, JWE and PKCS7 private key). Each entry can include an optional password separated by a colon after the filename.")
+	flagSet.StringSliceVar(&cc.config.decRecipients, "dec-recipients", nil, "Sets a recipients certificates list of the image (used only for PKCS7 and must be an x509)")
 }
 
 func parseDevices(devices []string) ([]types.DeviceMapping, error) {

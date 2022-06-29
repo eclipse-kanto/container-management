@@ -230,6 +230,14 @@ func TestSetCommandFlags(t *testing.T) {
 			flag:         "ccl-home-dir",
 			expectedType: reflect.String.String(),
 		},
+		"test_flags_ccl-image-dec-keys": {
+			flag:         "ccl-image-dec-keys",
+			expectedType: "stringSlice",
+		},
+		"test_flags_ccl-image-dec-recipients": {
+			flag:         "ccl-image-dec-recipients",
+			expectedType: "stringSlice",
+		},
 		"test_flags_net-type": {
 			flag:         "net-type",
 			expectedType: reflect.String.String(),

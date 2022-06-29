@@ -46,6 +46,7 @@ type containerdClient struct {
 	ctrdCache          *containerInfoCache
 	ioMgr              containerIOManager
 	logsMgr            containerLogsManager
+	decMgr             containerDecryptMgr
 	spi                containerdSpi
 	eventsCancel       context.CancelFunc
 }
@@ -80,13 +81,13 @@ func (ctrdClient *containerdClient) CreateContainer(ctx context.Context, contain
 	}
 	log.Debug("successfully initialized container logger")
 
-	image, err = ctrdClient.pullImage(ctx, container.Image.Name)
+	image, err = ctrdClient.pullImage(ctx, container.Image)
 	if err != nil {
 		log.ErrorErr(err, "error while trying to get container image with ID = %s for container ID = %s ", container.Image.Name, container.ID)
 		return err
 	}
 
-	return ctrdClient.createSnapshot(ctx, container.ID, image)
+	return ctrdClient.createSnapshot(ctx, container.ID, image, container.Image)
 }
 
 // DestroyContainer kill container and delete it.
@@ -165,6 +166,7 @@ func (ctrdClient *containerdClient) DestroyContainer(ctx context.Context, contai
 func (ctrdClient *containerdClient) StartContainer(ctx context.Context, container *types.Container, checkpointDir string) (int64, error) {
 	var (
 		ctrdContainer containerd.Container
+		createOpts    []containerd.NewContainerOpts
 		image         containerd.Image
 		ctrInfo       *containerInfo
 		err           error
@@ -193,13 +195,18 @@ func (ctrdClient *containerdClient) StartContainer(ctx context.Context, containe
 			}
 		}
 	}()
-	image, err = ctrdClient.spi.GetImage(ctx, container.Image.Name)
+	image, err = ctrdClient.getImage(ctx, container.Image)
 	if err != nil {
 		log.ErrorErr(err, "missing image ID = %s for container with ID = %s", container.Image.Name, container.ID)
 		return -1, err
 	}
 
-	ctrdContainer, err = ctrdClient.spi.CreateContainer(ctx, container.ID, ctrdClient.generateNewContainerOpts(container, image)...)
+	createOpts, err = ctrdClient.generateNewContainerOpts(container, image)
+	if err != nil {
+		log.ErrorErr(err, "failed to generate create opts for image ID = %s for container with ID = %s", container.Image.Name, container.ID)
+		return -1, err
+	}
+	ctrdContainer, err = ctrdClient.spi.CreateContainer(ctx, container.ID, createOpts...)
 	if err != nil {
 		log.ErrorErr(err, "error creating new container with ID = %s", container.ID)
 		return -1, err

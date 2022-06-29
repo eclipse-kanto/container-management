@@ -1,5 +1,4 @@
-
-// Copyright (c) 2021 Contributors to the Eclipse Foundation
+// Copyright (c) 2022 Contributors to the Eclipse Foundation
 //
 // See the NOTICE file(s) distributed with this work for additional
 // information regarding copyright ownership.
@@ -14,18 +13,15 @@ syntax = "proto3";
 
 package github.com.eclipse_kanto.container_management.containerm.api.types.containers;
 
-import "api/types/containers/decrypt_config.proto";
-
 option go_package = "github.com/eclipse-kanto/container-management/containerm/api/types/containers;containers";
 
-// Image contains the reference of the image used to build the
-// specification and snapshots for running this container.
-//
-// If this field is updated, the spec and rootfs needed to updated, as well.
-message Image {
-    // Image name or id
-    string name = 1;
+// Represents container image's decryption configuration
+message DecryptConfig {
 
-    // Data needed for image decryption
-    DecryptConfig decrypt_config = 2;
+    // Private key filepath with an optional password separated by a colon
+    repeated string keys = 1;
+
+    // Recipient protocol(pkcs7) and filepath to a x509 certificate separated by a colon
+    repeated string recipients = 2;
+
 }

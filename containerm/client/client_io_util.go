@@ -212,7 +212,7 @@ func (w *Writer) Close() error {
 //
 // It is the caller's responsibility to call Close when writing is done.
 //
-// TODO: There is currently no way to resume a write. Maybe NewWriter should begin with a call to QueryWriteStatus.
+// Note: There is currently no way to resume a writer. Maybe NewWriter should begin with a call to QueryWriteStatus.
 func NewWriter(ctx context.Context, containerID string, stdIn bool, ctrClient pbcontainers.Containers_AttachClient) (*Writer, error) {
 	return &Writer{
 		ctx:         ctx,

@@ -17,12 +17,11 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/leases"
-	"github.com/containerd/containerd/remotes"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/matchers"
 	containerdMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/containerd"
-	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
+	ctrdMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
 	"github.com/golang/mock/gomock"
 )
 
@@ -30,16 +29,16 @@ const testImageRef = "testImageRef"
 
 func TestGetImage(t *testing.T) {
 	testCases := map[string]struct {
-		mapExec func(*ctrd.MockcontainerClientWrapper, *containerdMocks.MockImage) (containerd.Image, error)
+		mockExec func(*ctrdMocks.MockcontainerClientWrapper, *containerdMocks.MockImage) (containerd.Image, error)
 	}{
 		"test_no_err": {
-			mapExec: func(ctrdWrapper *ctrd.MockcontainerClientWrapper, image *containerdMocks.MockImage) (containerd.Image, error) {
+			mockExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, image *containerdMocks.MockImage) (containerd.Image, error) {
 				ctrdWrapper.EXPECT().GetImage(gomock.Any(), testImageRef).Times(1).Return(image, nil)
 				return image, nil
 			},
 		},
 		"test_err": {
-			mapExec: func(ctrdWrapper *ctrd.MockcontainerClientWrapper, _ *containerdMocks.MockImage) (containerd.Image, error) {
+			mockExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, _ *containerdMocks.MockImage) (containerd.Image, error) {
 				err := log.NewError("test get image error")
 				ctrdWrapper.EXPECT().GetImage(gomock.Any(), testImageRef).Times(1).Return(nil, err)
 				return nil, err
@@ -53,10 +52,10 @@ func TestGetImage(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 			// init mocks
-			mockCtrdWrapper := ctrd.NewMockcontainerClientWrapper(mockCtrl)
+			mockCtrdWrapper := ctrdMocks.NewMockcontainerClientWrapper(mockCtrl)
 			mockImage := containerdMocks.NewMockImage(mockCtrl)
 			// mock exec
-			expectedImage, expectedErr := testData.mapExec(mockCtrdWrapper, mockImage)
+			expectedImage, expectedErr := testData.mockExec(mockCtrdWrapper, mockImage)
 			// init spi under test
 			testSpi := &ctrdSpi{
 				client: mockCtrdWrapper,
@@ -76,22 +75,10 @@ func TestPullImage(t *testing.T) {
 	const testSnapshotterType = "testSnapshotterType"
 
 	testCases := map[string]struct {
-		withResolver bool
-		mapExec      func(*ctrd.MockcontainerClientWrapper, remotes.Resolver, *containerdMocks.MockImage) (containerd.Image, error)
+		mapExec func(*ctrdMocks.MockcontainerClientWrapper, *containerdMocks.MockImage) (containerd.Image, error)
 	}{
-		"test_with_resolver": {
-			withResolver: true,
-			mapExec: func(ctrdWrapper *ctrd.MockcontainerClientWrapper, resolver remotes.Resolver, image *containerdMocks.MockImage) (containerd.Image, error) {
-				ctrdWrapper.EXPECT().Pull(gomock.Any(), testImageRef, matchers.MatchesResolverOpts(
-					containerd.WithSchema1Conversion,
-					containerd.WithPullSnapshotter(testSnapshotterType),
-					containerd.WithPullUnpack,
-					containerd.WithResolver(resolver))).Times(1).Return(image, nil)
-				return image, nil
-			},
-		},
-		"test_without_resolver": {
-			mapExec: func(ctrdWrapper *ctrd.MockcontainerClientWrapper, _ remotes.Resolver, image *containerdMocks.MockImage) (containerd.Image, error) {
+		"test_no_err": {
+			mapExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, image *containerdMocks.MockImage) (containerd.Image, error) {
 				ctrdWrapper.EXPECT().Pull(gomock.Any(), testImageRef, matchers.MatchesResolverOpts(
 					containerd.WithSchema1Conversion,
 					containerd.WithPullSnapshotter(testSnapshotterType),
@@ -100,9 +87,12 @@ func TestPullImage(t *testing.T) {
 			},
 		},
 		"test_err": {
-			mapExec: func(ctrdWrapper *ctrd.MockcontainerClientWrapper, _ remotes.Resolver, _ *containerdMocks.MockImage) (containerd.Image, error) {
+			mapExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, _ *containerdMocks.MockImage) (containerd.Image, error) {
 				err := log.NewError("test pull image error")
-				ctrdWrapper.EXPECT().Pull(gomock.Any(), testImageRef, gomock.Any()).Times(1).Return(nil, err)
+				ctrdWrapper.EXPECT().Pull(gomock.Any(), testImageRef, matchers.MatchesResolverOpts(
+					containerd.WithSchema1Conversion,
+					containerd.WithPullSnapshotter(testSnapshotterType),
+					containerd.WithPullUnpack)).Times(1).Return(nil, err)
 				return nil, err
 			},
 		},
@@ -114,14 +104,11 @@ func TestPullImage(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 			// init mocks
-			mockCtrdWrapper := ctrd.NewMockcontainerClientWrapper(mockCtrl)
+			mockCtrdWrapper := ctrdMocks.NewMockcontainerClientWrapper(mockCtrl)
 			mockImage := containerdMocks.NewMockImage(mockCtrl)
-			var resolver remotes.Resolver
-			if testData.withResolver {
-				resolver = containerdMocks.NewMockResolver(mockCtrl)
-			}
+
 			// mock exec
-			expectedImage, expectedErr := testData.mapExec(mockCtrdWrapper, resolver, mockImage)
+			expectedImage, expectedErr := testData.mapExec(mockCtrdWrapper, mockImage)
 			// init spi under test
 			testSpi := &ctrdSpi{
 				client:          mockCtrdWrapper,
@@ -131,8 +118,55 @@ func TestPullImage(t *testing.T) {
 				},
 			}
 			// test
-			actualImage, actualErr := testSpi.PullImage(context.Background(), testImageRef, resolver)
+			actualImage, actualErr := testSpi.PullImage(context.Background(), testImageRef,
+				containerd.WithSchema1Conversion,
+				containerd.WithPullSnapshotter(testSnapshotterType),
+				containerd.WithPullUnpack)
 			testutil.AssertEqual(t, expectedImage, actualImage)
+			testutil.AssertError(t, expectedErr, actualErr)
+		})
+	}
+}
+func TestUnpackImage(t *testing.T) {
+	const testSnapshotterType = "testSnapshotterType"
+
+	testCases := map[string]struct {
+		mapExec func(*containerdMocks.MockImage) error
+	}{
+		"test_no_err": {
+			mapExec: func(imageMock *containerdMocks.MockImage) error {
+				imageMock.EXPECT().Unpack(gomock.Any(), testSnapshotterType, matchers.MatchesUnpackOpts(
+					containerd.WithSnapshotterPlatformCheck())).Times(1).Return(nil)
+				return nil
+			},
+		},
+		"test_err": {
+			mapExec: func(imageMock *containerdMocks.MockImage) error {
+				err := log.NewError("test pull image error")
+				imageMock.EXPECT().Unpack(gomock.Any(), testSnapshotterType, matchers.MatchesUnpackOpts(
+					containerd.WithSnapshotterPlatformCheck())).Times(1).Return(err)
+				return err
+			},
+		},
+	}
+
+	for testName, testData := range testCases {
+		t.Run(testName, func(t *testing.T) {
+			// init mock ctrl
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+			// init mocks
+			mockImage := containerdMocks.NewMockImage(mockCtrl)
+
+			// mock exec
+			expectedErr := testData.mapExec(mockImage)
+
+			// init spi under test
+			testSpi := &ctrdSpi{
+				snapshotterType: testSnapshotterType,
+			}
+			// test
+			actualErr := testSpi.UnpackImage(context.Background(), mockImage, containerd.WithSnapshotterPlatformCheck())
 			testutil.AssertError(t, expectedErr, actualErr)
 		})
 	}

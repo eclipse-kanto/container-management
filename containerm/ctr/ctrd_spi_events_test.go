@@ -19,7 +19,7 @@ import (
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
-	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
+	ctrdMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
 	"github.com/golang/mock/gomock"
 )
 
@@ -33,7 +33,7 @@ func TestSubscribe(t *testing.T) {
 	// mock
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockCtrdWrapper := ctrd.NewMockcontainerClientWrapper(mockCtrl)
+	mockCtrdWrapper := ctrdMocks.NewMockcontainerClientWrapper(mockCtrl)
 	ctx := context.Background()
 	testSpi := &ctrdSpi{client: mockCtrdWrapper, lease: &leases.Lease{ID: containerManagementLeaseID}, namespace: testNamespace}
 

@@ -17,22 +17,22 @@ import (
 
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
-	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
+	ctrdMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
 	"github.com/golang/mock/gomock"
 )
 
 func TestCtrdSpiDispose(t *testing.T) {
 	testCases := map[string]struct {
-		mapExec func(mockCtrdWrapper *ctrd.MockcontainerClientWrapper) error
+		mapExec func(mockCtrdWrapper *ctrdMocks.MockcontainerClientWrapper) error
 	}{
 		"test_no_err": {
-			mapExec: func(mockCtrdWrapper *ctrd.MockcontainerClientWrapper) error {
+			mapExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerClientWrapper) error {
 				mockCtrdWrapper.EXPECT().Close().Return(nil)
 				return nil
 			},
 		},
 		"test_err": {
-			mapExec: func(mockCtrdWrapper *ctrd.MockcontainerClientWrapper) error {
+			mapExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerClientWrapper) error {
 				err := log.NewError("test error")
 				mockCtrdWrapper.EXPECT().Close().Return(err)
 				return err
@@ -46,7 +46,7 @@ func TestCtrdSpiDispose(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 			// init mocks
-			mockCtrdWrapper := ctrd.NewMockcontainerClientWrapper(mockCtrl)
+			mockCtrdWrapper := ctrdMocks.NewMockcontainerClientWrapper(mockCtrl)
 			// mock exec
 			expectedErr := testData.mapExec(mockCtrdWrapper)
 			// init spi under test

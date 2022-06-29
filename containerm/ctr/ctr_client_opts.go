@@ -15,11 +15,13 @@ package ctr
 type ContainerOpts func(ctrOptions *ctrOpts) error
 
 type ctrOpts struct {
-	namespace       string
-	connectionPath  string
-	registryConfigs map[string]*RegistryConfig
-	rootExec        string
-	metaPath        string
+	namespace          string
+	connectionPath     string
+	registryConfigs    map[string]*RegistryConfig
+	rootExec           string
+	metaPath           string
+	imageDecKeys       []string
+	imageDecRecipients []string
 }
 
 // RegistryConfig represents a single registry's access configuration.
@@ -87,6 +89,22 @@ func WithCtrdMetaPath(metaPath string) ContainerOpts {
 func WithCtrdRegistryConfigs(configs map[string]*RegistryConfig) ContainerOpts {
 	return func(ctrOptions *ctrOpts) error {
 		ctrOptions.registryConfigs = configs
+		return nil
+	}
+}
+
+// WithCtrdImageDecryptKeys sets the keys for decrypting encrypted container images.
+func WithCtrdImageDecryptKeys(keys ...string) ContainerOpts {
+	return func(ctrOptions *ctrOpts) error {
+		ctrOptions.imageDecKeys = keys
+		return nil
+	}
+}
+
+// WithCtrdImageDecryptRecipients sets the recipients for decrypting encrypted container images.
+func WithCtrdImageDecryptRecipients(recipients ...string) ContainerOpts {
+	return func(ctrOptions *ctrOpts) error {
+		ctrOptions.imageDecRecipients = recipients
 		return nil
 	}
 }

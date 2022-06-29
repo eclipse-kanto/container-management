@@ -13,7 +13,7 @@
 // Source: containerm/ctr/ctrd_registries_resolver.go
 
 // Package mocks is a generated GoMock package.
-package ctrd
+package mocks
 
 import (
 	reflect "reflect"

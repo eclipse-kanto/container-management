@@ -18,7 +18,6 @@ import (
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/events"
 	"github.com/containerd/containerd/leases"
-	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/snapshots"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 )
@@ -38,6 +37,7 @@ type containerClientWrapper interface {
 	SnapshotService(snapshotterName string) snapshots.Snapshotter
 	// LeasesService returns the current leases manager instance
 	LeasesService() leases.Manager
+	// Pull downloads the provided content and returns an image object
 	Pull(ctx context.Context, ref string, opts ...containerd.RemoteOpt) (_ containerd.Image, retErr error)
 	// Close closes the internal communication channel
 	Close() error
@@ -50,8 +50,10 @@ type containerdSpi interface {
 	// Wrapper section for managing the OCI images
 	// GetImage returns a locally existing image
 	GetImage(ctx context.Context, imageRef string) (containerd.Image, error)
-	// PullImage pulls and unpacks an image locally
-	PullImage(ctx context.Context, imageRef string, resolver remotes.Resolver) (containerd.Image, error)
+	// PullImage downloads the provided content and returns an image object
+	PullImage(ctx context.Context, imageRef string, opts ...containerd.RemoteOpt) (containerd.Image, error)
+	// UnpackImage unpacks the contents of the provided image locally
+	UnpackImage(ctx context.Context, image containerd.Image, opts ...containerd.UnpackOpt) error
 
 	// Wrapper section for managing the file system of the container and its snapshots
 	// GetSnapshotID generates a new ID for the snapshot to be used for this container
@@ -59,7 +61,7 @@ type containerdSpi interface {
 	// GetSnapshot returns a snapshot for this container ID
 	GetSnapshot(ctx context.Context, containerID string) (snapshots.Info, error)
 	// PrepareSnapshot initializes a new snapshot for the provided container image for the provided container ID
-	PrepareSnapshot(ctx context.Context, containerID string, image containerd.Image) error
+	PrepareSnapshot(ctx context.Context, containerID string, image containerd.Image, opts ...containerd.UnpackOpt) error
 	// MountSnapshot mounts the provided rootFS to an already existing snapshot for the provided container ID
 	MountSnapshot(ctx context.Context, containerID string, rootFS string) error
 	// RemoveSnapshot removes the snapshot and allocated resources for the provided container ID

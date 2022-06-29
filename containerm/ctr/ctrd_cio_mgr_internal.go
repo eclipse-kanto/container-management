@@ -118,7 +118,7 @@ func (mgr *cioMgr) createIOExec(fifoSet *cio.FIFOSet, cntrID, procID string, clo
 				go func() {
 					<-closeStdinCh
 					if err := procIOCloser(cntrID, procID); err != nil {
-						// TODO(fuweid): for the CloseIO grpc call, the containerd doesn't
+						// for the CloseIO grpc call, the containerd doesn't
 						// return correct status code if the process doesn't exist.
 						// for the case, we should use strings.Contains to reduce warning
 						// log. it will be fixed in containerd#2747.

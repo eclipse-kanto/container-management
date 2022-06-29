@@ -103,7 +103,19 @@ func ToInternalImage(grpcImage *apitypescontainers.Image) *internaltypes.Image {
 		return nil
 	}
 	return &internaltypes.Image{
-		Name: grpcImage.Name,
+		Name:          grpcImage.Name,
+		DecryptConfig: ToInternalDecryptConfig(grpcImage.DecryptConfig),
+	}
+}
+
+// ToInternalDecryptConfig converts a types.DecryptConfig instance to an internal DecryptConfig one
+func ToInternalDecryptConfig(grpcDecryptConfig *apitypescontainers.DecryptConfig) *internaltypes.DecryptConfig {
+	if grpcDecryptConfig == nil {
+		return nil
+	}
+	return &internaltypes.DecryptConfig{
+		Keys:       grpcDecryptConfig.Keys,
+		Recipients: grpcDecryptConfig.Recipients,
 	}
 }
 

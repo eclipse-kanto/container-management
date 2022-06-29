@@ -13,6 +13,9 @@ package ctr
 
 import (
 	"context"
+	"github.com/containerd/imgcrypt"
+	"github.com/containerd/imgcrypt/images/encryption"
+	"github.com/containers/ocicrypt/config"
 	"reflect"
 	"testing"
 
@@ -27,7 +30,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/matchers"
 	containerdMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/containerd"
-	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
+	ctrdMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
 	loggerMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/logger"
 	"github.com/eclipse-kanto/container-management/containerm/streams"
 	"github.com/eclipse-kanto/container-management/containerm/util"
@@ -42,21 +45,24 @@ func TestCtrdClientCreateContainer(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockIoMgr := NewMockcontainerIOManager(mockCtrl)
-	mockLogMgr := ctrd.NewMockcontainerLogsManager(mockCtrl)
+	mockLogMgr := ctrdMocks.NewMockcontainerLogsManager(mockCtrl)
+	mockDecrypctMgr := ctrdMocks.NewMockcontainerDecryptMgr(mockCtrl)
 	mockLogDriver := loggerMocks.NewMockLogDriver(mockCtrl)
-	mockSpi := ctrd.NewMockcontainerdSpi(mockCtrl)
+	mockSpi := ctrdMocks.NewMockcontainerdSpi(mockCtrl)
 	mockImage := containerdMocks.NewMockImage(mockCtrl)
 
 	testClient := &containerdClient{
 		ioMgr:   mockIoMgr,
 		logsMgr: mockLogMgr,
+		decMgr:  mockDecrypctMgr,
 		spi:     mockSpi,
 	}
 
 	testCtr := &types.Container{
 		ID: testContainerID,
 		Image: types.Image{
-			Name: "test.host/name:latest",
+			Name:          "test.host/name:latest",
+			DecryptConfig: &types.DecryptConfig{},
 		},
 		HostConfig: &types.HostConfig{
 			LogConfig: &types.LogConfiguration{
@@ -101,6 +107,7 @@ func TestCtrdClientCreateContainer(t *testing.T) {
 				mockIoMgr.EXPECT().ClearIO(testCtr.ID).Return(nil)
 				mockLogMgr.EXPECT().GetLogDriver(testCtr).Return(mockLogDriver, nil)
 				mockIoMgr.EXPECT().ConfigureIO(testCtr.ID, mockLogDriver, testCtr.HostConfig.LogConfig.ModeConfig).Return(nil)
+				mockDecrypctMgr.EXPECT().GetDecryptConfig(testCtr.Image.DecryptConfig).Return(nil, nil)
 				mockSpi.EXPECT().GetImage(ctx, testCtr.Image.Name).Return(nil, err)
 				mockSpi.EXPECT().RemoveSnapshot(ctx, testCtr.ID).Return(nil)
 				mockSpi.EXPECT().UnmountSnapshot(ctx, testCtr.ID, rootFSPathDefault).Return(nil)
@@ -112,8 +119,11 @@ func TestCtrdClientCreateContainer(t *testing.T) {
 				mockIoMgr.EXPECT().InitIO(testCtr.ID, testCtr.IOConfig.OpenStdin).Return(nil, nil)
 				mockLogMgr.EXPECT().GetLogDriver(testCtr).Return(mockLogDriver, nil)
 				mockIoMgr.EXPECT().ConfigureIO(testCtr.ID, mockLogDriver, testCtr.HostConfig.LogConfig.ModeConfig).Return(nil)
+				dc := &config.DecryptConfig{}
+				mockDecrypctMgr.EXPECT().GetDecryptConfig(testCtr.Image.DecryptConfig).Times(2).Return(dc, nil)
 				mockSpi.EXPECT().GetImage(ctx, testCtr.Image.Name).Return(mockImage, nil)
-				mockSpi.EXPECT().PrepareSnapshot(ctx, testCtr.ID, mockImage).Return(nil)
+				mockDecrypctMgr.EXPECT().CheckAuthorization(ctx, mockImage, dc).Return(nil)
+				mockSpi.EXPECT().PrepareSnapshot(ctx, testCtr.ID, mockImage, matchers.MatchesUnpackOpts(encryption.WithUnpackConfigApplyOpts(encryption.WithDecryptedUnpack(&imgcrypt.Payload{DecryptConfig: *dc})))).Return(nil)
 				mockSpi.EXPECT().MountSnapshot(ctx, testCtr.ID, rootFSPathDefault)
 				return nil
 			},
@@ -134,7 +144,7 @@ func TestCtrdClientDestroyContainer(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockIoMgr := NewMockcontainerIOManager(mockCtrl)
-	mockSpi := ctrd.NewMockcontainerdSpi(mockCtrl)
+	mockSpi := ctrdMocks.NewMockcontainerdSpi(mockCtrl)
 	mockTask := containerdMocks.NewMockTask(mockCtrl)
 
 	ctx := context.Background()
@@ -244,10 +254,11 @@ func TestCtrdClientStartContainer(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockSpi := ctrd.NewMockcontainerdSpi(mockCtrl)
+	mockSpi := ctrdMocks.NewMockcontainerdSpi(mockCtrl)
 	mockIoMgr := NewMockcontainerIOManager(mockCtrl)
-	mockLogMgr := ctrd.NewMockcontainerLogsManager(mockCtrl)
+	mockLogMgr := ctrdMocks.NewMockcontainerLogsManager(mockCtrl)
 	mockLogDriver := loggerMocks.NewMockLogDriver(mockCtrl)
+	mockDecMgr := ctrdMocks.NewMockcontainerDecryptMgr(mockCtrl)
 	mockImage := containerdMocks.NewMockImage(mockCtrl)
 	mockContainer := containerdMocks.NewMockContainer(mockCtrl)
 	mockTask := containerdMocks.NewMockTask(mockCtrl)
@@ -257,6 +268,7 @@ func TestCtrdClientStartContainer(t *testing.T) {
 		ctrdCache: newContainerInfoCache(),
 		ioMgr:     mockIoMgr,
 		logsMgr:   mockLogMgr,
+		decMgr:    mockDecMgr,
 		spi:       mockSpi,
 	}
 	ctx := context.Background()
@@ -307,7 +319,29 @@ func TestCtrdClientStartContainer(t *testing.T) {
 				err := log.NewErrorf("missing image ID = %s for container with ID = %s", testCtr.Image.Name, testContainerID)
 				mockSpi.EXPECT().LoadContainer(ctx, testCtr.ID).Return(nil, nil)
 				mockSpi.EXPECT().GetSnapshot(ctx, testCtr.ID).Return(snapshots.Info{}, nil)
+				mockDecMgr.EXPECT().GetDecryptConfig(testCtr.Image.DecryptConfig).Return(nil, nil)
 				mockSpi.EXPECT().GetImage(ctx, testCtr.Image.Name).Return(nil, err)
+				return err
+			},
+		},
+		"test_error_generating_container_opts": {
+			testCtr: &types.Container{
+				ID: testContainerID,
+				Image: types.Image{
+					Name: "test.host/name:latest",
+				},
+				HostConfig: &types.HostConfig{},
+			},
+			mockExec: func(testCtr *types.Container) error {
+				err := log.NewErrorf("missing image ID = %s for container with ID = %s", testCtr.Image.Name, testContainerID)
+				mockSpi.EXPECT().LoadContainer(ctx, testCtr.ID).Return(nil, nil)
+				mockSpi.EXPECT().GetSnapshot(ctx, testCtr.ID).Return(snapshots.Info{}, nil)
+				dc := &config.DecryptConfig{}
+				mockDecMgr.EXPECT().GetDecryptConfig(testCtr.Image.DecryptConfig).Return(dc, nil)
+				mockSpi.EXPECT().GetImage(ctx, testCtr.Image.Name).Return(mockImage, nil)
+				mockDecMgr.EXPECT().CheckAuthorization(ctx, mockImage, dc).Return(nil)
+				mockSpi.EXPECT().GetSnapshotID(testCtr.ID).Return(testCtr.ID)
+				mockDecMgr.EXPECT().GetDecryptConfig(testCtr.Image.DecryptConfig).Return(nil, err)
 				return err
 			},
 		},
@@ -328,7 +362,10 @@ func TestCtrdClientStartContainer(t *testing.T) {
 				mockSpi.EXPECT().LoadContainer(ctx, testCtr.ID).Return(nil, nil)
 				mockSpi.EXPECT().GetSnapshotID(testCtr.ID).Return(testCtr.ID)
 				mockSpi.EXPECT().GetSnapshot(ctx, testCtr.ID).Return(snapshots.Info{}, nil)
+				dc := &config.DecryptConfig{}
+				mockDecMgr.EXPECT().GetDecryptConfig(testCtr.Image.DecryptConfig).Times(2).Return(dc, nil)
 				mockSpi.EXPECT().GetImage(ctx, testCtr.Image.Name).Return(mockImage, nil)
+				mockDecMgr.EXPECT().CheckAuthorization(ctx, mockImage, dc).Return(nil)
 				mockSpi.EXPECT().CreateContainer(ctx, testCtr.ID, gomock.Any() /*for now..*/).Return(nil, err)
 				return err
 			},
@@ -354,7 +391,10 @@ func TestCtrdClientStartContainer(t *testing.T) {
 				mockSpi.EXPECT().LoadContainer(ctx, testCtr.ID).Return(nil, nil)
 				mockSpi.EXPECT().GetSnapshotID(testCtr.ID).Return(testCtr.ID)
 				mockSpi.EXPECT().GetSnapshot(ctx, testCtr.ID).Return(snapshots.Info{}, nil)
+				dc := &config.DecryptConfig{}
+				mockDecMgr.EXPECT().GetDecryptConfig(testCtr.Image.DecryptConfig).Times(2).Return(dc, nil)
 				mockSpi.EXPECT().GetImage(ctx, testCtr.Image.Name).Return(mockImage, nil)
+				mockDecMgr.EXPECT().CheckAuthorization(ctx, mockImage, dc).Return(nil)
 				mockSpi.EXPECT().CreateContainer(ctx, testCtr.ID, gomock.Any() /*for now..*/).Return(mockContainer, nil)
 				mockIoMgr.EXPECT().ExistsIO(testCtr.ID).Return(false)
 				mockIoMgr.EXPECT().InitIO(testCtr.ID, testCtr.IOConfig.OpenStdin).Return(nil, err)
@@ -383,7 +423,10 @@ func TestCtrdClientStartContainer(t *testing.T) {
 				mockSpi.EXPECT().LoadContainer(ctx, testCtr.ID).Return(nil, nil)
 				mockSpi.EXPECT().GetSnapshotID(testCtr.ID).Return(testCtr.ID)
 				mockSpi.EXPECT().GetSnapshot(ctx, testCtr.ID).Return(snapshots.Info{}, nil)
+				dc := &config.DecryptConfig{}
+				mockDecMgr.EXPECT().GetDecryptConfig(testCtr.Image.DecryptConfig).Times(2).Return(dc, nil)
 				mockSpi.EXPECT().GetImage(ctx, testCtr.Image.Name).Return(mockImage, nil)
+				mockDecMgr.EXPECT().CheckAuthorization(ctx, mockImage, dc).Return(nil)
 				mockSpi.EXPECT().CreateContainer(ctx, testCtr.ID, gomock.Any() /*for now..*/).Return(mockContainer, nil)
 				mockIoMgr.EXPECT().ExistsIO(testCtr.ID).Return(false)
 				mockIoMgr.EXPECT().InitIO(testCtr.ID, testCtr.IOConfig.OpenStdin).Return(nil, nil)
@@ -413,7 +456,10 @@ func TestCtrdClientStartContainer(t *testing.T) {
 				mockSpi.EXPECT().LoadContainer(ctx, testCtr.ID).Return(nil, nil)
 				mockSpi.EXPECT().GetSnapshotID(testCtr.ID).Return(testCtr.ID)
 				mockSpi.EXPECT().GetSnapshot(ctx, testCtr.ID).Return(snapshots.Info{}, nil)
+				dc := &config.DecryptConfig{}
+				mockDecMgr.EXPECT().GetDecryptConfig(testCtr.Image.DecryptConfig).Times(2).Return(dc, nil)
 				mockSpi.EXPECT().GetImage(ctx, testCtr.Image.Name).Return(mockImage, nil)
+				mockDecMgr.EXPECT().CheckAuthorization(ctx, mockImage, dc).Return(nil)
 				mockSpi.EXPECT().CreateContainer(ctx, testCtr.ID, gomock.Any()).Return(mockContainer, nil)
 				mockIoMgr.EXPECT().ExistsIO(testCtr.ID).Return(false)
 				mockIoMgr.EXPECT().InitIO(testCtr.ID, testCtr.IOConfig.OpenStdin).Return(nil, nil)
@@ -447,7 +493,10 @@ func TestCtrdClientStartContainer(t *testing.T) {
 				mockSpi.EXPECT().LoadContainer(ctx, testCtr.ID).Return(nil, nil)
 				mockSpi.EXPECT().GetSnapshotID(testCtr.ID).Return(testCtr.ID)
 				mockSpi.EXPECT().GetSnapshot(ctx, testCtr.ID).Return(snapshots.Info{}, nil)
+				dc := &config.DecryptConfig{}
+				mockDecMgr.EXPECT().GetDecryptConfig(testCtr.Image.DecryptConfig).Times(2).Return(dc, nil)
 				mockSpi.EXPECT().GetImage(ctx, testCtr.Image.Name).Return(mockImage, nil)
+				mockDecMgr.EXPECT().CheckAuthorization(ctx, mockImage, dc).Return(nil)
 				mockSpi.EXPECT().CreateContainer(ctx, testCtr.ID, gomock.Any() /*for now..*/).Return(mockContainer, nil)
 				mockIoMgr.EXPECT().ExistsIO(testCtr.ID).Return(false)
 				mockIoMgr.EXPECT().InitIO(testCtr.ID, testCtr.IOConfig.OpenStdin).Return(nil, nil)
@@ -714,9 +763,9 @@ func TestRestoreContainer(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockSpi := ctrd.NewMockcontainerdSpi(mockCtrl)
+	mockSpi := ctrdMocks.NewMockcontainerdSpi(mockCtrl)
 	mockIoMgr := NewMockcontainerIOManager(mockCtrl)
-	mockLogMgr := ctrd.NewMockcontainerLogsManager(mockCtrl)
+	mockLogMgr := ctrdMocks.NewMockcontainerLogsManager(mockCtrl)
 	mockLogDriver := loggerMocks.NewMockLogDriver(mockCtrl)
 	mockContainer := containerdMocks.NewMockContainer(mockCtrl)
 	mockTask := containerdMocks.NewMockTask(mockCtrl)
@@ -858,16 +907,16 @@ func TestSetContainerExitHooks(t *testing.T) {
 
 func TestCtrdClientDispose(t *testing.T) {
 	testCases := map[string]struct {
-		mapExec func(mockCtrdWrapper *ctrd.MockcontainerdSpi) error
+		mapExec func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi) error
 	}{
 		"test_no_err": {
-			mapExec: func(mockCtrdWrapper *ctrd.MockcontainerdSpi) error {
+			mapExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi) error {
 				mockCtrdWrapper.EXPECT().Dispose(gomock.Any()).Return(nil)
 				return nil
 			},
 		},
 		"test_err": {
-			mapExec: func(mockCtrdWrapper *ctrd.MockcontainerdSpi) error {
+			mapExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi) error {
 				err := log.NewError("test error")
 				mockCtrdWrapper.EXPECT().Dispose(gomock.Any()).Return(err)
 				return err
@@ -881,7 +930,7 @@ func TestCtrdClientDispose(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 			// init mocks
-			mockSpi := ctrd.NewMockcontainerdSpi(mockCtrl)
+			mockSpi := ctrdMocks.NewMockcontainerdSpi(mockCtrl)
 			// mock exec
 			expectedErr := testData.mapExec(mockSpi)
 			// init spi under test

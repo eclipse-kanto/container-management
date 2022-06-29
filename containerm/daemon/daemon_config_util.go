@@ -36,6 +36,8 @@ func extractCtrClientConfigOptions(daemonConfig *config) []ctr.ContainerOpts {
 		ctr.WithCtrdRootExec(daemonConfig.ContainerClientConfig.CtrRootExec),
 		ctr.WithCtrdMetaPath(daemonConfig.ContainerClientConfig.CtrMetaPath),
 		ctr.WithCtrdRegistryConfigs(parseRegistryConfigs(daemonConfig.ContainerClientConfig.CtrRegistryConfigs, daemonConfig.ContainerClientConfig.CtrInsecureRegistries)),
+		ctr.WithCtrdImageDecryptKeys(daemonConfig.ContainerClientConfig.CtrImageDecKeys...),
+		ctr.WithCtrdImageDecryptRecipients(daemonConfig.ContainerClientConfig.CtrImageDecRecipients...),
 	)
 	return ctrOpts
 }
@@ -202,6 +204,8 @@ func dumpContClient(configInstance *config) {
 		}
 		log.Debug("[daemon_cfg][ccl-exec-root-dir] : %s", configInstance.ContainerClientConfig.CtrRootExec)
 		log.Debug("[daemon_cfg][ccl-home-dir] : %s", configInstance.ContainerClientConfig.CtrMetaPath)
+		log.Debug("[daemon_cfg][ccl-image-dec-keys] : %s", configInstance.ContainerClientConfig.CtrImageDecKeys)
+		log.Debug("[daemon_cfg][ccl-image-dec-recipients] : %s", configInstance.ContainerClientConfig.CtrImageDecRecipients)
 	}
 }
 

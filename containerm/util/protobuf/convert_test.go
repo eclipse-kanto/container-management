@@ -73,10 +73,21 @@ const (
 	manuallyStopped = true
 
 	restartCount = 10
+	key          = "testKey"
+	decRecipient = "testRecipient"
 )
 
 var (
-	internalImage  = internaltypes.Image{Name: imageName}
+	internalImage = internaltypes.Image{
+		Name: imageName,
+	}
+	internalImageWithDecryptConfig = internaltypes.Image{
+		Name: imageName,
+		DecryptConfig: &internaltypes.DecryptConfig{
+			Keys:       []string{key},
+			Recipients: []string{decRecipient},
+		},
+	}
 	internalMounts = []internaltypes.MountPoint{{
 		Destination:     mountDest,
 		Source:          mountSrc,
@@ -168,7 +179,7 @@ func TestConvertContainer(t *testing.T) {
 	ctr := &internaltypes.Container{
 		ID:         id,
 		Name:       name,
-		Image:      internalImage,
+		Image:      internalImageWithDecryptConfig,
 		DomainName: domain,
 		HostName:   host,
 		Mounts:     internalMounts,
