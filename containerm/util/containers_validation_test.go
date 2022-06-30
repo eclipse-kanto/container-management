@@ -473,7 +473,7 @@ func TestNegativeContainerValidations(t *testing.T) {
 			},
 			expectedErr: log.NewErrorf("invalid environmental variable declaration provided : $VAR=1"),
 		},
-		"test_validate_config_env_incorrect_format_contains_bas_symbol": {
+		"test_validate_config_env_incorrect_format_contains_at_sign": {
 			ctr: &types.Container{
 				Image:      types.Image{Name: "image"},
 				HostConfig: &types.HostConfig{NetworkMode: types.NetworkModeBridge},
