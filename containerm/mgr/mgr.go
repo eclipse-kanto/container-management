@@ -475,7 +475,7 @@ func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool) erro
 func (mgr *containerMgr) Dispose(ctx context.Context) error {
 	log.Debug("waiting for any container resources and operations to finish")
 	if err := mgr.stopManagerService(ctx); err != nil {
-		log.WarnErr(err, "error while stopping containers on sopping the container management service")
+		log.WarnErr(err, "error while stopping containers on stopping the container management service")
 	}
 	log.Debug("finished clearing container resources and operations")
 	var err error

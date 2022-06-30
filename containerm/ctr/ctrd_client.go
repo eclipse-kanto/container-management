@@ -49,6 +49,7 @@ type containerdClient struct {
 	decMgr             containerDecryptMgr
 	spi                containerdSpi
 	eventsCancel       context.CancelFunc
+	runcRuntime        types.Runtime
 }
 
 //-------------------------------------- ContainerdAPIClient implementation with Containerd -------------------------------------
@@ -201,6 +202,7 @@ func (ctrdClient *containerdClient) StartContainer(ctx context.Context, containe
 		return -1, err
 	}
 
+	ctrdClient.configureRuncRuntime(container)
 	createOpts, err = ctrdClient.generateNewContainerOpts(container, image)
 	if err != nil {
 		log.ErrorErr(err, "failed to generate create opts for image ID = %s for container with ID = %s", container.Image.Name, container.ID)

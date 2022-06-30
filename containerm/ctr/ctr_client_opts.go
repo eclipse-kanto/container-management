@@ -11,6 +11,11 @@
 
 package ctr
 
+import (
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
+	"github.com/eclipse-kanto/container-management/containerm/log"
+)
+
 // ContainerOpts represents container engine client's configuration options.
 type ContainerOpts func(ctrOptions *ctrOpts) error
 
@@ -22,6 +27,7 @@ type ctrOpts struct {
 	metaPath           string
 	imageDecKeys       []string
 	imageDecRecipients []string
+	runcRuntime        types.Runtime
 }
 
 // RegistryConfig represents a single registry's access configuration.
@@ -105,6 +111,19 @@ func WithCtrdImageDecryptKeys(keys ...string) ContainerOpts {
 func WithCtrdImageDecryptRecipients(recipients ...string) ContainerOpts {
 	return func(ctrOptions *ctrOpts) error {
 		ctrOptions.imageDecRecipients = recipients
+		return nil
+	}
+}
+
+// WithCtrdRuncRuntime sets the container runcRuntime.
+func WithCtrdRuncRuntime(runcRuntime string) ContainerOpts {
+	return func(ctrOptions *ctrOpts) error {
+		switch types.Runtime(runcRuntime) {
+		case types.RuntimeTypeV1, types.RuntimeTypeV2runcV1, types.RuntimeTypeV2runcV2:
+			ctrOptions.runcRuntime = types.Runtime(runcRuntime)
+		default:
+			return log.NewErrorf("unexpected runc runtime = %s", runcRuntime)
+		}
 		return nil
 	}
 }

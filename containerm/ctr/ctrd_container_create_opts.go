@@ -12,38 +12,29 @@
 package ctr
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"path/filepath"
-	"runtime"
-
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/containers"
 	ctrdoci "github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/runtime/linux/runctypes"
 	runcoptions "github.com/containerd/containerd/runtime/v2/runc/options"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
+	"github.com/eclipse-kanto/container-management/containerm/log"
+	"github.com/eclipse-kanto/container-management/containerm/util"
+	"path/filepath"
 )
 
-const (
-	// RuntimeTypeV2runscV1 is the runtime type name for gVisor containerd shim implement the shim v2 api.
-	RuntimeTypeV2runscV1 = "io.containerd.runsc.v1"
-	// RuntimeTypeV2kataV2 is the runtime type name for kata-runtime containerd shim implement the shim v2 api.
-	RuntimeTypeV2kataV2 = "io.containerd.kata.v2"
-	// RuntimeTypeV2runcV1 is the runtime type name for runc containerd shim implement the shim v2 api.
-	RuntimeTypeV2runcV1 = "io.containerd.runc.v1"
-
-	rootFSPathDefault = "rootfs"
-)
+const rootFSPathDefault = "rootfs"
 
 var (
-	// RuntimeTypeV1 is the runtime type name for containerd shim interface v1 version.
-	RuntimeTypeV1 = fmt.Sprintf("io.containerd.runtime.v1.%s", runtime.GOOS)
 	// CtrdRuntimes contains all runtime type names
-	CtrdRuntimes = map[string]string{
-		RuntimeTypeV1:        "runc",
-		RuntimeTypeV2runscV1: "runhcs",
-		RuntimeTypeV2kataV2:  "kata",
-		RuntimeTypeV2runcV1:  "runc",
+	CtrdRuntimes = map[types.Runtime]string{
+		types.RuntimeTypeV1:        "runc",
+		types.RuntimeTypeV2runscV1: "runhcs",
+		types.RuntimeTypeV2kataV2:  "kata",
+		types.RuntimeTypeV2runcV1:  "runc",
+		types.RuntimeTypeV2runcV2:  "runc",
 	}
 )
 
@@ -53,31 +44,33 @@ func WithRuntimeOpts(container *types.Container, runtimeRootPath string) contain
 		options interface{}
 	)
 
-	if container.HostConfig.Runtime == "" {
-		container.HostConfig.Runtime = RuntimeTypeV1
-	}
-
 	runtimePath := CtrdRuntimes[container.HostConfig.Runtime]
 	runtimeRootPathFinal := filepath.Join(runtimePath, fmt.Sprintf("runtimes-%s", container.HostConfig.Runtime))
 
+	useSystemd := util.IsRunningSystemd()
 	switch container.HostConfig.Runtime {
-	case RuntimeTypeV1, RuntimeTypeV2runscV1, RuntimeTypeV2kataV2:
+	case types.RuntimeTypeV1, types.RuntimeTypeV2runscV1, types.RuntimeTypeV2kataV2:
 		options = &runctypes.RuncOptions{
-			Runtime:     runtimePath,
-			RuntimeRoot: runtimeRootPathFinal,
+			Runtime:       runtimePath,
+			RuntimeRoot:   runtimeRootPathFinal,
+			SystemdCgroup: useSystemd,
 		}
-	case RuntimeTypeV2runcV1:
+	case types.RuntimeTypeV2runcV1, types.RuntimeTypeV2runcV2:
 		options = &runcoptions.Options{
-			BinaryName: runtimePath,
-			Root:       runtimeRootPathFinal,
+			BinaryName:    runtimePath,
+			Root:          runtimeRootPathFinal,
+			SystemdCgroup: useSystemd,
 		}
 	default:
-		return nil
+		return func(_ context.Context, client *containerd.Client, _ *containers.Container) error {
+			// do nothing
+			return nil
+		}
 
 	}
 
-	log.Printf("Will create options for runtime with name >> %s ", container.HostConfig.Runtime)
-	return containerd.WithRuntime(container.HostConfig.Runtime, options)
+	log.Info("will create options for runtime with name = %s, for container ID = ", container.HostConfig.Runtime, container.ID)
+	return containerd.WithRuntime(string(container.HostConfig.Runtime), options)
 }
 
 // WithSnapshotOpts sets the snapshotting configuration for the container to be created.
@@ -105,6 +98,7 @@ func WithSpecOpts(container *types.Container, image containerd.Image, execRoot s
 		WithNamespaces(container),
 		WithHooks(container, execRoot),
 		WithResources(container),
+		WithCgroupsPath(container),
 		ctrdoci.WithRootFSPath(rootFSPathDefault),
 	)
 }

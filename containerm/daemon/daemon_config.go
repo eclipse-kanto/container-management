@@ -47,6 +47,7 @@ type containerRuntimeConfig struct {
 	CtrMetaPath           string                     `json:"home_dir,omitempty"`
 	CtrImageDecKeys       []string                   `json:"image_dec_keys,omitempty"`
 	CtrImageDecRecipients []string                   `json:"image_dec_recipients,omitempty"`
+	CtrRuncRuntime        string                     `json:"runc_runtime,omitempty"`
 }
 
 // registry config

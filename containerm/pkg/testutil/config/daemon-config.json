@@ -21,7 +21,8 @@
       "localhost"
     ],
     "exec_root_dir": "/var/run/container-management",
-    "home_dir": "/var/lib/container-management"
+    "home_dir": "/var/lib/container-management",
+    "runc_runtime": "io.containerd.runc.v2"
   },
   "network": {
     "type": "bridge",

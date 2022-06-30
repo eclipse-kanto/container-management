@@ -14,11 +14,25 @@ package types
 // NetworkMode represents the network mode for the container
 type NetworkMode string
 
+// Runtime represents the runtime for the container
+type Runtime string
+
 const (
 	// NetworkModeBridge means that the container is connected to the default bridge network interface of the engine and is assigned an IP
 	NetworkModeBridge NetworkMode = "bridge"
 	// NetworkModeHost means that the container shares the network stack of the host
 	NetworkModeHost NetworkMode = "host"
+
+	// RuntimeTypeV1 is the runtime type name for containerd shim interface v1 version.
+	RuntimeTypeV1 Runtime = "io.containerd.runtime.v1.linux"
+	// RuntimeTypeV2runscV1 is the runtime type name for gVisor containerd shim implement the shim v2 api.
+	RuntimeTypeV2runscV1 Runtime = "io.containerd.runsc.v1"
+	// RuntimeTypeV2kataV2 is the runtime type name for kata-runtime containerd shim implement the shim v2 api.
+	RuntimeTypeV2kataV2 Runtime = "io.containerd.kata.v2"
+	// RuntimeTypeV2runcV1 is the runtime type name for runc containerd shim implement the shim v2 api.
+	RuntimeTypeV2runcV1 Runtime = "io.containerd.runc.v1"
+	// RuntimeTypeV2runcV2 is the version 2 runtime type name for runc containerd shim implement the shim v2 api.
+	RuntimeTypeV2runcV2 Runtime = "io.containerd.runc.v2"
 )
 
 // HostConfig defines the resources, behavior, etc. that the host must manage on the container
@@ -27,7 +41,7 @@ type HostConfig struct {
 	NetworkMode   NetworkMode       `json:"network_mode"`
 	Privileged    bool              `json:"privileged"`
 	RestartPolicy *RestartPolicy    `json:"restart_policy"`
-	Runtime       string            `json:"runtime"`
+	Runtime       Runtime           `json:"runtime"`
 	ExtraHosts    []string          `json:"extra_hosts"`
 	PortMappings  []PortMapping     `json:"port_mappings"`
 	LogConfig     *LogConfiguration `json:"log_config"`
