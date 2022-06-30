@@ -15,7 +15,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -112,17 +111,10 @@ func (cc *createCmd) run(args []string) error {
 	}
 
 	if cc.config.env != nil || command != nil {
-		containerConfig := &types.ContainerConfiguration{}
-		if cc.config.env != nil {
-			if err := validateEnvVars(cc.config.env); err != nil {
-				return err
-			}
-			containerConfig.Env = cc.config.env
+		ctrToCreate.Config = &types.ContainerConfiguration{
+			Env: cc.config.env,
+			Cmd: command,
 		}
-		if command != nil {
-			containerConfig.Cmd = command
-		}
-		ctrToCreate.Config = containerConfig
 	}
 
 	if cc.config.devices != nil {
@@ -293,8 +285,10 @@ func (cc *createCmd) setupFlags() {
 		"--mp=\"source1:destination1:propagation_mode, source2:destination2\" \n"+
 		"If the propagation mode parameter is omitted, 'rprivate' will be set by default.  \n"+
 		"Available propagation modes are: rprivate, private, rshared, shared, rslave, slave")
-	flagSet.StringSliceVar(&cc.config.env, "e", nil, "Sets the provided environment variables in the root container's process environment. Example:\n"+
-		"--e=VAR1=2,VAR2=\"a bc\"")
+	flagSet.StringArrayVar(&cc.config.env, "e", nil, "Sets the provided environment variables in the root container's process environment. Example:\n"+
+		"--e=VAR1=2 --e=VAR2=\"a bc\"\n"+
+		"If --e=VAR1= is used, the environment variable would be set to empty.\n"+
+		"If --e=VAR1 is used, the environment variable would be removed from the container environment inherited from the image.")
 	flagSet.StringVar(&cc.config.logDriver, "log-driver", string(types.LogConfigDriverJSONFile), "Sets the type of the log driver to be used for the container - json-file (default), none")
 	flagSet.IntVar(&cc.config.logMaxFiles, "log-max-files", 2, "Sets the max number of log files to be rotated - applicable for json-file log driver only")
 	flagSet.StringVar(&cc.config.logMaxSize, "log-max-size", "100M", "Sets the max size of the logs files for rotation in the form of 1, 1.2m,1g, etc. - applicable for json-file log driver only")
@@ -431,23 +425,4 @@ func parsePortMappings(mappings []string) ([]types.PortMapping, error) {
 	}
 	return portMappings, nil
 
-}
-
-const (
-	envVarRegexp = "^[a-zA-Z_]([a-zA-Z0-9_]*)=(.+)$"
-)
-
-var (
-	envVarRegex = regexp.MustCompile(envVarRegexp)
-)
-
-func validateEnvVars(env []string) error {
-	if env != nil {
-		for _, envVar := range env {
-			if !envVarRegex.MatchString(envVar) {
-				return log.NewErrorf("invalid environmental variable declaration provided : %s", envVar)
-			}
-		}
-	}
-	return nil
 }

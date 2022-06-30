@@ -79,14 +79,14 @@ func (listTc *listCommandTest) commandConfigDefault() interface{} {
 		name: "",
 	}
 }
-func (listTc *listCommandTest) prepareCommand(flagsCfg map[string]string) {
+func (listTc *listCommandTest) prepareCommand(flagsCfg map[string]string) error {
 	// setup command to test
 	cmd := &listCmd{}
 	listTc.listCmd, listTc.baseCmd = cmd, cmd
 
 	listTc.listCmd.init(listTc.mockRootCommand)
 	// setup command flags
-	setCmdFlags(flagsCfg, listTc.listCmd.cmd)
+	return setCmdFlags(flagsCfg, listTc.listCmd.cmd)
 }
 
 func (listTc *listCommandTest) runCommand(args []string) error {

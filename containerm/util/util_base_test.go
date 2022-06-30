@@ -34,7 +34,12 @@ const (
 	hookTimeout = 10000
 	hookType    = internaltypes.HookTypePoststart
 
-	configEnv1 = "env1"
+	configEnv1 = "VAR1"
+	configEnv2 = "VAR2="
+	configEnv3 = "VAR3=test"
+	configEnv4 = "VAR4=\"test string\""
+	configEnv5 = "VAR5=test,comma"
+	configEnv6 = "_VAR6=test_underscore"
 
 	hostConfigPrivileged                 = true
 	hostConfigNetType                    = "bridge"
@@ -85,7 +90,7 @@ var (
 		Type:    hookType,
 	}}
 
-	configEnv               = []string{configEnv1}
+	configEnv               = []string{configEnv1, configEnv2, configEnv3, configEnv4, configEnv5, configEnv6}
 	internalContainerConfig = internaltypes.ContainerConfiguration{Env: configEnv}
 
 	hostConfigExtraHosts = []string{"ctrhost:host_ip"}

@@ -21,11 +21,13 @@ import (
 const (
 	containerNameRegexp      = "^[a-zA-Z0-9_][a-zA-Z0-9_.-]*$"
 	extraHostsReservedRegexp = "^(.+):host_ip(_(.+))?$"
+	envVarRegexp             = "^[a-zA-Z_]([a-zA-Z0-9_]*)(|=(.*))$"
 )
 
 var (
 	containerNameRegex      = regexp.MustCompile(containerNameRegexp)
 	extraHostsReservedRegex = regexp.MustCompile(extraHostsReservedRegexp)
+	envVarRegex             = regexp.MustCompile(envVarRegexp)
 )
 
 // ValidateContainer validats all container properties
@@ -46,6 +48,9 @@ func ValidateContainer(container *types.Container) error {
 		return log.NewError("the containers host config is mandatory and is missing")
 	}
 	if err := ValidateHostConfig(container.HostConfig); err != nil {
+		return err
+	}
+	if err := ValidateConfig(container.Config); err != nil {
 		return err
 	}
 	if container.IOConfig == nil {
@@ -281,6 +286,18 @@ func ValidateRestartPolicy(rsPolicy *types.RestartPolicy) error {
 	} else {
 		if rsPolicy.MaximumRetryCount != 0 {
 			return log.NewErrorf("cannot use max retry count when the restart policy is %s", rsPolicy.Type)
+		}
+	}
+	return nil
+}
+
+// ValidateConfig validates the container config
+func ValidateConfig(config *types.ContainerConfiguration) error {
+	if config != nil {
+		for _, envVar := range config.Env {
+			if !envVarRegex.MatchString(envVar) {
+				return log.NewErrorf("invalid environmental variable declaration provided : %s", envVar)
+			}
 		}
 	}
 	return nil

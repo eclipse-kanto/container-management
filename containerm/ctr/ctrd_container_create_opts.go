@@ -90,15 +90,16 @@ func WithSnapshotOpts(snapshotID string, snapshotterType string) []containerd.Ne
 
 // WithSpecOpts sets the OCI specification configuration options for the container to be created.
 func WithSpecOpts(container *types.Container, image containerd.Image, execRoot string) containerd.NewContainerOpts {
-	var args []string
+	var args, env []string
 	if container.Config != nil {
 		args = container.Config.Cmd
+		env = container.Config.Env
 	}
 
 	return containerd.WithNewSpec(
 		ctrdoci.WithImageConfigArgs(image, args),
 		WithCommonOptions(container),
-		WithProcessOptions(container),
+		ctrdoci.WithEnv(env),
 		WithDevices(container),
 		WithMounts(container),
 		WithNamespaces(container),

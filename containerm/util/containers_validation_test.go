@@ -453,6 +453,36 @@ func TestNegativeContainerValidations(t *testing.T) {
 			},
 			expectedErr: log.NewErrorf("minimum memory allowed is 3M"),
 		},
+		"test_validate_config_env_incorrect_format_start_digit": {
+			ctr: &types.Container{
+				Image:      types.Image{Name: "image"},
+				HostConfig: &types.HostConfig{NetworkMode: types.NetworkModeBridge},
+				Config: &types.ContainerConfiguration{
+					Env: []string{"1VAR=1"},
+				},
+			},
+			expectedErr: log.NewErrorf("invalid environmental variable declaration provided : 1VAR=1"),
+		},
+		"test_validate_config_env_incorrect_format_start_other": {
+			ctr: &types.Container{
+				Image:      types.Image{Name: "image"},
+				HostConfig: &types.HostConfig{NetworkMode: types.NetworkModeBridge},
+				Config: &types.ContainerConfiguration{
+					Env: []string{"$VAR=1"},
+				},
+			},
+			expectedErr: log.NewErrorf("invalid environmental variable declaration provided : $VAR=1"),
+		},
+		"test_validate_config_env_incorrect_format_contains_at_sign": {
+			ctr: &types.Container{
+				Image:      types.Image{Name: "image"},
+				HostConfig: &types.HostConfig{NetworkMode: types.NetworkModeBridge},
+				Config: &types.ContainerConfiguration{
+					Env: []string{"V@R=1"},
+				},
+			},
+			expectedErr: log.NewErrorf("invalid environmental variable declaration provided : V@R=1"),
+		},
 	}
 
 	for testName, testCase := range tests {
