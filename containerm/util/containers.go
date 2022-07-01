@@ -216,6 +216,12 @@ func FillDefaults(container *types.Container) bool {
 		changesMade = fillPortMappings(container) || changesMade
 	}
 
+	if container.HostConfig.Runtime == "" {
+		log.Debug("container's runtime is not set - setting a default one")
+		container.HostConfig.Runtime = types.RuntimeTypeV2runcV2
+		changesMade = true
+	}
+
 	if container.IOConfig == nil {
 		log.Debug("IO config is not set - setting it to default")
 		container.IOConfig = &types.IOConfig{

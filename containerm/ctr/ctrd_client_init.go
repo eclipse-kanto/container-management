@@ -12,6 +12,7 @@
 package ctr
 
 import (
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"path/filepath"
 
 	"github.com/containerd/containerd"
@@ -20,7 +21,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string) (ContainerAPIClient, error) {
+func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime) (ContainerAPIClient, error) {
 
 	//ensure storage
 	err := util.MkDir(rootExec)
@@ -51,6 +52,7 @@ func newContainerdClient(namespace, socket, rootExec, metaPath string, registryC
 		ioMgr:              newContainerIOManager(filepath.Join(rootExec, "fifo"), newCache()),
 		logsMgr:            newContainerLogsManager(filepath.Join(metaPath, "containers")),
 		decMgr:             decryptMgr,
+		runcRuntime:        runcRuntime,
 	}
 	go ctrdClient.processEvents(namespace)
 	return ctrdClient, nil
@@ -59,8 +61,10 @@ func newContainerdClient(namespace, socket, rootExec, metaPath string, registryC
 func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, error) {
 	createOpts := registryCtx.Config.([]ContainerOpts)
 	var opts = &ctrOpts{}
-	applyOptsCtr(opts, createOpts...)
+	if err := applyOptsCtr(opts, createOpts...); err != nil {
+		return nil, err
+	}
 
-	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients)
+	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients, opts.runcRuntime)
 
 }

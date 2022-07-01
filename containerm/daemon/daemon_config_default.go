@@ -43,6 +43,7 @@ const (
 	containerClientAddressPathDefault = "/run/containerd/containerd.sock"
 	containerClientExecRootDefault    = managerExecRootPathDefault
 	containerClientMetaPathDefault    = managerMetaPathDefault
+	containerClientRuncRuntimeDefault = string(types.RuntimeTypeV2runcV2)
 
 	// default network manager config
 	networkManagerNetTypeDefault  = string(types.NetworkModeBridge)
@@ -112,6 +113,7 @@ func getDefaultInstance() *config {
 			CtrInsecureRegistries: containerClientInsecureRegistriesDefault,
 			CtrRootExec:           containerClientExecRootDefault,
 			CtrMetaPath:           containerClientMetaPathDefault,
+			CtrRuncRuntime:        containerClientRuncRuntimeDefault,
 		},
 		NetworkConfig: &networkConfig{
 			NetType:     networkManagerNetTypeDefault,

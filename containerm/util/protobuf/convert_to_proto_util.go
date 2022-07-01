@@ -243,7 +243,7 @@ func ToProtoHostConfig(internalHostConfig *internaltypes.HostConfig) *apitypesco
 		NetworkMode:   string(internalHostConfig.NetworkMode),
 		Privileged:    internalHostConfig.Privileged,
 		RestartPolicy: ToProtoRestartPolicy(internalHostConfig.RestartPolicy),
-		Runtime:       internalHostConfig.Runtime,
+		Runtime:       string(internalHostConfig.Runtime),
 		ExtraHosts:    internalHostConfig.ExtraHosts,
 		PortMappings:  ToProtoPortMappings(internalHostConfig.PortMappings),
 		LogConfig:     ToProtoLogConfig(internalHostConfig.LogConfig),

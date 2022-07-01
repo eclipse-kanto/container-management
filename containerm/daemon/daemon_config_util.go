@@ -13,6 +13,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"io/ioutil"
 	"os"
 	"time"
@@ -38,6 +39,7 @@ func extractCtrClientConfigOptions(daemonConfig *config) []ctr.ContainerOpts {
 		ctr.WithCtrdRegistryConfigs(parseRegistryConfigs(daemonConfig.ContainerClientConfig.CtrRegistryConfigs, daemonConfig.ContainerClientConfig.CtrInsecureRegistries)),
 		ctr.WithCtrdImageDecryptKeys(daemonConfig.ContainerClientConfig.CtrImageDecKeys...),
 		ctr.WithCtrdImageDecryptRecipients(daemonConfig.ContainerClientConfig.CtrImageDecRecipients...),
+		ctr.WithCtrdRuncRuntime(daemonConfig.ContainerClientConfig.CtrRuncRuntime),
 	)
 	return ctrOpts
 }
@@ -206,6 +208,11 @@ func dumpContClient(configInstance *config) {
 		log.Debug("[daemon_cfg][ccl-home-dir] : %s", configInstance.ContainerClientConfig.CtrMetaPath)
 		log.Debug("[daemon_cfg][ccl-image-dec-keys] : %s", configInstance.ContainerClientConfig.CtrImageDecKeys)
 		log.Debug("[daemon_cfg][ccl-image-dec-recipients] : %s", configInstance.ContainerClientConfig.CtrImageDecRecipients)
+		r := types.Runtime(configInstance.ContainerClientConfig.CtrRuncRuntime)
+		log.Debug("[daemon_cfg][ccl-runc-runtime] : %s", r)
+		if r == types.RuntimeTypeV1 || r == types.RuntimeTypeV2runcV1 {
+			log.Warn("runtime %s is deprecated since containerd v1.4, consider using %s", r, types.RuntimeTypeV2runcV2)
+		}
 	}
 }
 

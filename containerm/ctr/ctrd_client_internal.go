@@ -78,6 +78,19 @@ func (ctrdClient *containerdClient) generateNewContainerOpts(container *types.Co
 	return createOpts, nil
 }
 
+func (ctrdClient *containerdClient) configureRuncRuntime(container *types.Container) {
+	if container.HostConfig.Runtime != ctrdClient.runcRuntime {
+		switch container.HostConfig.Runtime {
+		case types.RuntimeTypeV1, types.RuntimeTypeV2runcV1, types.RuntimeTypeV2runcV2:
+			log.Info("container runc runtime is automatically updated from %s to %s for container ID = %s", container.HostConfig.Runtime, ctrdClient.runcRuntime, container.ID)
+			container.HostConfig.Runtime = ctrdClient.runcRuntime
+		default:
+			// non runc runtime, must not change
+		}
+	}
+	log.Debug("container runtime = %s for container ID = %s", container.HostConfig.Runtime, container.ID)
+}
+
 func (ctrdClient *containerdClient) getImage(ctx context.Context, imageInfo types.Image) (containerd.Image, error) {
 	decryptConfig, err := ctrdClient.decMgr.GetDecryptConfig(imageInfo.DecryptConfig)
 	if err != nil {

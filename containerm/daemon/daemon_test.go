@@ -238,6 +238,10 @@ func TestSetCommandFlags(t *testing.T) {
 			flag:         "ccl-image-dec-recipients",
 			expectedType: "stringSlice",
 		},
+		"test_flags_ccl-runc-runtime": {
+			flag:         "ccl-runc-runtime",
+			expectedType: reflect.String.String(),
+		},
 		"test_flags_net-type": {
 			flag:         "net-type",
 			expectedType: reflect.String.String(),

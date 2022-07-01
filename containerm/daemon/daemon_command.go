@@ -44,6 +44,7 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.ContainerClientConfig.CtrMetaPath, "ccl-home-dir", cfg.ContainerClientConfig.CtrMetaPath, "Specify the home directory to be used for container runtime management data")
 	flagSet.StringSliceVar(&cfg.ContainerClientConfig.CtrImageDecKeys, "ccl-image-dec-keys", cfg.ContainerClientConfig.CtrImageDecKeys, "Specify a list of private keys filenames (GPG private key ring, JWE and PKCS7 private key). Each entry can include an optional password separated by a colon after the filename.")
 	flagSet.StringSliceVar(&cfg.ContainerClientConfig.CtrImageDecRecipients, "ccl-image-dec-recipients", cfg.ContainerClientConfig.CtrImageDecRecipients, "Specify a recipients certificates list of the image (used only for PKCS7 and must be an x509)")
+	flagSet.StringVar(&cfg.ContainerClientConfig.CtrRuncRuntime, "ccl-runc-runtime", cfg.ContainerClientConfig.CtrRuncRuntime, "Specify a default global runc runtime - possible values are io.containerd.runtime.v1.linux, io.containerd.runc.v1 and io.containerd.runc.v2. ")
 
 	// init network manager flags
 	flagSet.StringVar(&cfg.NetworkConfig.NetType, "net-type", cfg.NetworkConfig.NetType, "Specify the default network management type for containers")

@@ -18,6 +18,7 @@ import (
 	"strconv"
 
 	"github.com/containerd/containerd/containers"
+	"github.com/containerd/containerd/namespaces"
 	crtdoci "github.com/containerd/containerd/oci"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
@@ -243,5 +244,21 @@ func toLinuxMemory(resources *types.Resources) *specs.LinuxMemory {
 		Swap:        parseMemoryValue(resources.MemorySwap),
 		// updates of swappiness and disableOOMKiller will take place only after the container is restarted
 		// kernel resources limit is deprecated in cgroup v1 and cgroup v2 does not have support for kernel resources limit
+	}
+}
+
+// WithCgroupsPath sets the container's cgroup path
+func WithCgroupsPath(container *types.Container) crtdoci.SpecOpts {
+	return func(ctx context.Context, _ crtdoci.Client, _ *containers.Container, s *crtdoci.Spec) error {
+		ns, err := namespaces.NamespaceRequired(ctx)
+		if err != nil {
+			return err
+		}
+		if util.IsRunningSystemd() {
+			s.Linux.CgroupsPath = "system.slice:" + ns + ":" + container.ID
+		} else {
+			s.Linux.CgroupsPath = filepath.Join("/", ns, container.ID)
+		}
+		return nil
 	}
 }
