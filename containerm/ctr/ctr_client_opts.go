@@ -115,7 +115,7 @@ func WithCtrdImageDecryptRecipients(recipients ...string) ContainerOpts {
 	}
 }
 
-// WithCtrdRuncRuntime sets the container runcRuntime.
+// WithCtrdRuncRuntime sets the container runc runtime.
 func WithCtrdRuncRuntime(runcRuntime string) ContainerOpts {
 	return func(ctrOptions *ctrOpts) error {
 		switch types.Runtime(runcRuntime) {

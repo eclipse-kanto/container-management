@@ -117,6 +117,12 @@ coreos/go-semver (0.3.0)
 * Project: https://github.com/coreos/go-semver
 * Source:  https://github.com/coreos/go-semver/releases/tag/v0.3.0
 
+coreos/go-systemd (22.3.2)
+
+* License: Apache License 2.0
+* Project: https://github.com/coreos/go-systemd
+* Source:  https://github.com/coreos/go-systemd/releases/tag/v22.3.2
+
 deckarep/golang-set (1.8.0)
 
 * License: MIT
