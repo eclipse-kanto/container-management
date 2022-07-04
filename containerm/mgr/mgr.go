@@ -61,7 +61,7 @@ type containerMgr struct {
 // Load all container data prior to loading the actual containers in the client
 func (mgr *containerMgr) Load(ctx context.Context) error {
 	if pruneErr := mgr.containerRepository.Prune(); pruneErr != nil {
-		log.ErrorErr(pruneErr, "could not prune containers")
+		log.DebugErr(pruneErr, "could not prune containers")
 	}
 
 	readCtrs, err := mgr.containerRepository.ReadAll()
