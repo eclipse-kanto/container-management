@@ -79,7 +79,7 @@ func TestCtrdClientCreateContainer(t *testing.T) {
 	tests := map[string]struct {
 		mockExec func() error
 	}{
-		"test_error_initialise_IO": {
+		"test_error_initialise_io": {
 			mockExec: func() error {
 				err := log.NewErrorf("failed to initialise IO for container ID = %s", testCtr.ID)
 				mockIoMgr.EXPECT().InitIO(testCtr.ID, testCtr.IOConfig.OpenStdin).Return(nil, err)

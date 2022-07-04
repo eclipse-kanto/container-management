@@ -145,17 +145,17 @@ func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageInfo typ
 func (ctrdClient *containerdClient) createSnapshot(ctx context.Context, containerID string, image containerd.Image, imageInfo types.Image) error {
 	unpackOpts, err := ctrdClient.generateUnpackOpts(imageInfo)
 	if err != nil {
-		log.ErrorErr(err, "error while generating unpack opts for image ID = %s used by container ID = %s", image.Name, containerID)
+		log.ErrorErr(err, "error while generating unpack opts for image ID = %s used by container ID = %s", image.Name(), containerID)
 		return err
 	}
 	err = ctrdClient.spi.PrepareSnapshot(ctx, containerID, image, unpackOpts...)
 	if err != nil {
-		log.ErrorErr(err, "error while trying to create a snapshot for container ID = %s with image ID = %s ", containerID, image.Name)
+		log.ErrorErr(err, "error while trying to create a snapshot for container ID = %s with image ID = %s ", containerID, image.Name())
 		return err
 	}
 	err = ctrdClient.spi.MountSnapshot(ctx, containerID, rootFSPathDefault)
 	if err != nil {
-		log.ErrorErr(err, "error while trying to mount rootfs for container ID = %s , image with ID = %s ", containerID, image.Name)
+		log.ErrorErr(err, "error while trying to mount rootfs for container ID = %s , image with ID = %s ", containerID, image.Name())
 		return err
 	}
 	return err
@@ -362,8 +362,8 @@ func (ctrdClient *containerdClient) processEvents(namespace string) {
 	for {
 		select {
 		case env := <-ch:
-			if env.Topic != runtime.TaskOOMEventTopic && env.Namespace != namespace {
-				log.Debug("skip envelope with topic %s:", env.Topic)
+			if env.Topic != runtime.TaskOOMEventTopic || env.Namespace != namespace {
+				log.Debug("skip envelope with topic %s: %#v", env.Topic, env)
 				continue
 			}
 			event, err := typeurl.UnmarshalAny(env.Event)
@@ -383,6 +383,7 @@ func (ctrdClient *containerdClient) processEvents(namespace string) {
 				continue
 			}
 			ctrInfo.setOOMKilled(true)
+			log.Debug("updated info cache for container ID = %s with OOM killed = true", oomEvent.ContainerID)
 
 		case err := <-errs:
 			if err != nil {
