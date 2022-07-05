@@ -59,6 +59,12 @@ boltdb/bolt (1.3.1)
 
 BurntSushi/toml (0.3.1)
 
+containerd/cgroups (1.0.3)
+
+* License: Apache License 2.0
+* Project: https://github.com/containerd/cgroups
+* Source:  https://github.com/containerd/cgroups/releases/tag/v1.0.3
+
 * License: MIT License
 * Project: https://github.com/BurntSushi/toml
 * Source:  https://github.com/BurntSushi/toml/releases/tag/v0.3.1
@@ -146,6 +152,12 @@ docker/go-events (0.0.0-20190806004212-e31b211e4f1c)
 * License: Apache License 2.0
 * Project: https://github.com/docker/go-events
 * Source:  https://github.com/docker/go-events/tree/e31b211e4f1cd09aa76fe4ac244571fab96ae47f
+
+docker/go-units (0.4.0)
+
+* License: Apache License 2.0
+* Project: https://github.com/docker/go-units
+* Source:  https://github.com/docker/go-units/releases/tag/v0.4.0
 
 docker/libkv (0.2.1)
 
@@ -350,6 +362,12 @@ moby/locker (1.0.1)
 * License: Apache License 2.0
 * Project: https://github.com/moby/locker
 * Source:  https://github.com/moby/locker/releases/tag/v1.0.1
+
+moby/sys/mount (0.3.1)
+
+* License: Apache License 2.0
+* Project: https://github.com/moby/sys/mount
+* Source:  https://github.com/moby/sys/tree/mount/v0.3.1
 
 moby/sys/mountinfo (0.6.0)
 
