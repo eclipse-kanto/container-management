@@ -259,3 +259,18 @@ func (mr *MockContainerManagerMockRecorder) Update(arg0, arg1, arg2 interface{})
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockContainerManager)(nil).Update), arg0, arg1, arg2)
 }
+
+// Metrics mocks base method
+func (m *MockContainerManager) Metrics(ctx context.Context, id string) (*types.Metrics, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Metrics", ctx, id)
+	ret0, _ := ret[0].(*types.Metrics)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Metrics indicates an expected call of Metrics
+func (mr *MockContainerManagerMockRecorder) Metrics(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Metrics", reflect.TypeOf((*MockContainerManager)(nil).Metrics), ctx, id)
+}
