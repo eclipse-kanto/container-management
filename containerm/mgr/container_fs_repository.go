@@ -159,9 +159,7 @@ func (repository *containerFsRepository) Prune() error {
 	var errs = errorUtil.CompoundError{}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		msg := log.NewError("root containers directory does not exist")
-		log.WarnErr(msg, "the directory %s does not exist", path)
-		return msg
+		return log.NewError("root containers directory does not exist")
 	}
 
 	contDirs, readErr := ioutil.ReadDir(path)
