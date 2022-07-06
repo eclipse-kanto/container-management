@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Contributors to the Eclipse Foundation
+// Copyright (c) 2022 Contributors to the Eclipse Foundation
 //
 // See the NOTICE file(s) distributed with this work for additional
 // information regarding copyright ownership.
@@ -19,38 +19,41 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-type newContainerOptMatcher struct {
-	opts []containerd.NewContainerOpts
+type taskKillOptsMatcher struct {
+	opts []containerd.KillOpts
 	msg  string
 }
 
-// MatchesNewContainerOpts returns a Matcher interface for the New Container Opts
-func MatchesNewContainerOpts(opts ...containerd.NewContainerOpts) gomock.Matcher {
-	return &newContainerOptMatcher{opts, ""}
+// MatchesTaskKillOpts returns a Matcher interface for containerd task kill opts
+func MatchesTaskKillOpts(opts ...containerd.KillOpts) gomock.Matcher {
+	return &taskKillOptsMatcher{opts, ""}
 }
 
-func (matcher *newContainerOptMatcher) Matches(x interface{}) bool {
+func (matcher *taskKillOptsMatcher) Matches(x interface{}) bool {
 	switch x.(type) {
-	case []containerd.NewContainerOpts:
-		opts := x.([]containerd.NewContainerOpts)
+	case []containerd.KillOpts:
+		opts := x.([]containerd.KillOpts)
+
 		if len(matcher.opts) != len(opts) {
 			matcher.msg = fmt.Sprintf("expected %d , got %d", len(matcher.opts), len(opts))
 			return false
 		}
 		for i := range opts {
-			actual := reflect.ValueOf(opts[i]).Pointer()
-			expected := reflect.ValueOf(matcher.opts[i]).Pointer()
+			expected := reflect.ValueOf(opts[i]).Pointer()
+			actual := reflect.ValueOf(matcher.opts[i]).Pointer()
+
 			if !reflect.DeepEqual(expected, actual) {
 				matcher.msg = fmt.Sprintf("expected %v , got %v", expected, actual)
 				return false
 			}
 		}
+
 		return true
 	default:
 		return false
 	}
 }
 
-func (matcher *newContainerOptMatcher) String() string {
+func (matcher *taskKillOptsMatcher) String() string {
 	return matcher.msg
 }
