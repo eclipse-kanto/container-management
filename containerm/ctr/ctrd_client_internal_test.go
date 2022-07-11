@@ -13,11 +13,16 @@ package ctr
 
 import (
 	"context"
+	"fmt"
 	"github.com/containerd/containerd"
+	eventstypes "github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/events"
+	"github.com/containerd/containerd/runtime"
 	"github.com/containerd/imgcrypt"
 	"github.com/containerd/imgcrypt/images/encryption"
+	"github.com/containerd/typeurl"
 	"github.com/containers/ocicrypt/config"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
@@ -25,8 +30,15 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/matchers"
 	mocksContainerd "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/containerd"
 	mocksCtrd "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
+	mocksIo "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/io"
+	mocksLogger "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/logger"
 	"github.com/eclipse-kanto/container-management/containerm/util"
+	protoTypes "github.com/gogo/protobuf/types"
 	"github.com/golang/mock/gomock"
+	"github.com/sirupsen/logrus"
+	"os"
+	"sync"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -248,6 +260,7 @@ func TestClientInternalGetImage(t *testing.T) {
 		})
 	}
 }
+
 func TestClientInternalPullImage(t *testing.T) {
 	const containerImageRef = "some.repo/image:tag"
 	testImageInfo := types.Image{
@@ -381,6 +394,7 @@ func TestClientInternalPullImage(t *testing.T) {
 		})
 	}
 }
+
 func TestClientInternalCreateSnapshot(t *testing.T) {
 	const (
 		containerID       = "test-container-id"
@@ -452,6 +466,7 @@ func TestClientInternalCreateSnapshot(t *testing.T) {
 		})
 	}
 }
+
 func TestClientInternalClearSnapshot(t *testing.T) {
 	const (
 		containerID = "test-container-id"
@@ -593,6 +608,7 @@ func TestClientInternalCreateTask(t *testing.T) {
 		})
 	}
 }
+
 func TestClientInternalLoadTask(t *testing.T) {
 	const (
 		containerID   = "test-container-id"
@@ -684,6 +700,440 @@ func TestClientInternalLoadTask(t *testing.T) {
 			} else {
 				testutil.AssertNil(t, actualCtrInfo)
 			}
+		})
+	}
+}
+
+func TestClientInternalInitLogDriver(t *testing.T) {
+	const containerID = "test-container-id"
+	container := &types.Container{
+		ID: containerID,
+		HostConfig: &types.HostConfig{
+			LogConfig: &types.LogConfiguration{
+				ModeConfig: &types.LogModeConfiguration{},
+			},
+		},
+	}
+	testCases := map[string]struct {
+		mockExec func(logsMgrMock *mocksCtrd.MockcontainerLogsManager, ioMgrMock *MockcontainerIOManager, ctrl *gomock.Controller) error
+	}{
+		"test_get_log_driver_error": {
+			mockExec: func(logsMgrMock *mocksCtrd.MockcontainerLogsManager, ioMgrMock *MockcontainerIOManager, ctrl *gomock.Controller) error {
+				err := log.NewError("test error")
+				logsMgrMock.EXPECT().GetLogDriver(container).Return(nil, err)
+				return err
+			},
+		},
+		"test_configure_io_error": {
+			mockExec: func(logsMgrMock *mocksCtrd.MockcontainerLogsManager, ioMgrMock *MockcontainerIOManager, ctrl *gomock.Controller) error {
+				logDriverMock := mocksLogger.NewMockLogDriver(ctrl)
+				logsMgrMock.EXPECT().GetLogDriver(container).Return(logDriverMock, nil)
+				err := log.NewError("test error")
+				ioMgrMock.EXPECT().ConfigureIO(container.ID, logDriverMock, container.HostConfig.LogConfig.ModeConfig).Return(err)
+				return err
+			},
+		},
+		"test_no_error": {
+			mockExec: func(logsMgrMock *mocksCtrd.MockcontainerLogsManager, ioMgrMock *MockcontainerIOManager, ctrl *gomock.Controller) error {
+				logDriverMock := mocksLogger.NewMockLogDriver(ctrl)
+				logsMgrMock.EXPECT().GetLogDriver(container).Return(logDriverMock, nil)
+				ioMgrMock.EXPECT().ConfigureIO(container.ID, logDriverMock, container.HostConfig.LogConfig.ModeConfig).Return(nil)
+				return nil
+			},
+		},
+	}
+	for testCaseName, testCaseData := range testCases {
+		t.Run(testCaseName, func(t *testing.T) {
+			t.Log(testCaseName)
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			ioMgrMock := NewMockcontainerIOManager(ctrl)
+			logsMgrMock := mocksCtrd.NewMockcontainerLogsManager(ctrl)
+			ctrdClient := &containerdClient{
+				ioMgr:   ioMgrMock,
+				logsMgr: logsMgrMock,
+			}
+			expectedErr := testCaseData.mockExec(logsMgrMock, ioMgrMock, ctrl)
+			actualErr := ctrdClient.initLogDriver(container)
+			testutil.AssertError(t, expectedErr, actualErr)
+		})
+	}
+}
+
+func TestClientInternalKillTask(t *testing.T) {
+	const containerID = "test-container-id"
+	container := &types.Container{
+		ID: containerID,
+	}
+	testCases := map[string]struct {
+		stopOpts *types.StopOpts
+		mockExec func(taskMock *mocksContainerd.MockTask, resultChan chan exitInfo) (int64, error)
+	}{
+		"test_sigkill": {
+			stopOpts: &types.StopOpts{
+				Signal: "SIGKILL",
+			},
+			mockExec: func(taskMock *mocksContainerd.MockTask, resultChan chan exitInfo) (int64, error) {
+				err := log.NewError("test error")
+				taskMock.EXPECT().Kill(gomock.Any(), syscall.SIGKILL, matchers.MatchesTaskKillOpts(containerd.WithKillAll)).Return(err)
+				return -1, err
+			},
+		},
+		"test_sigterm_kill_error": {
+			stopOpts: &types.StopOpts{
+				Signal: "SIGTERM",
+			},
+			mockExec: func(taskMock *mocksContainerd.MockTask, resultChan chan exitInfo) (int64, error) {
+				err := log.NewError("test error")
+				taskMock.EXPECT().Kill(gomock.Any(), syscall.SIGTERM).Return(err)
+				return -1, err
+			},
+		},
+		"test_custom_signal_no_error": {
+			stopOpts: &types.StopOpts{
+				Signal:  "123",
+				Timeout: 30,
+			},
+			mockExec: func(taskMock *mocksContainerd.MockTask, resultChan chan exitInfo) (int64, error) {
+				taskMock.EXPECT().Kill(gomock.Any(), syscall.Signal(123)).Return(nil)
+				resultChan <- exitInfo{exitCode: 0, exitTime: time.Now(), exitError: nil}
+				return 0, nil
+			},
+		},
+		"test_sigterm_kill_not_forced_timeout": {
+			stopOpts: &types.StopOpts{
+				Signal:  "SIGTERM",
+				Timeout: 1,
+				Force:   false,
+			},
+			mockExec: func(taskMock *mocksContainerd.MockTask, resultChan chan exitInfo) (int64, error) {
+				taskMock.EXPECT().Kill(gomock.Any(), syscall.SIGTERM).
+					Do(func(context.Context, syscall.Signal, ...containerd.KillOpts) error {
+						time.Sleep(3 * time.Second)
+						return nil
+					})
+				err := log.NewErrorf("could not stop container with ID = %s with %s", container.ID, "SIGTERM")
+				return -1, err
+			},
+		},
+		"test_sigterm_kill_forced_timeout": {
+			stopOpts: &types.StopOpts{
+				Signal:  "SIGTERM",
+				Timeout: 1,
+				Force:   true,
+			},
+			mockExec: func(taskMock *mocksContainerd.MockTask, resultChan chan exitInfo) (int64, error) {
+				taskMock.EXPECT().Kill(gomock.Any(), syscall.SIGTERM).
+					Do(func(context.Context, syscall.Signal, ...containerd.KillOpts) error {
+						time.Sleep(3 * time.Second)
+						return nil
+					})
+				err := log.NewError("test error")
+				taskMock.EXPECT().Kill(gomock.Any(), syscall.SIGKILL, matchers.MatchesTaskKillOpts(containerd.WithKillAll)).Return(err)
+				return -1, err
+			},
+		},
+	}
+
+	for testCaseName, testCaseData := range testCases {
+		t.Run(testCaseName, func(t *testing.T) {
+			t.Log(testCaseName)
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			taskMock := mocksContainerd.NewMockTask(ctrl)
+			ctrInfo := &containerInfo{
+				c:             container,
+				task:          taskMock,
+				resultChannel: make(chan exitInfo, 1),
+			}
+			ctrdClient := &containerdClient{}
+
+			expectedCode, expectedErr := testCaseData.mockExec(taskMock, ctrInfo.resultChannel)
+			actualCode, _, actualErr := ctrdClient.killTask(context.TODO(), ctrInfo, testCaseData.stopOpts)
+
+			testutil.AssertError(t, expectedErr, actualErr)
+			testutil.AssertEqual(t, expectedCode, actualCode)
+		})
+	}
+}
+
+func TestClientInternalKillTaskForced(t *testing.T) {
+	const (
+		containerID                        = "test-container-id"
+		generalSigKillTimeoutConfiguration = 3 * time.Second
+	)
+	container := &types.Container{
+		ID: containerID,
+	}
+	testCases := map[string]struct {
+		mockExec func(taskMock *mocksContainerd.MockTask, resultChan chan exitInfo) (int64, error)
+	}{
+		"test_kill_error": {
+			mockExec: func(taskMock *mocksContainerd.MockTask, resultChan chan exitInfo) (int64, error) {
+				err := log.NewError("test error")
+				taskMock.EXPECT().Kill(gomock.Any(), syscall.SIGKILL, matchers.MatchesTaskKillOpts(containerd.WithKillAll)).Return(err)
+				return -1, err
+			},
+		},
+		"test_kill_no_error": {
+			mockExec: func(taskMock *mocksContainerd.MockTask, resultChan chan exitInfo) (int64, error) {
+				taskMock.EXPECT().Kill(gomock.Any(), syscall.SIGKILL, matchers.MatchesTaskKillOpts(containerd.WithKillAll)).
+					Return(nil)
+				resultChan <- exitInfo{
+					exitCode:  0,
+					exitError: nil,
+					exitTime:  time.Now(),
+				}
+				return 0, nil
+			},
+		},
+		"test_sigterm_kill_timeout": {
+			mockExec: func(taskMock *mocksContainerd.MockTask, resultChan chan exitInfo) (int64, error) {
+				taskMock.EXPECT().Kill(gomock.Any(), syscall.SIGKILL, matchers.MatchesTaskKillOpts(containerd.WithKillAll)).Return(nil)
+				return -1, log.NewErrorf("could not stop container with ID = %s with SIGKILL", container.ID)
+			},
+		},
+	}
+
+	for testCaseName, testCaseData := range testCases {
+		t.Run(testCaseName, func(t *testing.T) {
+			t.Log(testCaseName)
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			taskMock := mocksContainerd.NewMockTask(ctrl)
+			ctrInfo := &containerInfo{
+				c:             container,
+				task:          taskMock,
+				resultChannel: make(chan exitInfo, 1),
+			}
+			ctrdClient := &containerdClient{}
+
+			expectedCode, expectedErr := testCaseData.mockExec(taskMock, ctrInfo.resultChannel)
+			actualCode, _, actualErr := ctrdClient.killTaskForced(context.TODO(), ctrInfo, generalSigKillTimeoutConfiguration)
+
+			testutil.AssertError(t, expectedErr, actualErr)
+			testutil.AssertEqual(t, expectedCode, actualCode)
+		})
+	}
+}
+
+func TestClientInternalProcessEvents(t *testing.T) {
+	const (
+		namespace        = "test-namespace"
+		eventsFilter     = "namespace==" + namespace + ",topic~=tasks/oom.*"
+		containerID      = "test-container-id"
+		testCasesTimeout = 5 * time.Second
+	)
+	testCases := map[string]struct {
+		event    *events.Envelope
+		mockExec func(ioMock *mocksIo.MockWriteCloser, spiMock *mocksCtrd.MockcontainerdSpi) (*sync.WaitGroup, bool)
+	}{
+		"test_event_wrong_topic": {
+			mockExec: func(ioMock *mocksIo.MockWriteCloser, spiMock *mocksCtrd.MockcontainerdSpi) (*sync.WaitGroup, bool) {
+				eventsChan := make(chan *events.Envelope, 1)
+				errChan := make(chan error, 1)
+
+				spiMock.EXPECT().Subscribe(gomock.Any(), eventsFilter).Return(eventsChan, errChan)
+
+				wg := &sync.WaitGroup{}
+				wg.Add(1)
+
+				event := &events.Envelope{
+					Topic:     runtime.TaskStartEventTopic,
+					Namespace: namespace,
+				}
+				eventsChan <- event
+
+				ioMock.EXPECT().Write(matchers.ContainsString(fmt.Sprintf("skip envelope with topic %s:", event.Topic))).
+					Do(func(p []byte) (int, error) {
+						wg.Done()
+						return 0, nil
+					})
+				return wg, false
+			},
+		},
+		"test_event_wrong_namespace": {
+			mockExec: func(ioMock *mocksIo.MockWriteCloser, spiMock *mocksCtrd.MockcontainerdSpi) (*sync.WaitGroup, bool) {
+				eventsChan := make(chan *events.Envelope, 1)
+				errChan := make(chan error, 1)
+
+				spiMock.EXPECT().Subscribe(gomock.Any(), eventsFilter).Return(eventsChan, errChan)
+
+				wg := &sync.WaitGroup{}
+				wg.Add(1)
+
+				event := &events.Envelope{
+					Topic:     runtime.TaskOOMEventTopic,
+					Namespace: "some-random-ns",
+				}
+				eventsChan <- event
+
+				ioMock.EXPECT().Write(matchers.ContainsString(fmt.Sprintf("skip envelope with topic %s:", event.Topic))).
+					Do(func(p []byte) (int, error) {
+						wg.Done()
+						return 0, nil
+					})
+				return wg, false
+			},
+		},
+		"test_event_unmarshal_error": {
+			mockExec: func(ioMock *mocksIo.MockWriteCloser, spiMock *mocksCtrd.MockcontainerdSpi) (*sync.WaitGroup, bool) {
+				eventsChan := make(chan *events.Envelope, 1)
+				errChan := make(chan error, 1)
+
+				spiMock.EXPECT().Subscribe(gomock.Any(), eventsFilter).Return(eventsChan, errChan)
+
+				wg := &sync.WaitGroup{}
+				wg.Add(1)
+				event := &events.Envelope{
+					Namespace: namespace,
+					Topic:     runtime.TaskOOMEventTopic,
+					Event:     &protoTypes.Any{TypeUrl: "random"},
+				}
+				eventsChan <- event
+
+				ioMock.EXPECT().Write(matchers.ContainsString(fmt.Sprintf("failed to unmarshal envelope %s:", event.Topic))).
+					Do(func(p []byte) (int, error) {
+						wg.Done()
+						return 0, nil
+					})
+				return wg, false
+			},
+		},
+		"test_event_wrong_type": {
+			mockExec: func(ioMock *mocksIo.MockWriteCloser, spiMock *mocksCtrd.MockcontainerdSpi) (*sync.WaitGroup, bool) {
+				eventsChan := make(chan *events.Envelope, 1)
+				errChan := make(chan error, 1)
+
+				spiMock.EXPECT().Subscribe(gomock.Any(), eventsFilter).Return(eventsChan, errChan)
+
+				wg := &sync.WaitGroup{}
+				wg.Add(1)
+
+				e, _ := typeurl.MarshalAny(&eventstypes.ContainerCreate{})
+				event := &events.Envelope{
+					Namespace: namespace,
+					Topic:     runtime.TaskOOMEventTopic,
+					Event:     e,
+				}
+				eventsChan <- event
+
+				ioMock.EXPECT().Write(matchers.ContainsString(fmt.Sprintf("failed to parse %s envelope:", event.Topic))).
+					Do(func(p []byte) (int, error) {
+						wg.Done()
+						return 0, nil
+					})
+				return wg, false
+			},
+		},
+		"test_event_missing_container_cache": {
+			mockExec: func(ioMock *mocksIo.MockWriteCloser, spiMock *mocksCtrd.MockcontainerdSpi) (*sync.WaitGroup, bool) {
+				eventsChan := make(chan *events.Envelope, 1)
+				errChan := make(chan error, 1)
+
+				spiMock.EXPECT().Subscribe(gomock.Any(), eventsFilter).Return(eventsChan, errChan)
+
+				wg := &sync.WaitGroup{}
+				wg.Add(1)
+
+				e := &eventstypes.TaskOOM{ContainerID: "some-random-id"}
+				eBytes, _ := typeurl.MarshalAny(e)
+				event := &events.Envelope{
+					Namespace: namespace,
+					Topic:     runtime.TaskOOMEventTopic,
+					Event:     eBytes,
+				}
+				eventsChan <- event
+
+				ioMock.EXPECT().Write(matchers.ContainsString(fmt.Sprintf("missing container info for container - %s", e.ContainerID))).
+					Do(func(p []byte) (int, error) {
+						wg.Done()
+						return 0, nil
+					})
+				return wg, false
+			},
+		},
+		"test_event_oom_correct": {
+			mockExec: func(ioMock *mocksIo.MockWriteCloser, spiMock *mocksCtrd.MockcontainerdSpi) (*sync.WaitGroup, bool) {
+				eventsChan := make(chan *events.Envelope, 1)
+				errChan := make(chan error, 1)
+
+				spiMock.EXPECT().Subscribe(gomock.Any(), eventsFilter).Return(eventsChan, errChan)
+
+				wg := &sync.WaitGroup{}
+				wg.Add(1)
+
+				e := &eventstypes.TaskOOM{ContainerID: containerID}
+				eBytes, _ := typeurl.MarshalAny(e)
+				event := &events.Envelope{
+					Namespace: namespace,
+					Topic:     runtime.TaskOOMEventTopic,
+					Event:     eBytes,
+				}
+				eventsChan <- event
+
+				ioMock.EXPECT().Write(matchers.ContainsString(fmt.Sprintf("updated info cache for container ID = %s with OOM killed = true", e.ContainerID))).
+					Do(func(p []byte) (int, error) {
+						wg.Done()
+						return 0, nil
+					})
+				return wg, true
+			},
+		},
+		"test_event_error_received": {
+			mockExec: func(ioMock *mocksIo.MockWriteCloser, spiMock *mocksCtrd.MockcontainerdSpi) (*sync.WaitGroup, bool) {
+				eventsChan := make(chan *events.Envelope, 1)
+				errChan := make(chan error, 1)
+
+				spiMock.EXPECT().Subscribe(gomock.Any(), eventsFilter).Return(eventsChan, errChan)
+
+				wg := &sync.WaitGroup{}
+				wg.Add(1)
+				errChan <- log.NewError("test error")
+
+				ioMock.EXPECT().Write(matchers.ContainsString("failed to receive envelope:")).
+					Do(func(p []byte) (int, error) {
+						wg.Done()
+						return 0, nil
+					})
+				return wg, false
+			},
+		},
+	}
+	for testCaseName, testCaseData := range testCases {
+		t.Run(testCaseName, func(t *testing.T) {
+			t.Log(testCaseName)
+
+			ctrl := gomock.NewController(t)
+			spiMock := mocksCtrd.NewMockcontainerdSpi(ctrl)
+			ctrdClient := &containerdClient{
+				spi:       spiMock,
+				ctrdCache: newContainerInfoCache(),
+			}
+			ctrdClient.ctrdCache.cache[containerID] = &containerInfo{
+				c: &types.Container{
+					ID: containerID,
+				},
+			}
+			mockIOWriter := mocksIo.NewMockWriteCloser(ctrl)
+
+			logrus.SetLevel(logrus.DebugLevel)
+			logrus.SetOutput(mockIOWriter)
+
+			testWg, expectedOOMKilled := testCaseData.mockExec(mockIOWriter, spiMock)
+
+			defer func() {
+				ctrdClient.eventsCancel()
+				ctrl.Finish()
+
+				logrus.SetLevel(logrus.InfoLevel)
+				logrus.SetOutput(os.Stdout)
+			}()
+			go ctrdClient.processEvents(namespace)
+
+			testutil.AssertWithTimeout(t, testWg, testCasesTimeout)
+			testutil.AssertEqual(t, expectedOOMKilled, ctrdClient.ctrdCache.cache[containerID].isOOmKilled())
 		})
 	}
 }
