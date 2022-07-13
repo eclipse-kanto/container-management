@@ -87,7 +87,7 @@ var (
 	containerClientInsecureRegistriesDefault = []string{"localhost"}
 
 	// default things service features config
-	thingsServiceFeaturesDefault = []string{things.ContainerFactoryFeatureID, things.SoftwareUpdatableFeatureID}
+	thingsServiceFeaturesDefault = []string{things.ContainerFactoryFeatureID, things.SoftwareUpdatableFeatureID, things.MetricsFeatureID}
 )
 
 func getDefaultInstance() *config {

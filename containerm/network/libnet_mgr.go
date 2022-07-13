@@ -253,3 +253,20 @@ func (netMgr *libnetworkMgr) Initialize(ctx context.Context) error {
 
 	return nil
 }
+
+func (netMgr *libnetworkMgr) Metrics(ctx context.Context, container *types.Container) (*types.IOStats, error) {
+	sb := getNetworkSandbox(netMgr.netController, container.ID)
+	if sb == nil {
+		return nil, log.NewErrorf("no network sandbox for container %s ", container.ID)
+	}
+	interfaceStats, err := sb.Statistics()
+	if err != nil {
+		return nil, err
+	}
+	var rx, tx uint64
+	for _, is := range interfaceStats {
+		rx += is.RxBytes
+		tx += is.TxBytes
+	}
+	return &types.IOStats{Read: rx, Write: tx}, nil
+}

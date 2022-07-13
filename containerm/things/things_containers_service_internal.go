@@ -66,7 +66,7 @@ func (tMgr *containerThingsMgr) processThing(thing model.Thing) {
 			ctrFactory := newContainerFactoryFeature(tMgr.mgr, tMgr.eventsMgr, thing, newContainerFactoryStorage(tMgr.storageRoot, tMgr.containerThingID))
 			tMgr.managedFeatures[ContainerFactoryFeatureID] = ctrFactory
 		} else {
-			log.Debug("ContainerFactory feature is NOT enabled and will not be registered. No Container feature per container instance will also be registered!")
+			log.Debug("ContainerFactory feature is not enabled and will not be registered. No Container feature per container instance will also be registered!")
 		}
 		// handle SoftwareUpdatable
 		if tMgr.isFeatureEnabled(SoftwareUpdatableFeatureID) {
@@ -74,7 +74,16 @@ func (tMgr *containerThingsMgr) processThing(thing model.Thing) {
 			su := newSoftwareUpdatable(thing, tMgr.mgr, tMgr.eventsMgr)
 			tMgr.managedFeatures[SoftwareUpdatableFeatureID] = su
 		} else {
-			log.Debug("SoftwareUpdatable feature is NOT enabled and will not be registered")
+			log.Debug("SoftwareUpdatable feature is not enabled and will not be registered")
+		}
+
+		// handle Metrics
+		if tMgr.isFeatureEnabled(MetricsFeatureID) {
+			log.Debug("registering %s feature", MetricsFeatureID)
+			ctrMetrics := newMetricsFeature(thing, tMgr.mgr, tMgr.eventsMgr)
+			tMgr.managedFeatures[MetricsFeatureID] = ctrMetrics
+		} else {
+			log.Debug("%s feature is not enabled and will not be registered", MetricsFeatureID)
 		}
 
 		// register all added features

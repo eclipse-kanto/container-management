@@ -470,6 +470,33 @@ func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool) erro
 	return nil
 }
 
+func (mgr *containerMgr) Metrics(ctx context.Context, id string) (*types.Metrics, error) {
+	container := mgr.getContainerFromCache(id)
+	if container == nil {
+		return nil, log.NewErrorf(noSuchContainerErrorMsg, id)
+	}
+
+	container.Lock()
+	defer container.Unlock()
+
+	if !util.IsContainerRunningOrPaused(container) {
+		// no metrics for not running container
+		return nil, nil
+	}
+
+	var (
+		stats *types.Metrics
+		err   error
+	)
+	if stats, err = mgr.ctrClient.GetContainerMetrics(ctx, container); err != nil {
+		return nil, err
+	}
+	if stats.Network, err = mgr.netMgr.Metrics(ctx, container); err != nil {
+		log.WarnErr(err, "could not get network metrics for container ID = %s", container.ID)
+	}
+	return stats, err
+}
+
 //--------------------------------- Disposable impl -----------------------------------
 
 func (mgr *containerMgr) Dispose(ctx context.Context) error {

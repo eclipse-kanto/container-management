@@ -10,6 +10,7 @@ replace (
 )
 
 require (
+	github.com/containerd/cgroups v1.0.3
 	github.com/containerd/containerd v1.6.1
 	github.com/containerd/imgcrypt v1.1.5
 	github.com/containerd/typeurl v1.0.2
@@ -44,7 +45,6 @@ require (
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/boltdb/bolt v1.3.1 // indirect
-	github.com/containerd/cgroups v1.0.3 // indirect
 	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect

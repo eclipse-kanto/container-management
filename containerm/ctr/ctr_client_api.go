@@ -33,6 +33,9 @@ type ContainerAPIClient interface {
 	// StartContainer starts the underlying container
 	StartContainer(ctx context.Context, container *types.Container, checkpointDir string) (int64, error)
 
+	// GetContainerMetrics retrieves container metrics
+	GetContainerMetrics(ctx context.Context, container *types.Container) (*types.Metrics, error)
+
 	// AttachContainer attaches to the container's IO
 	AttachContainer(ctx context.Context, container *types.Container, attachConfig *streams.AttachConfig) error
 
