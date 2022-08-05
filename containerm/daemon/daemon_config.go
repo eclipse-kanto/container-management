@@ -48,6 +48,7 @@ type containerRuntimeConfig struct {
 	CtrImageDecKeys       []string                   `json:"image_dec_keys,omitempty"`
 	CtrImageDecRecipients []string                   `json:"image_dec_recipients,omitempty"`
 	CtrRuncRuntime        string                     `json:"runc_runtime,omitempty"`
+	CtrImageExpiry        int                        `json:"image_expiry,omitempty"`
 }
 
 // registry config

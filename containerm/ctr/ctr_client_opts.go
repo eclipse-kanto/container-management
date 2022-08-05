@@ -28,6 +28,7 @@ type ctrOpts struct {
 	imageDecKeys       []string
 	imageDecRecipients []string
 	runcRuntime        types.Runtime
+	imageExpiry        int
 }
 
 // RegistryConfig represents a single registry's access configuration.
@@ -124,6 +125,14 @@ func WithCtrdRuncRuntime(runcRuntime string) ContainerOpts {
 		default:
 			return log.NewErrorf("unexpected runc runtime = %s", runcRuntime)
 		}
+		return nil
+	}
+}
+
+// WithCtrdImageExpiry sets images expiry time.
+func WithCtrdImageExpiry(expiry int) ContainerOpts {
+	return func(ctrOptions *ctrOpts) error {
+		ctrOptions.imageExpiry = expiry
 		return nil
 	}
 }

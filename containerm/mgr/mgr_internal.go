@@ -385,6 +385,7 @@ func (mgr *containerMgr) stopManagerService(ctx context.Context) error {
 	}
 	return nil
 }
+
 func (mgr *containerMgr) fillContainerStopDefaults(stopOpts *types.StopOpts) {
 	if stopOpts != nil {
 		if stopOpts.Timeout == 0 {
@@ -395,10 +396,23 @@ func (mgr *containerMgr) fillContainerStopDefaults(stopOpts *types.StopOpts) {
 		}
 	}
 }
+
 func (mgr *containerMgr) getContainerStopOptions(force bool) *types.StopOpts {
 	return &types.StopOpts{
 		Timeout: mgr.defaultCtrsStopTimeout,
 		Force:   force,
 		Signal:  sigterm,
 	}
+}
+
+func (mgr *containerMgr) isImageUnused(imageRef string) bool {
+	mgr.containersLock.RLock()
+	defer mgr.containersLock.RUnlock()
+
+	for _, ctr := range mgr.containersToArray() {
+		if ctr.Image.Name == imageRef {
+			return false
+		}
+	}
+	return true
 }

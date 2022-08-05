@@ -43,6 +43,8 @@ const (
 	testNetworkManagerStopTimeout   = 30
 )
 
+var testImageDeleteFilter = func(string) bool { return true }
+
 func TestGetContainer(t *testing.T) {
 	// Set UP
 	mockCtrl := gomock.NewController(t)
@@ -512,6 +514,10 @@ func TestDeleteContainerFromManager(t *testing.T) {
 		Delete(ctrID).
 		Times(1)
 
+	mockCtrClient.EXPECT().
+		CleanContainerResources(gomock.Any(), gomock.AssignableToTypeOf(testImageDeleteFilter)).
+		Times(1)
+
 	unitUnderTest := createContainerManagerWithCustomMocks(
 		metaPath,
 		mockCtrClient,
@@ -950,6 +956,10 @@ func TestRestore(t *testing.T) {
 		Initialize(gomock.Any()).
 		Times(1)
 
+	mockCtrClient.EXPECT().
+		CleanContainerResources(gomock.Any(), gomock.AssignableToTypeOf(testImageDeleteFilter)).
+		Times(1)
+
 	unitUnderTest := createContainerManagerWithCustomMocks(
 		metaPath,
 		mockCtrClient,
@@ -992,6 +1002,10 @@ func TestRestoreOnDeadContainer(t *testing.T) {
 
 	mockNetworkManager.EXPECT().
 		Initialize(gomock.Any()).
+		Times(1)
+
+	mockCtrClient.EXPECT().
+		CleanContainerResources(gomock.Any(), gomock.AssignableToTypeOf(testImageDeleteFilter)).
 		Times(1)
 
 	unitUnderTest := createContainerManagerWithCustomMocks(

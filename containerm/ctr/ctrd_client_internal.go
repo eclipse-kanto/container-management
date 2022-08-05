@@ -112,6 +112,10 @@ func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageInfo typ
 	if dcErr != nil {
 		return nil, dcErr
 	}
+
+	ctrdClient.Lock()
+	defer ctrdClient.Unlock()
+
 	ctrdImage, err := ctrdClient.spi.GetImage(ctx, imageInfo.Name)
 	if err != nil {
 		// if the image is not present locally - pull it
@@ -392,4 +396,11 @@ func (ctrdClient *containerdClient) processEvents(namespace string) {
 			return
 		}
 	}
+}
+
+func (ctrdClient *containerdClient) deleteImage(ctx context.Context, imageRef string) error {
+	ctrdClient.Lock()
+	defer ctrdClient.Unlock()
+
+	return ctrdClient.spi.DeleteImage(ctx, imageRef)
 }

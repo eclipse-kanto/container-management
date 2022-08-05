@@ -45,6 +45,7 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.StringSliceVar(&cfg.ContainerClientConfig.CtrImageDecKeys, "ccl-image-dec-keys", cfg.ContainerClientConfig.CtrImageDecKeys, "Specify a list of private keys filenames (GPG private key ring, JWE and PKCS7 private key). Each entry can include an optional password separated by a colon after the filename.")
 	flagSet.StringSliceVar(&cfg.ContainerClientConfig.CtrImageDecRecipients, "ccl-image-dec-recipients", cfg.ContainerClientConfig.CtrImageDecRecipients, "Specify a recipients certificates list of the image (used only for PKCS7 and must be an x509)")
 	flagSet.StringVar(&cfg.ContainerClientConfig.CtrRuncRuntime, "ccl-runc-runtime", cfg.ContainerClientConfig.CtrRuncRuntime, "Specify a default global runc runtime - possible values are io.containerd.runtime.v1.linux, io.containerd.runc.v1 and io.containerd.runc.v2. ")
+	flagSet.IntVar(&cfg.ContainerClientConfig.CtrImageExpiry, "ccl-image-expiry", cfg.ContainerClientConfig.CtrImageExpiry, "Specify the expiry time for images in days. The amount of time since its creation that unused image would stay locally cached.")
 
 	// init network manager flags
 	flagSet.StringVar(&cfg.NetworkConfig.NetType, "net-type", cfg.NetworkConfig.NetType, "Specify the default network management type for containers")

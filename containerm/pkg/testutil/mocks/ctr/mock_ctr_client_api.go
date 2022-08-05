@@ -26,72 +26,30 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockContainerAPIClient is a mock of ContainerAPIClient interface
+// MockContainerAPIClient is a mock of ContainerAPIClient interface.
 type MockContainerAPIClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockContainerAPIClientMockRecorder
 }
 
-// MockContainerAPIClientMockRecorder is the mock recorder for MockContainerAPIClient
+// MockContainerAPIClientMockRecorder is the mock recorder for MockContainerAPIClient.
 type MockContainerAPIClientMockRecorder struct {
 	mock *MockContainerAPIClient
 }
 
-// NewMockContainerAPIClient creates a new mock instance
+// NewMockContainerAPIClient creates a new mock instance.
 func NewMockContainerAPIClient(ctrl *gomock.Controller) *MockContainerAPIClient {
 	mock := &MockContainerAPIClient{ctrl: ctrl}
 	mock.recorder = &MockContainerAPIClientMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockContainerAPIClient) EXPECT() *MockContainerAPIClientMockRecorder {
 	return m.recorder
 }
 
-// DestroyContainer mocks base method
-func (m *MockContainerAPIClient) DestroyContainer(ctx context.Context, container *types.Container, stopOpts *types.StopOpts, clearIOs bool) (int64, time.Time, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DestroyContainer", ctx, container, stopOpts, clearIOs)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(time.Time)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// DestroyContainer indicates an expected call of DestroyContainer
-func (mr *MockContainerAPIClientMockRecorder) DestroyContainer(ctx, container, stopOpts, clearIOs interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DestroyContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).DestroyContainer), ctx, container, stopOpts, clearIOs)
-}
-
-// CreateContainer mocks base method
-func (m *MockContainerAPIClient) CreateContainer(ctx context.Context, container *types.Container, checkpointDir string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateContainer", ctx, container, checkpointDir)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateContainer indicates an expected call of CreateContainer
-func (mr *MockContainerAPIClientMockRecorder) CreateContainer(ctx, container, checkpointDir interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).CreateContainer), ctx, container, checkpointDir)
-}
-
-// StartContainer mocks base method
-func (m *MockContainerAPIClient) StartContainer(ctx context.Context, container *types.Container, checkpointDir string) (int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StartContainer", ctx, container, checkpointDir)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// StartContainer indicates an expected call of StartContainer
-func (mr *MockContainerAPIClientMockRecorder) StartContainer(ctx, container, checkpointDir interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).StartContainer), ctx, container, checkpointDir)
+// AttachContainer mocks base method.
 }
 
 // GetContainerStats mocks base method.
@@ -111,9 +69,6 @@ func (m *MockContainerAPIClient) GetContainerStats(ctx context.Context, containe
 func (mr *MockContainerAPIClientMockRecorder) GetContainerStats(ctx, container interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerStats", reflect.TypeOf((*MockContainerAPIClient)(nil).GetContainerStats), ctx, container)
-}
-
-// AttachContainer mocks base method
 func (m *MockContainerAPIClient) AttachContainer(ctx context.Context, container *types.Container, attachConfig *streams.AttachConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AttachContainer", ctx, container, attachConfig)
@@ -121,55 +76,62 @@ func (m *MockContainerAPIClient) AttachContainer(ctx context.Context, container 
 	return ret0
 }
 
-// AttachContainer indicates an expected call of AttachContainer
+// AttachContainer indicates an expected call of AttachContainer.
 func (mr *MockContainerAPIClientMockRecorder) AttachContainer(ctx, container, attachConfig interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttachContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).AttachContainer), ctx, container, attachConfig)
 }
 
-// PauseContainer mocks base method
-func (m *MockContainerAPIClient) PauseContainer(ctx context.Context, container *types.Container) error {
+// CleanContainerResources mocks base method.
+func (m *MockContainerAPIClient) CleanContainerResources(ctx context.Context, filters ...ctr.ImageDeleteFilter) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PauseContainer", ctx, container)
+	varargs := []interface{}{ctx}
+	for _, a := range filters {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CleanContainerResources", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// PauseContainer indicates an expected call of PauseContainer
-func (mr *MockContainerAPIClientMockRecorder) PauseContainer(ctx, container interface{}) *gomock.Call {
+// CleanContainerResources indicates an expected call of CleanContainerResources.
+func (mr *MockContainerAPIClientMockRecorder) CleanContainerResources(ctx interface{}, filters ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PauseContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).PauseContainer), ctx, container)
+	varargs := append([]interface{}{ctx}, filters...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanContainerResources", reflect.TypeOf((*MockContainerAPIClient)(nil).CleanContainerResources), varargs...)
 }
 
-// UnpauseContainer mocks base method
-func (m *MockContainerAPIClient) UnpauseContainer(ctx context.Context, container *types.Container) error {
+// CreateContainer mocks base method.
+func (m *MockContainerAPIClient) CreateContainer(ctx context.Context, container *types.Container, checkpointDir string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UnpauseContainer", ctx, container)
+	ret := m.ctrl.Call(m, "CreateContainer", ctx, container, checkpointDir)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UnpauseContainer indicates an expected call of UnpauseContainer
-func (mr *MockContainerAPIClientMockRecorder) UnpauseContainer(ctx, container interface{}) *gomock.Call {
+// CreateContainer indicates an expected call of CreateContainer.
+func (mr *MockContainerAPIClientMockRecorder) CreateContainer(ctx, container, checkpointDir interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnpauseContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).UnpauseContainer), ctx, container)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).CreateContainer), ctx, container, checkpointDir)
 }
 
-// RestoreContainer mocks base method
-func (m *MockContainerAPIClient) RestoreContainer(ctx context.Context, container *types.Container) error {
+// DestroyContainer mocks base method.
+func (m *MockContainerAPIClient) DestroyContainer(ctx context.Context, container *types.Container, stopOpts *types.StopOpts, clearIOs bool) (int64, time.Time, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RestoreContainer", ctx, container)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "DestroyContainer", ctx, container, stopOpts, clearIOs)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(time.Time)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
-// RestoreContainer indicates an expected call of RestoreContainer
-func (mr *MockContainerAPIClientMockRecorder) RestoreContainer(ctx, container interface{}) *gomock.Call {
+// DestroyContainer indicates an expected call of DestroyContainer.
+func (mr *MockContainerAPIClientMockRecorder) DestroyContainer(ctx, container, stopOpts, clearIOs interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RestoreContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).RestoreContainer), ctx, container)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DestroyContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).DestroyContainer), ctx, container, stopOpts, clearIOs)
 }
 
-// Dispose mocks base method
+// Dispose mocks base method.
 func (m *MockContainerAPIClient) Dispose(ctx context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Dispose", ctx)
@@ -177,28 +139,13 @@ func (m *MockContainerAPIClient) Dispose(ctx context.Context) error {
 	return ret0
 }
 
-// Dispose indicates an expected call of Dispose
+// Dispose indicates an expected call of Dispose.
 func (mr *MockContainerAPIClientMockRecorder) Dispose(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Dispose", reflect.TypeOf((*MockContainerAPIClient)(nil).Dispose), ctx)
 }
 
-// ListContainers mocks base method
-func (m *MockContainerAPIClient) ListContainers(ctx context.Context) ([]*types.Container, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListContainers", ctx)
-	ret0, _ := ret[0].([]*types.Container)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListContainers indicates an expected call of ListContainers
-func (mr *MockContainerAPIClientMockRecorder) ListContainers(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListContainers", reflect.TypeOf((*MockContainerAPIClient)(nil).ListContainers), ctx)
-}
-
-// GetContainerInfo mocks base method
+// GetContainerInfo mocks base method.
 func (m *MockContainerAPIClient) GetContainerInfo(ctx context.Context, id string) (*types.Container, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetContainerInfo", ctx, id)
@@ -207,13 +154,42 @@ func (m *MockContainerAPIClient) GetContainerInfo(ctx context.Context, id string
 	return ret0, ret1
 }
 
-// GetContainerInfo indicates an expected call of GetContainerInfo
+// GetContainerInfo indicates an expected call of GetContainerInfo.
 func (mr *MockContainerAPIClientMockRecorder) GetContainerInfo(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerInfo", reflect.TypeOf((*MockContainerAPIClient)(nil).GetContainerInfo), ctx, id)
 }
 
-// ReleaseContainerResources mocks base method
+// ListContainers mocks base method.
+func (m *MockContainerAPIClient) ListContainers(ctx context.Context) ([]*types.Container, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListContainers", ctx)
+	ret0, _ := ret[0].([]*types.Container)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListContainers indicates an expected call of ListContainers.
+func (mr *MockContainerAPIClientMockRecorder) ListContainers(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListContainers", reflect.TypeOf((*MockContainerAPIClient)(nil).ListContainers), ctx)
+}
+
+// PauseContainer mocks base method.
+func (m *MockContainerAPIClient) PauseContainer(ctx context.Context, container *types.Container) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PauseContainer", ctx, container)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PauseContainer indicates an expected call of PauseContainer.
+func (mr *MockContainerAPIClientMockRecorder) PauseContainer(ctx, container interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PauseContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).PauseContainer), ctx, container)
+}
+
+// ReleaseContainerResources mocks base method.
 func (m *MockContainerAPIClient) ReleaseContainerResources(ctx context.Context, container *types.Container) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReleaseContainerResources", ctx, container)
@@ -221,13 +197,27 @@ func (m *MockContainerAPIClient) ReleaseContainerResources(ctx context.Context, 
 	return ret0
 }
 
-// ReleaseContainerResources indicates an expected call of ReleaseContainerResources
+// ReleaseContainerResources indicates an expected call of ReleaseContainerResources.
 func (mr *MockContainerAPIClientMockRecorder) ReleaseContainerResources(ctx, container interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReleaseContainerResources", reflect.TypeOf((*MockContainerAPIClient)(nil).ReleaseContainerResources), ctx, container)
 }
 
-// SetContainerExitHooks mocks base method
+// RestoreContainer mocks base method.
+func (m *MockContainerAPIClient) RestoreContainer(ctx context.Context, container *types.Container) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RestoreContainer", ctx, container)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RestoreContainer indicates an expected call of RestoreContainer.
+func (mr *MockContainerAPIClientMockRecorder) RestoreContainer(ctx, container interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RestoreContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).RestoreContainer), ctx, container)
+}
+
+// SetContainerExitHooks mocks base method.
 func (m *MockContainerAPIClient) SetContainerExitHooks(hooks ...ctr.ContainerExitHook) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -237,22 +227,51 @@ func (m *MockContainerAPIClient) SetContainerExitHooks(hooks ...ctr.ContainerExi
 	m.ctrl.Call(m, "SetContainerExitHooks", varargs...)
 }
 
-// SetContainerExitHooks indicates an expected call of SetContainerExitHooks
+// SetContainerExitHooks indicates an expected call of SetContainerExitHooks.
 func (mr *MockContainerAPIClientMockRecorder) SetContainerExitHooks(hooks ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetContainerExitHooks", reflect.TypeOf((*MockContainerAPIClient)(nil).SetContainerExitHooks), hooks...)
 }
 
-// UpdateContainer mocks base method
-func (m *MockContainerAPIClient) UpdateContainer(ctx context.Context, container *types.Container, reseources *types.Resources) error {
+// StartContainer mocks base method.
+func (m *MockContainerAPIClient) StartContainer(ctx context.Context, container *types.Container, checkpointDir string) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateContainer", ctx, container, reseources)
+	ret := m.ctrl.Call(m, "StartContainer", ctx, container, checkpointDir)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StartContainer indicates an expected call of StartContainer.
+func (mr *MockContainerAPIClientMockRecorder) StartContainer(ctx, container, checkpointDir interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).StartContainer), ctx, container, checkpointDir)
+}
+
+// UnpauseContainer mocks base method.
+func (m *MockContainerAPIClient) UnpauseContainer(ctx context.Context, container *types.Container) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnpauseContainer", ctx, container)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateContainer indicates an expected call of UpdateContainer
-func (mr *MockContainerAPIClientMockRecorder) UpdateContainer(ctx, container interface{}, resources interface{}) *gomock.Call {
+// UnpauseContainer indicates an expected call of UnpauseContainer.
+func (mr *MockContainerAPIClientMockRecorder) UnpauseContainer(ctx, container interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnpauseContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).UnpauseContainer), ctx, container)
+}
+
+// UpdateContainer mocks base method.
+func (m *MockContainerAPIClient) UpdateContainer(ctx context.Context, container *types.Container, resources *types.Resources) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateContainer", ctx, container, resources)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateContainer indicates an expected call of UpdateContainer.
+func (mr *MockContainerAPIClientMockRecorder) UpdateContainer(ctx, container, resources interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).UpdateContainer), ctx, container, resources)
 }

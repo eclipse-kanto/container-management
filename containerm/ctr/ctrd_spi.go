@@ -13,10 +13,10 @@ package ctr
 
 import (
 	"context"
-
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/events"
+	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/snapshots"
 	"github.com/eclipse-kanto/container-management/containerm/log"
@@ -33,10 +33,14 @@ type containerClientWrapper interface {
 	LoadContainer(ctx context.Context, id string) (containerd.Container, error)
 	// GetImage retrieves an image from the local cache
 	GetImage(ctx context.Context, ref string) (containerd.Image, error)
+	// ListImages returns all locally existing images
+	ListImages(ctx context.Context, filters ...string) ([]containerd.Image, error)
 	// SnapshotService returns the current snapshots manager service
 	SnapshotService(snapshotterName string) snapshots.Snapshotter
 	// LeasesService returns the current leases manager instance
 	LeasesService() leases.Manager
+	// ImageService returns the current image store instance
+	ImageService() images.Store
 	// Pull downloads the provided content and returns an image object
 	Pull(ctx context.Context, ref string, opts ...containerd.RemoteOpt) (_ containerd.Image, retErr error)
 	// Close closes the internal communication channel
@@ -54,6 +58,10 @@ type containerdSpi interface {
 	PullImage(ctx context.Context, imageRef string, opts ...containerd.RemoteOpt) (containerd.Image, error)
 	// UnpackImage unpacks the contents of the provided image locally
 	UnpackImage(ctx context.Context, image containerd.Image, opts ...containerd.UnpackOpt) error
+	// DeleteImage removes the contents of the provided image from the disk
+	DeleteImage(ctx context.Context, imageRef string) error
+	// ListImages returns all locally existing images
+	ListImages(ctx context.Context) ([]containerd.Image, error)
 
 	// Wrapper section for managing the file system of the container and its snapshots
 	// GetSnapshotID generates a new ID for the snapshot to be used for this container
@@ -93,6 +101,8 @@ type ctrdSpi struct {
 	snapshotterType string
 	metaPath        string
 	snapshotService snapshots.Snapshotter
+	leaseService    leases.Manager
+	imageService    images.Store
 }
 
 const (
@@ -106,14 +116,31 @@ func newContainerdSpi(rpcAddress string, namespace string, snapshotterType strin
 		return nil, err
 	}
 
-	var lease leases.Lease
-
 	leaseSrv := ctrdClient.LeasesService()
 	leaseList, err := leaseSrv.List(context.TODO())
 	if err != nil {
 		return nil, err
 	}
 	log.Debug("got all leases")
+
+	var (
+		lease leases.Lease
+		init  = func(lease *leases.Lease) (containerdSpi, error) {
+			log.Debug("will set lease to %v with ID - %s", lease, lease.ID)
+			spi := &ctrdSpi{
+				client:          ctrdClient,
+				lease:           lease,
+				namespace:       namespace,
+				snapshotterType: snapshotterType,
+				metaPath:        metaPath,
+				snapshotService: ctrdClient.SnapshotService(snapshotterType),
+				leaseService:    ctrdClient.LeasesService(),
+				imageService:    ctrdClient.ImageService(),
+			}
+			spi.disperseImageResources(leaseList)
+			return spi, nil
+		}
+	)
 
 	for _, l := range leaseList {
 		log.Debug("checking lease with ID = %s", l.ID)
@@ -131,15 +158,7 @@ func newContainerdSpi(rpcAddress string, namespace string, snapshotterType strin
 		log.Debug("is expired lease %s - %v", containerManagementLeaseID, foundExpireLabel)
 		// found a lease that matched the condition, just return
 		if !foundExpireLabel {
-			log.Debug("will set lease to %v with ID - %s", &l, (&l).ID)
-			return &ctrdSpi{
-				client:          ctrdClient,
-				lease:           &l,
-				namespace:       namespace,
-				snapshotterType: snapshotterType,
-				metaPath:        metaPath,
-				snapshotService: ctrdClient.SnapshotService(snapshotterType),
-			}, nil
+			return init(&l)
 		}
 		log.Debug("deleting expired lease %s", containerManagementLeaseID)
 		// found a lease with id is container-management.lease and has expire time,
@@ -154,15 +173,7 @@ func newContainerdSpi(rpcAddress string, namespace string, snapshotterType strin
 	if lease, err = leaseSrv.Create(context.TODO(), leases.WithID(containerManagementLeaseID)); err != nil {
 		return nil, err
 	}
-	log.Debug("will set lease to %v with ID - %s", &lease, (&lease).ID)
-	return &ctrdSpi{
-		client:          ctrdClient,
-		lease:           &lease,
-		namespace:       namespace,
-		snapshotterType: snapshotterType,
-		metaPath:        metaPath,
-		snapshotService: ctrdClient.SnapshotService(snapshotterType),
-	}, nil
+	return init(&lease)
 }
 
 func (spi *ctrdSpi) Dispose(ctx context.Context) error {

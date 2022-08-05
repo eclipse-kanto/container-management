@@ -44,6 +44,7 @@ const (
 	containerClientExecRootDefault    = managerExecRootPathDefault
 	containerClientMetaPathDefault    = managerMetaPathDefault
 	containerClientRuncRuntimeDefault = string(types.RuntimeTypeV2runcV2)
+	containerClientImageExpiry        = 31
 
 	// default network manager config
 	networkManagerNetTypeDefault  = string(types.NetworkModeBridge)
@@ -114,6 +115,7 @@ func getDefaultInstance() *config {
 			CtrRootExec:           containerClientExecRootDefault,
 			CtrMetaPath:           containerClientMetaPathDefault,
 			CtrRuncRuntime:        containerClientRuncRuntimeDefault,
+			CtrImageExpiry:        containerClientImageExpiry,
 		},
 		NetworkConfig: &networkConfig{
 			NetType:     networkManagerNetTypeDefault,

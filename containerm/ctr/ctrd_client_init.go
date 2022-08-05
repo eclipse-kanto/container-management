@@ -21,7 +21,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime) (ContainerAPIClient, error) {
+func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime, imageExpiry int) (ContainerAPIClient, error) {
 
 	//ensure storage
 	err := util.MkDir(rootExec)
@@ -53,6 +53,7 @@ func newContainerdClient(namespace, socket, rootExec, metaPath string, registryC
 		logsMgr:            newContainerLogsManager(filepath.Join(metaPath, "containers")),
 		decMgr:             decryptMgr,
 		runcRuntime:        runcRuntime,
+		imageExpiry:        imageExpiry,
 	}
 	go ctrdClient.processEvents(namespace)
 	return ctrdClient, nil
@@ -65,6 +66,6 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 		return nil, err
 	}
 
-	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients, opts.runcRuntime)
+	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients, opts.runcRuntime, opts.imageExpiry)
 
 }

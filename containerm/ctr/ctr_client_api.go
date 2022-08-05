@@ -22,6 +22,9 @@ import (
 // ContainerExitHook represents a hook for clearing logic to the containers resources management on exit
 type ContainerExitHook func(*types.Container, int64, error, bool, func() error) error
 
+// ImageDeleteFilter returns whether an image should be deleted
+type ImageDeleteFilter func(imageRef string) bool
+
 // ContainerAPIClient provides access to containerd container features
 type ContainerAPIClient interface {
 	// DestroyContainer kill container and delete it
@@ -63,6 +66,9 @@ type ContainerAPIClient interface {
 	// SetContainerExitHooks provides access for hooking a clearing logic to the containers resources management on exit
 	SetContainerExitHooks(hooks ...ContainerExitHook)
 
-	//UpdateContainer updates container resource limits
+	// UpdateContainer updates container resource limits
 	UpdateContainer(ctx context.Context, container *types.Container, resources *types.Resources) error
+
+	// CleanContainerResources cleans unused container resources. The images filtered for deleting would either be remove right away or be scheduled for removing upon the configured image expiry time.
+	CleanContainerResources(ctx context.Context, filters ...ImageDeleteFilter) error
 }

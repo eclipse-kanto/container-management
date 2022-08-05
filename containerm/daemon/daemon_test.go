@@ -242,6 +242,10 @@ func TestSetCommandFlags(t *testing.T) {
 			flag:         "ccl-runc-runtime",
 			expectedType: reflect.String.String(),
 		},
+		"test_flags_ccl-image-expiry": {
+			flag:         "ccl-image-expiry",
+			expectedType: reflect.Int.String(),
+		},
 		"test_flags_net-type": {
 			flag:         "net-type",
 			expectedType: reflect.String.String(),

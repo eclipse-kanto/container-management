@@ -75,10 +75,11 @@ func TestPullImage(t *testing.T) {
 	const testSnapshotterType = "testSnapshotterType"
 
 	testCases := map[string]struct {
-		mapExec func(*ctrdMocks.MockcontainerClientWrapper, *containerdMocks.MockImage) (containerd.Image, error)
+		mapExec func(*ctrdMocks.MockcontainerClientWrapper, *containerdMocks.MockImage, *containerdMocks.MockManager) (containerd.Image, error)
 	}{
 		"test_no_err": {
-			mapExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, image *containerdMocks.MockImage) (containerd.Image, error) {
+			mapExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, image *containerdMocks.MockImage, leaseManager *containerdMocks.MockManager) (containerd.Image, error) {
+				leaseManager.EXPECT().Create(gomock.Any(), gomock.AssignableToTypeOf(leases.WithID(testImageRef))).Return(leases.Lease{ID: testImageRef}, nil)
 				ctrdWrapper.EXPECT().Pull(gomock.Any(), testImageRef, matchers.MatchesResolverOpts(
 					containerd.WithSchema1Conversion,
 					containerd.WithPullSnapshotter(testSnapshotterType),
@@ -86,13 +87,21 @@ func TestPullImage(t *testing.T) {
 				return image, nil
 			},
 		},
-		"test_err": {
-			mapExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, _ *containerdMocks.MockImage) (containerd.Image, error) {
+		"test_pull_err": {
+			mapExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, _ *containerdMocks.MockImage, leaseManager *containerdMocks.MockManager) (containerd.Image, error) {
+				leaseManager.EXPECT().Create(gomock.Any(), gomock.AssignableToTypeOf(leases.WithID(testImageRef))).Return(leases.Lease{ID: testImageRef}, nil)
 				err := log.NewError("test pull image error")
 				ctrdWrapper.EXPECT().Pull(gomock.Any(), testImageRef, matchers.MatchesResolverOpts(
 					containerd.WithSchema1Conversion,
 					containerd.WithPullSnapshotter(testSnapshotterType),
 					containerd.WithPullUnpack)).Times(1).Return(nil, err)
+				return nil, err
+			},
+		},
+		"test_create_lease_err": {
+			mapExec: func(_ *ctrdMocks.MockcontainerClientWrapper, _ *containerdMocks.MockImage, leaseManager *containerdMocks.MockManager) (containerd.Image, error) {
+				err := log.NewError("test create lease error")
+				leaseManager.EXPECT().Create(gomock.Any(), gomock.AssignableToTypeOf(leases.WithID(testImageRef))).Return(leases.Lease{}, err)
 				return nil, err
 			},
 		},
@@ -106,9 +115,10 @@ func TestPullImage(t *testing.T) {
 			// init mocks
 			mockCtrdWrapper := ctrdMocks.NewMockcontainerClientWrapper(mockCtrl)
 			mockImage := containerdMocks.NewMockImage(mockCtrl)
+			mockLeaseService := containerdMocks.NewMockManager(mockCtrl)
 
 			// mock exec
-			expectedImage, expectedErr := testData.mapExec(mockCtrdWrapper, mockImage)
+			expectedImage, expectedErr := testData.mapExec(mockCtrdWrapper, mockImage, mockLeaseService)
 			// init spi under test
 			testSpi := &ctrdSpi{
 				client:          mockCtrdWrapper,
@@ -116,6 +126,7 @@ func TestPullImage(t *testing.T) {
 				lease: &leases.Lease{
 					ID: containerManagementLeaseID,
 				},
+				leaseService: mockLeaseService,
 			}
 			// test
 			actualImage, actualErr := testSpi.PullImage(context.Background(), testImageRef,
