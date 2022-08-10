@@ -7,7 +7,7 @@ Requires=containerd.service
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/container-management --cfg-file /etc/container-management/config.json
+ExecStart=/usr/bin/container-management --cfg-file /etc/container-management/config.json
 Restart=always
 TimeoutSec=300
 
