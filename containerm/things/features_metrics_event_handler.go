@@ -52,14 +52,16 @@ func (f *metricsFeature) handleEventRunning(ctrID string) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
-	metrics, err := f.mgr.Metrics(context.Background(), ctrID)
-	if err != nil {
-		log.ErrorErr(err, "could not get metrics for container with ID=%s", ctrID)
-		return
-	}
-
 	originator := fmt.Sprintf(containerFeatureIDTemplate, ctrID)
-	if metrics != nil && metrics.CPU != nil && f.request != nil && f.request.HasFilterForItem(CPUUtilization, originator) {
-		f.previousCPU[originator] = metrics.CPU
+	if f.request != nil && f.request.HasFilterForItem(CPUUtilization, originator) {
+		metrics, err := f.mgr.Metrics(context.Background(), ctrID)
+		if err != nil {
+			log.ErrorErr(err, "could not get metrics for container with ID=%s", ctrID)
+			return
+		}
+
+		if metrics != nil && metrics.CPU != nil {
+			f.previousCPU[originator] = metrics.CPU
+		}
 	}
 }
