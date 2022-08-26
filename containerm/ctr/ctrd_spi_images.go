@@ -14,9 +14,7 @@ package ctr
 import (
 	"context"
 	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/leases"
-	"github.com/eclipse-kanto/container-management/containerm/log"
+	"github.com/containerd/containerd/images"
 )
 
 // GetImage returns a locally existing image
@@ -28,14 +26,6 @@ func (spi *ctrdSpi) GetImage(ctx context.Context, imageRef string) (containerd.I
 // PullImage downloads the provided content and returns an image object
 func (spi *ctrdSpi) PullImage(ctx context.Context, imageRef string, opts ...containerd.RemoteOpt) (containerd.Image, error) {
 	ctx = spi.setContext(ctx, false)
-	lease, err := spi.leaseService.Create(ctx, leases.WithID(imageRef))
-	if err != nil {
-		if !errdefs.IsAlreadyExists(err) {
-			log.ErrorErr(err, "error creating lease with ID = %s", imageRef)
-			return nil, err
-		}
-	}
-	ctx = leases.WithLease(ctx, lease.ID)
 	return spi.client.Pull(ctx, imageRef, opts...)
 }
 
@@ -55,10 +45,5 @@ func (spi *ctrdSpi) ListImages(ctx context.Context) ([]containerd.Image, error) 
 // DeleteImage removes the contents of the provided image from the disk
 func (spi *ctrdSpi) DeleteImage(ctx context.Context, imageRef string) error {
 	ctx = spi.setContext(ctx, false)
-
-	lease := leases.Lease{ID: imageRef}
-	if err := spi.leaseService.Delete(ctx, lease); err != nil {
-		return err
-	}
-	return spi.client.ImageService().Delete(ctx, imageRef)
+	return spi.client.ImageService().Delete(ctx, imageRef, images.SynchronousDelete())
 }

@@ -116,31 +116,14 @@ func newContainerdSpi(rpcAddress string, namespace string, snapshotterType strin
 		return nil, err
 	}
 
+	var lease leases.Lease
+
 	leaseSrv := ctrdClient.LeasesService()
 	leaseList, err := leaseSrv.List(context.TODO())
 	if err != nil {
 		return nil, err
 	}
 	log.Debug("got all leases")
-
-	var (
-		lease leases.Lease
-		init  = func(lease *leases.Lease) (containerdSpi, error) {
-			log.Debug("will set lease to %v with ID - %s", lease, lease.ID)
-			spi := &ctrdSpi{
-				client:          ctrdClient,
-				lease:           lease,
-				namespace:       namespace,
-				snapshotterType: snapshotterType,
-				metaPath:        metaPath,
-				snapshotService: ctrdClient.SnapshotService(snapshotterType),
-				leaseService:    ctrdClient.LeasesService(),
-				imageService:    ctrdClient.ImageService(),
-			}
-			spi.disperseImageResources(leaseList)
-			return spi, nil
-		}
-	)
 
 	for _, l := range leaseList {
 		log.Debug("checking lease with ID = %s", l.ID)
@@ -158,7 +141,17 @@ func newContainerdSpi(rpcAddress string, namespace string, snapshotterType strin
 		log.Debug("is expired lease %s - %v", containerManagementLeaseID, foundExpireLabel)
 		// found a lease that matched the condition, just return
 		if !foundExpireLabel {
-			return init(&l)
+			log.Debug("will set lease to %v with ID - %s", &l, (&l).ID)
+			spi := &ctrdSpi{
+				client:          ctrdClient,
+				lease:           &l,
+				namespace:       namespace,
+				snapshotterType: snapshotterType,
+				metaPath:        metaPath,
+				snapshotService: ctrdClient.SnapshotService(snapshotterType),
+			}
+			spi.unleaseImageResources()
+			return spi, nil
 		}
 		log.Debug("deleting expired lease %s", containerManagementLeaseID)
 		// found a lease with id is container-management.lease and has expire time,
@@ -173,7 +166,15 @@ func newContainerdSpi(rpcAddress string, namespace string, snapshotterType strin
 	if lease, err = leaseSrv.Create(context.TODO(), leases.WithID(containerManagementLeaseID)); err != nil {
 		return nil, err
 	}
-	return init(&lease)
+	log.Debug("will set lease to %v with ID - %s", &lease, (&lease).ID)
+	return &ctrdSpi{
+		client:          ctrdClient,
+		lease:           &lease,
+		namespace:       namespace,
+		snapshotterType: snapshotterType,
+		metaPath:        metaPath,
+		snapshotService: ctrdClient.SnapshotService(snapshotterType),
+	}, nil
 }
 
 func (spi *ctrdSpi) Dispose(ctx context.Context) error {
