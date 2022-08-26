@@ -101,7 +101,6 @@ type ctrdSpi struct {
 	snapshotterType string
 	metaPath        string
 	snapshotService snapshots.Snapshotter
-	leaseService    leases.Manager
 	imageService    images.Store
 }
 
@@ -141,17 +140,29 @@ func newContainerdSpi(rpcAddress string, namespace string, snapshotterType strin
 		log.Debug("is expired lease %s - %v", containerManagementLeaseID, foundExpireLabel)
 		// found a lease that matched the condition, just return
 		if !foundExpireLabel {
+			// remove images content from the lease
+			var resources []leases.Resource
+			if resources, err = leaseSrv.ListResources(context.TODO(), l); err == nil {
+				for _, r := range resources {
+					if r.Type == "content" {
+						// delete only dereferences the resources from the lease
+						if err = leaseSrv.DeleteResource(context.TODO(), l, r); err != nil {
+							log.ErrorErr(err, "could not remove resource with ID = %s of lease with ID = %s", r.ID, l.ID)
+						}
+					}
+				}
+			} else {
+				log.ErrorErr(err, "could not list resources of lease with ID = %s", l.ID)
+			}
 			log.Debug("will set lease to %v with ID - %s", &l, (&l).ID)
-			spi := &ctrdSpi{
+			return &ctrdSpi{
 				client:          ctrdClient,
 				lease:           &l,
 				namespace:       namespace,
 				snapshotterType: snapshotterType,
 				metaPath:        metaPath,
 				snapshotService: ctrdClient.SnapshotService(snapshotterType),
-			}
-			spi.unleaseImageResources()
-			return spi, nil
+			}, nil
 		}
 		log.Debug("deleting expired lease %s", containerManagementLeaseID)
 		// found a lease with id is container-management.lease and has expire time,
