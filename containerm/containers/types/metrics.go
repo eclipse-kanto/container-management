@@ -15,24 +15,24 @@ import "time"
 
 // Metrics container metrics.
 type Metrics struct {
-	CPU       *CPUStats    `json:"cpu,omitempty"`
-	Memory    *MemoryStats `json:"memory,omitempty"`
-	IO        *IOStats     `json:"io,omitempty"`
-	Network   *IOStats     `json:"network,omitempty"`
-	Timestamp time.Time    `json:"timestamp"`
-	PIDs      uint64       `json:"pids"`
+	CPU       *CPUMetrics    `json:"cpu,omitempty"`
+	Memory    *MemoryMetrics `json:"memory,omitempty"`
+	IO        *IOMetrics     `json:"io,omitempty"`
+	Network   *IOMetrics     `json:"network,omitempty"`
+	Timestamp time.Time      `json:"timestamp"`
+	PIDs      uint64         `json:"pids"`
 }
 
-// CPUStats container stats regarding CPU.
-type CPUStats struct {
-	// Total is container's processes CPU time in nanoseconds.
+// CPUMetrics container stats regarding CPU.
+type CPUMetrics struct {
+	// Total is the total system CPU time in nanoseconds.
 	Total uint64 `json:"total"`
-	// SystemTotal is total system CPU time in nanoseconds.
-	SystemTotal uint64 `json:"system_total"`
+	// Used is container's processes CPU time in nanoseconds.
+	Used uint64 `json:"used"`
 }
 
-// MemoryStats container stats regarding Memory.
-type MemoryStats struct {
+// MemoryMetrics container stats regarding Memory.
+type MemoryMetrics struct {
 	// Total is the container memory limit in bytes.
 	// If container does not have memory limit set, machine memory is used.
 	Total uint64 `json:"total"`
@@ -40,8 +40,8 @@ type MemoryStats struct {
 	Used uint64 `json:"used"`
 }
 
-// IOStats container stats regarding IO
-type IOStats struct {
+// IOMetrics container stats regarding IO.
+type IOMetrics struct {
 	// Read is the number of bytes that has been read.
 	Read uint64 `json:"read"`
 	// Write is the number of bytes that has been written.

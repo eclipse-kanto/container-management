@@ -144,10 +144,10 @@ func (mr *MockNetworkManagerMockRecorder) Initialize(ctx interface{}) *gomock.Ca
 }
 
 // Metrics mocks base method
-func (m *MockNetworkManager) Metrics(ctx context.Context, container *types.Container) (*types.IOStats, error) {
+func (m *MockNetworkManager) Metrics(ctx context.Context, container *types.Container) (*types.IOMetrics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Metrics", ctx, container)
-	ret0, _ := ret[0].(*types.IOStats)
+	ret0, _ := ret[0].(*types.IOMetrics)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -41,5 +41,5 @@ type ConteinerNetworkManager interface {
 	Initialize(ctx context.Context) error
 
 	// Metrics retrieves the network statistics of the provided container
-	Metrics(ctx context.Context, container *types.Container) (*types.IOStats, error)
+	Metrics(ctx context.Context, container *types.Container) (*types.IOMetrics, error)
 }

@@ -18,11 +18,8 @@ import (
 	"github.com/containerd/typeurl"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/eclipse-kanto/container-management/containerm/util"
 	"strings"
-	"sync"
-	"time"
 )
 
 func toMetrics(ctrdMetrics *ctrdTypes.Metric) (*types.Metrics, error) {
@@ -57,19 +54,19 @@ func toMetricsV1(ctrdMetrics *statsV1.Metrics) *types.Metrics {
 		metrics.PIDs = ctrdMetrics.Pids.Current
 	}
 	if ctrdMetrics.CPU != nil && ctrdMetrics.CPU.Usage != nil {
-		if systemTotal, err := getSystemCPUUsage(); err == nil {
-			metrics.CPU = &types.CPUStats{
-				Total:       ctrdMetrics.CPU.Usage.Total,
-				SystemTotal: systemTotal,
+		if systemTotal, err := util.GetSystemCPUUsage(); err == nil {
+			metrics.CPU = &types.CPUMetrics{
+				Used:  ctrdMetrics.CPU.Usage.Total,
+				Total: systemTotal,
 			}
 		} else {
 			log.WarnErr(err, "could not get system CPU usage")
 		}
 	}
 	if ctrdMetrics.Memory != nil && ctrdMetrics.Memory.Usage != nil {
-		metrics.Memory = &types.MemoryStats{
+		metrics.Memory = &types.MemoryMetrics{
 			Used:  ctrdMetrics.Memory.Usage.Usage - ctrdMetrics.Memory.TotalInactiveFile,
-			Total: getMemoryLimit(ctrdMetrics.Memory.Usage.Limit),
+			Total: util.GetMemoryLimit(ctrdMetrics.Memory.Usage.Limit),
 		}
 	}
 	return metrics
@@ -83,46 +80,25 @@ func toMetricsV2(ctrdMetrics *statsV2.Metrics) *types.Metrics {
 		metrics.PIDs = ctrdMetrics.Pids.Current
 	}
 	if ctrdMetrics.CPU != nil {
-		if systemTotal, err := getSystemCPUUsage(); err == nil {
-			metrics.CPU = &types.CPUStats{
-				Total:       ctrdMetrics.CPU.UsageUsec * 1000,
-				SystemTotal: systemTotal,
+		if systemTotal, err := util.GetSystemCPUUsage(); err == nil {
+			metrics.CPU = &types.CPUMetrics{
+				Used:  ctrdMetrics.CPU.UsageUsec * 1000,
+				Total: systemTotal,
 			}
 		} else {
 			log.WarnErr(err, "could not get system CPU usage")
 		}
 	}
 	if ctrdMetrics.Memory != nil {
-		metrics.Memory = &types.MemoryStats{
+		metrics.Memory = &types.MemoryMetrics{
 			Used:  ctrdMetrics.Memory.Usage - ctrdMetrics.Memory.InactiveFile,
-			Total: getMemoryLimit(ctrdMetrics.Memory.UsageLimit),
+			Total: util.GetMemoryLimit(ctrdMetrics.Memory.UsageLimit),
 		}
 	}
 	return metrics
 }
 
-var (
-	machineMemory       uint64
-	detectMachineMemory sync.Once
-)
-
-func getMemoryLimit(limit uint64) uint64 {
-	detectMachineMemory.Do(func() {
-		if vm, err := mem.VirtualMemory(); err == nil {
-			if vm.Total > 0 {
-				machineMemory = vm.Total
-			} else {
-				err = log.NewErrorf("unexpected value for machine memory: %d", vm.Total)
-			}
-		}
-	})
-	if limit > machineMemory && machineMemory > 0 {
-		return machineMemory
-	}
-	return limit
-}
-
-func calculateIO(io *statsV2.IOStat) *types.IOStats {
+func calculateIO(io *statsV2.IOStat) *types.IOMetrics {
 	if io == nil || io.Usage == nil {
 		return nil
 	}
@@ -131,23 +107,10 @@ func calculateIO(io *statsV2.IOStat) *types.IOStats {
 		read = read + entry.Rbytes
 		write = write + entry.Wbytes
 	}
-	return &types.IOStats{Read: read, Write: write}
+	return &types.IOMetrics{Read: read, Write: write}
 }
 
-func getSystemCPUUsage() (uint64, error) {
-	if times, err := cpu.Times(false); err == nil {
-		usage := uint64(total(times[0]) * float64(time.Second))
-		return usage, nil
-	}
-	return 0, log.NewErrorf("could not get system CPU usage")
-}
-
-func total(time cpu.TimesStat) float64 {
-	return time.User + time.System + time.Idle + time.Nice + time.Iowait + time.Irq +
-		time.Softirq + time.Steal
-}
-
-func calculateBlkIO(blkio *statsV1.BlkIOStat) *types.IOStats {
+func calculateBlkIO(blkio *statsV1.BlkIOStat) *types.IOMetrics {
 	if blkio == nil || blkio.IoServiceBytesRecursive == nil {
 		return nil
 	}
@@ -160,5 +123,5 @@ func calculateBlkIO(blkio *statsV1.BlkIOStat) *types.IOStats {
 			write += entry.Value
 		}
 	}
-	return &types.IOStats{Read: read, Write: write}
+	return &types.IOMetrics{Read: read, Write: write}
 }
