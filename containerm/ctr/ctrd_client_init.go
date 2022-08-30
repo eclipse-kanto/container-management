@@ -14,6 +14,7 @@ package ctr
 import (
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"path/filepath"
+	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/eclipse-kanto/container-management/containerm/log"
@@ -54,6 +55,7 @@ func newContainerdClient(namespace, socket, rootExec, metaPath string, registryC
 		decMgr:             decryptMgr,
 		runcRuntime:        runcRuntime,
 		imageExpiry:        imageExpiry,
+		imageExpiryTimers:  make(map[string]*time.Timer),
 	}
 	go ctrdClient.processEvents(namespace)
 	return ctrdClient, nil

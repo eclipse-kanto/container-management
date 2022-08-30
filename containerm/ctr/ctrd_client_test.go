@@ -13,11 +13,15 @@ package ctr
 
 import (
 	"context"
+	"errors"
+	"github.com/containerd/containerd/images"
 	"github.com/containerd/imgcrypt"
 	"github.com/containerd/imgcrypt/images/encryption"
 	"github.com/containers/ocicrypt/config"
 	"reflect"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -907,16 +911,16 @@ func TestSetContainerExitHooks(t *testing.T) {
 
 func TestCtrdClientDispose(t *testing.T) {
 	testCases := map[string]struct {
-		mapExec func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi) error
+		mockExec func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi) error
 	}{
 		"test_no_err": {
-			mapExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi) error {
+			mockExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi) error {
 				mockCtrdWrapper.EXPECT().Dispose(gomock.Any()).Return(nil)
 				return nil
 			},
 		},
 		"test_err": {
-			mapExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi) error {
+			mockExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi) error {
 				err := log.NewError("test error")
 				mockCtrdWrapper.EXPECT().Dispose(gomock.Any()).Return(err)
 				return err
@@ -932,7 +936,7 @@ func TestCtrdClientDispose(t *testing.T) {
 			// init mocks
 			mockSpi := ctrdMocks.NewMockcontainerdSpi(mockCtrl)
 			// mock exec
-			expectedErr := testData.mapExec(mockSpi)
+			expectedErr := testData.mockExec(mockSpi)
 			// init spi under test
 			testClient := &containerdClient{
 				spi:       mockSpi,
@@ -957,13 +961,11 @@ func TestCtrdClientUpdateContainer(t *testing.T) {
 	testCtrID := "test-update-id"
 	unlimited := int64(-1)
 
-	type mockExec func() error
-
 	var testClient *containerdClient
 	tests := map[string]struct {
 		ctr       *types.Container
 		resources *types.Resources
-		exec      mockExec
+		mockExec  func() error
 	}{
 		"test_with_initial_limits": {
 			ctr: &types.Container{
@@ -978,7 +980,7 @@ func TestCtrdClientUpdateContainer(t *testing.T) {
 			resources: &types.Resources{
 				Memory: "200M",
 			},
-			exec: func() error {
+			mockExec: func() error {
 				limit := int64(200 * 1024 * 1024)
 				resources := &specs.LinuxResources{
 					Devices: spec.Linux.Resources.Devices,
@@ -1001,7 +1003,7 @@ func TestCtrdClientUpdateContainer(t *testing.T) {
 				Memory:            "200M",
 				MemoryReservation: "100M",
 			},
-			exec: func() error {
+			mockExec: func() error {
 				limit := int64(200 * 1024 * 1024)
 				reservation := int64(100 * 1024 * 1024)
 				resources := &specs.LinuxResources{
@@ -1021,7 +1023,7 @@ func TestCtrdClientUpdateContainer(t *testing.T) {
 				ID:         testCtrID,
 				HostConfig: &types.HostConfig{},
 			},
-			exec: func() error {
+			mockExec: func() error {
 				return nil
 			},
 		},
@@ -1030,7 +1032,7 @@ func TestCtrdClientUpdateContainer(t *testing.T) {
 				ID: testCtrID,
 			},
 			resources: &types.Resources{},
-			exec: func() error {
+			mockExec: func() error {
 				err := log.NewError("test error")
 				mockContainer.EXPECT().Spec(ctx).Return(nil, err)
 				return err
@@ -1041,7 +1043,7 @@ func TestCtrdClientUpdateContainer(t *testing.T) {
 				ID: testCtrID,
 			},
 			resources: &types.Resources{},
-			exec: func() error {
+			mockExec: func() error {
 				testClient.ctrdCache.cache[testCtrID] = nil
 				return log.NewErrorf("missing container to update with ID = %s", testCtrID)
 			},
@@ -1067,9 +1069,79 @@ func TestCtrdClientUpdateContainer(t *testing.T) {
 				task:      mockTask,
 			}
 
-			expectedErr := testCase.exec()
+			expectedErr := testCase.mockExec()
 			actualErr := testClient.UpdateContainer(ctx, testCase.ctr, testCase.resources)
 			testutil.AssertError(t, expectedErr, actualErr)
+		})
+	}
+}
+
+func TestCleanContainerResources(t *testing.T) {
+	const testCasesTimeout = 5 * time.Second
+
+	// init mock ctrl
+	mockCtrl := gomock.NewController(t)
+
+	// init mocks
+	mockSpi := ctrdMocks.NewMockcontainerdSpi(mockCtrl)
+	mockImage := containerdMocks.NewMockImage(mockCtrl)
+	defer mockCtrl.Finish()
+
+	filter := func(imageRef string) bool {
+		return testImageRef == imageRef
+	}
+	wg := &sync.WaitGroup{}
+
+	tests := map[string]struct {
+		filter   ImageDeleteFilter
+		mockExec func() error
+	}{
+		"test_no_error": {
+			filter: filter,
+			mockExec: func() error {
+				mockSpi.EXPECT().ListImages(gomock.Any()).Return([]containerd.Image{mockImage}, nil)
+				mockImage.EXPECT().Name().Return(testImageRef).AnyTimes()
+				mockImage.EXPECT().Metadata().Return(images.Image{CreatedAt: time.Now().Add(-32 * 24 * time.Hour)})
+				mockSpi.EXPECT().DeleteImage(gomock.Any(), testImageRef).Return(nil)
+				return nil
+			},
+		},
+		"test_timer_no_error": {
+			filter: filter,
+			mockExec: func() error {
+				wg.Add(1)
+				mockSpi.EXPECT().ListImages(gomock.Any()).Return([]containerd.Image{mockImage}, nil)
+				mockImage.EXPECT().Name().Return(testImageRef).AnyTimes()
+				mockImage.EXPECT().Metadata().Return(images.Image{CreatedAt: time.Now().Add(-31*24*time.Hour + 1*time.Second)})
+				mockSpi.EXPECT().DeleteImage(gomock.Any(), testImageRef).Do(func(_ context.Context, _ string) error {
+					wg.Done()
+					return nil
+				}).Return(nil)
+				return nil
+			},
+		},
+		"test_list_error": {
+			filter: filter,
+			mockExec: func() error {
+				err := errors.New("test error")
+				mockSpi.EXPECT().ListImages(gomock.Any()).Return([]containerd.Image{}, err)
+				return err
+			},
+		},
+	}
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+
+			testClient := &containerdClient{
+				spi:               mockSpi,
+				imageExpiry:       31,
+				imageExpiryTimers: make(map[string]*time.Timer),
+			}
+
+			expectedErr := testCase.mockExec()
+			actualErr := testClient.CleanContainerResources(context.TODO(), testCase.filter)
+			testutil.AssertError(t, expectedErr, actualErr)
+			testutil.AssertWithTimeout(t, wg, testCasesTimeout)
 		})
 	}
 }

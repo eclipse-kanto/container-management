@@ -70,5 +70,5 @@ type ContainerAPIClient interface {
 	UpdateContainer(ctx context.Context, container *types.Container, resources *types.Resources) error
 
 	// CleanContainerResources cleans unused container resources. The images filtered for deleting would either be remove right away or be scheduled for removing upon the configured image expiry time.
-	CleanContainerResources(ctx context.Context, filters ...ImageDeleteFilter) error
+	CleanContainerResources(ctx context.Context, filter ImageDeleteFilter) error
 }
