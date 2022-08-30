@@ -15,7 +15,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/registry"
 )
 
-func newLibnetworkMgr(netConfig config) (ConteinerNetworkManager, error) {
+func newLibnetworkMgr(netConfig config) (ContainerNetworkManager, error) {
 	return &libnetworkMgr{&netConfig, nil}, nil
 }
 

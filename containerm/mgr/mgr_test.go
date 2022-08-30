@@ -1052,7 +1052,7 @@ func TestAttach(t *testing.T) {
 	unitUnderTest.Load(ctx)
 
 	// Act
-	err := unitUnderTest.AttachContainer(context.Background(), ctrID, attachConfig)
+	err := unitUnderTest.Attach(context.Background(), ctrID, attachConfig)
 
 	testutil.AssertNil(t, err)
 }
@@ -1092,7 +1092,7 @@ func getStoppedContainer() (string, *types.Container) {
 func createContainerManagerWithCustomMocks(
 	metaPath string,
 	mockCtrClient ctr.ContainerAPIClient,
-	mockNetworkManager network.ConteinerNetworkManager,
+	mockNetworkManager network.ContainerNetworkManager,
 	mockEventsManager events.ContainerEventsManager,
 	mockRepository containerRepository,
 	containersCache map[string]*types.Container,

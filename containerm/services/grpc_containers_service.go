@@ -111,7 +111,7 @@ func (server *containers) Attach(attachServer pbcontainers.Containers_AttachServ
 	attach.UseStderr = true
 	attach.Stderr = writer
 
-	if err := server.mgr.AttachContainer(ctx, ctrID, attach); err != nil {
+	if err := server.mgr.Attach(ctx, ctrID, attach); err != nil {
 		writer.Write([]byte(err.Error() + "\r\n"))
 		return err
 	}

@@ -48,7 +48,7 @@ type containerMgr struct {
 	execPath               string
 	defaultCtrsStopTimeout int64
 	ctrClient              ctr.ContainerAPIClient
-	netMgr                 network.ConteinerNetworkManager
+	netMgr                 network.ContainerNetworkManager
 	eventsMgr              events.ContainerEventsManager
 
 	containers     map[string]*types.Container
@@ -236,8 +236,8 @@ func (mgr *containerMgr) Start(ctx context.Context, id string) error {
 	return mgr.processStartContainer(ctx, id, true)
 }
 
-// AttachContainer attaches the container's IO
-func (mgr *containerMgr) AttachContainer(ctx context.Context, id string, attachConfig *streams.AttachConfig) error {
+// Attach attaches the container's IO
+func (mgr *containerMgr) Attach(ctx context.Context, id string, attachConfig *streams.AttachConfig) error {
 	container := mgr.getContainerFromCache(id)
 	if container == nil {
 		return log.NewErrorf(noSuchContainerErrorMsg, id)
