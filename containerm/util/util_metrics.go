@@ -33,7 +33,7 @@ func CalculateCPUPercent(cpu *types.CPUMetrics, previousCPU *types.CPUMetrics) (
 		if systemDelta > 0 {
 			return math.Min(100, math.Max(0, cpuDelta/systemDelta*100)), nil
 		}
-		return 0, log.NewErrorf("unexpected system CPU delta: %d", systemDelta)
+		return 0, log.NewErrorf("unexpected system CPU delta: %f", systemDelta)
 	}
 	return 0, log.NewErrorf("no CPU data")
 }
