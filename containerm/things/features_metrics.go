@@ -195,8 +195,12 @@ func (f *metricsFeature) reportMetrics() {
 
 		var measurements []Measurement
 		if metrics.CPU != nil && f.request.HasFilterForItem(CPUUtilization, originator) {
-			measurements = append(measurements, Measurement{ID: CPUUtilization, Value: util.CalculateCPUPercent(metrics.CPU, f.previousCPU[originator])})
-			f.previousCPU[originator] = metrics.CPU
+			if cpuUtilization, err := util.CalculateCPUPercent(metrics.CPU, f.previousCPU[originator]); err == nil {
+				measurements = append(measurements, Measurement{ID: CPUUtilization, Value: cpuUtilization})
+				f.previousCPU[originator] = metrics.CPU
+			} else {
+				log.DebugErr(err, "could not calculate CPU utilization for originator = %s", originator)
+			}
 		}
 
 		if metrics.Memory != nil {
@@ -207,7 +211,11 @@ func (f *metricsFeature) reportMetrics() {
 				measurements = append(measurements, Measurement{ID: MemoryUsed, Value: float64(metrics.Memory.Used)})
 			}
 			if f.request.HasFilterForItem(MemoryUtilization, originator) {
-				measurements = append(measurements, Measurement{ID: MemoryUtilization, Value: util.CalculateMemoryPercent(metrics.Memory)})
+				if memoryUtilization, err := util.CalculateMemoryPercent(metrics.Memory); err == nil {
+					measurements = append(measurements, Measurement{ID: MemoryUtilization, Value: memoryUtilization})
+				} else {
+					log.DebugErr(err, "could not calculate memory utilization for originator = %s", originator)
+				}
 			}
 		}
 

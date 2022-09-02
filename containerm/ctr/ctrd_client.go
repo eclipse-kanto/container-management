@@ -455,7 +455,7 @@ func (ctrdClient *containerdClient) GetContainerMetrics(ctx context.Context, con
 			log.ErrorErr(err, "could not get stats for container ID = %s", container.ID)
 			return nil, err
 		}
-		return toMetrics(ctrdMetrics)
+		return toMetrics(ctrdMetrics, container.ID)
 	}
 
 	return nil, log.NewErrorf("missing container with ID = %s", container.ID)

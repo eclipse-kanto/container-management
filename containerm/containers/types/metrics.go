@@ -13,37 +13,37 @@ package types
 
 import "time"
 
-// Metrics container metrics.
+// Metrics represents all measurements of a container.
 type Metrics struct {
 	CPU       *CPUMetrics    `json:"cpu,omitempty"`
 	Memory    *MemoryMetrics `json:"memory,omitempty"`
 	IO        *IOMetrics     `json:"io,omitempty"`
 	Network   *IOMetrics     `json:"network,omitempty"`
 	Timestamp time.Time      `json:"timestamp"`
-	PIDs      uint64         `json:"pids"`
+	PIDs      uint64         `json:"pids,omitempty"`
 }
 
-// CPUMetrics container stats regarding CPU.
+// CPUMetrics represents the CPU measurements of a container.
 type CPUMetrics struct {
-	// Total is the total system CPU time in nanoseconds.
+	// Total represents the total system CPU time in nanoseconds.
 	Total uint64 `json:"total"`
-	// Used is container's processes CPU time in nanoseconds.
+	// Used represents the container's processes CPU time in nanoseconds.
 	Used uint64 `json:"used"`
 }
 
-// MemoryMetrics container stats regarding Memory.
+// MemoryMetrics represents the memory measurements of a container.
 type MemoryMetrics struct {
-	// Total is the container memory limit in bytes.
+	// Total represents the container memory limit in bytes.
 	// If container does not have memory limit set, machine memory is used.
 	Total uint64 `json:"total"`
-	// Used memory used by a container in bytes.
+	// Used represents the memory used by a container in bytes.
 	Used uint64 `json:"used"`
 }
 
-// IOMetrics container stats regarding IO.
+// IOMetrics represents the IO measurements of a container.
 type IOMetrics struct {
-	// Read is the number of bytes that has been read.
+	// Read represents the number of bytes that has been read.
 	Read uint64 `json:"read"`
-	// Write is the number of bytes that has been written.
+	// Write represents the number of bytes that has been written.
 	Write uint64 `json:"write"`
 }

@@ -16,29 +16,36 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
+	"math"
 	"sync"
 	"time"
 )
 
-// CalculateCPUPercent calculates the CPU percentage in range [0-100]
-func CalculateCPUPercent(cpu *types.CPUMetrics, previousCPU *types.CPUMetrics) float64 {
+// CalculateCPUPercent calculates the CPU percentage in range [0-100].
+// Returns error if there is missing data needed for the calculation.
+func CalculateCPUPercent(cpu *types.CPUMetrics, previousCPU *types.CPUMetrics) (float64, error) {
 	if cpu != nil && previousCPU != nil {
+		if cpu.Total == 0 || previousCPU.Total == 0 {
+			return 0, log.NewErrorf("no total system CPU usage")
+		}
 		cpuDelta := float64(cpu.Used) - float64(previousCPU.Used)
 		systemDelta := float64(cpu.Total) - float64(previousCPU.Total)
-
-		if systemDelta > 0.0 && cpuDelta > 0.0 {
-			return cpuDelta / systemDelta * 100.0
+		if systemDelta > 0 {
+			return math.Min(100, math.Max(0, cpuDelta/systemDelta*100)), nil
 		}
+		return 0, log.NewErrorf("unexpected system CPU delta: %d", systemDelta)
 	}
-	return 0
+	return 0, log.NewErrorf("no CPU data")
 }
 
-// CalculateMemoryPercent calculates the memory percentage
-func CalculateMemoryPercent(memory *types.MemoryMetrics) float64 {
+// CalculateMemoryPercent calculates the memory percentage.
+// Returns error if there is missing data needed for the calculation.
+func CalculateMemoryPercent(memory *types.MemoryMetrics) (float64, error) {
 	if memory != nil && memory.Total != 0 {
-		return float64(memory.Used) / float64(memory.Total) * 100.0
+		percent := float64(memory.Used) / float64(memory.Total) * 100.0
+		return math.Min(100, math.Max(0, percent)), nil
 	}
-	return 0
+	return 0, log.NewErrorf("no memory data: %+v", memory)
 }
 
 var (
@@ -50,12 +57,16 @@ var (
 // the provided limit, returns the machine memory in bytes. Otherwise, returns the provided limit.
 func GetMemoryLimit(limit uint64) uint64 {
 	detectMachineMemory.Do(func() {
-		if vm, err := mem.VirtualMemory(); err == nil {
-			if vm.Total > 0 {
-				machineMemory = vm.Total
-			} else {
-				err = log.NewErrorf("unexpected value for machine memory: %d", vm.Total)
-			}
+		var (
+			vm  *mem.VirtualMemoryStat
+			err error
+		)
+		if vm, err = mem.VirtualMemory(); err != nil {
+			log.ErrorErr(err, "could not get machine memory")
+		} else if vm.Total <= 0 {
+			log.Error("unexpected value for machine memory: %d", vm.Total)
+		} else {
+			machineMemory = vm.Total
 		}
 	})
 	if limit > machineMemory && machineMemory > 0 {

@@ -12,6 +12,7 @@
 package ctr
 
 import (
+	"encoding/json"
 	statsV1 "github.com/containerd/cgroups/stats/v1"
 	statsV2 "github.com/containerd/cgroups/v2/stats"
 	ctrdTypes "github.com/containerd/containerd/api/types"
@@ -22,7 +23,7 @@ import (
 	"strings"
 )
 
-func toMetrics(ctrdMetrics *ctrdTypes.Metric) (*types.Metrics, error) {
+func toMetrics(ctrdMetrics *ctrdTypes.Metric, ctrID string) (*types.Metrics, error) {
 	var (
 		metrics     *types.Metrics
 		metricsData interface{}
@@ -33,20 +34,30 @@ func toMetrics(ctrdMetrics *ctrdTypes.Metric) (*types.Metrics, error) {
 		return nil, err
 	}
 
+	debugArgsFunc := func(m interface{}) log.ArgsFunction {
+		data, _ := json.Marshal(m)
+		return func() []interface{} {
+			return []interface{}{ctrID, data}
+		}
+	}
 	switch metricsData.(type) {
 	case *statsV1.Metrics:
-		metrics = toMetricsV1(metricsData.(*statsV1.Metrics))
+		m := metricsData.(*statsV1.Metrics)
+		log.DebugFn("metrics of a container with ID = %s: %s", debugArgsFunc(m))
+		metrics = toMetricsV1(m, ctrID)
 	case *statsV2.Metrics:
-		metrics = toMetricsV2(metricsData.(*statsV2.Metrics))
+		m := metricsData.(*statsV2.Metrics)
+		log.DebugFn("metrics of a container with ID = %s: %s", debugArgsFunc(m))
+		metrics = toMetricsV2(m, ctrID)
 	default:
-		return nil, log.NewErrorf("unexpected metrics type = %T ", metricsData)
+		return nil, log.NewErrorf("unexpected metrics type = %T for container with ID = %s", metricsData, ctrID)
 	}
 
 	metrics.Timestamp = ctrdMetrics.Timestamp
 	return metrics, nil
 }
 
-func toMetricsV1(ctrdMetrics *statsV1.Metrics) *types.Metrics {
+func toMetricsV1(ctrdMetrics *statsV1.Metrics, ctrID string) *types.Metrics {
 	metrics := &types.Metrics{
 		IO: calculateBlkIO(ctrdMetrics.Blkio),
 	}
@@ -54,13 +65,12 @@ func toMetricsV1(ctrdMetrics *statsV1.Metrics) *types.Metrics {
 		metrics.PIDs = ctrdMetrics.Pids.Current
 	}
 	if ctrdMetrics.CPU != nil && ctrdMetrics.CPU.Usage != nil {
-		if systemTotal, err := util.GetSystemCPUUsage(); err == nil {
-			metrics.CPU = &types.CPUMetrics{
-				Used:  ctrdMetrics.CPU.Usage.Total,
-				Total: systemTotal,
-			}
-		} else {
-			log.WarnErr(err, "could not get system CPU usage")
+		metrics.CPU = &types.CPUMetrics{
+			Used: ctrdMetrics.CPU.Usage.Total,
+		}
+		var err error
+		if metrics.CPU.Total, err = util.GetSystemCPUUsage(); err != nil {
+			log.WarnErr(err, "could not get system CPU usage for metrics of a container with ID = %s", ctrID)
 		}
 	}
 	if ctrdMetrics.Memory != nil && ctrdMetrics.Memory.Usage != nil {
@@ -72,7 +82,9 @@ func toMetricsV1(ctrdMetrics *statsV1.Metrics) *types.Metrics {
 	return metrics
 }
 
-func toMetricsV2(ctrdMetrics *statsV2.Metrics) *types.Metrics {
+func toMetricsV2(ctrdMetrics *statsV2.Metrics, ctrID string) *types.Metrics {
+	data, _ := json.Marshal(ctrdMetrics)
+	log.Debug("metrics of a container with ID = %s: %s", ctrID, string(data))
 	metrics := &types.Metrics{
 		IO: calculateIO(ctrdMetrics.Io),
 	}
@@ -80,13 +92,12 @@ func toMetricsV2(ctrdMetrics *statsV2.Metrics) *types.Metrics {
 		metrics.PIDs = ctrdMetrics.Pids.Current
 	}
 	if ctrdMetrics.CPU != nil {
-		if systemTotal, err := util.GetSystemCPUUsage(); err == nil {
-			metrics.CPU = &types.CPUMetrics{
-				Used:  ctrdMetrics.CPU.UsageUsec * 1000,
-				Total: systemTotal,
-			}
-		} else {
-			log.WarnErr(err, "could not get system CPU usage")
+		metrics.CPU = &types.CPUMetrics{
+			Used: ctrdMetrics.CPU.UsageUsec * 1000,
+		}
+		var err error
+		if metrics.CPU.Total, err = util.GetSystemCPUUsage(); err != nil {
+			log.WarnErr(err, "could not get system CPU usage for metrics of a container with ID = %s", ctrID)
 		}
 	}
 	if ctrdMetrics.Memory != nil {
