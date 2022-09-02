@@ -34,20 +34,16 @@ func toMetrics(ctrdMetrics *ctrdTypes.Metric, ctrID string) (*types.Metrics, err
 		return nil, err
 	}
 
-	debugArgsFunc := func(m interface{}) log.ArgsFunction {
-		data, _ := json.Marshal(m)
-		return func() []interface{} {
-			return []interface{}{ctrID, data}
-		}
-	}
 	switch metricsData.(type) {
 	case *statsV1.Metrics:
 		m := metricsData.(*statsV1.Metrics)
-		log.DebugFn("metrics of a container with ID = %s: %s", debugArgsFunc(m))
+		data, _ := json.Marshal(m)
+		log.Debug("metrics of a container with ID = %s: %s", ctrID, string(data))
 		metrics = toMetricsV1(m, ctrID)
 	case *statsV2.Metrics:
 		m := metricsData.(*statsV2.Metrics)
-		log.DebugFn("metrics of a container with ID = %s: %s", debugArgsFunc(m))
+		data, _ := json.Marshal(m)
+		log.Debug("metrics of a container with ID = %s: %s", ctrID, string(data))
 		metrics = toMetricsV2(m, ctrID)
 	default:
 		return nil, log.NewErrorf("unexpected metrics type = %T for container with ID = %s", metricsData, ctrID)
