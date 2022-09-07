@@ -61,7 +61,7 @@ func toMetricsV1(ctrdMetrics *statsV1.Metrics, ctrID string) *types.Metrics {
 		metrics.PIDs = ctrdMetrics.Pids.Current
 	}
 	if ctrdMetrics.CPU != nil && ctrdMetrics.CPU.Usage != nil {
-		metrics.CPU = &types.CPUMetrics{
+		metrics.CPU = &types.CPUStats{
 			Used: ctrdMetrics.CPU.Usage.Total,
 		}
 		var err error
@@ -70,7 +70,7 @@ func toMetricsV1(ctrdMetrics *statsV1.Metrics, ctrID string) *types.Metrics {
 		}
 	}
 	if ctrdMetrics.Memory != nil && ctrdMetrics.Memory.Usage != nil {
-		metrics.Memory = &types.MemoryMetrics{
+		metrics.Memory = &types.MemoryStats{
 			Used:  ctrdMetrics.Memory.Usage.Usage - ctrdMetrics.Memory.TotalInactiveFile,
 			Total: util.GetMemoryLimit(ctrdMetrics.Memory.Usage.Limit),
 		}
@@ -88,7 +88,7 @@ func toMetricsV2(ctrdMetrics *statsV2.Metrics, ctrID string) *types.Metrics {
 		metrics.PIDs = ctrdMetrics.Pids.Current
 	}
 	if ctrdMetrics.CPU != nil {
-		metrics.CPU = &types.CPUMetrics{
+		metrics.CPU = &types.CPUStats{
 			Used: ctrdMetrics.CPU.UsageUsec * 1000,
 		}
 		var err error
@@ -97,7 +97,7 @@ func toMetricsV2(ctrdMetrics *statsV2.Metrics, ctrID string) *types.Metrics {
 		}
 	}
 	if ctrdMetrics.Memory != nil {
-		metrics.Memory = &types.MemoryMetrics{
+		metrics.Memory = &types.MemoryStats{
 			Used:  ctrdMetrics.Memory.Usage - ctrdMetrics.Memory.InactiveFile,
 			Total: util.GetMemoryLimit(ctrdMetrics.Memory.UsageLimit),
 		}
@@ -105,7 +105,7 @@ func toMetricsV2(ctrdMetrics *statsV2.Metrics, ctrID string) *types.Metrics {
 	return metrics
 }
 
-func calculateIO(io *statsV2.IOStat) *types.IOMetrics {
+func calculateIO(io *statsV2.IOStat) *types.IOStats {
 	if io == nil || io.Usage == nil {
 		return nil
 	}
@@ -114,10 +114,10 @@ func calculateIO(io *statsV2.IOStat) *types.IOMetrics {
 		read = read + entry.Rbytes
 		write = write + entry.Wbytes
 	}
-	return &types.IOMetrics{Read: read, Write: write}
+	return &types.IOStats{Read: read, Write: write}
 }
 
-func calculateBlkIO(blkio *statsV1.BlkIOStat) *types.IOMetrics {
+func calculateBlkIO(blkio *statsV1.BlkIOStat) *types.IOStats {
 	if blkio == nil || blkio.IoServiceBytesRecursive == nil {
 		return nil
 	}
@@ -130,5 +130,5 @@ func calculateBlkIO(blkio *statsV1.BlkIOStat) *types.IOMetrics {
 			write += entry.Value
 		}
 	}
-	return &types.IOMetrics{Read: read, Write: write}
+	return &types.IOStats{Read: read, Write: write}
 }

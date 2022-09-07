@@ -15,24 +15,24 @@ import "time"
 
 // Metrics represents all measurements of a container.
 type Metrics struct {
-	CPU       *CPUMetrics    `json:"cpu,omitempty"`
-	Memory    *MemoryMetrics `json:"memory,omitempty"`
-	IO        *IOMetrics     `json:"io,omitempty"`
-	Network   *IOMetrics     `json:"network,omitempty"`
-	Timestamp time.Time      `json:"timestamp"`
-	PIDs      uint64         `json:"pids,omitempty"`
+	CPU       *CPUStats    `json:"cpu,omitempty"`
+	Memory    *MemoryStats `json:"memory,omitempty"`
+	IO        *IOStats     `json:"io,omitempty"`
+	Network   *IOStats     `json:"network,omitempty"`
+	Timestamp time.Time    `json:"timestamp"`
+	PIDs      uint64       `json:"pids,omitempty"`
 }
 
-// CPUMetrics represents the CPU measurements of a container.
-type CPUMetrics struct {
+// CPUStats represents the CPU measurements of a container.
+type CPUStats struct {
 	// Total represents the total system CPU time in nanoseconds.
-	Total uint64 `json:"total"`
+	Total uint64 `json:"total,omitempty"`
 	// Used represents the container's processes CPU time in nanoseconds.
 	Used uint64 `json:"used"`
 }
 
-// MemoryMetrics represents the memory measurements of a container.
-type MemoryMetrics struct {
+// MemoryStats represents the memory measurements of a container.
+type MemoryStats struct {
 	// Total represents the container memory limit in bytes.
 	// If container does not have memory limit set, machine memory is used.
 	Total uint64 `json:"total"`
@@ -40,8 +40,8 @@ type MemoryMetrics struct {
 	Used uint64 `json:"used"`
 }
 
-// IOMetrics represents the IO measurements of a container.
-type IOMetrics struct {
+// IOStats represents the IO measurements of a container.
+type IOStats struct {
 	// Read represents the number of bytes that has been read.
 	Read uint64 `json:"read"`
 	// Write represents the number of bytes that has been written.

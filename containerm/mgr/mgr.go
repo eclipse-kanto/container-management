@@ -485,16 +485,16 @@ func (mgr *containerMgr) Metrics(ctx context.Context, id string) (*types.Metrics
 	}
 
 	var (
-		stats *types.Metrics
-		err   error
+		metrics *types.Metrics
+		err     error
 	)
-	if stats, err = mgr.ctrClient.GetContainerMetrics(ctx, container); err != nil {
+	if metrics, err = mgr.ctrClient.GetContainerMetrics(ctx, container); err != nil {
 		return nil, err
 	}
-	if stats.Network, err = mgr.netMgr.Metrics(ctx, container); err != nil {
+	if metrics.Network, err = mgr.netMgr.Stats(ctx, container); err != nil {
 		log.WarnErr(err, "could not get network metrics for container ID = %s", container.ID)
 	}
-	return stats, err
+	return metrics, err
 }
 
 //--------------------------------- Disposable impl -----------------------------------

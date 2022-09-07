@@ -23,7 +23,7 @@ import (
 
 // CalculateCPUPercent calculates the CPU percentage in range [0-100].
 // Returns error if there is missing data needed for the calculation.
-func CalculateCPUPercent(cpu *types.CPUMetrics, previousCPU *types.CPUMetrics) (float64, error) {
+func CalculateCPUPercent(cpu *types.CPUStats, previousCPU *types.CPUStats) (float64, error) {
 	if cpu != nil && previousCPU != nil {
 		if cpu.Total == 0 || previousCPU.Total == 0 {
 			return 0, log.NewErrorf("no total system CPU usage")
@@ -40,7 +40,7 @@ func CalculateCPUPercent(cpu *types.CPUMetrics, previousCPU *types.CPUMetrics) (
 
 // CalculateMemoryPercent calculates the memory percentage.
 // Returns error if there is missing data needed for the calculation.
-func CalculateMemoryPercent(memory *types.MemoryMetrics) (float64, error) {
+func CalculateMemoryPercent(memory *types.MemoryStats) (float64, error) {
 	if memory != nil && memory.Total != 0 {
 		percent := float64(memory.Used) / float64(memory.Total) * 100.0
 		return math.Min(100, math.Max(0, percent)), nil
@@ -80,10 +80,9 @@ func GetMemoryLimit(limit uint64) uint64 {
 func GetSystemCPUUsage() (uint64, error) {
 	if times, err := cpu.Times(false); err == nil {
 		aggregated := times[0]
-		total := uint64(aggregated.User + aggregated.System + aggregated.Idle + aggregated.Nice + aggregated.Iowait + aggregated.Irq +
-			aggregated.Softirq + aggregated.Steal)
-		usage := total * uint64(time.Second)
-		return usage, nil
+		total := time.Duration(aggregated.User+aggregated.System+aggregated.Idle+aggregated.Nice+aggregated.Iowait+aggregated.Irq+
+			aggregated.Softirq+aggregated.Steal) * time.Second
+		return uint64(total.Nanoseconds()), nil
 	}
 	return 0, log.NewErrorf("could not get system CPU usage")
 }

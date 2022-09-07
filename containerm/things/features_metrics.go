@@ -39,7 +39,7 @@ type metricsFeature struct {
 	mgr                 mgr.ContainerManager
 	cancelEventsHandler context.CancelFunc
 	eventsMgr           events.ContainerEventsManager
-	previousCPU         map[string]*types.CPUMetrics
+	previousCPU         map[string]*types.CPUStats
 	request             *Request
 	disposed            bool
 	mutex               sync.Mutex
@@ -128,7 +128,7 @@ func (f *metricsFeature) processRequest(req *Request) error {
 	f.request = req
 
 	// initialize previous CPU stats to get proper CPU utilization measurement on first report
-	f.previousCPU = make(map[string]*types.CPUMetrics)
+	f.previousCPU = make(map[string]*types.CPUStats)
 	f.walkContainerMetrics(func(originator string, metrics *types.Metrics) {
 		if metrics.CPU != nil && f.request.HasFilterForItem(CPUUtilization, originator) {
 			f.previousCPU[originator] = metrics.CPU

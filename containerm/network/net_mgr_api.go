@@ -40,6 +40,6 @@ type ConteinerNetworkManager interface {
 	// Initialize initializes all base networks for the manager depending on the modes supported - currently on bridge is supported
 	Initialize(ctx context.Context) error
 
-	// Metrics retrieves the network statistics of the provided container
-	Metrics(ctx context.Context, container *types.Container) (*types.IOMetrics, error)
+	// Stats retrieves the network statistics of the provided container
+	Stats(ctx context.Context, container *types.Container) (*types.IOStats, error)
 }
