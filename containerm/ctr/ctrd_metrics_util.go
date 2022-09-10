@@ -21,88 +21,81 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"
 	"strings"
+	"time"
 )
 
-func toMetrics(ctrdMetrics *ctrdTypes.Metric, ctrID string) (*types.Metrics, error) {
+func toMetrics(ctrdMetrics *ctrdTypes.Metric, ctrID string) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error) {
 	var (
-		metrics     *types.Metrics
 		metricsData interface{}
 		err         error
 	)
 
 	if metricsData, err = typeurl.UnmarshalAny(ctrdMetrics.Data); err != nil {
-		return nil, err
+		return nil, nil, nil, 0, time.Time{}, err
 	}
 
 	switch metricsData.(type) {
 	case *statsV1.Metrics:
 		m := metricsData.(*statsV1.Metrics)
-		data, _ := json.Marshal(m)
+		data, _ := json.Marshal(m) // type is checked and error is not expected, an error is not critical as it is used only for the debug log
 		log.Debug("metrics of a container with ID = %s: %s", ctrID, string(data))
-		metrics = toMetricsV1(m, ctrID)
+		cpu, mem, io, pids := toMetricsV1(m, ctrID)
+		return cpu, mem, io, pids, ctrdMetrics.Timestamp, nil
 	case *statsV2.Metrics:
 		m := metricsData.(*statsV2.Metrics)
-		data, _ := json.Marshal(m)
+		data, _ := json.Marshal(m) // type is checked and error is not expected, an error is not critical as it is used only for the debug log
 		log.Debug("metrics of a container with ID = %s: %s", ctrID, string(data))
-		metrics = toMetricsV2(m, ctrID)
+		cpu, mem, io, pids := toMetricsV2(m, ctrID)
+		return cpu, mem, io, pids, ctrdMetrics.Timestamp, nil
 	default:
-		return nil, log.NewErrorf("unexpected metrics type = %T for container with ID = %s", metricsData, ctrID)
+		return nil, nil, nil, 0, time.Time{}, log.NewErrorf("unexpected metrics type = %T for container with ID = %s", metricsData, ctrID)
 	}
-
-	metrics.Timestamp = ctrdMetrics.Timestamp
-	return metrics, nil
 }
 
-func toMetricsV1(ctrdMetrics *statsV1.Metrics, ctrID string) *types.Metrics {
-	metrics := &types.Metrics{
-		IO: calculateBlkIO(ctrdMetrics.Blkio),
-	}
+func toMetricsV1(ctrdMetrics *statsV1.Metrics, ctrID string) (cpu *types.CPUStats, mem *types.MemoryStats, io *types.IOStats, pids uint64) {
+	io = calculateBlkIO(ctrdMetrics.Blkio)
 	if ctrdMetrics.Pids != nil {
-		metrics.PIDs = ctrdMetrics.Pids.Current
+		pids = ctrdMetrics.Pids.Current
 	}
 	if ctrdMetrics.CPU != nil && ctrdMetrics.CPU.Usage != nil {
-		metrics.CPU = &types.CPUStats{
+		cpu = &types.CPUStats{
 			Used: ctrdMetrics.CPU.Usage.Total,
 		}
 		var err error
-		if metrics.CPU.Total, err = util.GetSystemCPUUsage(); err != nil {
+		if cpu.Total, err = util.GetSystemCPUUsage(); err != nil {
 			log.WarnErr(err, "could not get system CPU usage for metrics of a container with ID = %s", ctrID)
 		}
 	}
 	if ctrdMetrics.Memory != nil && ctrdMetrics.Memory.Usage != nil {
-		metrics.Memory = &types.MemoryStats{
+		mem = &types.MemoryStats{
 			Used:  ctrdMetrics.Memory.Usage.Usage - ctrdMetrics.Memory.TotalInactiveFile,
 			Total: util.GetMemoryLimit(ctrdMetrics.Memory.Usage.Limit),
 		}
 	}
-	return metrics
+	return
 }
 
-func toMetricsV2(ctrdMetrics *statsV2.Metrics, ctrID string) *types.Metrics {
-	data, _ := json.Marshal(ctrdMetrics)
-	log.Debug("metrics of a container with ID = %s: %s", ctrID, string(data))
-	metrics := &types.Metrics{
-		IO: calculateIO(ctrdMetrics.Io),
-	}
+func toMetricsV2(ctrdMetrics *statsV2.Metrics, ctrID string) (cpu *types.CPUStats, mem *types.MemoryStats, io *types.IOStats, pids uint64) {
+	io = calculateIO(ctrdMetrics.Io)
 	if ctrdMetrics.Pids != nil {
-		metrics.PIDs = ctrdMetrics.Pids.Current
+		pids = ctrdMetrics.Pids.Current
 	}
 	if ctrdMetrics.CPU != nil {
-		metrics.CPU = &types.CPUStats{
-			Used: ctrdMetrics.CPU.UsageUsec * 1000,
+		cpu = &types.CPUStats{
+			Used: uint64((time.Duration(ctrdMetrics.CPU.UsageUsec) * time.Microsecond).Nanoseconds()),
 		}
 		var err error
-		if metrics.CPU.Total, err = util.GetSystemCPUUsage(); err != nil {
+		if cpu.Total, err = util.GetSystemCPUUsage(); err != nil {
 			log.WarnErr(err, "could not get system CPU usage for metrics of a container with ID = %s", ctrID)
 		}
 	}
 	if ctrdMetrics.Memory != nil {
-		metrics.Memory = &types.MemoryStats{
+		mem = &types.MemoryStats{
 			Used:  ctrdMetrics.Memory.Usage - ctrdMetrics.Memory.InactiveFile,
 			Total: util.GetMemoryLimit(ctrdMetrics.Memory.UsageLimit),
 		}
 	}
-	return metrics
+	return
 }
 
 func calculateIO(io *statsV2.IOStat) *types.IOStats {

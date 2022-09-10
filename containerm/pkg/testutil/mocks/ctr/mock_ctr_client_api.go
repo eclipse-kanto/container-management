@@ -94,19 +94,23 @@ func (mr *MockContainerAPIClientMockRecorder) StartContainer(ctx, container, che
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).StartContainer), ctx, container, checkpointDir)
 }
 
-// GetContainerMetrics mocks base method
-func (m *MockContainerAPIClient) GetContainerMetrics(ctx context.Context, container *types.Container) (*types.Metrics, error) {
+// GetContainerStats mocks base method.
+func (m *MockContainerAPIClient) GetContainerStats(ctx context.Context, container *types.Container) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetContainerMetrics", ctx, container)
-	ret0, _ := ret[0].(*types.Metrics)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GetContainerStats", ctx, container)
+	ret0, _ := ret[0].(*types.CPUStats)
+	ret1, _ := ret[1].(*types.MemoryStats)
+	ret2, _ := ret[2].(*types.IOStats)
+	ret3, _ := ret[3].(uint64)
+	ret4, _ := ret[4].(time.Time)
+	ret5, _ := ret[5].(error)
+	return ret0, ret1, ret2, ret3, ret4, ret5
 }
 
-// GetContainerMetrics indicates an expected call of GetContainerMetrics
-func (mr *MockContainerAPIClientMockRecorder) GetContainerMetrics(ctx, container interface{}) *gomock.Call {
+// GetContainerStats indicates an expected call of GetContainerStats.
+func (mr *MockContainerAPIClientMockRecorder) GetContainerStats(ctx, container interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerMetrics", reflect.TypeOf((*MockContainerAPIClient)(nil).GetContainerMetrics), ctx, container)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerStats", reflect.TypeOf((*MockContainerAPIClient)(nil).GetContainerStats), ctx, container)
 }
 
 // AttachContainer mocks base method

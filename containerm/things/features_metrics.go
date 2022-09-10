@@ -72,6 +72,7 @@ func (f *metricsFeature) dispose() {
 	log.Debug("disposing Metrics feature")
 	f.stopTicker()
 	f.disposed = true
+	f.request = nil
 
 	if f.cancelEventsHandler != nil {
 		log.Debug("unsubscribing from container events")
@@ -185,6 +186,10 @@ func (f *metricsFeature) walkContainerMetrics(execute func(string, *types.Metric
 func (f *metricsFeature) reportMetrics() {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
+
+	if f.disposed {
+		return // feature is disposed do not report
+	}
 
 	mData := &MetricData{
 		Snapshot:  make([]OriginatorMeasurements, 0),
