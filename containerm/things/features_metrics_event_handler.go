@@ -31,7 +31,7 @@ func (f *metricsFeature) handleContainerEvents(ctx context.Context) {
 					ctrID := ctrEvent.Source.ID
 					switch ctrEvent.Action {
 					case types.EventActionContainersRunning:
-						f.handleEventRunning(ctrID)
+						f.handleEventRunning(ctx, ctrID)
 					default:
 						log.Debug("container changed event received that does not affect the Metrics feature")
 					}
@@ -48,13 +48,17 @@ func (f *metricsFeature) handleContainerEvents(ctx context.Context) {
 	}(subscribeCtx)
 }
 
-func (f *metricsFeature) handleEventRunning(ctrID string) {
+func (f *metricsFeature) handleEventRunning(ctx context.Context, ctrID string) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
+	if f.disposed {
+		return // feature is disposed do not report
+	}
+
 	originator := fmt.Sprintf(containerFeatureIDTemplate, ctrID)
 	if f.request != nil && f.request.HasFilterForItem(CPUUtilization, originator) {
-		metrics, err := f.mgr.Metrics(context.Background(), ctrID)
+		metrics, err := f.mgr.Metrics(ctx, ctrID)
 		if err != nil {
 			log.ErrorErr(err, "could not get metrics for container with ID=%s", ctrID)
 			return
