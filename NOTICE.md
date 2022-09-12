@@ -60,6 +60,12 @@ boltdb/bolt (1.3.1)
 
 BurntSushi/toml (0.3.1)
 
+containerd/cgroups (1.0.3)
+
+* License: Apache License 2.0
+* Project: https://github.com/containerd/cgroups
+* Source:  https://github.com/containerd/cgroups/releases/tag/v1.0.3
+
 * License: MIT License
 * Project: https://github.com/BurntSushi/toml
 * Source:  https://github.com/BurntSushi/toml/releases/tag/v0.3.1
@@ -406,6 +412,12 @@ pkg/errors (0.9.1)
 * Project: https://github.com/pkg/errors
 * Source:  https://github.com/pkg/errors/releases/tag/v0.9.1
 
+shirou/gopsutil (3.22.7)
+
+* License: BSD 3-Clause "New" or "Revised" License
+* Project: https://github.com/shirou/gopsutil
+* Source:  https://github.com/shirou/gopsutil/releases/tag/v3.22.7
+
 samuel/go-zookeeper (0.0.0-20201211165307-7117e9ea2414)
 
 * License: BSD 3-Clause "New" or "Revised" License
@@ -442,6 +454,18 @@ stefanberger/go-pkcs11uri (0.0.0-20201008174630-78d3cae3a980)
 * Project: https://github.com/stefanberger/go-pkcs11uri
 * Source:  https://github.com/stefanberger/go-pkcs11uri/tree/78d3cae3a9805d89aa4fa80a362ca944c89a1b99
 
+tklauser/go-sysconf (0.3.10)
+
+* License: BSD 3-Clause "New" or "Revised" License
+* Project: https://github.com/tklauser/go-sysconf
+* Source:  https://github.com/tklauser/go-sysconf/releases/tag/v0.3.10
+
+tklauser/numcpus (0.4.0)
+
+* License: Apache License 2.0
+* Project: https://github.com/tklauser/numcpus
+* Source:  https://github.com/tklauser/numcpus/releases/tag/v0.4.0
+
 vishvananda/netlink (1.1.1-0.20201029203352-d40f9887b852)
 
 * License: Apache License 2.0
@@ -472,11 +496,11 @@ golang/sync (0.0.0-20210220032951-036812b2e83c)
 * Project: https://github.com/golang/sync
 * Source:  https://github.com/golang/sync/tree/036812b2e83c0ddf193dd5a34e034151da389d09
 
-golang/sys (0.0.0-20220412211240-33da011f77ad)
+golang/sys (0.0.0-20220520151302-bc2c85ada10a)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sys
-* Source:  https://github.com/golang/sys/tree/33da011f77ade50ff5b6a6fb4a9a1e6d6b285809
+* Source:  https://github.com/golang/sys/tree/bc2c85ada10aa9b6aa9607e9ac9ad0761b95cf1d
 
 golang/term (0.0.0-20210615171337-6886f2dfbf5b)
 
@@ -526,11 +550,11 @@ square/go-jose (2.5.1)
 * Project: https://github.com/square/go-jose
 * Source:  https://github.com/square/go-jose/releases/tag/v2.5.1
 
-go-yaml/yaml (3.0.0)
+go-yaml/yaml (3.0.1)
 
 * License: Apache License 2.0
 * Project: https://github.com/go-yaml/yaml
-* Source:  https://github.com/go-yaml/yaml/releases/tag/v3.0.0
+* Source:  https://github.com/go-yaml/yaml/releases/tag/v3.0.1
 
 golang/go (1.17.2)
 

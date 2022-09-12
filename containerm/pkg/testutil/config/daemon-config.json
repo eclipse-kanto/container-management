@@ -46,7 +46,8 @@
     "home_dir": "/var/lib/container-management",
     "features": [
       "ContainerFactory",
-      "SoftwareUpdatable"
+      "SoftwareUpdatable",
+      "Metrics"
     ],
     "connection": {
       "broker_url": "tcp://localhost:1883",

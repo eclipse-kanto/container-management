@@ -13,16 +13,18 @@ package ctr
 
 import (
 	"context"
+	"io"
+	"sync"
+	"time"
+
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
+
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
 	"github.com/eclipse-kanto/container-management/containerm/streams"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"io"
-	"sync"
-	"time"
 )
 
 const (
@@ -443,6 +445,20 @@ func (ctrdClient *containerdClient) UpdateContainer(ctx context.Context, contain
 		Memory:  lm,
 	}
 	return ctrInfo.getTask().Update(ctx, containerd.WithResources(r))
+}
+
+func (ctrdClient *containerdClient) GetContainerStats(ctx context.Context, container *types.Container) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error) {
+	ctrInfo := ctrdClient.ctrdCache.get(container.ID)
+	if ctrInfo != nil && ctrInfo.task != nil {
+		ctrdMetrics, err := ctrInfo.task.Metrics(ctx)
+		if err != nil {
+			log.ErrorErr(err, "could not get stats for container ID = %s", container.ID)
+			return nil, nil, nil, 0, time.Time{}, err
+		}
+		return toMetrics(ctrdMetrics, container.ID)
+	}
+
+	return nil, nil, nil, 0, time.Time{}, log.NewErrorf("missing container with ID = %s", container.ID)
 }
 
 //--------------------------------------EOF ContainerdAPIClient implementation with Containerd -------------------------------------

@@ -63,6 +63,9 @@ type ContainerManager interface {
 	// Remove removes a container, it may be running or stopped and so on
 	Remove(ctx context.Context, id string, force bool) error
 
-	//Dispose stops and disposes the network manager
+	// Metrics retrieves metrics data about a container
+	Metrics(ctx context.Context, id string) (*types.Metrics, error)
+
+	// Dispose stops and disposes the network manager
 	Dispose(ctx context.Context) error
 }

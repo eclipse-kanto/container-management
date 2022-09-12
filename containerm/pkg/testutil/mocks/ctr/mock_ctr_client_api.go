@@ -17,12 +17,13 @@ package mocks
 
 import (
 	context "context"
+	reflect "reflect"
+	time "time"
+
 	types "github.com/eclipse-kanto/container-management/containerm/containers/types"
 	ctr "github.com/eclipse-kanto/container-management/containerm/ctr"
 	streams "github.com/eclipse-kanto/container-management/containerm/streams"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
-	time "time"
 )
 
 // MockContainerAPIClient is a mock of ContainerAPIClient interface
@@ -91,6 +92,25 @@ func (m *MockContainerAPIClient) StartContainer(ctx context.Context, container *
 func (mr *MockContainerAPIClientMockRecorder) StartContainer(ctx, container, checkpointDir interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).StartContainer), ctx, container, checkpointDir)
+}
+
+// GetContainerStats mocks base method.
+func (m *MockContainerAPIClient) GetContainerStats(ctx context.Context, container *types.Container) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContainerStats", ctx, container)
+	ret0, _ := ret[0].(*types.CPUStats)
+	ret1, _ := ret[1].(*types.MemoryStats)
+	ret2, _ := ret[2].(*types.IOStats)
+	ret3, _ := ret[3].(uint64)
+	ret4, _ := ret[4].(time.Time)
+	ret5, _ := ret[5].(error)
+	return ret0, ret1, ret2, ret3, ret4, ret5
+}
+
+// GetContainerStats indicates an expected call of GetContainerStats.
+func (mr *MockContainerAPIClientMockRecorder) GetContainerStats(ctx, container interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerStats", reflect.TypeOf((*MockContainerAPIClient)(nil).GetContainerStats), ctx, container)
 }
 
 // AttachContainer mocks base method
