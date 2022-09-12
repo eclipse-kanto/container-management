@@ -50,25 +50,6 @@ func (m *MockContainerAPIClient) EXPECT() *MockContainerAPIClientMockRecorder {
 }
 
 // AttachContainer mocks base method.
-}
-
-// GetContainerStats mocks base method.
-func (m *MockContainerAPIClient) GetContainerStats(ctx context.Context, container *types.Container) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetContainerStats", ctx, container)
-	ret0, _ := ret[0].(*types.CPUStats)
-	ret1, _ := ret[1].(*types.MemoryStats)
-	ret2, _ := ret[2].(*types.IOStats)
-	ret3, _ := ret[3].(uint64)
-	ret4, _ := ret[4].(time.Time)
-	ret5, _ := ret[5].(error)
-	return ret0, ret1, ret2, ret3, ret4, ret5
-}
-
-// GetContainerStats indicates an expected call of GetContainerStats.
-func (mr *MockContainerAPIClientMockRecorder) GetContainerStats(ctx, container interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerStats", reflect.TypeOf((*MockContainerAPIClient)(nil).GetContainerStats), ctx, container)
 func (m *MockContainerAPIClient) AttachContainer(ctx context.Context, container *types.Container, attachConfig *streams.AttachConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AttachContainer", ctx, container, attachConfig)
@@ -91,7 +72,7 @@ func (m *MockContainerAPIClient) CleanContainerResources(ctx context.Context, fi
 }
 
 // CleanContainerResources indicates an expected call of CleanContainerResources.
-func (mr *MockContainerAPIClientMockRecorder) CleanContainerResources(ctx interface{}, filter interface{}) *gomock.Call {
+func (mr *MockContainerAPIClientMockRecorder) CleanContainerResources(ctx, filter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanContainerResources", reflect.TypeOf((*MockContainerAPIClient)(nil).CleanContainerResources), ctx, filter)
 }
@@ -153,6 +134,25 @@ func (m *MockContainerAPIClient) GetContainerInfo(ctx context.Context, id string
 func (mr *MockContainerAPIClientMockRecorder) GetContainerInfo(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerInfo", reflect.TypeOf((*MockContainerAPIClient)(nil).GetContainerInfo), ctx, id)
+}
+
+// GetContainerStats mocks base method.
+func (m *MockContainerAPIClient) GetContainerStats(ctx context.Context, container *types.Container) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContainerStats", ctx, container)
+	ret0, _ := ret[0].(*types.CPUStats)
+	ret1, _ := ret[1].(*types.MemoryStats)
+	ret2, _ := ret[2].(*types.IOStats)
+	ret3, _ := ret[3].(uint64)
+	ret4, _ := ret[4].(time.Time)
+	ret5, _ := ret[5].(error)
+	return ret0, ret1, ret2, ret3, ret4, ret5
+}
+
+// GetContainerStats indicates an expected call of GetContainerStats.
+func (mr *MockContainerAPIClientMockRecorder) GetContainerStats(ctx, container interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerStats", reflect.TypeOf((*MockContainerAPIClient)(nil).GetContainerStats), ctx, container)
 }
 
 // ListContainers mocks base method.
