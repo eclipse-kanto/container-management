@@ -18,6 +18,8 @@ package ctr
 
 import (
 	"context"
+	"fmt"
+	"github.com/opencontainers/image-spec/identity"
 	"syscall"
 	"time"
 
@@ -112,9 +114,6 @@ func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageInfo typ
 	if dcErr != nil {
 		return nil, dcErr
 	}
-
-	ctrdClient.Lock()
-	defer ctrdClient.Unlock()
 
 	ctrdImage, err := ctrdClient.spi.GetImage(ctx, imageInfo.Name)
 	if err != nil {
@@ -398,9 +397,104 @@ func (ctrdClient *containerdClient) processEvents(namespace string) {
 	}
 }
 
-func (ctrdClient *containerdClient) deleteImage(ctx context.Context, imageRef string) error {
-	ctrdClient.Lock()
-	defer ctrdClient.Unlock()
+func (ctrdClient *containerdClient) watchImages() error {
+	ctx := context.Background()
+	images, err := ctrdClient.spi.ListImages(ctx)
+	if err != nil {
+		return err
+	}
+	ctrdClient.imagesCleanupLock.Lock()
+	defer ctrdClient.imagesCleanupLock.Unlock()
 
-	return ctrdClient.spi.DeleteImage(ctx, imageRef)
+	for _, image := range images {
+		cleanupErr := ctrdClient.processImageCleanup(ctx, image)
+		if cleanupErr != nil {
+			log.DebugErr(cleanupErr, "error while initializing watch for image = %s", image.Name())
+			continue
+		}
+	}
+	return nil
+}
+
+func (ctrdClient *containerdClient) processImageCleanup(ctx context.Context, image containerd.Image) error {
+	isImgUsed, isUsedErr := ctrdClient.isImageUsed(ctx, image)
+	if isUsedErr != nil {
+		log.DebugErr(isUsedErr, "could not check if image = %s is in use - skipping expiry check", image.Name())
+		return isUsedErr
+	}
+
+	imgTTL := ctrdClient.imageExpiry - time.Now().Sub(image.Metadata().CreatedAt)
+	if imgTTL <= 0 { // expired
+		log.Debug("image = %s has expired", image.Name())
+		if !isImgUsed {
+			log.Debug("image = %s is not used and will be deleted", image.Name())
+			if delErr := ctrdClient.spi.DeleteImage(ctx, image.Name()); delErr != nil {
+				log.DebugErr(delErr, "error while deleting unused expired image = %s", image.Name())
+			}
+		}
+	} else {
+		log.Debug("image = %s is not expired and will be scheduled for removal after %s", image.Name(), imgTTL)
+		if watchErr := ctrdClient.resourcesMgr.Watch(image.Name(), imgTTL, ctrdClient.handleImageExpired); watchErr != nil {
+			if watchErr == alreadyWatchedError {
+				log.Debug("image %s is already scheduled for deletion - reschedule discarded", image.Name())
+			} else {
+				log.Warn("could not schedule image %s for expiry monitoring", image.Name())
+				return watchErr
+			}
+		}
+	}
+	return nil
+}
+
+func (ctrdClient *containerdClient) handleRemoveCleanup(ctx context.Context, imageRef string) error {
+	ctrdClient.imagesCleanupLock.Lock()
+	defer ctrdClient.imagesCleanupLock.Unlock()
+
+	image, err := ctrdClient.spi.GetImage(ctx, imageRef)
+	if err != nil {
+		return err
+	}
+	return ctrdClient.processImageCleanup(ctx, image)
+}
+
+func (ctrdClient *containerdClient) handleImageExpired(ctx context.Context, imageRef string) error {
+	ctrdClient.imagesCleanupLock.Lock()
+	defer ctrdClient.imagesCleanupLock.Unlock()
+
+	image, err := ctrdClient.spi.GetImage(ctx, imageRef)
+	if err != nil {
+		if errdefs.IsNotFound(err) {
+			log.Debug("image = %s is already removed", imageRef)
+		} else {
+			return err
+		}
+	}
+	isImgUsed, isUsedErr := ctrdClient.isImageUsed(ctx, image)
+	if isUsedErr != nil {
+		log.DebugErr(isUsedErr, "could not check if image = %s is in use - skipping expiry check", image.Name())
+		return isUsedErr
+	}
+	log.Debug("image with ref=%s is used=%v", image.Name(), isImgUsed)
+	if !isImgUsed {
+		if delErr := ctrdClient.spi.DeleteImage(ctx, image.Name()); delErr != nil {
+			return delErr
+		}
+	}
+	return nil
+}
+
+// see snapshots.Snapshotter's Walk API documentation for the supported keys and format of the filter
+const snapshotsWalkFilterFormat = "parent==%s"
+
+func (ctrdClient *containerdClient) isImageUsed(ctx context.Context, image containerd.Image) (bool, error) {
+	diffsDigests, err := image.RootFS(ctx)
+	if err != nil {
+		log.DebugErr(err, "could not get the diff entries digests for image with ref=%s", image.Name())
+		return false, err
+	}
+	imgLastDiffEntry := identity.ChainID(diffsDigests)
+	log.Debug("last diff entry in the chain for image with ref=%s is %s", image.Name(), imgLastDiffEntry)
+
+	imgSnapshots, _ := ctrdClient.spi.ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, imgLastDiffEntry.String()))
+	return len(imgSnapshots) > 0, nil
 }

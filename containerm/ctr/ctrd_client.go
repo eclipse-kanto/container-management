@@ -52,10 +52,9 @@ type containerdClient struct {
 	spi                containerdSpi
 	eventsCancel       context.CancelFunc
 	runcRuntime        types.Runtime
-	imageExpiry        int
-	imageExpiryTimers  map[string]*time.Timer
-	disposed           bool
-	disposedLock       sync.Mutex
+	imageExpiry        time.Duration
+	resourcesMgr       resourcesManager
+	imagesCleanupLock  sync.Mutex
 }
 
 //-------------------------------------- ContainerdAPIClient implementation with Containerd -------------------------------------
@@ -115,6 +114,10 @@ func (ctrdClient *containerdClient) DestroyContainer(ctx context.Context, contai
 			log.Debug("cleared IOs while destroying container id = %s", container.ID)
 
 			ctrdClient.clearSnapshot(ctx, container.ID)
+
+			if cleanupErr := ctrdClient.handleRemoveCleanup(ctx, container.Image.Name); cleanupErr != nil {
+				log.WarnErr(cleanupErr, "could not clean up resources for image %s", container.Image.Name)
+			}
 		}
 	}()
 
@@ -465,78 +468,19 @@ func (ctrdClient *containerdClient) GetContainerStats(ctx context.Context, conta
 	return nil, nil, nil, 0, time.Time{}, log.NewErrorf("missing container with ID = %s", container.ID)
 }
 
-// CleanContainerResources cleans unused container resources. The images filtered for deleting would either be remove right away or be scheduled for removing upon the configured image expiry time.
-func (ctrdClient *containerdClient) CleanContainerResources(ctx context.Context, filter ImageDeleteFilter) error {
-	ctrdClient.disposedLock.Lock()
-	defer ctrdClient.disposedLock.Unlock()
-
-	if ctrdClient.disposed {
-		return nil
-	}
-	images, err := ctrdClient.spi.ListImages(ctx)
-	if err != nil {
-		return err
-	}
-
-	for i := range images {
-		image := images[i] // must be initialized inside the loop, if scheduled the ref should stay the same for the goroutine
-		if !filter(image.Name()) {
-			continue
-		}
-
-		log.Debug("will delete image = %s", image.Name())
-		delta := time.Duration(ctrdClient.imageExpiry)*24*time.Hour - time.Now().Sub(image.Metadata().CreatedAt)
-		if delta <= 0 {
-			if err = ctrdClient.deleteImage(ctx, image.Name()); err != nil {
-				log.ErrorErr(err, "could not delete image = %s", image.Name())
-			} else {
-				log.Debug("deleted successfully image = %s", image.Name())
-			}
-		} else {
-			if ctrdClient.imageExpiryTimers[image.Name()] != nil {
-				// there is already timer for this image removal
-				break
-			}
-			log.Debug("scheduling deletion of image = %s, will be deleted after %s", image.Name(), delta)
-			t := time.NewTimer(delta)
-			ctrdClient.imageExpiryTimers[image.Name()] = t
-			go func() {
-				<-t.C
-				ctrdClient.disposedLock.Lock()
-				defer ctrdClient.disposedLock.Unlock()
-				if ctrdClient.disposed {
-					return
-				}
-				log.Debug("scheduled deleting of image = %s", image.Name())
-				if filter(image.Name()) {
-					if err = ctrdClient.deleteImage(context.TODO(), image.Name()); err != nil {
-						log.ErrorErr(err, "could not delete image = %s", image.Name())
-					} else {
-						log.Debug("deleted successfully image = %s", image.Name())
-					}
-				}
-				delete(ctrdClient.imageExpiryTimers, image.Name())
-			}()
-		}
-	}
-	return nil
-}
-
 //--------------------------------------EOF ContainerdAPIClient implementation with Containerd -------------------------------------
 
 //----------------------------Disposable-------------------------------------------
 
 func (ctrdClient *containerdClient) Dispose(ctx context.Context) error {
-	ctrdClient.disposedLock.Lock()
-	ctrdClient.disposed = true
-	ctrdClient.disposedLock.Unlock()
-
-	for _, t := range ctrdClient.imageExpiryTimers {
-		t.Stop()
-	}
 	if ctrdClient.eventsCancel != nil {
 		ctrdClient.eventsCancel()
 	}
+	ctrdClient.resourcesMgr.Dispose()
+
+	ctrdClient.imagesCleanupLock.Lock()
+	defer ctrdClient.imagesCleanupLock.Unlock()
+
 	ctrdClient.ctrdCache.setContainerdDead(true)
 	return ctrdClient.spi.Dispose(ctx)
 }

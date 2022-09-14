@@ -367,6 +367,26 @@ func (mr *MockcontainerdSpiMockRecorder) ListImages(ctx interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImages", reflect.TypeOf((*MockcontainerdSpi)(nil).ListImages), ctx)
 }
 
+// ListSnapshots mocks base method.
+func (m *MockcontainerdSpi) ListSnapshots(ctx context.Context, filters ...string) ([]snapshots.Info, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx}
+	for _, a := range filters {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListSnapshots", varargs...)
+	ret0, _ := ret[0].([]snapshots.Info)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSnapshots indicates an expected call of ListSnapshots.
+func (mr *MockcontainerdSpiMockRecorder) ListSnapshots(ctx interface{}, filters ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx}, filters...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSnapshots", reflect.TypeOf((*MockcontainerdSpi)(nil).ListSnapshots), varargs...)
+}
+
 // LoadContainer mocks base method.
 func (m *MockcontainerdSpi) LoadContainer(ctx context.Context, containerID string) (containerd.Container, error) {
 	m.ctrl.T.Helper()

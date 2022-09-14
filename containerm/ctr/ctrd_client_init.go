@@ -22,7 +22,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime, imageExpiry int) (ContainerAPIClient, error) {
+func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime, imageExpiry time.Duration) (ContainerAPIClient, error) {
 
 	//ensure storage
 	err := util.MkDir(rootExec)
@@ -52,12 +52,15 @@ func newContainerdClient(namespace, socket, rootExec, metaPath string, registryC
 		spi:                ctrdClientSpi,
 		ioMgr:              newContainerIOManager(filepath.Join(rootExec, "fifo"), newCache()),
 		logsMgr:            newContainerLogsManager(filepath.Join(metaPath, "containers")),
+		resourcesMgr:       newResourceManager(),
 		decMgr:             decryptMgr,
 		runcRuntime:        runcRuntime,
 		imageExpiry:        imageExpiry,
-		imageExpiryTimers:  make(map[string]*time.Timer),
 	}
 	go ctrdClient.processEvents(namespace)
+	if watchErr := ctrdClient.watchImages(); watchErr != nil {
+		return nil, watchErr
+	}
 	return ctrdClient, nil
 }
 
@@ -67,7 +70,6 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 	if err := applyOptsCtr(opts, createOpts...); err != nil {
 		return nil, err
 	}
-
-	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients, opts.runcRuntime, opts.imageExpiry)
-
+	imageExpiry := time.Duration(opts.imageExpiry) * 24 * time.Hour // convert to hours
+	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients, opts.runcRuntime, imageExpiry)
 }

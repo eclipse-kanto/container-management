@@ -25,7 +25,7 @@ import (
 // containerClientWrapper is an interface that abstracts the functional scope of the *containerd.Client instance
 // that is used by the SPI implementation
 // The interface definition is a direct extraction of the *containerd.Client struct function signatures of only such that are used by the SPI.
-// The API is based on the currently supported version of containerd client API - 1.3.4 (see go.mod)
+// The API is based on the currently supported version of containerd client API - 1.5.13 (see go.mod)
 type containerClientWrapper interface {
 	// NewContainer creates a new container instance
 	NewContainer(ctx context.Context, id string, opts ...containerd.NewContainerOpts) (containerd.Container, error)
@@ -68,6 +68,8 @@ type containerdSpi interface {
 	GetSnapshotID(containerID string) string
 	// GetSnapshot returns a snapshot for this container ID
 	GetSnapshot(ctx context.Context, containerID string) (snapshots.Info, error)
+	// ListSnapshots collects all snapshots matching the provided filters or all if no filters are provided
+	ListSnapshots(ctx context.Context, filters ...string) ([]snapshots.Info, error)
 	// PrepareSnapshot initializes a new snapshot for the provided container image for the provided container ID
 	PrepareSnapshot(ctx context.Context, containerID string, image containerd.Image, opts ...containerd.UnpackOpt) error
 	// MountSnapshot mounts the provided rootFS to an already existing snapshot for the provided container ID

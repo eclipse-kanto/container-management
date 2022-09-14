@@ -404,15 +404,3 @@ func (mgr *containerMgr) getContainerStopOptions(force bool) *types.StopOpts {
 		Signal:  sigterm,
 	}
 }
-
-func (mgr *containerMgr) isImageUnused(imageRef string) bool {
-	mgr.containersLock.RLock()
-	defer mgr.containersLock.RUnlock()
-
-	for _, ctr := range mgr.containersToArray() {
-		if ctr.Image.Name == imageRef {
-			return false
-		}
-	}
-	return true
-}

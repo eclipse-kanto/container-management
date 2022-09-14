@@ -156,9 +156,6 @@ func (mgr *containerMgr) Restore(ctx context.Context) error {
 	mgr.startRestoredContainers(ctx, ctrs)
 	log.Debug("finished restarting restored containers")
 
-	if err = mgr.ctrClient.CleanContainerResources(ctx, mgr.isImageUnused); err != nil {
-		log.WarnErr(err, "failed to clean container resources")
-	}
 	return nil
 }
 
@@ -471,16 +468,6 @@ func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool) erro
 
 	if err != nil {
 		log.WarnErr(err, "failed to Delete container file with id: %s", id)
-	}
-
-	filter := func(imageRef string) bool {
-		if imageRef != container.Image.Name {
-			return false
-		}
-		return mgr.isImageUnused(imageRef)
-	}
-	if err = mgr.ctrClient.CleanContainerResources(ctx, filter); err != nil {
-		log.WarnErr(err, "failed to clean container resources for container id = %s", id)
 	}
 
 	return nil

@@ -63,20 +63,6 @@ func (mr *MockContainerAPIClientMockRecorder) AttachContainer(ctx, container, at
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttachContainer", reflect.TypeOf((*MockContainerAPIClient)(nil).AttachContainer), ctx, container, attachConfig)
 }
 
-// CleanContainerResources mocks base method.
-func (m *MockContainerAPIClient) CleanContainerResources(ctx context.Context, filter ctr.ImageDeleteFilter) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CleanContainerResources", ctx, filter)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CleanContainerResources indicates an expected call of CleanContainerResources.
-func (mr *MockContainerAPIClientMockRecorder) CleanContainerResources(ctx, filter interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanContainerResources", reflect.TypeOf((*MockContainerAPIClient)(nil).CleanContainerResources), ctx, filter)
-}
-
 // CreateContainer mocks base method.
 func (m *MockContainerAPIClient) CreateContainer(ctx context.Context, container *types.Container, checkpointDir string) error {
 	m.ctrl.T.Helper()
