@@ -429,7 +429,7 @@ func (ctrdClient *containerdClient) processImageCleanup(ctx context.Context, ima
 		if !isImgUsed {
 			log.Debug("image = %s is not used and will be deleted", image.Name())
 			if delErr := ctrdClient.spi.DeleteImage(ctx, image.Name()); delErr != nil {
-				log.DebugErr(delErr, "error while deleting unused expired image = %s", image.Name())
+				return delErr
 			}
 		}
 	} else {

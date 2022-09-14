@@ -385,7 +385,6 @@ func (mgr *containerMgr) stopManagerService(ctx context.Context) error {
 	}
 	return nil
 }
-
 func (mgr *containerMgr) fillContainerStopDefaults(stopOpts *types.StopOpts) {
 	if stopOpts != nil {
 		if stopOpts.Timeout == 0 {
@@ -396,7 +395,6 @@ func (mgr *containerMgr) fillContainerStopDefaults(stopOpts *types.StopOpts) {
 		}
 	}
 }
-
 func (mgr *containerMgr) getContainerStopOptions(force bool) *types.StopOpts {
 	return &types.StopOpts{
 		Timeout: mgr.defaultCtrsStopTimeout,

@@ -155,7 +155,6 @@ func (mgr *containerMgr) Restore(ctx context.Context) error {
 	log.Debug("restarting restored containers compliant with their restart policies")
 	mgr.startRestoredContainers(ctx, ctrs)
 	log.Debug("finished restarting restored containers")
-
 	return nil
 }
 

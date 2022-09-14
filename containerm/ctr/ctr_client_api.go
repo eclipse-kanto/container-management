@@ -63,6 +63,6 @@ type ContainerAPIClient interface {
 	// SetContainerExitHooks provides access for hooking a clearing logic to the containers resources management on exit
 	SetContainerExitHooks(hooks ...ContainerExitHook)
 
-	// UpdateContainer updates container resource limits
+	//UpdateContainer updates container resource limits
 	UpdateContainer(ctx context.Context, container *types.Container, resources *types.Resources) error
 }
