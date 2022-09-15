@@ -475,18 +475,19 @@ func (ctrdClient *containerdClient) handleImageExpired(ctx context.Context, imag
 const snapshotsWalkFilterFormat = "parent==%s"
 
 func (ctrdClient *containerdClient) isImageUsed(ctx context.Context, image containerd.Image) (bool, error) {
-	log.Debug("checking if image with ref = %s is in use", image.Name())
+	imgRef := image.Name()
+	log.Debug("checking if image with ref = %s is in use", imgRef)
 	diffsDigests, err := image.RootFS(ctx)
 	if err != nil {
-		log.DebugErr(err, "could not get the diff entries digests for image with ref = %s", image.Name())
+		log.DebugErr(err, "could not get the diff entries digests for image with ref = %s", imgRef)
 		return false, err
 	}
 	imgLastDiffEntry := identity.ChainID(diffsDigests)
-	log.Debug("last diff entry in the chain for image with ref=%s is %s", image.Name(), imgLastDiffEntry)
+	log.Debug("last diff entry in the chain for image with ref=%s is %s", imgRef, imgLastDiffEntry)
 
 	imgSnapshots, _ := ctrdClient.spi.ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, imgLastDiffEntry.String()))
 	isUsed := len(imgSnapshots) > 0
-	log.Debug("is image with ref = %s used: %v", image.Name(), isUsed)
+	log.Debug("is image with ref = %s used: %v", imgRef, isUsed)
 	return isUsed, nil
 }
 
@@ -501,6 +502,8 @@ func (ctrdClient *containerdClient) removeUnusedImage(ctx context.Context, image
 			return delErr
 		}
 		log.Debug("deleted unused image = %s", image.Name())
+	} else {
+		log.Debug("image = %s is in use - will not delete it", image.Name())
 	}
 	return nil
 }
