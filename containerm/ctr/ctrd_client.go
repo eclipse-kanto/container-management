@@ -53,8 +53,9 @@ type containerdClient struct {
 	eventsCancel       context.CancelFunc
 	runcRuntime        types.Runtime
 	imageExpiry        time.Duration
-	resourcesMgr       resourcesManager
-	imagesCleanupLock  sync.Mutex
+	imageExpiryDisable bool
+	imagesExpiryLock   sync.Mutex
+	imagesWatcher      resourcesWatcher
 }
 
 //-------------------------------------- ContainerdAPIClient implementation with Containerd -------------------------------------
@@ -115,7 +116,7 @@ func (ctrdClient *containerdClient) DestroyContainer(ctx context.Context, contai
 
 			ctrdClient.clearSnapshot(ctx, container.ID)
 
-			if cleanupErr := ctrdClient.handleRemoveCleanup(ctx, container.Image.Name); cleanupErr != nil {
+			if cleanupErr := ctrdClient.handleImageExpiryOnRemove(ctx, container.Image.Name); cleanupErr != nil {
 				log.WarnErr(cleanupErr, "could not clean up resources for image %s", container.Image.Name)
 			}
 		}
@@ -476,10 +477,12 @@ func (ctrdClient *containerdClient) Dispose(ctx context.Context) error {
 	if ctrdClient.eventsCancel != nil {
 		ctrdClient.eventsCancel()
 	}
-	ctrdClient.resourcesMgr.Dispose()
+	if ctrdClient.imagesWatcher != nil { // disabled expiry management
+		ctrdClient.imagesWatcher.Dispose()
+	}
 
-	ctrdClient.imagesCleanupLock.Lock()
-	defer ctrdClient.imagesCleanupLock.Unlock()
+	ctrdClient.imagesExpiryLock.Lock()
+	defer ctrdClient.imagesExpiryLock.Unlock()
 
 	ctrdClient.ctrdCache.setContainerdDead(true)
 	return ctrdClient.spi.Dispose(ctx)

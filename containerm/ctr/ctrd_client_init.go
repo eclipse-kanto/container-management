@@ -12,6 +12,7 @@
 package ctr
 
 import (
+	"context"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"path/filepath"
 	"time"
@@ -22,7 +23,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime, imageExpiry time.Duration) (ContainerAPIClient, error) {
+func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime, imageExpiry time.Duration, imageExpiryDisable bool) (ContainerAPIClient, error) {
 
 	//ensure storage
 	err := util.MkDir(rootExec)
@@ -52,14 +53,20 @@ func newContainerdClient(namespace, socket, rootExec, metaPath string, registryC
 		spi:                ctrdClientSpi,
 		ioMgr:              newContainerIOManager(filepath.Join(rootExec, "fifo"), newCache()),
 		logsMgr:            newContainerLogsManager(filepath.Join(metaPath, "containers")),
-		resourcesMgr:       newResourceManager(),
 		decMgr:             decryptMgr,
 		runcRuntime:        runcRuntime,
 		imageExpiry:        imageExpiry,
+		imageExpiryDisable: imageExpiryDisable,
 	}
 	go ctrdClient.processEvents(namespace)
-	if watchErr := ctrdClient.watchImages(); watchErr != nil {
-		return nil, watchErr
+	if !ctrdClient.imageExpiryDisable {
+		ctx := context.Background()
+		ctrdClient.imagesWatcher = newResourcesWatcher(ctx)
+		if watchErr := ctrdClient.initImagesExpiryManagement(ctx); watchErr != nil {
+			log.WarnErr(watchErr, "could not initialize watch for resources expiry")
+		}
+	} else {
+		log.Warn("images expiry management is disabled")
 	}
 	return ctrdClient, nil
 }
@@ -70,6 +77,5 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 	if err := applyOptsCtr(opts, createOpts...); err != nil {
 		return nil, err
 	}
-	imageExpiry := time.Duration(opts.imageExpiry) * 24 * time.Hour // convert to hours
-	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients, opts.runcRuntime, imageExpiry)
+	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients, opts.runcRuntime, opts.imageExpiry, opts.imageExpiryDisable)
 }

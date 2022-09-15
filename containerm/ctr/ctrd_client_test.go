@@ -13,8 +13,6 @@ package ctr
 
 import (
 	"context"
-	"crypto/sha256"
-	"fmt"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/containers"
@@ -36,7 +34,6 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/streams"
 	"github.com/eclipse-kanto/container-management/containerm/util"
 	"github.com/golang/mock/gomock"
-	"github.com/opencontainers/go-digest"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"reflect"
 	"testing"
@@ -152,7 +149,7 @@ func TestCtrdClientDestroyContainer(t *testing.T) {
 	mockSpi := ctrdMocks.NewMockcontainerdSpi(mockCtrl)
 	mockTask := containerdMocks.NewMockTask(mockCtrl)
 	mockImg := containerdMocks.NewMockImage(mockCtrl)
-	mockResMgr := NewMockresourcesManager(mockCtrl)
+	mockResMgr := NewMockresourcesWatcher(mockCtrl)
 
 	ctx := context.Background()
 	stopOpts := &types.StopOpts{}
@@ -176,9 +173,9 @@ func TestCtrdClientDestroyContainer(t *testing.T) {
 						},
 					},
 				},
-				ioMgr:        mockIoMgr,
-				spi:          mockSpi,
-				resourcesMgr: mockResMgr,
+				ioMgr:         mockIoMgr,
+				spi:           mockSpi,
+				imagesWatcher: mockResMgr,
 			},
 			testCtr: &types.Container{
 				ID: notExistingContainerID,
@@ -207,9 +204,9 @@ func TestCtrdClientDestroyContainer(t *testing.T) {
 						},
 					},
 				},
-				ioMgr:        mockIoMgr,
-				spi:          mockSpi,
-				resourcesMgr: mockResMgr,
+				ioMgr:         mockIoMgr,
+				spi:           mockSpi,
+				imagesWatcher: mockResMgr,
 			},
 			testCtr: &types.Container{
 				ID: testContainerID,
@@ -231,10 +228,10 @@ func TestCtrdClientDestroyContainer(t *testing.T) {
 						},
 					},
 				},
-				ioMgr:        mockIoMgr,
-				spi:          mockSpi,
-				resourcesMgr: mockResMgr,
-				imageExpiry:  24 * time.Hour,
+				ioMgr:         mockIoMgr,
+				spi:           mockSpi,
+				imagesWatcher: mockResMgr,
+				imageExpiry:   24 * time.Hour,
 			},
 			testCtr: &types.Container{
 				ID: testContainerID,
@@ -247,11 +244,8 @@ func TestCtrdClientDestroyContainer(t *testing.T) {
 				mockSpi.EXPECT().RemoveSnapshot(ctx, testContainerID).Return(nil)
 				mockSpi.EXPECT().UnmountSnapshot(ctx, testContainerID, rootFSPathDefault).Return(nil)
 				mockSpi.EXPECT().GetImage(ctx, testContainerImageRef).Return(mockImg, nil)
-				testDigest := digest.NewDigest(digest.SHA256, sha256.New())
 				mockImg.EXPECT().Metadata().Return(images.Image{CreatedAt: time.Now().Add(-12 * time.Hour)})
-				mockImg.EXPECT().Name().Return(testContainerImageRef).Times(3)
-				mockImg.EXPECT().RootFS(ctx).Return([]digest.Digest{testDigest}, nil)
-				mockSpi.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, testDigest.String())).Return(nil, nil)
+				mockImg.EXPECT().Name().Return(testContainerImageRef).Times(1)
 				mockResMgr.EXPECT().Watch(testContainerImageRef, gomock.Any(), gomock.Any()).Return(nil)
 				return nil
 			},
@@ -933,20 +927,40 @@ func TestSetContainerExitHooks(t *testing.T) {
 
 func TestCtrdClientDispose(t *testing.T) {
 	testCases := map[string]struct {
-		mockExec func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi, mockResMgr *MockresourcesManager) error
+		imagesExpiryDisabled bool
+		mockExec             func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi, mockResMgr *MockresourcesWatcher) error
 	}{
-		"test_no_err": {
-			mockExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi, mockResMgr *MockresourcesManager) error {
+		"test_no_err_expiry_enabled": {
+			imagesExpiryDisabled: false,
+			mockExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi, mockResMgr *MockresourcesWatcher) error {
 				mockCtrdWrapper.EXPECT().Dispose(gomock.Any()).Return(nil)
 				mockResMgr.EXPECT().Dispose()
 				return nil
 			},
 		},
-		"test_err": {
-			mockExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi, mockResMgr *MockresourcesManager) error {
+		"test_err_expiry_enabled": {
+			imagesExpiryDisabled: false,
+			mockExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi, mockResMgr *MockresourcesWatcher) error {
 				err := log.NewError("test error")
 				mockCtrdWrapper.EXPECT().Dispose(gomock.Any()).Return(err)
 				mockResMgr.EXPECT().Dispose()
+				return err
+			},
+		},
+		"test_no_err_expiry_disabled": {
+			imagesExpiryDisabled: true,
+			mockExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi, mockResMgr *MockresourcesWatcher) error {
+				mockCtrdWrapper.EXPECT().Dispose(gomock.Any()).Return(nil)
+				mockResMgr.EXPECT().Dispose().Times(0)
+				return nil
+			},
+		},
+		"test_err_expiry_disabled": {
+			imagesExpiryDisabled: true,
+			mockExec: func(mockCtrdWrapper *ctrdMocks.MockcontainerdSpi, mockResMgr *MockresourcesWatcher) error {
+				err := log.NewError("test error")
+				mockCtrdWrapper.EXPECT().Dispose(gomock.Any()).Return(err)
+				mockResMgr.EXPECT().Dispose().Times(0)
 				return err
 			},
 		},
@@ -959,14 +973,17 @@ func TestCtrdClientDispose(t *testing.T) {
 			defer mockCtrl.Finish()
 			// init mocks
 			mockSpi := ctrdMocks.NewMockcontainerdSpi(mockCtrl)
-			mockResMgr := NewMockresourcesManager(mockCtrl)
+			mockResMgr := NewMockresourcesWatcher(mockCtrl)
 			// mock exec
 			expectedErr := testData.mockExec(mockSpi, mockResMgr)
 			// init spi under test
 			testClient := &containerdClient{
-				spi:          mockSpi,
-				ctrdCache:    newContainerInfoCache(),
-				resourcesMgr: mockResMgr,
+				spi:                mockSpi,
+				ctrdCache:          newContainerInfoCache(),
+				imageExpiryDisable: testData.imagesExpiryDisabled,
+			}
+			if !testData.imagesExpiryDisabled {
+				testClient.imagesWatcher = mockResMgr
 			}
 			// test
 			actualErr := testClient.Dispose(context.Background())

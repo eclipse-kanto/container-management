@@ -244,7 +244,11 @@ func TestSetCommandFlags(t *testing.T) {
 		},
 		"test_flags_ccl-image-expiry": {
 			flag:         "ccl-image-expiry",
-			expectedType: reflect.Int.String(),
+			expectedType: "duration",
+		},
+		"test_flags_ccl-image-expiry-disable": {
+			flag:         "ccl-image-expiry-disable",
+			expectedType: reflect.Bool.String(),
 		},
 		"test_flags_net-type": {
 			flag:         "net-type",

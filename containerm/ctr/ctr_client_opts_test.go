@@ -15,19 +15,21 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"testing"
+	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 )
 
 const (
-	testNamespace      = "test-namespace"
-	testConnectionPath = "test-conn-path"
-	testRootExec       = "test-root-exec"
-	testMetaPath       = "test-meta-path"
-	testHost           = "test-host"
-	testUser           = "test-user"
-	testPass           = "test-pass"
-	testImageExpiry    = 31
+	testNamespace          = "test-namespace"
+	testConnectionPath     = "test-conn-path"
+	testRootExec           = "test-root-exec"
+	testMetaPath           = "test-meta-path"
+	testHost               = "test-host"
+	testUser               = "test-user"
+	testPass               = "test-pass"
+	testImageExpiry        = 31 * 24 * time.Hour
+	testImageExpiryDisable = true
 )
 
 var (
@@ -50,6 +52,7 @@ var (
 		imageDecRecipients: testDecRecipients,
 		runcRuntime:        types.RuntimeTypeV2runcV2,
 		imageExpiry:        testImageExpiry,
+		imageExpiryDisable: testImageExpiryDisable,
 	}
 )
 
@@ -75,7 +78,8 @@ func TestCtrOpts(t *testing.T) {
 				WithCtrdImageDecryptKeys(testDecKeys...),
 				WithCtrdImageDecryptRecipients(testDecRecipients...),
 				WithCtrdRuncRuntime(string(types.RuntimeTypeV2runcV2)),
-				WithCtrdImageExpiry(testImageExpiry)},
+				WithCtrdImageExpiry(testImageExpiry),
+				WithCtrdImageExpiryDisable(testImageExpiryDisable)},
 			expectedOpts: testOpt,
 		},
 	}

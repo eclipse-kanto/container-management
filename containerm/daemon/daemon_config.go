@@ -11,7 +11,11 @@
 
 package main
 
-import "github.com/eclipse-kanto/container-management/containerm/log"
+import (
+	"encoding/json"
+	"github.com/eclipse-kanto/container-management/containerm/log"
+	"time"
+)
 
 // config refers to daemon's whole configurations.
 type config struct {
@@ -48,7 +52,30 @@ type containerRuntimeConfig struct {
 	CtrImageDecKeys       []string                   `json:"image_dec_keys,omitempty"`
 	CtrImageDecRecipients []string                   `json:"image_dec_recipients,omitempty"`
 	CtrRuncRuntime        string                     `json:"runc_runtime,omitempty"`
-	CtrImageExpiry        int                        `json:"image_expiry,omitempty"`
+	CtrImageExpiry        time.Duration              `json:"image_expiry,omitempty"`
+	CtrImageExpiryDisable bool                       `json:"image_expiry_disable,omitempty"`
+}
+
+func (cfg *containerRuntimeConfig) UnmarshalJSON(data []byte) error {
+	type containerRuntimeConfigPlain containerRuntimeConfig
+
+	tmp := struct {
+		CtrImageExpiry string `json:"image_expiry,omitempty"`
+		*containerRuntimeConfigPlain
+	}{
+		containerRuntimeConfigPlain: (*containerRuntimeConfigPlain)(cfg),
+	}
+	err := json.Unmarshal(data, &tmp)
+	if err != nil {
+		return err
+	}
+	if tmp.CtrImageExpiry != "" {
+		cfg.CtrImageExpiry, err = time.ParseDuration(tmp.CtrImageExpiry)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // registry config

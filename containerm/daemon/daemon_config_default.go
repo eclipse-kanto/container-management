@@ -17,6 +17,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/network"
 	"github.com/eclipse-kanto/container-management/containerm/things"
+	"time"
 )
 
 const (
@@ -44,7 +45,8 @@ const (
 	containerClientExecRootDefault    = managerExecRootPathDefault
 	containerClientMetaPathDefault    = managerMetaPathDefault
 	containerClientRuncRuntimeDefault = string(types.RuntimeTypeV2runcV2)
-	containerClientImageExpiry        = 31
+	containerClientImageExpiry        = 31 * 24 * time.Hour // 31 days
+	containerClientImageExpiryDisable = false
 
 	// default network manager config
 	networkManagerNetTypeDefault  = string(types.NetworkModeBridge)
@@ -116,6 +118,7 @@ func getDefaultInstance() *config {
 			CtrMetaPath:           containerClientMetaPathDefault,
 			CtrRuncRuntime:        containerClientRuncRuntimeDefault,
 			CtrImageExpiry:        containerClientImageExpiry,
+			CtrImageExpiryDisable: containerClientImageExpiryDisable,
 		},
 		NetworkConfig: &networkConfig{
 			NetType:     networkManagerNetTypeDefault,
