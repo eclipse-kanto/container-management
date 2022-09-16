@@ -106,12 +106,9 @@ type ctrdSpi struct {
 	imageService    images.Store
 }
 
-const (
-	containerManagementLeaseID = "kanto-cm.lease"
-	containerdGCExpireLabel    = "containerd.io/gc.expire"
-)
+const containerdGCExpireLabel = "containerd.io/gc.expire"
 
-func newContainerdSpi(rpcAddress string, namespace string, snapshotterType string, metaPath string) (containerdSpi, error) {
+func newContainerdSpi(rpcAddress string, namespace string, snapshotterType string, metaPath string, leaseID string) (containerdSpi, error) {
 	ctrdClient, err := containerd.New(rpcAddress, containerd.WithDefaultNamespace(namespace))
 	if err != nil {
 		return nil, err
@@ -128,10 +125,10 @@ func newContainerdSpi(rpcAddress string, namespace string, snapshotterType strin
 
 	for _, l := range leaseList {
 		log.Debug("checking lease with ID = %s", l.ID)
-		if l.ID != containerManagementLeaseID {
+		if l.ID != leaseID {
 			continue
 		}
-		log.Debug("found lease with ID = %s", containerManagementLeaseID)
+		log.Debug("found lease with ID = %s", leaseID)
 		foundExpireLabel := false
 		for k := range l.Labels {
 			if k == containerdGCExpireLabel {
@@ -139,7 +136,7 @@ func newContainerdSpi(rpcAddress string, namespace string, snapshotterType strin
 				break
 			}
 		}
-		log.Debug("is expired lease %s - %v", containerManagementLeaseID, foundExpireLabel)
+		log.Debug("is expired lease %s - %v", leaseID, foundExpireLabel)
 		// found a lease that matched the condition, just return
 		if !foundExpireLabel {
 			// remove images content from the lease
@@ -166,7 +163,7 @@ func newContainerdSpi(rpcAddress string, namespace string, snapshotterType strin
 				snapshotService: ctrdClient.SnapshotService(snapshotterType),
 			}, nil
 		}
-		log.Debug("deleting expired lease %s", containerManagementLeaseID)
+		log.Debug("deleting expired lease %s", leaseID)
 		// found a lease with id is container-management.lease and has expire time,
 		// then just delete it and wait to recreate a new lease.
 		if err := leaseSrv.Delete(context.TODO(), l); err != nil {
@@ -174,9 +171,9 @@ func newContainerdSpi(rpcAddress string, namespace string, snapshotterType strin
 		}
 
 	}
-	log.Debug("creating new lease with id = %s ", containerManagementLeaseID)
+	log.Debug("creating new lease with id = %s ", leaseID)
 	// not found a matched lease so it must be created
-	if lease, err = leaseSrv.Create(context.TODO(), leases.WithID(containerManagementLeaseID)); err != nil {
+	if lease, err = leaseSrv.Create(context.TODO(), leases.WithID(leaseID)); err != nil {
 		return nil, err
 	}
 	log.Debug("will set lease to %v with ID - %s", &lease, (&lease).ID)

@@ -47,6 +47,7 @@ const (
 	containerClientRuncRuntimeDefault = string(types.RuntimeTypeV2runcV2)
 	containerClientImageExpiry        = 31 * 24 * time.Hour // 31 days
 	containerClientImageExpiryDisable = false
+	containerClientLeaseIDDefault     = "kanto-cm.lease"
 
 	// default network manager config
 	networkManagerNetTypeDefault  = string(types.NetworkModeBridge)
@@ -119,6 +120,7 @@ func getDefaultInstance() *config {
 			CtrRuncRuntime:        containerClientRuncRuntimeDefault,
 			CtrImageExpiry:        containerClientImageExpiry,
 			CtrImageExpiryDisable: containerClientImageExpiryDisable,
+			CtrLeaseID:            containerClientLeaseIDDefault,
 		},
 		NetworkConfig: &networkConfig{
 			NetType:     networkManagerNetTypeDefault,

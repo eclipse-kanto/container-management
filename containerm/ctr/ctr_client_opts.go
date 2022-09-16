@@ -31,6 +31,7 @@ type ctrOpts struct {
 	runcRuntime        types.Runtime
 	imageExpiry        time.Duration
 	imageExpiryDisable bool
+	leaseID            string
 }
 
 // RegistryConfig represents a single registry's access configuration.
@@ -143,6 +144,14 @@ func WithCtrdImageExpiry(expiry time.Duration) ContainerOpts {
 func WithCtrdImageExpiryDisable(disable bool) ContainerOpts {
 	return func(ctrOptions *ctrOpts) error {
 		ctrOptions.imageExpiryDisable = disable
+		return nil
+	}
+}
+
+// WithCtrdLeaseID sets the lease that the container client instance will use within containerd.
+func WithCtrdLeaseID(leaseID string) ContainerOpts {
+	return func(ctrOptions *ctrOpts) error {
+		ctrOptions.leaseID = leaseID
 		return nil
 	}
 }

@@ -250,6 +250,10 @@ func TestSetCommandFlags(t *testing.T) {
 			flag:         "ccl-image-expiry-disable",
 			expectedType: reflect.Bool.String(),
 		},
+		"test_flags_ccl-lease-id": {
+			flag:         "ccl-lease-id",
+			expectedType: reflect.String.String(),
+		},
 		"test_flags_net-type": {
 			flag:         "net-type",
 			expectedType: reflect.String.String(),
