@@ -12,6 +12,7 @@
 package things
 
 import (
+	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 	"testing"
 	"time"
 )
@@ -53,9 +54,8 @@ func TestMetricsRequestHasFilterFor(t *testing.T) {
 				Frequency: Duration{5 * time.Second},
 				Filter:    testCase.filter,
 			}
-			if got := mr.HasFilterFor(testCase.originator); got != testCase.want {
-				t.Errorf("MetricsRequest.HasFilterFor = %v, want %v", got, testCase.want)
-			}
+			got := mr.HasFilterFor(testCase.originator)
+			testutil.AssertEqual(t, testCase.want, got)
 		})
 	}
 }
@@ -164,9 +164,8 @@ func TestMetricsRequestHasFilterForItem(t *testing.T) {
 				Frequency: Duration{5 * time.Second},
 				Filter:    testCase.filter,
 			}
-			if got := mr.HasFilterForItem(testCase.dataID, testCase.dataOriginator); got != testCase.want {
-				t.Errorf("MetricsRequest.HasFilterForItem = %v, want %v", got, testCase.want)
-			}
+			got := mr.HasFilterForItem(testCase.dataID, testCase.dataOriginator)
+			testutil.AssertEqual(t, testCase.want, got)
 		})
 	}
 }
