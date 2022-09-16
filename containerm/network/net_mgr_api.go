@@ -17,8 +17,8 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 )
 
-// ConteinerNetworkManager  abstracts container's network operations
-type ConteinerNetworkManager interface {
+// ContainerNetworkManager  abstracts container's network operations
+type ContainerNetworkManager interface {
 	// Manage performs any container network initialization operations that are needed so that a container is connectable afterwards
 	Manage(ctx context.Context, container *types.Container) error
 
@@ -28,7 +28,7 @@ type ConteinerNetworkManager interface {
 	// Disconnect disconnects the given container from given network
 	Disconnect(ctx context.Context, container *types.Container, force bool) error
 
-	// ReleaseContainerResources releases all locally allocated resources for the container by the network manager implementation - e.g. network endpoints, etc.
+	// ReleaseNetworkResources releases all locally allocated resources for the container by the network manager implementation - e.g. network endpoints, etc.
 	ReleaseNetworkResources(ctx context.Context, container *types.Container) error
 
 	// Dispose manages stop and dispose of the network manager

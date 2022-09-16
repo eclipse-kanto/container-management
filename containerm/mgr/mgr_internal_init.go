@@ -22,7 +22,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-func newContainerMgr(metaPath string, execPath string, defaultCtrsStopTimeout int64, ctrClient ctr.ContainerAPIClient, netMgr network.ConteinerNetworkManager, eventsMgr events.ContainerEventsManager) (ContainerManager, error) {
+func newContainerMgr(metaPath string, execPath string, defaultCtrsStopTimeout int64, ctrClient ctr.ContainerAPIClient, netMgr network.ContainerNetworkManager, eventsMgr events.ContainerEventsManager) (ContainerManager, error) {
 	locksCache := util.NewLocksCache()
 	ctrRepository := containerFsRepository{metaPath: metaPath, locksCache: &locksCache}
 
@@ -86,6 +86,6 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 	}
 
 	//initialize the manager local service
-	return newContainerMgr(mgrOpts.metaPath, mgrOpts.rootExec, mgrOpts.defaultCtrsStopTimeout, ctrClientService.(ctr.ContainerAPIClient), netMgrService.(network.ConteinerNetworkManager), eventsManagerService.(events.ContainerEventsManager))
+	return newContainerMgr(mgrOpts.metaPath, mgrOpts.rootExec, mgrOpts.defaultCtrsStopTimeout, ctrClientService.(ctr.ContainerAPIClient), netMgrService.(network.ContainerNetworkManager), eventsManagerService.(events.ContainerEventsManager))
 
 }

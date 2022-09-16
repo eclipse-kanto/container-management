@@ -39,8 +39,8 @@ type ContainerManager interface {
 	// Start starts a container that has been stopped or created
 	Start(ctx context.Context, id string) error
 
-	// AttachContainer attaches the container's IO
-	AttachContainer(ctx context.Context, id string, attachConfig *streams.AttachConfig) error
+	// Attach attaches the container's IO
+	Attach(ctx context.Context, id string, attachConfig *streams.AttachConfig) error
 
 	// Stop stops a running container
 	Stop(ctx context.Context, id string, stopOpts *types.StopOpts) error

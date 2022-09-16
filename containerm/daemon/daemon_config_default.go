@@ -36,7 +36,7 @@ const (
 	managerMetaPathDefault                 = "/var/lib/container-management"
 	managerExecRootPathDefault             = "/var/run/container-management"
 	managerContainerClientServiceIDDefault = ctr.ContainerdClientServiceLocalID
-	managerNetworkManagerServiceIDDefault  = network.LibetworkManagerServiceLocalID
+	managerNetworkManagerServiceIDDefault  = network.LibnetworkManagerServiceLocalID
 	managerNetworkManagerStopTimeout       = 30
 
 	// default container client config
