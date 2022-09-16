@@ -24,13 +24,13 @@ import (
 )
 
 const (
-	// LibetworkManagerServiceLocalID sets service local ID for libnetwork manager
-	LibetworkManagerServiceLocalID = "container-management.service.local.v1.service-libnetwork-manager"
+	// LibnetworkManagerServiceLocalID sets service local ID for libnetwork manager
+	LibnetworkManagerServiceLocalID = "container-management.service.local.v1.service-libnetwork-manager"
 )
 
 func init() {
 	registry.Register(&registry.Registration{
-		ID:       LibetworkManagerServiceLocalID,
+		ID:       LibnetworkManagerServiceLocalID,
 		Type:     registry.NetworkManagerService,
 		InitFunc: registryInit,
 	})

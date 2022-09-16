@@ -50,7 +50,7 @@ func TestGetContainer(t *testing.T) {
 
 	metapath := "../pkg/testutil/metapath/valid"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -85,7 +85,7 @@ func TestRenameContainer(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -128,7 +128,7 @@ func TestRenameContainerInvalid(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -162,7 +162,7 @@ func TestRenameContainerWithSameName(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -195,7 +195,7 @@ func TestUpdateRunningContainer(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -246,7 +246,7 @@ func TestUpdateContainerWithInvalidOpts(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -307,7 +307,7 @@ func TestRestartContainer(t *testing.T) {
 
 	metapath := "../pkg/testutil/metapath/valid"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -344,7 +344,7 @@ func TestCreateValidContainer(t *testing.T) {
 
 	metapath := "../pkg/testutil/metapath/empty"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	_, container := getDefaultContainer()
@@ -391,7 +391,7 @@ func TestCreateExistingContainer(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctrID, container := getDefaultContainer()
@@ -428,7 +428,7 @@ func TestValidateWrongContainerName(t *testing.T) {
 
 	metapath := "../pkg/testutil/metapath/tmp"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	cache := map[string]*types.Container{}
@@ -457,7 +457,7 @@ func TestDeleteContainerFromManager(t *testing.T) {
 
 	metaPath := "../pkg/testutil/metapath/tmp"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -542,7 +542,7 @@ func TestContainerPause(t *testing.T) {
 
 	metaPath := "../pkg/testutil/metapath/tmp"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -613,7 +613,7 @@ func TestContainerUnpause(t *testing.T) {
 
 	metaPath := "../pkg/testutil/metapath/tmp"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -682,7 +682,7 @@ func TestContainerStart(t *testing.T) {
 
 	metaPath := "../pkg/testutil/metapath/tmp"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -764,7 +764,7 @@ func TestStopContainer(t *testing.T) {
 
 	metaPath := "../pkg/testutil/metapath/tmp"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -844,7 +844,7 @@ func TestStopOpsTimeoutValidation(t *testing.T) {
 
 	metaPath := "../pkg/testutil/metapath/valid"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -882,7 +882,7 @@ func TestStopOpsSignalValidation(t *testing.T) {
 
 	metaPath := "../pkg/testutil/metapath/valid"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	ctx := context.Background()
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
@@ -919,7 +919,7 @@ func TestRestore(t *testing.T) {
 
 	metaPath := "../pkg/testutil/metapath/tmp"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
@@ -972,7 +972,7 @@ func TestRestoreOnDeadContainer(t *testing.T) {
 
 	metaPath := "../pkg/testutil/metapath/tmp"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	hook := test.NewGlobal()
@@ -1023,7 +1023,7 @@ func TestAttach(t *testing.T) {
 
 	metaPath := "../pkg/testutil/metapath/tmp"
 	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
-	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
 	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
 	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
 	ctx := context.Background()
