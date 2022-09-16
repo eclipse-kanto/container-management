@@ -1233,7 +1233,7 @@ func TestClientInternalRemoveUnusedImage(t *testing.T) {
 		},
 		"test_not_used_delete_no_error": {
 			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
-				imageMock.EXPECT().Name().Return(testImgRef).Times(3)
+				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
 				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
 				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
 				spiMock.EXPECT().DeleteImage(ctx, testImgRef).Return(nil)
@@ -1296,7 +1296,7 @@ func TestClientInternalHandleImageExpired(t *testing.T) {
 		"test_no_error": {
 			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
 				spiMock.EXPECT().GetImage(ctx, testImgRef).Return(imageMock, nil)
-				imageMock.EXPECT().Name().Return(testImgRef).Times(3)
+				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
 				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
 				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
 				spiMock.EXPECT().DeleteImage(ctx, testImgRef).Return(nil)
@@ -1327,7 +1327,7 @@ func TestClientInternalHandleImageExpired(t *testing.T) {
 	}
 }
 
-func TestClientInternalManageExpiry(t *testing.T) {
+func TestClientInternalManageImageExpiry(t *testing.T) {
 	testImgRef := "test.image/ref:latest"
 	entryDigest := digest.NewDigest(digest.SHA256, sha256.New())
 
@@ -1348,7 +1348,7 @@ func TestClientInternalManageExpiry(t *testing.T) {
 		"test_expired_not_used_no_error": {
 			imagesExpiry: 1 * time.Second,
 			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, watcherMock *MockresourcesWatcher, imageMock *mocksContainerd.MockImage) error {
-				imageMock.EXPECT().Name().Return(testImgRef).Times(4)
+				imageMock.EXPECT().Name().Return(testImgRef).Times(3)
 				imageMock.EXPECT().Metadata().Return(images.Image{CreatedAt: time.Now().Add(-24 * time.Hour)})
 				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
 				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
