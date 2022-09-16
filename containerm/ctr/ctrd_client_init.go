@@ -23,7 +23,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime, imageExpiry time.Duration, imageExpiryDisable bool) (ContainerAPIClient, error) {
+func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime, imageExpiry time.Duration, imageExpiryDisable bool, leaseID string) (ContainerAPIClient, error) {
 
 	//ensure storage
 	err := util.MkDir(rootExec)
@@ -36,9 +36,9 @@ func newContainerdClient(namespace, socket, rootExec, metaPath string, registryC
 	}
 
 	log.Debug("starting container client with default namespace = %s", namespace)
-	ctrdClientSpi, err := newContainerdSpi(socket, namespace, containerd.DefaultSnapshotter /*overlayfs for now - TODO add client config*/, metaPath)
-	if err != nil {
-		return nil, err
+	ctrdClientSpi, spiErr := newContainerdSpi(socket, namespace, containerd.DefaultSnapshotter /*overlayfs for now - TODO add client config*/, metaPath, leaseID)
+	if spiErr != nil {
+		return nil, spiErr
 	}
 	decryptMgr, decrErr := newContainerDecryptManager(imageDecKeys, imageDecRecipients)
 	if decrErr != nil {
@@ -77,5 +77,5 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 	if err := applyOptsCtr(opts, createOpts...); err != nil {
 		return nil, err
 	}
-	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients, opts.runcRuntime, opts.imageExpiry, opts.imageExpiryDisable)
+	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients, opts.runcRuntime, opts.imageExpiry, opts.imageExpiryDisable, opts.leaseID)
 }

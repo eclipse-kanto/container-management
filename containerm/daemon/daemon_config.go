@@ -54,6 +54,7 @@ type containerRuntimeConfig struct {
 	CtrRuncRuntime        string                     `json:"runc_runtime,omitempty"`
 	CtrImageExpiry        time.Duration              `json:"image_expiry,omitempty"`
 	CtrImageExpiryDisable bool                       `json:"image_expiry_disable,omitempty"`
+	CtrLeaseID            string                     `json:"lease_id,omitempty"`
 }
 
 func (cfg *containerRuntimeConfig) UnmarshalJSON(data []byte) error {

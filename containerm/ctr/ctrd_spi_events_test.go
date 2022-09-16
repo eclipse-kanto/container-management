@@ -24,7 +24,10 @@ import (
 )
 
 func TestSubscribe(t *testing.T) {
-	const testNamespace = "test-namespace"
+	const (
+		testNamespace  = "test-namespace"
+		testSpiLeaseID = "test.lease"
+	)
 
 	testChanEnv := make(<-chan *events.Envelope)
 	testChanErr := make(<-chan error, 1)
@@ -35,10 +38,11 @@ func TestSubscribe(t *testing.T) {
 	defer mockCtrl.Finish()
 	mockCtrdWrapper := ctrdMocks.NewMockcontainerClientWrapper(mockCtrl)
 	ctx := context.Background()
-	testSpi := &ctrdSpi{client: mockCtrdWrapper, lease: &leases.Lease{ID: containerManagementLeaseID}, namespace: testNamespace}
+
+	testSpi := &ctrdSpi{client: mockCtrdWrapper, lease: &leases.Lease{ID: testSpiLeaseID}, namespace: testNamespace}
 
 	expectedContext := namespaces.WithNamespace(ctx, testNamespace)
-	expectedContext = leases.WithLease(expectedContext, containerManagementLeaseID)
+	expectedContext = leases.WithLease(expectedContext, testSpiLeaseID)
 	mockCtrdWrapper.EXPECT().Subscribe(expectedContext, testFilters).Times(1).Return(testChanEnv, testChanErr)
 
 	// test

@@ -30,6 +30,7 @@ const (
 	testPass               = "test-pass"
 	testImageExpiry        = 31 * 24 * time.Hour
 	testImageExpiryDisable = true
+	testLeaseID            = "test-lease-id"
 )
 
 var (
@@ -53,6 +54,7 @@ var (
 		runcRuntime:        types.RuntimeTypeV2runcV2,
 		imageExpiry:        testImageExpiry,
 		imageExpiryDisable: testImageExpiryDisable,
+		leaseID:            testLeaseID,
 	}
 )
 
@@ -79,7 +81,8 @@ func TestCtrOpts(t *testing.T) {
 				WithCtrdImageDecryptRecipients(testDecRecipients...),
 				WithCtrdRuncRuntime(string(types.RuntimeTypeV2runcV2)),
 				WithCtrdImageExpiry(testImageExpiry),
-				WithCtrdImageExpiryDisable(testImageExpiryDisable)},
+				WithCtrdImageExpiryDisable(testImageExpiryDisable),
+				WithCtrdLeaseID(testLeaseID)},
 			expectedOpts: testOpt,
 		},
 	}
