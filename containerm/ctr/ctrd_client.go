@@ -479,10 +479,10 @@ func (ctrdClient *containerdClient) Dispose(ctx context.Context) error {
 	}
 	if ctrdClient.imagesWatcher != nil { // disabled expiry management
 		ctrdClient.imagesWatcher.Dispose()
-	}
 
-	ctrdClient.imagesExpiryLock.Lock()
-	defer ctrdClient.imagesExpiryLock.Unlock()
+		ctrdClient.imagesExpiryLock.Lock() // wait for all expiry handling to finish
+		defer ctrdClient.imagesExpiryLock.Unlock()
+	}
 
 	ctrdClient.ctrdCache.setContainerdDead(true)
 	return ctrdClient.spi.Dispose(ctx)

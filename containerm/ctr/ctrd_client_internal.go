@@ -407,9 +407,9 @@ func (ctrdClient *containerdClient) initImagesExpiryManagement(ctx context.Conte
 	defer ctrdClient.imagesExpiryLock.Unlock()
 
 	for _, image := range images {
-		cleanupErr := ctrdClient.manageImageExpiry(ctx, image)
-		if cleanupErr != nil {
-			log.DebugErr(cleanupErr, "error while initializing expiry management for image = %s", image.Name())
+		watchErr := ctrdClient.manageImageExpiry(ctx, image)
+		if watchErr != nil {
+			log.DebugErr(watchErr, "error while initializing expiry management for image = %s", image.Name())
 			continue
 		}
 		log.Debug("successfully managed expiry for image = %s", image.Name())
