@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/docker/libnetwork"
+	libnetTypes "github.com/docker/libnetwork/types"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
@@ -203,7 +204,7 @@ func TestManage(t *testing.T) {
 		"netmgr_test_manage_default_existing_sb_destroy_error": {
 			mgrConfig:         defaultCfg,
 			container:         newDefaultContainer(),
-			prepareMgrForTest: prepareDestrySbFailed,
+			prepareMgrForTest: prepareDestroySbFailed,
 			assertCtr:         assertManagedContainer,
 			expectedErr:       log.NewErrorf("failed to destroy container sandbox"),
 		},
@@ -668,6 +669,44 @@ func TestRestore(t *testing.T) {
 	}
 }
 
+func TestStats(t *testing.T) {
+	tests := map[string]struct {
+		container         *types.Container
+		prepareMgrForTest prepare
+		expectedIOStats   *types.IOStats
+		expectedErr       error
+	}{
+		"netmgr_test_stats_default": {
+			container:         newDefaultContainer(),
+			prepareMgrForTest: prepareStatsDefault,
+			expectedIOStats:   &types.IOStats{Read: 2048, Write: 4096},
+		},
+		"netmgr_test_stats_missing_sandbox": {
+			container:         newDefaultContainer(),
+			prepareMgrForTest: prepareStatsMissingSb,
+			expectedErr:       log.NewErrorf("no network sandbox for container %s ", testCtrID),
+		},
+		"netmgr_test_stats_statistics_error": {
+			container:         newDefaultContainer(),
+			prepareMgrForTest: prepareStatsErrorGettingStatistics,
+			expectedErr:       log.NewError("error getting statistics"),
+		},
+	}
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			t.Log(testName)
+			controller := gomock.NewController(t)
+
+			testMgr := testCase.prepareMgrForTest(controller, nil, testCase.container)
+			ioStats, err := testMgr.Stats(context.Background(), testCase.container)
+			testutil.AssertError(t, testCase.expectedErr, err)
+			testutil.AssertEqual(t, testCase.expectedIOStats, ioStats)
+		})
+	}
+
+}
+
 func assertManagedContainer(t *testing.T, mgrConfig *config, container *types.Container) {
 	// assert container
 	ctrMetaPath := getContainerNetMetaPath(mgrConfig, container.ID)
@@ -732,7 +771,50 @@ func prepareDefaultExistingSb(gomockCtrl *gomock.Controller, config *config, con
 
 	return &libnetworkMgr{config, mockLibnetMgr}
 }
-func prepareDestrySbFailed(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
+func prepareStatsDefault(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
+	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
+	mockSb := mocks.NewMockSandbox(gomockCtrl)
+
+	mockLibnetMgr.EXPECT().WalkSandboxes(gomock.Any()).Do(func(walker libnetwork.SandboxWalker) {
+		for _, sb := range mockLibnetMgr.Sandboxes() {
+			if walker(sb) {
+				return
+			}
+		}
+	}).Times(1)
+	mockLibnetMgr.EXPECT().Sandboxes().Times(1).Return([]libnetwork.Sandbox{mockSb})
+	mockSb.EXPECT().ContainerID().Times(1).Return(container.ID)
+	mockSb.EXPECT().Statistics().Times(1).Return(
+		map[string]*libnetTypes.InterfaceStatistics{
+			"test0": {RxBytes: 1024, TxBytes: 2048},
+			"test1": {RxBytes: 1024, TxBytes: 2048},
+		}, nil)
+
+	return &libnetworkMgr{config, mockLibnetMgr}
+}
+func prepareStatsMissingSb(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
+	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
+	mockLibnetMgr.EXPECT().WalkSandboxes(gomock.Any()).Times(1)
+	return &libnetworkMgr{config, mockLibnetMgr}
+}
+func prepareStatsErrorGettingStatistics(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
+	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
+	mockSb := mocks.NewMockSandbox(gomockCtrl)
+
+	mockLibnetMgr.EXPECT().WalkSandboxes(gomock.Any()).Do(func(walker libnetwork.SandboxWalker) {
+		for _, sb := range mockLibnetMgr.Sandboxes() {
+			if walker(sb) {
+				return
+			}
+		}
+	}).Times(1)
+	mockLibnetMgr.EXPECT().Sandboxes().Times(1).Return([]libnetwork.Sandbox{mockSb})
+	mockSb.EXPECT().ContainerID().Times(1).Return(container.ID)
+	mockSb.EXPECT().Statistics().Times(1).Return(nil, log.NewError("error getting statistics"))
+
+	return &libnetworkMgr{config, mockLibnetMgr}
+}
+func prepareDestroySbFailed(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
 	mockSb := mocks.NewMockSandbox(gomockCtrl)
 

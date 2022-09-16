@@ -23,11 +23,13 @@ import (
 	eventsMock "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/events"
 	mgrMock "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/mgr"
 	"github.com/eclipse-kanto/container-management/containerm/streams"
+	errorUtil "github.com/eclipse-kanto/container-management/containerm/util/error"
 	"github.com/sirupsen/logrus/hooks/test"
-
-	"context"
 	"path/filepath"
 	"sync"
+	"time"
+
+	"context"
 	"testing"
 
 	networkMock "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/network"
@@ -1055,6 +1057,163 @@ func TestAttach(t *testing.T) {
 	err := unitUnderTest.Attach(context.Background(), ctrID, attachConfig)
 
 	testutil.AssertNil(t, err)
+}
+
+func TestMetrics(t *testing.T) {
+	const testCtrID = "test-ctr-id"
+	metricsReportFull := &types.Metrics{
+		CPU: &types.CPUStats{
+			Used:  15000,
+			Total: 150000,
+		},
+		Memory: &types.MemoryStats{
+			Used:  1024 * 1024 * 1024,
+			Total: 8 * 1024 * 1024 * 1024,
+		},
+		IO: &types.IOStats{
+			Read:  1024,
+			Write: 2028,
+		},
+		Network: &types.IOStats{
+			Read:  2048,
+			Write: 4096,
+		},
+		PIDs:      5,
+		Timestamp: time.Now(),
+	}
+
+	tests := map[string]struct {
+		ctr              *types.Container
+		ctrStatsFailOnly bool
+		addCtrToCache    bool
+		mockExec         func(ctx context.Context, ctr *types.Container, client *ctrMock.MockContainerAPIClient, manager *networkMock.MockContainerNetworkManager) (*types.Metrics, error)
+	}{
+		"test_missing_in_cache": {
+			ctr: &types.Container{
+				ID: testCtrID,
+			},
+			addCtrToCache: false,
+			mockExec: func(ctx context.Context, ctr *types.Container, client *ctrMock.MockContainerAPIClient, manager *networkMock.MockContainerNetworkManager) (*types.Metrics, error) {
+				return nil, log.NewErrorf(noSuchContainerErrorMsg, testCtrID)
+			},
+		},
+		"test_exited_container": {
+			ctr: &types.Container{
+				ID: testCtrID,
+				State: &types.State{
+					Exited:  true,
+					Paused:  false,
+					Running: false,
+				},
+			},
+			addCtrToCache: true,
+			mockExec: func(ctx context.Context, ctr *types.Container, client *ctrMock.MockContainerAPIClient, manager *networkMock.MockContainerNetworkManager) (*types.Metrics, error) {
+				return nil, nil
+			},
+		},
+		"test_ctr_stats_error": {
+			ctrStatsFailOnly: true,
+			addCtrToCache:    true,
+			ctr: &types.Container{
+				ID: testCtrID,
+				State: &types.State{
+					Running: true,
+				},
+			},
+			mockExec: func(ctx context.Context, ctr *types.Container, client *ctrMock.MockContainerAPIClient, manager *networkMock.MockContainerNetworkManager) (*types.Metrics, error) {
+				err := log.NewError("test error")
+				client.EXPECT().GetContainerStats(ctx, ctr).Return(nil, nil, nil, uint64(0), time.Time{}, err)
+				manager.EXPECT().Stats(ctx, ctr).Return(metricsReportFull.Network, nil)
+				return &types.Metrics{
+					Network:   metricsReportFull.Network,
+					Timestamp: time.Now(),
+				}, nil
+			},
+		},
+		"test_net_stats_error": {
+			ctr: &types.Container{
+				ID: testCtrID,
+				State: &types.State{
+					Running: true,
+				},
+			},
+			addCtrToCache: true,
+			mockExec: func(ctx context.Context, ctr *types.Container, client *ctrMock.MockContainerAPIClient, manager *networkMock.MockContainerNetworkManager) (*types.Metrics, error) {
+				err := log.NewError("test error")
+				client.EXPECT().GetContainerStats(ctx, ctr).Return(metricsReportFull.CPU, metricsReportFull.Memory, metricsReportFull.IO, uint64(metricsReportFull.PIDs), metricsReportFull.Timestamp, nil)
+				manager.EXPECT().Stats(ctx, ctr).Return(nil, err)
+				return &types.Metrics{
+					CPU:       metricsReportFull.CPU,
+					Memory:    metricsReportFull.Memory,
+					IO:        metricsReportFull.IO,
+					Network:   nil,
+					Timestamp: metricsReportFull.Timestamp,
+					PIDs:      metricsReportFull.PIDs,
+				}, nil
+			},
+		},
+		"test_ctr_net_stats_error": {
+			ctr: &types.Container{
+				ID: testCtrID,
+				State: &types.State{
+					Running: true,
+				},
+			},
+			addCtrToCache: true,
+			mockExec: func(ctx context.Context, ctr *types.Container, client *ctrMock.MockContainerAPIClient, manager *networkMock.MockContainerNetworkManager) (*types.Metrics, error) {
+				err := log.NewError("test error")
+				client.EXPECT().GetContainerStats(ctx, ctr).Return(nil, nil, nil, uint64(0), time.Time{}, err)
+				manager.EXPECT().Stats(ctx, ctr).Return(nil, err)
+				errs := &errorUtil.CompoundError{}
+				errs.Append(err, err)
+				return nil, errs
+			},
+		},
+	}
+	// run tests
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			t.Log(testName)
+
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			// init mocks
+			mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
+			mockNetworkManager := networkMock.NewMockContainerNetworkManager(mockCtrl)
+
+			testMgr := &containerMgr{
+				ctrClient:  mockCtrClient,
+				netMgr:     mockNetworkManager,
+				containers: make(map[string]*types.Container),
+			}
+			if testCase.addCtrToCache {
+				testMgr.containers[testCase.ctr.ID] = testCase.ctr
+			}
+			ctx := context.Background()
+			expectedMetrics, expectedErr := testCase.mockExec(ctx, testCase.ctr, mockCtrClient, mockNetworkManager)
+			metrics, err := testMgr.Metrics(ctx, testCase.ctr.ID)
+
+			testutil.AssertError(t, expectedErr, err)
+			if expectedErr != nil {
+				testutil.AssertNil(t, metrics)
+			} else if expectedMetrics == nil {
+				testutil.AssertNil(t, metrics)
+			} else {
+				testutil.AssertEqual(t, expectedMetrics.CPU, metrics.CPU)
+				testutil.AssertEqual(t, expectedMetrics.Memory, metrics.Memory)
+				testutil.AssertEqual(t, expectedMetrics.IO, metrics.IO)
+				testutil.AssertEqual(t, expectedMetrics.PIDs, metrics.PIDs)
+				testutil.AssertEqual(t, expectedMetrics.Network, metrics.Network)
+
+				if testCase.ctrStatsFailOnly {
+					testutil.AssertNotNil(t, metrics.Timestamp)
+				} else {
+					testutil.AssertEqual(t, expectedMetrics.Timestamp, metrics.Timestamp)
+				}
+			}
+		})
+	}
 }
 
 func getDeadContainer() (string, *types.Container) {

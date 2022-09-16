@@ -29,7 +29,7 @@ const (
 )
 
 var (
-	testThingsFeaturesDefaultSet = []string{ContainerFactoryFeatureID, SoftwareUpdatableFeatureID}
+	testThingsFeaturesDefaultSet = []string{ContainerFactoryFeatureID, SoftwareUpdatableFeatureID, MetricsFeatureID}
 	testContainer                = &types.Container{
 		ID:    testContainerID,
 		Name:  testContainerName,

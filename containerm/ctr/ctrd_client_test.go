@@ -23,7 +23,12 @@ import (
 	"github.com/containerd/containerd/snapshots"
 	"github.com/containerd/imgcrypt"
 	"github.com/containerd/imgcrypt/images/encryption"
+	"github.com/containerd/typeurl"
 	"github.com/containers/ocicrypt/config"
+
+	statsV1 "github.com/containerd/cgroups/stats/v1"
+	containerdtypes "github.com/containerd/containerd/api/types"
+
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
@@ -1115,6 +1120,149 @@ func TestCtrdClientUpdateContainer(t *testing.T) {
 			expectedErr := testCase.mockExec()
 			actualErr := testClient.UpdateContainer(ctx, testCase.ctr, testCase.resources)
 			testutil.AssertError(t, expectedErr, actualErr)
+		})
+	}
+}
+
+func TestGetContainerStats(t *testing.T) {
+
+	tests := map[string]struct {
+		arg      *types.Container
+		mockExec func(context context.Context, mockTask *containerdMocks.MockTask) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error)
+	}{
+		"test_container_not_exists": {
+			arg: &types.Container{
+				ID: "non-existing-test-container-id",
+			},
+			mockExec: func(context context.Context, mockTask *containerdMocks.MockTask) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error) {
+				return nil, nil, nil, 0, time.Time{}, log.NewErrorf("missing container with ID = non-existing-test-container-id")
+			},
+		},
+		"test_metrics_error": {
+			arg: &types.Container{
+				ID: testContainerID,
+			},
+			mockExec: func(context context.Context, mockTask *containerdMocks.MockTask) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error) {
+				err := log.NewErrorf("metrics error")
+				mockTask.EXPECT().Metrics(context).Return(nil, err)
+				return nil, nil, nil, 0, time.Time{}, err
+			},
+		},
+		"test_metrics_invalid_type": {
+			arg: &types.Container{
+				ID: testContainerID,
+			},
+			mockExec: func(context context.Context, mockTask *containerdMocks.MockTask) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error) {
+				invalidMetricsObj := &statsV1.MemoryStat{
+					Usage: &statsV1.MemoryEntry{},
+				}
+				b, mErr := typeurl.MarshalAny(invalidMetricsObj)
+				testutil.AssertNil(t, mErr)
+				invalidMetrics := &containerdtypes.Metric{
+					Data: b,
+				}
+				err := log.NewErrorf("unexpected metrics type = %T for container with ID = %s", invalidMetricsObj, testContainerID)
+				mockTask.EXPECT().Metrics(context).Return(invalidMetrics, nil)
+				return nil, nil, nil, 0, time.Time{}, err
+			},
+		},
+		"test_metrics": {
+			arg: &types.Container{
+				ID: testContainerID,
+			},
+			mockExec: func(context context.Context, mockTask *containerdMocks.MockTask) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error) {
+				ctrdMetrics := &statsV1.Metrics{
+					Blkio: &statsV1.BlkIOStat{
+						IoServiceBytesRecursive: []*statsV1.BlkIOEntry{
+							{
+								Op:    "read",
+								Value: 1,
+							},
+							{
+								Op:    "read",
+								Value: 1,
+							},
+							{
+								Op:    "write",
+								Value: 1,
+							},
+							{
+								Op:    "write",
+								Value: 11,
+							},
+						},
+					},
+					Pids: &statsV1.PidsStat{
+						Current: 11,
+					},
+					CPU: &statsV1.CPUStat{
+						Usage: &statsV1.CPUUsage{
+							Total: 1,
+						},
+					},
+					Memory: &statsV1.MemoryStat{
+						Usage: &statsV1.MemoryEntry{
+							Usage: 11,
+						},
+						TotalInactiveFile: 1,
+					},
+				}
+
+				eBytes, marshalErr := typeurl.MarshalAny(ctrdMetrics)
+				testutil.AssertNil(t, marshalErr)
+
+				ctrdMetricsRaw := &containerdtypes.Metric{
+					Data:      eBytes,
+					Timestamp: time.Now(),
+				}
+				mockTask.EXPECT().Metrics(context).Return(ctrdMetricsRaw, nil)
+				return &types.CPUStats{Used: ctrdMetrics.CPU.Usage.Total}, &types.MemoryStats{Used: ctrdMetrics.Memory.Usage.Usage - ctrdMetrics.Memory.TotalInactiveFile}, &types.IOStats{Read: 2, Write: 12}, ctrdMetrics.Pids.Current, ctrdMetricsRaw.Timestamp, nil
+			},
+		},
+	}
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			mockTask := containerdMocks.NewMockTask(mockCtrl)
+
+			testClient := &containerdClient{
+				ctrdCache: &containerInfoCache{
+					cache: map[string]*containerInfo{
+						testContainerID: {
+							c: &types.Container{
+								ID: testContainerID,
+							},
+							task: mockTask,
+						},
+					},
+				},
+			}
+
+			ctx := context.Background()
+
+			cpuStats, memStats, ioStats, pidStats, timestamp, expectedError := testCase.mockExec(ctx, mockTask)
+			cpu, mem, io, pids, tstamp, err := testClient.GetContainerStats(ctx, testCase.arg)
+			testutil.AssertError(t, expectedError, err)
+			if expectedError != nil {
+				testutil.AssertNil(t, cpu)
+				testutil.AssertNil(t, mem)
+				testutil.AssertNil(t, io)
+				testutil.AssertEqual(t, uint64(0), pids)
+				testutil.AssertEqual(t, time.Time{}, tstamp)
+			} else {
+				testutil.AssertNotNil(t, cpu)
+				testutil.AssertEqual(t, cpuStats.Used, cpu.Used)
+				testutil.AssertNotNil(t, mem)
+				testutil.AssertEqual(t, memStats.Used, mem.Used)
+				testutil.AssertNotNil(t, io)
+				testutil.AssertEqual(t, ioStats.Read, io.Read)
+				testutil.AssertEqual(t, ioStats.Write, io.Write)
+				testutil.AssertEqual(t, pidStats, pids)
+				testutil.AssertEqual(t, timestamp, tstamp)
+			}
 		})
 	}
 }
