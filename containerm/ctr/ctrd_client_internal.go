@@ -422,7 +422,7 @@ func (ctrdClient *containerdClient) manageImageExpiry(ctx context.Context, image
 	log.Debug("performing expiry management for image = %s", imgRef)
 
 	imgTTL := ctrdClient.imageExpiry - time.Now().Sub(image.Metadata().CreatedAt)
-	log.Debug("the tile to live period of image = %s is %v", imgRef, imgTTL)
+	log.Debug("image = %s will expire after %v", imgRef, imgTTL)
 	if imgTTL <= 0 { // expired
 		log.Debug("image = %s has expired", imgRef)
 		var rmErr error

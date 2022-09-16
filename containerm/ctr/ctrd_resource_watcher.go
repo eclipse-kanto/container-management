@@ -93,6 +93,7 @@ func (watcher *resWatcher) Watch(resourceID string, duration time.Duration, expi
 func (watcher *resWatcher) Dispose() {
 	watcher.Lock()
 	defer watcher.Unlock()
+	log.Debug("resource watcher is disposing")
 	watcher.watcherCtxCancel()
 
 	watcher.watchCacheLock.RLock()
@@ -102,6 +103,7 @@ func (watcher *resWatcher) Dispose() {
 		log.Debug("stopping monitoring for resource %s", infoKey)
 		info.timer.Stop()
 	}
+	log.Debug("resource watcher disposed")
 }
 func (watcher *resWatcher) cleanCache(id string) {
 	watcher.watchCacheLock.Lock()
