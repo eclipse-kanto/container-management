@@ -108,7 +108,7 @@ type ctrdSpi struct {
 
 const containerdGCExpireLabel = "containerd.io/gc.expire"
 
-func newContainerdSpi(rpcAddress, namespace, snapshotterType, metaPath, leaseID string) (containerdSpi, error) {
+func newContainerdSpi(rpcAddress string, namespace string, snapshotterType string, metaPath string, leaseID string) (containerdSpi, error) {
 	ctrdClient, err := containerd.New(rpcAddress, containerd.WithDefaultNamespace(namespace))
 	if err != nil {
 		return nil, err
