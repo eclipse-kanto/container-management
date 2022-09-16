@@ -204,7 +204,7 @@ func TestManage(t *testing.T) {
 		"netmgr_test_manage_default_existing_sb_destroy_error": {
 			mgrConfig:         defaultCfg,
 			container:         newDefaultContainer(),
-			prepareMgrForTest: prepareDestrySbFailed,
+			prepareMgrForTest: prepareDestroySbFailed,
 			assertCtr:         assertManagedContainer,
 			expectedErr:       log.NewErrorf("failed to destroy container sandbox"),
 		},
@@ -771,7 +771,7 @@ func prepareDefaultExistingSb(gomockCtrl *gomock.Controller, config *config, con
 
 	return &libnetworkMgr{config, mockLibnetMgr}
 }
-func prepareStatsDefault(gomockCtrl *gomock.Controller, config *config, container *types.Container) ConteinerNetworkManager {
+func prepareStatsDefault(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
 	mockSb := mocks.NewMockSandbox(gomockCtrl)
 
@@ -792,12 +792,12 @@ func prepareStatsDefault(gomockCtrl *gomock.Controller, config *config, containe
 
 	return &libnetworkMgr{config, mockLibnetMgr}
 }
-func prepareStatsMissingSb(gomockCtrl *gomock.Controller, config *config, container *types.Container) ConteinerNetworkManager {
+func prepareStatsMissingSb(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
 	mockLibnetMgr.EXPECT().WalkSandboxes(gomock.Any()).Times(1)
 	return &libnetworkMgr{config, mockLibnetMgr}
 }
-func prepareStatsErrorGettingStatistics(gomockCtrl *gomock.Controller, config *config, container *types.Container) ConteinerNetworkManager {
+func prepareStatsErrorGettingStatistics(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
 	mockSb := mocks.NewMockSandbox(gomockCtrl)
 
@@ -814,7 +814,7 @@ func prepareStatsErrorGettingStatistics(gomockCtrl *gomock.Controller, config *c
 
 	return &libnetworkMgr{config, mockLibnetMgr}
 }
-func prepareDestrySbFailed(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
+func prepareDestroySbFailed(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
 	mockSb := mocks.NewMockSandbox(gomockCtrl)
 
