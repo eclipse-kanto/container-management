@@ -22,7 +22,10 @@
     ],
     "exec_root_dir": "/var/run/container-management",
     "home_dir": "/var/lib/container-management",
-    "runc_runtime": "io.containerd.runc.v2"
+    "runc_runtime": "io.containerd.runc.v2",
+    "image_expiry": "744h",
+    "image_expiry_disable": false,
+    "lease_id": "kanto-cm.lease"
   },
   "network": {
     "type": "bridge",
@@ -46,7 +49,8 @@
     "home_dir": "/var/lib/container-management",
     "features": [
       "ContainerFactory",
-      "SoftwareUpdatable"
+      "SoftwareUpdatable",
+      "Metrics"
     ],
     "connection": {
       "broker_url": "tcp://localhost:1883",

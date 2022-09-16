@@ -17,6 +17,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/network"
 	"github.com/eclipse-kanto/container-management/containerm/things"
+	"time"
 )
 
 const (
@@ -44,6 +45,9 @@ const (
 	containerClientExecRootDefault    = managerExecRootPathDefault
 	containerClientMetaPathDefault    = managerMetaPathDefault
 	containerClientRuncRuntimeDefault = string(types.RuntimeTypeV2runcV2)
+	containerClientImageExpiry        = 31 * 24 * time.Hour // 31 days
+	containerClientImageExpiryDisable = false
+	containerClientLeaseIDDefault     = "kanto-cm.lease"
 
 	// default network manager config
 	networkManagerNetTypeDefault  = string(types.NetworkModeBridge)
@@ -87,7 +91,7 @@ var (
 	containerClientInsecureRegistriesDefault = []string{"localhost"}
 
 	// default things service features config
-	thingsServiceFeaturesDefault = []string{things.ContainerFactoryFeatureID, things.SoftwareUpdatableFeatureID}
+	thingsServiceFeaturesDefault = []string{things.ContainerFactoryFeatureID, things.SoftwareUpdatableFeatureID, things.MetricsFeatureID}
 )
 
 func getDefaultInstance() *config {
@@ -114,6 +118,9 @@ func getDefaultInstance() *config {
 			CtrRootExec:           containerClientExecRootDefault,
 			CtrMetaPath:           containerClientMetaPathDefault,
 			CtrRuncRuntime:        containerClientRuncRuntimeDefault,
+			CtrImageExpiry:        containerClientImageExpiry,
+			CtrImageExpiryDisable: containerClientImageExpiryDisable,
+			CtrLeaseID:            containerClientLeaseIDDefault,
 		},
 		NetworkConfig: &networkConfig{
 			NetType:     networkManagerNetTypeDefault,

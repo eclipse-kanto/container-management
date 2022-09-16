@@ -142,3 +142,18 @@ func (mr *MockNetworkManagerMockRecorder) Initialize(ctx interface{}) *gomock.Ca
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Initialize", reflect.TypeOf((*MockNetworkManager)(nil).Initialize), ctx)
 }
+
+// Stats mocks base method
+func (m *MockNetworkManager) Stats(ctx context.Context, container *types.Container) (*types.IOStats, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Stats", ctx, container)
+	ret0, _ := ret[0].(*types.IOStats)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Stats indicates an expected call of Stats
+func (mr *MockNetworkManagerMockRecorder) Stats(ctx, container interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stats", reflect.TypeOf((*MockNetworkManager)(nil).Stats), ctx, container)
+}

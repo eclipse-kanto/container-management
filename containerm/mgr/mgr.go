@@ -17,6 +17,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/ctr"
@@ -26,6 +27,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/registry"
 	"github.com/eclipse-kanto/container-management/containerm/streams"
 	"github.com/eclipse-kanto/container-management/containerm/util"
+	errorUtil "github.com/eclipse-kanto/container-management/containerm/util/error"
 )
 
 const (
@@ -468,6 +470,44 @@ func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool) erro
 	}
 
 	return nil
+}
+
+func (mgr *containerMgr) Metrics(ctx context.Context, id string) (*types.Metrics, error) {
+	container := mgr.getContainerFromCache(id)
+	if container == nil {
+		return nil, log.NewErrorf(noSuchContainerErrorMsg, id)
+	}
+
+	container.Lock()
+	defer container.Unlock()
+
+	if !util.IsContainerRunningOrPaused(container) {
+		// no metrics for not running container
+		return nil, nil
+	}
+
+	var (
+		m      = &types.Metrics{}
+		errCtr error
+		errNet error
+	)
+
+	m.CPU, m.Memory, m.IO, m.PIDs, m.Timestamp, errCtr = mgr.ctrClient.GetContainerStats(ctx, container)
+	m.Network, errNet = mgr.netMgr.Stats(ctx, container)
+
+	// both failed - return compound error, only one failed - log warning and return the metrics
+	if errNet != nil {
+		if errCtr != nil {
+			errs := &errorUtil.CompoundError{}
+			errs.Append(errCtr, errNet)
+			return nil, errs
+		}
+		log.WarnErr(errCtr, "could not get network stats for container with ID = %s", container.ID)
+	} else if errCtr != nil {
+		m.Timestamp = time.Now()
+		log.WarnErr(errCtr, "could not get CPU, memory, IO and PIDs stats for container with ID = %s", container.ID)
+	}
+	return m, nil
 }
 
 //--------------------------------- Disposable impl -----------------------------------

@@ -13,16 +13,18 @@ package ctr
 
 import (
 	"context"
+	"io"
+	"sync"
+	"time"
+
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
+
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
 	"github.com/eclipse-kanto/container-management/containerm/streams"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"io"
-	"sync"
-	"time"
 )
 
 const (
@@ -50,6 +52,10 @@ type containerdClient struct {
 	spi                containerdSpi
 	eventsCancel       context.CancelFunc
 	runcRuntime        types.Runtime
+	imageExpiry        time.Duration
+	imageExpiryDisable bool
+	imagesExpiryLock   sync.Mutex
+	imagesWatcher      resourcesWatcher
 }
 
 //-------------------------------------- ContainerdAPIClient implementation with Containerd -------------------------------------
@@ -109,6 +115,10 @@ func (ctrdClient *containerdClient) DestroyContainer(ctx context.Context, contai
 			log.Debug("cleared IOs while destroying container id = %s", container.ID)
 
 			ctrdClient.clearSnapshot(ctx, container.ID)
+
+			if cleanupErr := ctrdClient.handleImageExpiryOnRemove(ctx, container.Image.Name); cleanupErr != nil {
+				log.WarnErr(cleanupErr, "could not clean up resources for image %s", container.Image.Name)
+			}
 		}
 	}()
 
@@ -445,6 +455,20 @@ func (ctrdClient *containerdClient) UpdateContainer(ctx context.Context, contain
 	return ctrInfo.getTask().Update(ctx, containerd.WithResources(r))
 }
 
+func (ctrdClient *containerdClient) GetContainerStats(ctx context.Context, container *types.Container) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error) {
+	ctrInfo := ctrdClient.ctrdCache.get(container.ID)
+	if ctrInfo != nil && ctrInfo.task != nil {
+		ctrdMetrics, err := ctrInfo.task.Metrics(ctx)
+		if err != nil {
+			log.ErrorErr(err, "could not get stats for container ID = %s", container.ID)
+			return nil, nil, nil, 0, time.Time{}, err
+		}
+		return toMetrics(ctrdMetrics, container.ID)
+	}
+
+	return nil, nil, nil, 0, time.Time{}, log.NewErrorf("missing container with ID = %s", container.ID)
+}
+
 //--------------------------------------EOF ContainerdAPIClient implementation with Containerd -------------------------------------
 
 //----------------------------Disposable-------------------------------------------
@@ -453,6 +477,13 @@ func (ctrdClient *containerdClient) Dispose(ctx context.Context) error {
 	if ctrdClient.eventsCancel != nil {
 		ctrdClient.eventsCancel()
 	}
+	if ctrdClient.imagesWatcher != nil { // disabled expiry management
+		ctrdClient.imagesWatcher.Dispose()
+
+		ctrdClient.imagesExpiryLock.Lock() // wait for all expiry handling to finish
+		defer ctrdClient.imagesExpiryLock.Unlock()
+	}
+
 	ctrdClient.ctrdCache.setContainerdDead(true)
 	return ctrdClient.spi.Dispose(ctx)
 }

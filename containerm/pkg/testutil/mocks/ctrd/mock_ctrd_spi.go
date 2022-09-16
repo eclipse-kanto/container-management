@@ -22,6 +22,7 @@ import (
 	containerd "github.com/containerd/containerd"
 	cio "github.com/containerd/containerd/cio"
 	events "github.com/containerd/containerd/events"
+	images "github.com/containerd/containerd/images"
 	leases "github.com/containerd/containerd/leases"
 	snapshots "github.com/containerd/containerd/snapshots"
 	gomock "github.com/golang/mock/gomock"
@@ -79,6 +80,20 @@ func (mr *MockcontainerClientWrapperMockRecorder) GetImage(ctx, ref interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImage", reflect.TypeOf((*MockcontainerClientWrapper)(nil).GetImage), ctx, ref)
 }
 
+// ImageService mocks base method.
+func (m *MockcontainerClientWrapper) ImageService() images.Store {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ImageService")
+	ret0, _ := ret[0].(images.Store)
+	return ret0
+}
+
+// ImageService indicates an expected call of ImageService.
+func (mr *MockcontainerClientWrapperMockRecorder) ImageService() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ImageService", reflect.TypeOf((*MockcontainerClientWrapper)(nil).ImageService))
+}
+
 // LeasesService mocks base method.
 func (m *MockcontainerClientWrapper) LeasesService() leases.Manager {
 	m.ctrl.T.Helper()
@@ -91,6 +106,26 @@ func (m *MockcontainerClientWrapper) LeasesService() leases.Manager {
 func (mr *MockcontainerClientWrapperMockRecorder) LeasesService() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LeasesService", reflect.TypeOf((*MockcontainerClientWrapper)(nil).LeasesService))
+}
+
+// ListImages mocks base method.
+func (m *MockcontainerClientWrapper) ListImages(ctx context.Context, filters ...string) ([]containerd.Image, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx}
+	for _, a := range filters {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListImages", varargs...)
+	ret0, _ := ret[0].([]containerd.Image)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListImages indicates an expected call of ListImages.
+func (mr *MockcontainerClientWrapperMockRecorder) ListImages(ctx interface{}, filters ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx}, filters...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImages", reflect.TypeOf((*MockcontainerClientWrapper)(nil).ListImages), varargs...)
 }
 
 // LoadContainer mocks base method.
@@ -245,6 +280,20 @@ func (mr *MockcontainerdSpiMockRecorder) CreateTask(ctx, container, cioCreatorFu
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTask", reflect.TypeOf((*MockcontainerdSpi)(nil).CreateTask), varargs...)
 }
 
+// DeleteImage mocks base method.
+func (m *MockcontainerdSpi) DeleteImage(ctx context.Context, imageRef string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteImage", ctx, imageRef)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteImage indicates an expected call of DeleteImage.
+func (mr *MockcontainerdSpiMockRecorder) DeleteImage(ctx, imageRef interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteImage", reflect.TypeOf((*MockcontainerdSpi)(nil).DeleteImage), ctx, imageRef)
+}
+
 // Dispose mocks base method.
 func (m *MockcontainerdSpi) Dispose(ctx context.Context) error {
 	m.ctrl.T.Helper()
@@ -301,6 +350,41 @@ func (m *MockcontainerdSpi) GetSnapshotID(containerID string) string {
 func (mr *MockcontainerdSpiMockRecorder) GetSnapshotID(containerID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSnapshotID", reflect.TypeOf((*MockcontainerdSpi)(nil).GetSnapshotID), containerID)
+}
+
+// ListImages mocks base method.
+func (m *MockcontainerdSpi) ListImages(ctx context.Context) ([]containerd.Image, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListImages", ctx)
+	ret0, _ := ret[0].([]containerd.Image)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListImages indicates an expected call of ListImages.
+func (mr *MockcontainerdSpiMockRecorder) ListImages(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImages", reflect.TypeOf((*MockcontainerdSpi)(nil).ListImages), ctx)
+}
+
+// ListSnapshots mocks base method.
+func (m *MockcontainerdSpi) ListSnapshots(ctx context.Context, filters ...string) ([]snapshots.Info, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx}
+	for _, a := range filters {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListSnapshots", varargs...)
+	ret0, _ := ret[0].([]snapshots.Info)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSnapshots indicates an expected call of ListSnapshots.
+func (mr *MockcontainerdSpiMockRecorder) ListSnapshots(ctx interface{}, filters ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx}, filters...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSnapshots", reflect.TypeOf((*MockcontainerdSpi)(nil).ListSnapshots), varargs...)
 }
 
 // LoadContainer mocks base method.
