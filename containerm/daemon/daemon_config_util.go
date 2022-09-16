@@ -40,6 +40,8 @@ func extractCtrClientConfigOptions(daemonConfig *config) []ctr.ContainerOpts {
 		ctr.WithCtrdImageDecryptKeys(daemonConfig.ContainerClientConfig.CtrImageDecKeys...),
 		ctr.WithCtrdImageDecryptRecipients(daemonConfig.ContainerClientConfig.CtrImageDecRecipients...),
 		ctr.WithCtrdRuncRuntime(daemonConfig.ContainerClientConfig.CtrRuncRuntime),
+		ctr.WithCtrdImageExpiry(daemonConfig.ContainerClientConfig.CtrImageExpiry),
+		ctr.WithCtrdImageExpiryDisable(daemonConfig.ContainerClientConfig.CtrImageExpiryDisable),
 	)
 	return ctrOpts
 }
@@ -213,6 +215,8 @@ func dumpContClient(configInstance *config) {
 		if r == types.RuntimeTypeV1 || r == types.RuntimeTypeV2runcV1 {
 			log.Warn("runtime %s is deprecated since containerd v1.4, consider using %s", r, types.RuntimeTypeV2runcV2)
 		}
+		log.Debug("[daemon_cfg][ccl-image-expiry] : %s", configInstance.ContainerClientConfig.CtrImageExpiry)
+		log.Debug("[daemon_cfg][ccl-image-expiry-disable] : %v", configInstance.ContainerClientConfig.CtrImageExpiryDisable)
 	}
 }
 

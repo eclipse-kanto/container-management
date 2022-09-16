@@ -12,8 +12,10 @@
 package ctr
 
 import (
+	"context"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"path/filepath"
+	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/eclipse-kanto/container-management/containerm/log"
@@ -21,7 +23,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime) (ContainerAPIClient, error) {
+func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime, imageExpiry time.Duration, imageExpiryDisable bool) (ContainerAPIClient, error) {
 
 	//ensure storage
 	err := util.MkDir(rootExec)
@@ -53,8 +55,19 @@ func newContainerdClient(namespace, socket, rootExec, metaPath string, registryC
 		logsMgr:            newContainerLogsManager(filepath.Join(metaPath, "containers")),
 		decMgr:             decryptMgr,
 		runcRuntime:        runcRuntime,
+		imageExpiry:        imageExpiry,
+		imageExpiryDisable: imageExpiryDisable,
 	}
 	go ctrdClient.processEvents(namespace)
+	if !ctrdClient.imageExpiryDisable {
+		ctx := context.Background()
+		ctrdClient.imagesWatcher = newResourcesWatcher(ctx)
+		if watchErr := ctrdClient.initImagesExpiryManagement(ctx); watchErr != nil {
+			log.WarnErr(watchErr, "could not initialize watch for resources expiry")
+		}
+	} else {
+		log.Warn("images expiry management is disabled")
+	}
 	return ctrdClient, nil
 }
 
@@ -64,7 +77,5 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 	if err := applyOptsCtr(opts, createOpts...); err != nil {
 		return nil, err
 	}
-
-	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients, opts.runcRuntime)
-
+	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients, opts.runcRuntime, opts.imageExpiry, opts.imageExpiryDisable)
 }

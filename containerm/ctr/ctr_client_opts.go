@@ -14,6 +14,7 @@ package ctr
 import (
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
+	"time"
 )
 
 // ContainerOpts represents container engine client's configuration options.
@@ -28,6 +29,8 @@ type ctrOpts struct {
 	imageDecKeys       []string
 	imageDecRecipients []string
 	runcRuntime        types.Runtime
+	imageExpiry        time.Duration
+	imageExpiryDisable bool
 }
 
 // RegistryConfig represents a single registry's access configuration.
@@ -124,6 +127,22 @@ func WithCtrdRuncRuntime(runcRuntime string) ContainerOpts {
 		default:
 			return log.NewErrorf("unexpected runc runtime = %s", runcRuntime)
 		}
+		return nil
+	}
+}
+
+// WithCtrdImageExpiry sets images expiry time.
+func WithCtrdImageExpiry(expiry time.Duration) ContainerOpts {
+	return func(ctrOptions *ctrOpts) error {
+		ctrOptions.imageExpiry = expiry
+		return nil
+	}
+}
+
+// WithCtrdImageExpiryDisable disables the images' expiry management.
+func WithCtrdImageExpiryDisable(disable bool) ContainerOpts {
+	return func(ctrOptions *ctrOpts) error {
+		ctrOptions.imageExpiryDisable = disable
 		return nil
 	}
 }

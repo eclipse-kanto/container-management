@@ -13,13 +13,16 @@ package ctr
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"github.com/containerd/containerd"
 	eventstypes "github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/events"
+	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/runtime"
+	"github.com/containerd/containerd/snapshots"
 	"github.com/containerd/imgcrypt"
 	"github.com/containerd/imgcrypt/images/encryption"
 	"github.com/containerd/typeurl"
@@ -35,6 +38,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 	protoTypes "github.com/gogo/protobuf/types"
 	"github.com/golang/mock/gomock"
+	"github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 	"os"
 	"sync"
@@ -1134,6 +1138,285 @@ func TestClientInternalProcessEvents(t *testing.T) {
 
 			testutil.AssertWithTimeout(t, testWg, testCasesTimeout)
 			testutil.AssertEqual(t, expectedOOMKilled, ctrdClient.ctrdCache.cache[containerID].isOOmKilled())
+		})
+	}
+}
+
+func TestClientInternalIsImageUsed(t *testing.T) {
+	testImgRef := "test.image/ref:latest"
+	entryDigest := digest.NewDigest(digest.SHA256, sha256.New())
+
+	testCases := map[string]struct {
+		mockExec func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) (bool, error)
+	}{
+		"test_rootfs_error": {
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) (bool, error) {
+				imageMock.EXPECT().Name().Return(testImgRef)
+				err := log.NewErrorf("test error")
+				imageMock.EXPECT().RootFS(ctx).Return(nil, err)
+				return false, err
+			},
+		},
+		"test_not_used": {
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) (bool, error) {
+				imageMock.EXPECT().Name().Return(testImgRef)
+				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
+				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
+				return false, nil
+			},
+		},
+		"test_used": {
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) (bool, error) {
+				imageMock.EXPECT().Name().Return(testImgRef)
+				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
+				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return([]snapshots.Info{{}}, log.NewErrorf("test err"))
+				return true, nil
+			},
+		},
+	}
+	for testCaseName, testCaseData := range testCases {
+		t.Run(testCaseName, func(t *testing.T) {
+			t.Log(testCaseName)
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			// init mocks
+			spiMock := mocksCtrd.NewMockcontainerdSpi(ctrl)
+			imageMock := mocksContainerd.NewMockImage(ctrl)
+
+			ctx := context.Background()
+			ctrdClient := &containerdClient{
+				spi: spiMock,
+			}
+			// mock exec
+			expectedIsUsed, expectedErr := testCaseData.mockExec(ctx, spiMock, imageMock)
+
+			isUsed, err := ctrdClient.isImageUsed(ctx, imageMock)
+			testutil.AssertError(t, expectedErr, err)
+			testutil.AssertEqual(t, expectedIsUsed, isUsed)
+		})
+	}
+}
+
+func TestClientInternalRemoveUnusedImage(t *testing.T) {
+	testImgRef := "test.image/ref:latest"
+	entryDigest := digest.NewDigest(digest.SHA256, sha256.New())
+
+	testCases := map[string]struct {
+		mockExec func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error
+	}{
+		"test_is_used_error": {
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
+				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
+				err := log.NewErrorf("test error")
+				imageMock.EXPECT().RootFS(ctx).Return(nil, err)
+				return err
+			},
+		},
+		"test_used": {
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
+				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
+				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
+				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return([]snapshots.Info{{}}, nil)
+				return errImageIsInUse
+			},
+		},
+		"test_not_used_delete_error": {
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
+				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
+				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
+				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
+				err := log.NewError("test error")
+				spiMock.EXPECT().DeleteImage(ctx, testImgRef).Return(err)
+				return err
+			},
+		},
+		"test_not_used_delete_no_error": {
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
+				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
+				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
+				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
+				spiMock.EXPECT().DeleteImage(ctx, testImgRef).Return(nil)
+				return nil
+			},
+		},
+	}
+	for testCaseName, testCaseData := range testCases {
+		t.Run(testCaseName, func(t *testing.T) {
+			t.Log(testCaseName)
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			// init mocks
+			spiMock := mocksCtrd.NewMockcontainerdSpi(ctrl)
+			imageMock := mocksContainerd.NewMockImage(ctrl)
+
+			ctx := context.Background()
+			ctrdClient := &containerdClient{
+				spi: spiMock,
+			}
+			// mock exec
+			expectedErr := testCaseData.mockExec(ctx, spiMock, imageMock)
+
+			err := ctrdClient.removeUnusedImage(ctx, imageMock)
+			testutil.AssertError(t, expectedErr, err)
+		})
+	}
+}
+
+func TestClientInternalHandleImageExpired(t *testing.T) {
+	testImgRef := "test.image/ref:latest"
+	entryDigest := digest.NewDigest(digest.SHA256, sha256.New())
+
+	testCases := map[string]struct {
+		mockExec func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error
+	}{
+		"test_get_image_error": {
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
+				err := log.NewErrorf("test error")
+				spiMock.EXPECT().GetImage(ctx, testImgRef).Return(nil, err)
+				return err
+			},
+		},
+		"test_get_image_not_found_error": {
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
+				spiMock.EXPECT().GetImage(ctx, testImgRef).Return(nil, errdefs.ErrNotFound)
+				return errdefs.ErrNotFound
+			},
+		},
+		"test_unused_error": {
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
+				spiMock.EXPECT().GetImage(ctx, testImgRef).Return(imageMock, nil)
+				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
+				err := log.NewErrorf("test error")
+				imageMock.EXPECT().RootFS(ctx).Return(nil, err)
+				return err
+			},
+		},
+		"test_no_error": {
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
+				spiMock.EXPECT().GetImage(ctx, testImgRef).Return(imageMock, nil)
+				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
+				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
+				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
+				spiMock.EXPECT().DeleteImage(ctx, testImgRef).Return(nil)
+				return nil
+			},
+		},
+	}
+	for testCaseName, testCaseData := range testCases {
+		t.Run(testCaseName, func(t *testing.T) {
+			t.Log(testCaseName)
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			// init mocks
+			spiMock := mocksCtrd.NewMockcontainerdSpi(ctrl)
+			imageMock := mocksContainerd.NewMockImage(ctrl)
+
+			ctx := context.Background()
+			ctrdClient := &containerdClient{
+				spi: spiMock,
+			}
+			// mock exec
+			expectedErr := testCaseData.mockExec(ctx, spiMock, imageMock)
+
+			err := ctrdClient.handleImageExpired(ctx, testImgRef)
+			testutil.AssertError(t, expectedErr, err)
+		})
+	}
+}
+
+func TestClientInternalManageImageExpiry(t *testing.T) {
+	testImgRef := "test.image/ref:latest"
+	entryDigest := digest.NewDigest(digest.SHA256, sha256.New())
+
+	testCases := map[string]struct {
+		imagesExpiry time.Duration
+		mockExec     func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, watcherMock *MockresourcesWatcher, imageMock *mocksContainerd.MockImage) error
+	}{
+		"test_expired_error": {
+			imagesExpiry: 1 * time.Second,
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, watcherMock *MockresourcesWatcher, imageMock *mocksContainerd.MockImage) error {
+				imageMock.EXPECT().Name().Return(testImgRef).Times(3)
+				imageMock.EXPECT().Metadata().Return(images.Image{CreatedAt: time.Now().Add(-24 * time.Hour)})
+				err := log.NewError("test error")
+				imageMock.EXPECT().RootFS(ctx).Return(nil, err)
+				return err
+			},
+		},
+		"test_expired_not_used_no_error": {
+			imagesExpiry: 1 * time.Second,
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, watcherMock *MockresourcesWatcher, imageMock *mocksContainerd.MockImage) error {
+				imageMock.EXPECT().Name().Return(testImgRef).Times(3)
+				imageMock.EXPECT().Metadata().Return(images.Image{CreatedAt: time.Now().Add(-24 * time.Hour)})
+				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
+				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
+				spiMock.EXPECT().DeleteImage(ctx, testImgRef).Return(nil)
+				return nil
+			},
+		},
+		"test_expired_used_no_error": {
+			imagesExpiry: 1 * time.Second,
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, watcherMock *MockresourcesWatcher, imageMock *mocksContainerd.MockImage) error {
+				imageMock.EXPECT().Name().Return(testImgRef).Times(3)
+				imageMock.EXPECT().Metadata().Return(images.Image{CreatedAt: time.Now().Add(-24 * time.Hour)})
+				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
+				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return([]snapshots.Info{{}}, nil)
+				return nil
+			},
+		},
+		"test_not_expired_watch_already_watched_error": {
+			imagesExpiry: 5 * time.Hour,
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, watcherMock *MockresourcesWatcher, imageMock *mocksContainerd.MockImage) error {
+				imageMock.EXPECT().Name().Return(testImgRef)
+				imageMock.EXPECT().Metadata().Return(images.Image{CreatedAt: time.Now().Add(-1 * time.Hour)})
+				watcherMock.EXPECT().Watch(testImgRef, gomock.Any(), gomock.Any()).Return(errAlreadyWatched)
+				return nil
+			},
+		},
+		"test_not_expired_watch_error": {
+			imagesExpiry: 5 * time.Hour,
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, watcherMock *MockresourcesWatcher, imageMock *mocksContainerd.MockImage) error {
+				imageMock.EXPECT().Name().Return(testImgRef)
+				imageMock.EXPECT().Metadata().Return(images.Image{CreatedAt: time.Now().Add(-1 * time.Hour)})
+				err := log.NewError("test error")
+				watcherMock.EXPECT().Watch(testImgRef, gomock.Any(), gomock.Any()).Return(err)
+				return err
+			},
+		},
+		"test_not_expired_watch_no_error": {
+			imagesExpiry: 5 * time.Hour,
+			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, watcherMock *MockresourcesWatcher, imageMock *mocksContainerd.MockImage) error {
+				imageMock.EXPECT().Name().Return(testImgRef)
+				imageMock.EXPECT().Metadata().Return(images.Image{CreatedAt: time.Now().Add(-1 * time.Hour)})
+				watcherMock.EXPECT().Watch(testImgRef, gomock.Any(), gomock.Any()).Return(nil)
+				return nil
+			},
+		},
+	}
+	for testCaseName, testCaseData := range testCases {
+		t.Run(testCaseName, func(t *testing.T) {
+			t.Log(testCaseName)
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			// init mocks
+			spiMock := mocksCtrd.NewMockcontainerdSpi(ctrl)
+			watcherMock := NewMockresourcesWatcher(ctrl)
+			imageMock := mocksContainerd.NewMockImage(ctrl)
+
+			ctx := context.Background()
+			ctrdClient := &containerdClient{
+				spi:           spiMock,
+				imagesWatcher: watcherMock,
+				imageExpiry:   testCaseData.imagesExpiry,
+			}
+			// mock exec
+			expectedErr := testCaseData.mockExec(ctx, spiMock, watcherMock, imageMock)
+
+			err := ctrdClient.manageImageExpiry(ctx, imageMock)
+			testutil.AssertError(t, expectedErr, err)
 		})
 	}
 }

@@ -132,3 +132,24 @@ func (spi *ctrdSpi) UnmountSnapshot(ctx context.Context, containerID string, roo
 	}
 	return nil
 }
+
+func (spi *ctrdSpi) ListSnapshots(ctx context.Context, filters ...string) ([]snapshots.Info, error) {
+	ctx = spi.setContext(ctx, false)
+
+	var (
+		foundSnapshots []snapshots.Info
+		err            error
+	)
+	snapshotsWalkHandler := func(ctx context.Context, info snapshots.Info) error {
+		log.Debug("found snapshot with ID=%s matching the filters %v", info.Name, filters)
+		foundSnapshots = append(foundSnapshots, info)
+		return nil
+	}
+
+	log.Debug("checking snapshots for filters %v", filters)
+	if err = spi.snapshotService.Walk(ctx, snapshotsWalkHandler, filters...); err != nil {
+		log.DebugErr(err, "error checking snapshots for filters %v", filters)
+	}
+	// return here as snapshots might have been found before the walk cycle has been interrupted by an error
+	return foundSnapshots, err
+}

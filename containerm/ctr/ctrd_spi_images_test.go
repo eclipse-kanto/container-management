@@ -86,7 +86,7 @@ func TestPullImage(t *testing.T) {
 				return image, nil
 			},
 		},
-		"test_err": {
+		"test_pull_err": {
 			mapExec: func(ctrdWrapper *ctrdMocks.MockcontainerClientWrapper, _ *containerdMocks.MockImage) (containerd.Image, error) {
 				err := log.NewError("test pull image error")
 				ctrdWrapper.EXPECT().Pull(gomock.Any(), testImageRef, matchers.MatchesResolverOpts(
