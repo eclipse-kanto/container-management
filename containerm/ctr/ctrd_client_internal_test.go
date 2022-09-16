@@ -1218,7 +1218,7 @@ func TestClientInternalRemoveUnusedImage(t *testing.T) {
 				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
 				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
 				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return([]snapshots.Info{{}}, nil)
-				return nil
+				return errImageIsInUse
 			},
 		},
 		"test_not_used_delete_error": {
@@ -1281,7 +1281,7 @@ func TestClientInternalHandleImageExpired(t *testing.T) {
 		"test_get_image_not_found_error": {
 			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
 				spiMock.EXPECT().GetImage(ctx, testImgRef).Return(nil, errdefs.ErrNotFound)
-				return nil
+				return errdefs.ErrNotFound
 			},
 		},
 		"test_unused_error": {
@@ -1371,7 +1371,7 @@ func TestClientInternalManageExpiry(t *testing.T) {
 			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, watcherMock *MockresourcesWatcher, imageMock *mocksContainerd.MockImage) error {
 				imageMock.EXPECT().Name().Return(testImgRef)
 				imageMock.EXPECT().Metadata().Return(images.Image{CreatedAt: time.Now().Add(-1 * time.Hour)})
-				watcherMock.EXPECT().Watch(testImgRef, gomock.Any(), gomock.Any()).Return(alreadyWatchedError)
+				watcherMock.EXPECT().Watch(testImgRef, gomock.Any(), gomock.Any()).Return(errAlreadyWatched)
 				return nil
 			},
 		},

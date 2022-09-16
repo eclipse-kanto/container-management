@@ -23,7 +23,7 @@ type resourcesWatcher interface {
 	Dispose()
 }
 
-var alreadyWatchedError = log.NewError("resource already watched")
+var errAlreadyWatched = log.NewError("resource already watched")
 
 type watchExpired func(ctx context.Context, id string) error
 
@@ -34,6 +34,7 @@ type watchInfo struct {
 }
 
 type resWatcher struct {
+	sync.Mutex
 	watchCache       map[string]watchInfo
 	watchCacheLock   sync.RWMutex
 	watcherCtx       context.Context
@@ -50,6 +51,8 @@ func newResourcesWatcher(ctx context.Context) resourcesWatcher {
 }
 
 func (watcher *resWatcher) Watch(resourceID string, duration time.Duration, expiredHandler watchExpired) error {
+	watcher.Lock()
+	defer watcher.Unlock()
 	if err := watcher.watcherCtx.Err(); err == context.Canceled {
 		log.Debug("resource manager is cancelled - will not process watch request for resource = %s", resourceID)
 		return err
@@ -59,7 +62,7 @@ func (watcher *resWatcher) Watch(resourceID string, duration time.Duration, expi
 	log.Debug("processing monitoring requested for resource %s", resourceID)
 
 	if _, ok := watcher.watchCache[resourceID]; ok {
-		return alreadyWatchedError
+		return errAlreadyWatched
 	}
 
 	info := watchInfo{
@@ -88,7 +91,10 @@ func (watcher *resWatcher) Watch(resourceID string, duration time.Duration, expi
 }
 
 func (watcher *resWatcher) Dispose() {
+	watcher.Lock()
+	defer watcher.Unlock()
 	watcher.watcherCtxCancel()
+
 	watcher.watchCacheLock.RLock()
 	defer watcher.watchCacheLock.RUnlock()
 

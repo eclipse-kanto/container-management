@@ -425,12 +425,19 @@ func (ctrdClient *containerdClient) manageImageExpiry(ctx context.Context, image
 	log.Debug("the tile to live period of image = %s is %v", imgRef, imgTTL)
 	if imgTTL <= 0 { // expired
 		log.Debug("image = %s has expired", imgRef)
-		return ctrdClient.removeUnusedImage(ctx, image)
+		var rmErr error
+		if rmErr = ctrdClient.removeUnusedImage(ctx, image); rmErr != nil {
+			if rmErr == errImageIsInUse {
+				log.Debug("expired image = %s is in use - will not delete or schedule it for deletion")
+				return nil
+			}
+		}
+		return rmErr
 	}
 	// not expired
 	log.Debug("image = %s is not expired and will be scheduled for removal after %s", imgRef, imgTTL)
 	if watchErr := ctrdClient.imagesWatcher.Watch(imgRef, imgTTL, ctrdClient.handleImageExpired); watchErr != nil {
-		if watchErr == alreadyWatchedError {
+		if watchErr == errAlreadyWatched {
 			log.Debug("image = %s is already scheduled for deletion - reschedule is discarded", imgRef)
 		} else {
 			log.Warn("could not schedule image = %s for expiry monitoring", imgRef)
@@ -463,8 +470,7 @@ func (ctrdClient *containerdClient) handleImageExpired(ctx context.Context, imag
 	image, err := ctrdClient.spi.GetImage(ctx, imageRef)
 	if err != nil {
 		if errdefs.IsNotFound(err) {
-			log.Debug("image = %s is already removed", imageRef)
-			return nil
+			log.Warn("image = %s has already been removed - no usage check or clean up will be performed", imageRef)
 		}
 		return err
 	}
@@ -491,19 +497,26 @@ func (ctrdClient *containerdClient) isImageUsed(ctx context.Context, image conta
 	return isUsed, nil
 }
 
+var errImageIsInUse = log.NewError("image is in use")
+
 func (ctrdClient *containerdClient) removeUnusedImage(ctx context.Context, image containerd.Image) error {
 	isImgUsed, isUsedErr := ctrdClient.isImageUsed(ctx, image)
 	if isUsedErr != nil {
 		log.DebugErr(isUsedErr, "could not check if image = %s is in use - skipping expiry check", image.Name())
 		return isUsedErr
 	}
-	if !isImgUsed {
-		if delErr := ctrdClient.spi.DeleteImage(ctx, image.Name()); delErr != nil {
-			return delErr
-		}
-		log.Debug("deleted unused image = %s", image.Name())
-	} else {
+	if isImgUsed {
 		log.Debug("image = %s is in use - will not delete it", image.Name())
+		return errImageIsInUse
 	}
+
+	if delErr := ctrdClient.spi.DeleteImage(ctx, image.Name()); delErr != nil {
+		if errdefs.IsNotFound(delErr) {
+			log.Debug("image = %s is already removed", image.Name())
+			return nil
+		}
+		return delErr
+	}
+	log.Debug("deleted unused image = %s", image.Name())
 	return nil
 }
