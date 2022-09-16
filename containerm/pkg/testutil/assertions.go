@@ -75,7 +75,7 @@ func AssertContainsString(t *testing.T, str string, substring string) {
 // AssertNil asserts that a value is nil
 func AssertNil(t *testing.T, value interface{}) {
 	if !IsNil(value) {
-		t.Fatalf("expecteh nil, but was %+v", value)
+		t.Fatalf("expected nil, but was %+v", value)
 	}
 }
 

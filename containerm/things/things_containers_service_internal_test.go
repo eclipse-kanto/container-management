@@ -73,9 +73,10 @@ type mockExecutionProcessThing func(t *testing.T)
 
 func mockDefault(t *testing.T) {
 	mockContainerManager.EXPECT().List(gomock.Any()).Times(2).Return(nil, nil)
-	mockEventsManager.EXPECT().Subscribe(gomock.Any()).Times(2).Return(nil, nil)
+	mockEventsManager.EXPECT().Subscribe(gomock.Any()).Times(3).Return(nil, nil)
 	mockThing.EXPECT().SetFeature(ContainerFactoryFeatureID, gomock.Any()).Times(1).Return(nil)
 	mockThing.EXPECT().SetFeature(SoftwareUpdatableFeatureID, gomock.Any()).Times(1).Return(nil)
+	mockThing.EXPECT().SetFeature(MetricsFeatureID, gomock.Any()).Times(1).Return(nil)
 }
 
 func mockFactoryOnly(t *testing.T) {

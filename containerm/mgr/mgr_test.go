@@ -24,6 +24,7 @@ import (
 	mgrMock "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/mgr"
 	"github.com/eclipse-kanto/container-management/containerm/streams"
 	"github.com/sirupsen/logrus/hooks/test"
+	"time"
 
 	"context"
 	"path/filepath"
@@ -1055,6 +1056,62 @@ func TestAttach(t *testing.T) {
 	err := unitUnderTest.Attach(context.Background(), ctrID, attachConfig)
 
 	testutil.AssertNil(t, err)
+}
+
+func TestMetrics(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	metapath := "../pkg/testutil/metapath/valid"
+	mockCtrClient := ctrMock.NewMockContainerAPIClient(mockCtrl)
+	mockNetworkManager := networkMock.NewMockNetworkManager(mockCtrl)
+	mockEventsManager := eventsMock.NewMockContainerEventsManager(mockCtrl)
+	mockRepository := mgrMock.NewMockcontainerRepository(mockCtrl)
+
+	ctx := context.Background()
+
+	expected := &types.Metrics{
+		CPU: &types.CPUStats{
+			Used:  15000,
+			Total: 150000,
+		},
+		Memory: &types.MemoryStats{
+			Used:  1024 * 1024 * 1024,
+			Total: 8 * 1024 * 1024 * 1024,
+		},
+		IO: &types.IOStats{
+			Read:  1024,
+			Write: 2028,
+		},
+		Network: &types.IOStats{
+			Read:  2048,
+			Write: 4096,
+		},
+		PIDs:      5,
+		Timestamp: time.Now(),
+	}
+
+	ctrID, container := getDefaultContainer()
+
+	mockRepository.EXPECT().Prune().Times(1)
+	mockRepository.EXPECT().
+		ReadAll().
+		Return([]*types.Container{container}, nil)
+
+	mockCtrClient.EXPECT().GetContainerStats(gomock.Any(), container).Return(expected.CPU, expected.Memory, expected.IO, expected.PIDs, expected.Timestamp, nil)
+	mockNetworkManager.EXPECT().Stats(gomock.Any(), container).Return(expected.Network, nil)
+
+	cache := make(map[string]*types.Container)
+	unitUnderTest := createContainerManagerWithCustomMocks(
+		metapath, mockCtrClient,
+		mockNetworkManager, mockEventsManager,
+		mockRepository, cache)
+	unitUnderTest.Load(ctx)
+
+	metrics, err := unitUnderTest.Metrics(ctx, ctrID)
+
+	testutil.AssertNil(t, err)
+	testutil.AssertEqual(t, expected, metrics)
 }
 
 func getDeadContainer() (string, *types.Container) {

@@ -23,7 +23,12 @@ import (
 	"github.com/containerd/containerd/snapshots"
 	"github.com/containerd/imgcrypt"
 	"github.com/containerd/imgcrypt/images/encryption"
+	"github.com/containerd/typeurl"
 	"github.com/containers/ocicrypt/config"
+
+	statsV1 "github.com/containerd/cgroups/stats/v1"
+	containerdtypes "github.com/containerd/containerd/api/types"
+
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
@@ -164,15 +169,7 @@ func TestCtrdClientDestroyContainer(t *testing.T) {
 	}{
 		"test_error_not_existing_container": {
 			testClient: &containerdClient{
-				ctrdCache: &containerInfoCache{
-					cache: map[string]*containerInfo{
-						testContainerID: {
-							c: &types.Container{
-								ID: testContainerID,
-							},
-						},
-					},
-				},
+				ctrdCache:     generateTestInfoCache(),
 				ioMgr:         mockIoMgr,
 				spi:           mockSpi,
 				imagesWatcher: mockResMgr,
@@ -194,16 +191,7 @@ func TestCtrdClientDestroyContainer(t *testing.T) {
 		},
 		"test_error_kill_task": {
 			testClient: &containerdClient{
-				ctrdCache: &containerInfoCache{
-					cache: map[string]*containerInfo{
-						testContainerID: {
-							c: &types.Container{
-								ID: testContainerID,
-							},
-							task: mockTask,
-						},
-					},
-				},
+				ctrdCache:     generateTestInfoCache(mockTask),
 				ioMgr:         mockIoMgr,
 				spi:           mockSpi,
 				imagesWatcher: mockResMgr,
@@ -219,15 +207,7 @@ func TestCtrdClientDestroyContainer(t *testing.T) {
 		},
 		"test_destroy_container_without_error": {
 			testClient: &containerdClient{
-				ctrdCache: &containerInfoCache{
-					cache: map[string]*containerInfo{
-						testContainerID: {
-							c: &types.Container{
-								ID: testContainerID,
-							},
-						},
-					},
-				},
+				ctrdCache:     generateTestInfoCache(),
 				ioMgr:         mockIoMgr,
 				spi:           mockSpi,
 				imagesWatcher: mockResMgr,
@@ -579,16 +559,7 @@ func TestPauseContainer(t *testing.T) {
 	mockTask := containerdMocks.NewMockTask(mockCtrl)
 
 	testClient := &containerdClient{
-		ctrdCache: &containerInfoCache{
-			cache: map[string]*containerInfo{
-				testContainerID: {
-					c: &types.Container{
-						ID: testContainerID,
-					},
-					task: mockTask,
-				},
-			},
-		},
+		ctrdCache: generateTestInfoCache(mockTask),
 	}
 	ctx := context.Background()
 
@@ -641,16 +612,7 @@ func TestUnpauseContainer(t *testing.T) {
 	mockTask := containerdMocks.NewMockTask(mockCtrl)
 
 	testClient := &containerdClient{
-		ctrdCache: &containerInfoCache{
-			cache: map[string]*containerInfo{
-				testContainerID: {
-					c: &types.Container{
-						ID: testContainerID,
-					},
-					task: mockTask,
-				},
-			},
-		},
+		ctrdCache: generateTestInfoCache(mockTask),
 	}
 	ctx := context.Background()
 
@@ -709,15 +671,7 @@ func TestListContainers(t *testing.T) {
 		},
 		"test_with_containers": {
 			testClient: &containerdClient{
-				ctrdCache: &containerInfoCache{
-					cache: map[string]*containerInfo{
-						testContainerID: {
-							c: &types.Container{
-								ID: testContainerID,
-							},
-						},
-					},
-				},
+				ctrdCache: generateTestInfoCache(),
 			},
 			want: []*types.Container{
 				{
@@ -737,15 +691,7 @@ func TestListContainers(t *testing.T) {
 
 func TestGetContainerInfo(t *testing.T) {
 	testClient := &containerdClient{
-		ctrdCache: &containerInfoCache{
-			cache: map[string]*containerInfo{
-				testContainerID: {
-					c: &types.Container{
-						ID: testContainerID,
-					},
-				},
-			},
-		},
+		ctrdCache: generateTestInfoCache(),
 	}
 
 	tests := map[string]struct {
@@ -1116,5 +1062,117 @@ func TestCtrdClientUpdateContainer(t *testing.T) {
 			actualErr := testClient.UpdateContainer(ctx, testCase.ctr, testCase.resources)
 			testutil.AssertError(t, expectedErr, actualErr)
 		})
+	}
+}
+
+func TestGetContainerStats(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockTask := containerdMocks.NewMockTask(mockCtrl)
+
+	testClient := &containerdClient{
+		ctrdCache: generateTestInfoCache(mockTask),
+	}
+
+	e := &statsV1.Metrics{
+		CPU: &statsV1.CPUStat{
+			Usage: &statsV1.CPUUsage{},
+		},
+		Memory: &statsV1.MemoryStat{
+			Usage: &statsV1.MemoryEntry{},
+		},
+	}
+
+	eBytes, marshalErr := typeurl.MarshalAny(e)
+	testutil.AssertNil(t, marshalErr)
+
+	m := &containerdtypes.Metric{
+		Data: eBytes,
+	}
+
+	ctx := context.Background()
+
+	tests := map[string]struct {
+		arg      *types.Container
+		mockExec func(context context.Context, mockTask *containerdMocks.MockTask) error
+	}{
+		"test_container_not_exists": {
+			arg: &types.Container{
+				ID: "test-container",
+			},
+			mockExec: func(context context.Context, mockTask *containerdMocks.MockTask) error {
+				return log.NewErrorf("missing container with ID = test-container")
+			},
+		},
+		"test_metrics_error": {
+			arg: &types.Container{
+				ID: testContainerID,
+			},
+			mockExec: func(context context.Context, mockTask *containerdMocks.MockTask) error {
+				err := log.NewErrorf("metrics error")
+				mockTask.EXPECT().Metrics(ctx).Return(nil, err)
+				return err
+			},
+		},
+		"test_metrics_invalid_type": {
+			arg: &types.Container{
+				ID: testContainerID,
+			},
+			mockExec: func(context context.Context, mockTask *containerdMocks.MockTask) error {
+				b, mErr := typeurl.MarshalAny(e.Memory)
+				testutil.AssertNil(t, mErr)
+				invalidMetrics := *m
+				invalidMetrics.Data = b
+				err := log.NewErrorf("unexpected metrics type = %T for container with ID = %s", e.Memory, testContainerID)
+				mockTask.EXPECT().Metrics(ctx).Return(&invalidMetrics, nil)
+				return err
+			},
+		},
+		"test_metrics": {
+			arg: &types.Container{
+				ID: testContainerID,
+			},
+			mockExec: func(context context.Context, mockTask *containerdMocks.MockTask) error {
+				mockTask.EXPECT().Metrics(ctx).Return(m, nil)
+				return nil
+			},
+		},
+	}
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			expectedError := testCase.mockExec(ctx, mockTask)
+			cpu, mem, io, pids, time, err := testClient.GetContainerStats(ctx, testCase.arg)
+			testutil.AssertError(t, expectedError, err)
+			testutil.AssertNil(t, io)
+			testutil.AssertEqual(t, uint64(0), pids)
+			testutil.AssertEqual(t, m.Timestamp, time)
+			if expectedError != nil {
+				testutil.AssertNil(t, cpu)
+				testutil.AssertNil(t, mem)
+			} else {
+				testutil.AssertNotNil(t, cpu)
+				testutil.AssertNotNil(t, mem)
+			}
+		})
+	}
+}
+
+func generateTestInfoCache(mockTask ...*containerdMocks.MockTask) *containerInfoCache {
+	return &containerInfoCache{
+		cache: map[string]*containerInfo{
+			testContainerID: {
+				c: &types.Container{
+					ID: testContainerID,
+				},
+				task: func() containerd.Task {
+					if len(mockTask) > 0 {
+						return mockTask[0]
+					}
+					return nil
+				}(),
+			},
+		},
 	}
 }
