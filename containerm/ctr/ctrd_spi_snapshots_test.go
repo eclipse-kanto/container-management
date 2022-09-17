@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/namespaces"
+	"github.com/eclipse-kanto/container-management/containerm/log"
 	"testing"
 
 	"github.com/containerd/containerd/errdefs"
@@ -37,17 +38,17 @@ func TestGetSnapshot(t *testing.T) {
 	testSnapshotID := fmt.Sprintf(snapshotIDTemplate, testCtrID)
 
 	testCases := map[string]struct {
-		mapExec func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) (snapshots.Info, error)
+		mockExec func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) (snapshots.Info, error)
 	}{
 		"test_no_err": {
-			mapExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) (snapshots.Info, error) {
+			mockExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) (snapshots.Info, error) {
 				info := snapshots.Info{Name: "testSnapshotName"}
 				mockSnapshotter.EXPECT().Stat(ctx, testSnapshotID).Return(info, nil)
 				return info, nil
 			},
 		},
 		"test_err": {
-			mapExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) (snapshots.Info, error) {
+			mockExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) (snapshots.Info, error) {
 				info := snapshots.Info{}
 				err := errors.New("test error")
 				mockSnapshotter.EXPECT().Stat(ctx, testSnapshotID).Return(info, err)
@@ -76,7 +77,7 @@ func TestGetSnapshot(t *testing.T) {
 				namespace:       testNamespace,
 			}
 			// mock exec
-			expectedInfo, expectedErr := testData.mapExec(prepareContext(ctx), mockSnapshotter)
+			expectedInfo, expectedErr := testData.mockExec(prepareContext(ctx), mockSnapshotter)
 
 			// test
 			actualInfo, actualErr := testSpi.GetSnapshot(ctx, testCtrID)
@@ -112,11 +113,11 @@ func TestPrepareSnapshot(t *testing.T) {
 	}
 
 	testCases := map[string]struct {
-		ctx     context.Context
-		mapExec func(context.Context, *containerdMocks.MockImage, *containerdMocks.MockSnapshotter) error
+		ctx      context.Context
+		mockExec func(context.Context, *containerdMocks.MockImage, *containerdMocks.MockSnapshotter) error
 	}{
 		"test_image_error_rootfs": {
-			mapExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				testCtx := prepareContext(ctx, testNamespace, testLeaseID)
 				err := errors.New("test image RootFS error")
 				mockImage.EXPECT().RootFS(testCtx).Return(nil, err)
@@ -124,7 +125,7 @@ func TestPrepareSnapshot(t *testing.T) {
 			},
 		},
 		"test_error_prepare": {
-			mapExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				err := errors.New("test prepare error")
 				testCtx := prepareContext(ctx, testNamespace, testLeaseID)
 				mockImage.EXPECT().RootFS(testCtx).Return(nil, nil)
@@ -133,7 +134,7 @@ func TestPrepareSnapshot(t *testing.T) {
 			},
 		},
 		"test_no_error_prepare": {
-			mapExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				testCtx := prepareContext(ctx, testNamespace, testLeaseID)
 				mockImage.EXPECT().RootFS(testCtx).Return(nil, nil)
 				mockSnapshotter.EXPECT().Prepare(testCtx, testSnapshotID, gomock.Any()).Return(make([]mount.Mount, 0), nil)
@@ -141,7 +142,7 @@ func TestPrepareSnapshot(t *testing.T) {
 			},
 		},
 		"test_error_is_unpacked": {
-			mapExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				err := errors.New("test isUnpacked error")
 				testCtx := prepareContext(ctx, testNamespace, testLeaseID)
 
@@ -153,7 +154,7 @@ func TestPrepareSnapshot(t *testing.T) {
 			},
 		},
 		"test_error_unpack": {
-			mapExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				err := errors.New("test unpack error")
 				testCtx := prepareContext(ctx, testNamespace, testLeaseID)
 				testCtxNoLease := prepareContext(prepareContext(ctx, testNamespace, ""), testNamespace, "")
@@ -167,7 +168,7 @@ func TestPrepareSnapshot(t *testing.T) {
 			},
 		},
 		"test_unpack_success_prepare_fail": {
-			mapExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				err := errors.New("test prepare after unpack error")
 				testCtx := prepareContext(ctx, testNamespace, testLeaseID)
 				testCtxNoLease := prepareContext(prepareContext(ctx, testNamespace, ""), testNamespace, "")
@@ -182,7 +183,7 @@ func TestPrepareSnapshot(t *testing.T) {
 			},
 		},
 		"test_unpack_prepare_success": {
-			mapExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				testCtx := prepareContext(ctx, testNamespace, testLeaseID)
 				testCtxNoLease := prepareContext(prepareContext(ctx, testNamespace, ""), testNamespace, "")
 
@@ -196,7 +197,7 @@ func TestPrepareSnapshot(t *testing.T) {
 			},
 		},
 		"test_is_packed": {
-			mapExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockImage *containerdMocks.MockImage, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				testCtx := prepareContext(ctx, testNamespace, testLeaseID)
 
 				mockImage.EXPECT().RootFS(testCtx).Return(nil, nil)
@@ -223,7 +224,7 @@ func TestPrepareSnapshot(t *testing.T) {
 				namespace:       testNamespace,
 			}
 			ctx := context.Background()
-			expectedErr := testData.mapExec(ctx, mockImage, mockSnapshotter)
+			expectedErr := testData.mockExec(ctx, mockImage, mockSnapshotter)
 
 			actualErr := testSpi.PrepareSnapshot(ctx, testCtrID, mockImage)
 			testutil.AssertError(t, expectedErr, actualErr)
@@ -242,17 +243,17 @@ func TestMountSnapshot(t *testing.T) {
 	testSnapshotID := fmt.Sprintf(snapshotIDTemplate, testCtrID)
 
 	testCases := map[string]struct {
-		mapExec func(context.Context, *containerdMocks.MockSnapshotter) error
+		mockExec func(context.Context, *containerdMocks.MockSnapshotter) error
 	}{
 		"test_error_mounts": {
-			mapExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				err := errors.New("test mounts error")
 				mockSnapshotter.EXPECT().Mounts(ctx, testSnapshotID).Return(nil, err)
 				return err
 			},
 		},
 		"test_mounts_size_error": {
-			mapExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				err := errors.New("failed to get mounts for snapshot for container test-container-id: not equals 1")
 				mockSnapshotter.EXPECT().Mounts(ctx, testSnapshotID).Return(make([]mount.Mount, 2), nil)
 				return err
@@ -279,7 +280,7 @@ func TestMountSnapshot(t *testing.T) {
 			}
 			ctx := context.Background()
 
-			expectedErr := testData.mapExec(prepareContext(ctx), mockSnapshotter)
+			expectedErr := testData.mockExec(prepareContext(ctx), mockSnapshotter)
 
 			actualErr := testSpi.MountSnapshot(ctx, testCtrID, testRootFs)
 			testutil.AssertError(t, expectedErr, actualErr)
@@ -298,23 +299,23 @@ func TestRemoveSnapshot(t *testing.T) {
 	testSnapshotID := fmt.Sprintf(snapshotIDTemplate, testCtrID)
 
 	testCases := map[string]struct {
-		mapExec func(context.Context, *containerdMocks.MockSnapshotter) error
+		mockExec func(context.Context, *containerdMocks.MockSnapshotter) error
 	}{
 		"test_error_remove": {
-			mapExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				err := errors.New("test error remove")
 				mockSnapshotter.EXPECT().Remove(ctx, testSnapshotID).Return(err)
 				return err
 			},
 		},
 		"test_error_not_found_remove": {
-			mapExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				mockSnapshotter.EXPECT().Remove(ctx, testSnapshotID).Return(errdefs.ErrNotFound)
 				return nil
 			},
 		},
 		"test_remove_success": {
-			mapExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) error {
+			mockExec: func(ctx context.Context, mockSnapshotter *containerdMocks.MockSnapshotter) error {
 				mockSnapshotter.EXPECT().Remove(ctx, testSnapshotID).Return(nil)
 				return nil
 			},
@@ -341,10 +342,69 @@ func TestRemoveSnapshot(t *testing.T) {
 			}
 			ctx := context.Background()
 
-			expectedErr := testData.mapExec(prepareContext(ctx), mockSnapshotter)
+			expectedErr := testData.mockExec(prepareContext(ctx), mockSnapshotter)
 
 			actualErr := testSpi.RemoveSnapshot(ctx, testCtrID)
 			testutil.AssertError(t, expectedErr, actualErr)
+
+		})
+	}
+}
+
+func TestListSnapshots(t *testing.T) {
+	const (
+		testType      = "test_type"
+		testFilter    = "name=test-snapshot"
+		testLeaseID   = "test.lease"
+		testNamespace = "test-ns"
+	)
+
+	testCases := map[string]struct {
+		mockExec func(context.Context, *containerdMocks.MockSnapshotter) ([]snapshots.Info, error)
+	}{
+		"test_walk_error": {
+			mockExec: func(ctx context.Context, snapshotter *containerdMocks.MockSnapshotter) ([]snapshots.Info, error) {
+				err := log.NewError("test error")
+				snapshotter.EXPECT().Walk(ctx, gomock.Any(), testFilter).Return(err)
+				return nil, err
+			},
+		},
+		"test_no_error": {
+			mockExec: func(ctx context.Context, snapshotter *containerdMocks.MockSnapshotter) ([]snapshots.Info, error) {
+				testSnapshotInfo := snapshots.Info{
+					Name: "test-snapshot",
+				}
+				snapshotter.EXPECT().Walk(ctx, gomock.Any(), testFilter).Do(
+					func(ctx context.Context, fn snapshots.WalkFunc, filters ...string) error {
+						_ = fn(ctx, testSnapshotInfo)
+						return nil
+					},
+				)
+				return []snapshots.Info{testSnapshotInfo}, nil
+			},
+		},
+	}
+
+	for testName, testData := range testCases {
+		t.Run(testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			mockSnapshotter := containerdMocks.NewMockSnapshotter(mockCtrl)
+
+			testSpi := &ctrdSpi{
+				snapshotService: mockSnapshotter,
+				snapshotterType: testType,
+				lease:           &leases.Lease{ID: testLeaseID},
+				namespace:       testNamespace,
+			}
+			ctx := context.Background()
+
+			expectedSnapshots, expectedErr := testData.mockExec(namespaces.WithNamespace(ctx, testNamespace), mockSnapshotter)
+
+			actualSnapshots, actualErr := testSpi.ListSnapshots(ctx, testFilter)
+			testutil.AssertError(t, expectedErr, actualErr)
+			testutil.AssertEqual(t, expectedSnapshots, actualSnapshots)
 
 		})
 	}

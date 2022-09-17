@@ -24,7 +24,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-func newContainerdClient(namespace, socket, rootExec, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime, imageExpiry time.Duration, imageExpiryDisable bool, leaseID string) (ContainerAPIClient, error) {
+func newContainerdClient(namespace string, socket string, rootExec string, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime, imageExpiry time.Duration, imageExpiryDisable bool, leaseID string) (ContainerAPIClient, error) {
 
 	//ensure storage
 	err := util.MkDir(rootExec)

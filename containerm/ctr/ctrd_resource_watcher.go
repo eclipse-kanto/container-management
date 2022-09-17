@@ -36,16 +36,18 @@ type watchInfo struct {
 
 type resWatcher struct {
 	sync.Mutex
-	watchCache       map[string]watchInfo
-	watchCacheLock   sync.RWMutex
-	watcherCtx       context.Context
-	watcherCtxCancel context.CancelFunc
+	watchCache          map[string]watchInfo
+	watchCacheLock      sync.RWMutex
+	watcherCtx          context.Context
+	watcherCtxCancel    context.CancelFunc
+	watchCacheWaitGroup *sync.WaitGroup
 }
 
 func newResourcesWatcher(ctx context.Context) resourcesWatcher {
 	watcher := &resWatcher{
-		watchCache:     make(map[string]watchInfo),
-		watchCacheLock: sync.RWMutex{},
+		watchCache:          make(map[string]watchInfo),
+		watchCacheLock:      sync.RWMutex{},
+		watchCacheWaitGroup: &sync.WaitGroup{},
 	}
 	watcher.watcherCtx, watcher.watcherCtxCancel = context.WithCancel(ctx)
 	return watcher
@@ -72,7 +74,9 @@ func (watcher *resWatcher) Watch(resourceID string, duration time.Duration, expi
 		expiredHandler: expiredHandler,
 	}
 	watcher.watchCache[info.resourceID] = info
+	watcher.watchCacheWaitGroup.Add(1)
 	go func(ctx context.Context, info watchInfo) {
+		defer watcher.watchCacheWaitGroup.Done()
 		select {
 		case <-info.timer.C:
 			if info.expiredHandler != nil {
@@ -80,9 +84,10 @@ func (watcher *resWatcher) Watch(resourceID string, duration time.Duration, expi
 					log.WarnErr(err, "error while handling monitoring expiry for resource %s", info.resourceID)
 				}
 			}
-			watcher.cleanCache(info.resourceID)
+			watcher.cleanCache(info.resourceID, false)
 			log.Debug("successfully processed expired resource %s", info.resourceID)
 		case <-ctx.Done():
+			watcher.cleanCache(info.resourceID, true)
 			log.Debug("cancelled monitoring for resource %s", info.resourceID)
 		}
 		log.Debug("finished watch process for resource %s", info.resourceID)
@@ -97,23 +102,22 @@ func (watcher *resWatcher) Dispose() {
 	log.Debug("resource watcher is disposing")
 	watcher.watcherCtxCancel()
 
-	watcher.watchCacheLock.RLock()
-	defer watcher.watchCacheLock.RUnlock()
+	log.Debug("waiting for monitoring routines to finish")
+	watcher.watchCacheWaitGroup.Wait()
 
-	for infoKey, info := range watcher.watchCache {
-		log.Debug("stopping monitoring for resource %s", infoKey)
-		info.timer.Stop()
-	}
 	log.Debug("resource watcher disposed")
 }
-func (watcher *resWatcher) cleanCache(id string) {
+func (watcher *resWatcher) cleanCache(id string, withStop bool) {
 	watcher.watchCacheLock.Lock()
 	defer watcher.watchCacheLock.Unlock()
 	info, ok := watcher.watchCache[id]
 	if ok {
+		if withStop && info.timer.Stop() {
+			log.Debug("stopped monitoring timer for resource %s", info.resourceID)
+		}
 		delete(watcher.watchCache, id)
 		log.Debug("removed watch cache for resource %s", info.resourceID)
 	} else {
-		log.Debug("no watch cache to remove for resource %s", info.resourceID)
+		log.Warn("no watch cache found for resource %s", info.resourceID)
 	}
 }
