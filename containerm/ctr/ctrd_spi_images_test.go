@@ -189,6 +189,7 @@ func TestUnpackImage(t *testing.T) {
 func TestListImages(t *testing.T) {
 	const (
 		testNamespace = "test-ns"
+		testFilter    = "name=test.img/ref:latest"
 	)
 
 	testCases := map[string]struct {
@@ -197,14 +198,14 @@ func TestListImages(t *testing.T) {
 		"test_no_err": {
 			mockExec: func(ctx context.Context, ctrdWrapperMock *ctrdMocks.MockcontainerClientWrapper, imageMock *containerdMocks.MockImage) ([]containerd.Image, error) {
 				res := []containerd.Image{imageMock}
-				ctrdWrapperMock.EXPECT().ListImages(ctx).Return(res, nil)
+				ctrdWrapperMock.EXPECT().ListImages(ctx, testFilter).Return(res, nil)
 				return res, nil
 			},
 		},
 		"test_err": {
 			mockExec: func(ctx context.Context, ctrdWrapperMock *ctrdMocks.MockcontainerClientWrapper, imageMock *containerdMocks.MockImage) ([]containerd.Image, error) {
 				err := log.NewError("test pull image error")
-				ctrdWrapperMock.EXPECT().ListImages(ctx).Return(nil, err)
+				ctrdWrapperMock.EXPECT().ListImages(ctx, testFilter).Return(nil, err)
 				return nil, err
 			},
 		},
@@ -230,7 +231,7 @@ func TestListImages(t *testing.T) {
 			expectedImgs, expectedErr := testData.mockExec(namespaces.WithNamespace(ctx, testNamespace), mockCtrdWrapper, mockImg)
 
 			// test
-			imgs, actualErr := testSpi.ListImages(ctx)
+			imgs, actualErr := testSpi.ListImages(ctx, testFilter)
 			testutil.AssertError(t, expectedErr, actualErr)
 			testutil.AssertEqual(t, expectedImgs, imgs)
 		})
