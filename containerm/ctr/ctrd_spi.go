@@ -61,8 +61,8 @@ type containerdSpi interface {
 	UnpackImage(ctx context.Context, image containerd.Image, opts ...containerd.UnpackOpt) error
 	// DeleteImage removes the contents of the provided image from the disk
 	DeleteImage(ctx context.Context, imageRef string) error
-	// ListImages returns all locally existing images
-	ListImages(ctx context.Context) ([]containerd.Image, error)
+	// ListImages returns all locally existing images matching the provided filters or all if no filters are provided
+	ListImages(ctx context.Context, filters ...string) ([]containerd.Image, error)
 
 	// Wrapper section for managing the file system of the container and its snapshots
 	// GetSnapshotID generates a new ID for the snapshot to be used for this container

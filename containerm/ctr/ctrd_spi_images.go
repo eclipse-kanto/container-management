@@ -38,9 +38,9 @@ func (spi *ctrdSpi) UnpackImage(ctx context.Context, image containerd.Image, opt
 }
 
 // ListImages returns all locally existing images
-func (spi *ctrdSpi) ListImages(ctx context.Context) ([]containerd.Image, error) {
+func (spi *ctrdSpi) ListImages(ctx context.Context, filters ...string) ([]containerd.Image, error) {
 	ctx = spi.setContext(ctx, false)
-	return spi.client.ListImages(ctx)
+	return spi.client.ListImages(ctx, filters...)
 }
 
 // DeleteImage removes the contents of the provided image from the disk
