@@ -25,7 +25,7 @@ import (
 func TestNewResourceWatcher(t *testing.T) {
 	ctx := context.Background()
 
-	expectedCtx, expextedCtxCancel := context.WithCancel(ctx)
+	expectedCtx, expectedCtxCancel := context.WithCancel(ctx)
 
 	testResourceWatcher := newResourcesWatcher(ctx)
 	testResourceWatcherInternal, ok := testResourceWatcher.(*resWatcher)
@@ -33,7 +33,7 @@ func TestNewResourceWatcher(t *testing.T) {
 	testutil.AssertNotNil(t, testResourceWatcherInternal.watchCache)
 	testutil.AssertEqual(t, 0, len(testResourceWatcherInternal.watchCache))
 	testutil.AssertEqual(t, expectedCtx, testResourceWatcherInternal.watcherCtx)
-	testutil.AssertEqual(t, reflect.ValueOf(expextedCtxCancel).Pointer(), reflect.ValueOf(testResourceWatcherInternal.watcherCtxCancel).Pointer())
+	testutil.AssertEqual(t, reflect.ValueOf(expectedCtxCancel).Pointer(), reflect.ValueOf(testResourceWatcherInternal.watcherCtxCancel).Pointer())
 	testutil.AssertNotNil(t, testResourceWatcherInternal.watchCacheWaitGroup)
 }
 

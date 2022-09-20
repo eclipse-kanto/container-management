@@ -1303,7 +1303,7 @@ func TestClientInternalHandleImageExpired(t *testing.T) {
 				return err
 			},
 		},
-		"test_used_error": {
+		"test_used_no_error": {
 			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
 				spiMock.EXPECT().GetImage(ctx, testImgRef).Return(imageMock, nil)
 				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
