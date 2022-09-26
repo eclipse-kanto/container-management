@@ -310,11 +310,11 @@ json-iterator/go (1.1.10)
 * Project: https://github.com/json-iterator/go
 * Source:  https://github.com/json-iterator/go/releases/tag/v1.1.10
 
-klauspost/compress (1.11.13)
+klauspost/compress (1.13.6)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/klauspost/compress
-* Source:  https://github.com/klauspost/compress/releases/tag/v1.11.13
+* Source:  https://github.com/klauspost/compress/releases/tag/v1.13.6
 
 mattn/go-colorable (0.1.6)
 
