@@ -17,7 +17,7 @@ require (
 	github.com/containers/ocicrypt v1.1.5
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20200318182600-ef149a924dfd
-	github.com/eclipse/paho.mqtt.golang v1.3.5
+	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2

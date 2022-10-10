@@ -166,11 +166,11 @@ moby/libnetwork (0.8.0-dev.2.0.20200318182600-ef149a924dfd)
 * Project: https://github.com/moby/libnetwork
 * Source:  https://github.com/moby/libnetwork/tree/ef149a924dfde2e506ea3cb3f617d7d0fa96b8ee
 
-eclipse/paho.mqtt.golang (1.3.5)
+eclipse/paho.mqtt.golang (1.4.1)
 
-* License: Eclipse Public License 2.0
+* License: Eclipse Distribution License v1.0
 * Project: https://github.com/eclipse/paho.mqtt.golang
-* Source:  https://github.com/eclipse/paho.mqtt.golang/releases/tag/v1.3.5
+* Source:  https://github.com/eclipse/paho.mqtt.golang/releases/tag/v1.4.1
 
 fatih/color (1.9.0)
 
