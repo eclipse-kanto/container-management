@@ -84,5 +84,8 @@ func setupThingsContainerManager(controller *gomock.Controller) {
 		0,
 		0,
 		0,
-		0)
+		0,
+		"",
+		"",
+		"")
 }

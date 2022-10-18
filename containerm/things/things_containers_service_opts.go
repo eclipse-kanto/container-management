@@ -12,7 +12,9 @@
 
 package things
 
-import "time"
+import (
+	"time"
+)
 
 // ContainerThingsManagerOpt represents the available configuration options for the ContainerThingsManager service
 type ContainerThingsManagerOpt func(thingsOptions *thingsOpts) error
@@ -29,6 +31,9 @@ type thingsOpts struct {
 	acknowledgeTimeout time.Duration
 	subscribeTimeout   time.Duration
 	unsubscribeTimeout time.Duration
+	rootCA             string
+	clientCert         string
+	clientKey          string
 }
 
 func applyOptsThings(thingsOpts *thingsOpts, opts ...ContainerThingsManagerOpt) error {
@@ -124,6 +129,30 @@ func WithConnectionSubscribeTimeout(subscribeTimeout time.Duration) ContainerThi
 func WithConnectionUnsubscribeTimeout(unsubscribeTimeout time.Duration) ContainerThingsManagerOpt {
 	return func(thingsOptions *thingsOpts) error {
 		thingsOptions.unsubscribeTimeout = unsubscribeTimeout
+		return nil
+	}
+}
+
+// WithRootCA configures the CA certificate for TLS communication
+func WithRootCA(rootCA string) ContainerThingsManagerOpt {
+	return func(thingsOptions *thingsOpts) error {
+		thingsOptions.rootCA = rootCA
+		return nil
+	}
+}
+
+// WithClientCert configures certificate to authenticate to the MQTT server/broker
+func WithClientCert(clientCert string) ContainerThingsManagerOpt {
+	return func(thingsOptions *thingsOpts) error {
+		thingsOptions.clientCert = clientCert
+		return nil
+	}
+}
+
+// WithClientKey configures the private key to authenticate to the MQTT server/broker
+func WithClientKey(clientKey string) ContainerThingsManagerOpt {
+	return func(thingsOptions *thingsOpts) error {
+		thingsOptions.clientKey = clientKey
 		return nil
 	}
 }

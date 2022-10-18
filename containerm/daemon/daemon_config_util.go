@@ -14,11 +14,11 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"io/ioutil"
 	"os"
 	"time"
 
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/ctr"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/mgr"
@@ -105,6 +105,9 @@ func extractThingsOptions(daemonConfig *config) []things.ContainerThingsManagerO
 		things.WithConnectionAcknowledgeTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout)*time.Millisecond),
 		things.WithConnectionSubscribeTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout)*time.Millisecond),
 		things.WithConnectionUnsubscribeTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout)*time.Millisecond),
+		things.WithRootCA(daemonConfig.ThingsConfig.ThingsConnectionConfig.RootCA),
+		things.WithClientCert(daemonConfig.ThingsConfig.ThingsConnectionConfig.ClientCert),
+		things.WithClientKey(daemonConfig.ThingsConfig.ThingsConnectionConfig.ClientKey),
 	)
 	return thingsOpts
 }

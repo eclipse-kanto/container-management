@@ -86,4 +86,7 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout, "things-conn-ack-timeout", cfg.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout, "Specify the acknowledgement timeout for the MQTT requests in milliseconds")
 	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout, "things-conn-sub-timeout", cfg.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout, "Specify the subscribe timeout for the MQTT requests in milliseconds")
 	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout, "things-conn-unsub-timeout", cfg.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout, "Specify the unsubscribe timeout for the MQTT requests in milliseconds")
+	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.RootCA, "things-conn-root-ca", cfg.ThingsConfig.ThingsConnectionConfig.RootCA, "Specify the PEM encoded CA certificates file")
+	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.ClientCert, "things-conn-client-cert", cfg.ThingsConfig.ThingsConnectionConfig.ClientCert, "Specify the PEM encoded certificate file to authenticate to the MQTT server/broker")
+	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.ClientKey, "things-conn-client-key", cfg.ThingsConfig.ThingsConnectionConfig.ClientKey, "Specify the PEM encoded unencrypted private key file to authenticate to the MQTT server/broker")
 }

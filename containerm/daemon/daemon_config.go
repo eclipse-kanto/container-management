@@ -14,8 +14,9 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/eclipse-kanto/container-management/containerm/log"
 	"time"
+
+	"github.com/eclipse-kanto/container-management/containerm/log"
 )
 
 // config refers to daemon's whole configurations.
@@ -149,4 +150,7 @@ type thingsConnectionConfig struct {
 	AcknowledgeTimeout int64  `json:"acknowledge_timeout,omitempty"`
 	SubscribeTimeout   int64  `json:"subscribe_timeout,omitempty"`
 	UnsubscribeTimeout int64  `json:"unsubscribe_timeout,omitempty"`
+	RootCA             string `json:"root_ca,omitempty"`
+	ClientCert         string `json:"client_cert,omitempty"`
+	ClientKey          string `json:"client_key,omitempty"`
 }

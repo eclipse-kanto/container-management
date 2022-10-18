@@ -371,6 +371,18 @@ func TestSetCommandFlags(t *testing.T) {
 			flag:         "things-conn-unsub-timeout",
 			expectedType: reflect.Int64.String(),
 		},
+		"test_flags_things-conn-root-ca": {
+			flag:         "things-conn-root-ca",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags_things-conn-client-cert": {
+			flag:         "things-conn-client-cert",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags_things-conn-client-key": {
+			flag:         "things-conn-client-key",
+			expectedType: reflect.String.String(),
+		},
 	}
 
 	for testName, testCase := range tests {

@@ -14,11 +14,14 @@ package client
 
 import (
 	"fmt"
+	"net/url"
 	"sync"
 	"time"
 
 	"github.com/eclipse-kanto/container-management/things/api/handlers"
 	"github.com/eclipse-kanto/container-management/things/api/model"
+	"github.com/eclipse-kanto/container-management/things/client/config"
+
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
 )
@@ -67,6 +70,10 @@ func (client *Client) Connect() error {
 		})
 	}
 
+	if err := setupLocalTLS(pahoOpts, client.cfg); err != nil {
+		return err
+	}
+
 	//create and start a client using the created ClientOptions
 	client.pahoClient = MQTT.NewClient(pahoOpts)
 
@@ -74,6 +81,32 @@ func (client *Client) Connect() error {
 		return token.Error()
 	}
 	return nil
+}
+
+func setupLocalTLS(pahoOpts *MQTT.ClientOptions, configuration *Configuration) error {
+	u, err := url.Parse(configuration.broker)
+	if err != nil {
+		return err
+	}
+
+	if isConnectionSecure(u.Scheme) {
+		tlsConfig, err := config.NewLocalTLSConfig(configuration.rootCA, configuration.clientCert, configuration.clientKey)
+		if err != nil {
+			return err
+		}
+		pahoOpts.TLSConfig = tlsConfig
+	}
+
+	return nil
+}
+
+func isConnectionSecure(schema string) bool {
+	switch schema {
+	case "wss", "ssl", "tls", "mqtts", "mqtt+ssl", "tcps":
+		return true
+	default:
+	}
+	return false
 }
 
 // Disconnect unsubscribes and disconects the client
