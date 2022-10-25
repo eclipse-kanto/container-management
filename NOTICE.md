@@ -386,7 +386,7 @@ opencontainers/image-spec (1.0.3-0.20211202183452-c5a74bcca799)
 
 * License: Apache License 2.0
 * Project: https://github.com/opencontainers/image-spec
-* Source:  https://github.com/opencontainers/image-spec/releases/tag/v1.0.3-0.20211202183452-c5a74bcca799
+* Source:  https://github.com/opencontainers/image-spec/tree/c5a74bcca799bef045e7fbe74e1b75580fd18d4c
 
 opencontainers/runc (1.1.0)
 
