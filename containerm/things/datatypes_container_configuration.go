@@ -66,6 +66,7 @@ func fromAPIContainerConfig(ctr *types.Container) *configuration {
 		if ctr.HostConfig.Resources != nil {
 			cfg.Resources = fromAPIResources(ctr.HostConfig.Resources)
 		}
+		cfg.NetworkMode = fromAPINetworkMode(ctr.HostConfig.NetworkMode)
 	}
 	if ctr.Mounts != nil && len(ctr.Mounts) > 0 {
 		for _, mp := range ctr.Mounts {
@@ -91,7 +92,6 @@ func fromAPIContainerConfig(ctr *types.Container) *configuration {
 	if len(ctr.HostName) > 0 {
 		cfg.HostName = ctr.HostName
 	}
-	cfg.NetworkMode = fromAPINetworkMode(ctr.HostConfig.NetworkMode)
 	return cfg
 }
 
