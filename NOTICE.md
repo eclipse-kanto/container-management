@@ -88,11 +88,11 @@ containerd/fifo (1.0.0)
 * Project: https://github.com/containerd/fifo
 * Source:  https://github.com/containerd/fifo/releases/tag/v1.0.0
 
-containerd/imgcrypt (1.1.5)
+containerd/imgcrypt (1.1.7)
 
 * License: Apache License 2.0
 * Project: https://github.com/containerd/imgcrypt
-* Source:  https://github.com/containerd/imgcrypt/releases/tag/v1.1.5
+* Source:  https://github.com/containerd/imgcrypt/releases/tag/v1.1.7
 
 containerd/ttrpc (1.1.0)
 
@@ -106,11 +106,11 @@ containerd/typeurl (1.0.2)
 * Project: https://github.com/containerd/typeurl
 * Source:  https://github.com/containerd/typeurl/releases/tag/v1.0.2
 
-containers/ocicrypt (1.1.5)
+containers/ocicrypt (1.1.6)
 
 * License: Apache License 2.0
 * Project: https://github.com/containers/ocicrypt
-* Source:  https://github.com/containers/ocicrypt/releases/tag/v1.1.5
+* Source:  https://github.com/containers/ocicrypt/releases/tag/v1.1.6
 
 etcd-io/etcd (3.3.18)
 
@@ -382,11 +382,11 @@ opencontainers/go-digest (1.0.0)
 * Project: https://github.com/opencontainers/go-digest
 * Source:  https://github.com/opencontainers/go-digest/releases/tag/v1.0.0
 
-opencontainers/image-spec (1.0.2)
+opencontainers/image-spec (1.0.3-0.20211202183452-c5a74bcca799)
 
 * License: Apache License 2.0
 * Project: https://github.com/opencontainers/image-spec
-* Source:  https://github.com/opencontainers/image-spec/releases/tag/v1.0.2
+* Source:  https://github.com/opencontainers/image-spec/tree/c5a74bcca799bef045e7fbe74e1b75580fd18d4c
 
 opencontainers/runc (1.1.0)
 

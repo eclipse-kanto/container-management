@@ -11,10 +11,10 @@ replace (
 
 require (
 	github.com/containerd/cgroups v1.0.3
-	github.com/containerd/containerd v1.6.1
-	github.com/containerd/imgcrypt v1.1.5
+	github.com/containerd/containerd v1.6.8
+	github.com/containerd/imgcrypt v1.1.7
 	github.com/containerd/typeurl v1.0.2
-	github.com/containers/ocicrypt v1.1.5
+	github.com/containers/ocicrypt v1.1.6
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20200318182600-ef149a924dfd
 	github.com/eclipse/paho.mqtt.golang v1.4.1
@@ -23,7 +23,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.2.0
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/image-spec v1.0.2
+	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
 	github.com/opencontainers/runc v1.1.0
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pkg/errors v0.9.1
@@ -42,7 +42,7 @@ require (
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Microsoft/go-winio v0.5.1 // indirect
-	github.com/Microsoft/hcsshim v0.9.3 // indirect
+	github.com/Microsoft/hcsshim v0.9.4 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/boltdb/bolt v1.3.1 // indirect
