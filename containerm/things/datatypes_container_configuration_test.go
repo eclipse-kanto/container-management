@@ -182,7 +182,7 @@ func TestFromAPIContainerConfig(t *testing.T) {
 		testutil.AssertEqual(t, ctr.HostName, ctrParsed.HostName)
 	})
 	t.Run("test_from_api_container_decrypt_config", func(t *testing.T) {
-		testutil.AssertEqual(t, ctr.Image.DecryptConfig, toAPIDecryptConfig(ctrParsed.DecryptConfig))
+		testutil.AssertEqual(t, ctr.Image.DecryptConfig, toAPIDecryptConfig(ctrParsed.Decryption))
 	})
 	t.Run("test_from_api_container_config_networkMode", func(t *testing.T) {
 		testutil.AssertEqual(t, ctr.HostConfig.NetworkMode, ctrParsed.NetworkMode.toAPINetworkMode())
@@ -197,12 +197,12 @@ var (
 			Source:          mountPointSource,
 			PropagationMode: rprivate,
 		}},
-		HostName:      hostName,
-		Env:           envVar,
-		Cmd:           cmdVar,
-		DecryptConfig: &decryptConfig{},
-		Devices:       []*device{{}},
-		Privileged:    hostConfigPrivileged,
+		HostName:   hostName,
+		Env:        envVar,
+		Cmd:        cmdVar,
+		Decryption: &decryption{},
+		Devices:    []*device{{}},
+		Privileged: hostConfigPrivileged,
 		RestartPolicy: &restartPolicy{
 			MaxRetryCount: hostConfigRestartPolicyMaxRetry,
 			RetryTimeout:  hostConfigRestartPolicyTimeout.Seconds(),
@@ -279,7 +279,7 @@ func TestToAPIContainerConfig(t *testing.T) {
 		testutil.AssertEqual(t, testContainerConfig.HostName, ctrParsed.HostName)
 	})
 	t.Run("test_to_api_container_decrypt_config", func(t *testing.T) {
-		testutil.AssertEqual(t, testContainerConfig.DecryptConfig, fromAPIDecryptConfig(ctrParsed.Image.DecryptConfig))
+		testutil.AssertEqual(t, testContainerConfig.Decryption, fromAPIDecryptConfig(ctrParsed.Image.DecryptConfig))
 	})
 	t.Run("test_to_api_container_config_networkMode", func(t *testing.T) {
 		testutil.AssertEqual(t, testContainerConfig.NetworkMode, fromAPINetworkMode(ctrParsed.HostConfig.NetworkMode))

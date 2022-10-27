@@ -56,7 +56,8 @@ func TestContainerFactoryOperationsHandlerCreate(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 	expectedCtr.Image = types.Image{
-		Name: testContainerImage,
+		Name:          testContainerImage,
+		DecryptConfig: &types.DecryptConfig{},
 	}
 
 	tests := map[string]struct {

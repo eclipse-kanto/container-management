@@ -15,12 +15,12 @@ package things
 import "github.com/eclipse-kanto/container-management/containerm/containers/types"
 
 type configuration struct {
-	DomainName    string         `json:"domainName,omitempty"`
-	MountPoints   []*mountPoint  `json:"mountPoints,omitempty"`
-	HostName      string         `json:"hostName,omitempty"`
-	Env           []string       `json:"env,omitempty"`
-	Cmd           []string       `json:"cmd,omitempty"`
-	DecryptConfig *decryptConfig `json:"decryptConfig,omitempty"`
+	DomainName  string        `json:"domainName,omitempty"`
+	MountPoints []*mountPoint `json:"mountPoints,omitempty"`
+	HostName    string        `json:"hostName,omitempty"`
+	Env         []string      `json:"env,omitempty"`
+	Cmd         []string      `json:"cmd,omitempty"`
+	Decryption  *decryption   `json:"decryption,omitempty"`
 	// host resources
 	Devices       []*device      `json:"devices,omitempty"`
 	Privileged    bool           `json:"privileged,omitempty"`
@@ -87,7 +87,7 @@ func fromAPIContainerConfig(ctr *types.Container) *configuration {
 		}
 	}
 	if ctr.Image.DecryptConfig != nil {
-		cfg.DecryptConfig = fromAPIDecryptConfig(ctr.Image.DecryptConfig)
+		cfg.Decryption = fromAPIDecryptConfig(ctr.Image.DecryptConfig)
 	}
 	if len(ctr.HostName) > 0 {
 		cfg.HostName = ctr.HostName
@@ -147,8 +147,8 @@ func toAPIContainerConfig(cfg *configuration) *types.Container {
 			Cmd: cfg.Cmd,
 		}
 	}
-	if cfg.DecryptConfig != nil {
-		ctr.Image.DecryptConfig = toAPIDecryptConfig(cfg.DecryptConfig)
+	if cfg.Decryption != nil {
+		ctr.Image.DecryptConfig = toAPIDecryptConfig(cfg.Decryption)
 	}
 	if len(cfg.HostName) > 0 {
 		ctr.HostName = cfg.HostName

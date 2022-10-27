@@ -168,7 +168,7 @@ func (ctrFactory *containerFactoryFeature) createWithConfig(ctx context.Context,
 		ctr = &types.Container{}
 	}
 	ctr.Name = name
-	ctr.Image = types.Image{Name: imageRef}
+	ctr.Image = types.Image{Name: imageRef, DecryptConfig: ctr.Image.DecryptConfig}
 
 	var (
 		resCtr *types.Container

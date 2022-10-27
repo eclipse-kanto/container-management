@@ -37,7 +37,7 @@ func TestFromAPIDecryptConfig(t *testing.T) {
 }
 
 func TestToAPIDecryptConfig(t *testing.T) {
-	thingsDecryptConfig := &decryptConfig{
+	thingsDecryptConfig := &decryption{
 		Keys:       []string{"key:pass"},
 		Recipients: []string{"recipient"},
 	}

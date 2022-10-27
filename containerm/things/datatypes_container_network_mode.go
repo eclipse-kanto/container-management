@@ -13,48 +13,34 @@
 package things
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 )
 
-type networkMode uint8
+type networkMode string
 
 const (
-	bridge networkMode = iota
-	host
+	bridge networkMode = "BRIDGE"
+	host   networkMode = "HOST"
 )
 
-// String representation of the networkMode
-func (n networkMode) String() string {
-	return string(n.toAPINetworkMode())
-}
-
 func (n networkMode) toAPINetworkMode() types.NetworkMode {
-	return []types.NetworkMode{types.NetworkModeBridge, types.NetworkModeHost}[n]
+	switch n {
+	case bridge:
+		return types.NetworkModeBridge
+	case host:
+		return types.NetworkModeHost
+	default:
+		return types.NetworkMode(n)
+	}
 }
 
 func fromAPINetworkMode(n types.NetworkMode) networkMode {
-	return map[types.NetworkMode]networkMode{types.NetworkModeBridge: bridge, types.NetworkModeHost: host}[n]
-}
-
-func (n *networkMode) MarshalJSON() ([]byte, error) {
-	return json.Marshal(n.String())
-}
-
-func (n *networkMode) UnmarshalJSON(data []byte) error {
-	nmString := ""
-	if err := json.Unmarshal(data, &nmString); err != nil {
-		return err
-	}
-	switch nmString {
-	case bridge.String():
-		*n = bridge
-	case host.String():
-		*n = host
+	switch n {
+	case types.NetworkModeBridge:
+		return bridge
+	case types.NetworkModeHost:
+		return host
 	default:
-		return fmt.Errorf("invalid network mode %s", nmString)
+		return networkMode(n)
 	}
-	return nil
 }
