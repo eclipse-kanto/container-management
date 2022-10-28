@@ -141,16 +141,14 @@ type thingsConfig struct {
 
 // things service connection config
 type thingsConnectionConfig struct {
-	BrokerURL          string `json:"broker_url,omitempty"`
-	KeepAlive          int64  `json:"keep_alive,omitempty"`
-	DisconnectTimeout  int64  `json:"disconnect_timeout,omitempty"`
-	ClientUsername     string `json:"client_username,omitempty"`
-	ClientPassword     string `json:"client_password,omitempty"`
-	ConnectTimeout     int64  `json:"connect_timeout,omitempty"`
-	AcknowledgeTimeout int64  `json:"acknowledge_timeout,omitempty"`
-	SubscribeTimeout   int64  `json:"subscribe_timeout,omitempty"`
-	UnsubscribeTimeout int64  `json:"unsubscribe_timeout,omitempty"`
-	RootCA             string `json:"root_ca,omitempty"`
-	ClientCert         string `json:"client_cert,omitempty"`
-	ClientKey          string `json:"client_key,omitempty"`
+	BrokerURL          string    `json:"broker_url,omitempty"`
+	KeepAlive          int64     `json:"keep_alive,omitempty"`
+	DisconnectTimeout  int64     `json:"disconnect_timeout,omitempty"`
+	ClientUsername     string    `json:"client_username,omitempty"`
+	ClientPassword     string    `json:"client_password,omitempty"`
+	ConnectTimeout     int64     `json:"connect_timeout,omitempty"`
+	AcknowledgeTimeout int64     `json:"acknowledge_timeout,omitempty"`
+	SubscribeTimeout   int64     `json:"subscribe_timeout,omitempty"`
+	UnsubscribeTimeout int64     `json:"unsubscribe_timeout,omitempty"`
+	Transport          tlsConfig `json:"transport,omitempty"`
 }
