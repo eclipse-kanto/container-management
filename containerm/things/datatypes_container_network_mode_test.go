@@ -21,11 +21,11 @@ import (
 
 func TestToAPINetworkMode(t *testing.T) {
 	t.Run("test_to_api_network_mode_bridge", func(t *testing.T) {
-		testutil.AssertEqual(t, bridge.toAPINetworkMode(), types.NetworkModeBridge)
+		testutil.AssertEqual(t, types.NetworkModeBridge, bridge.toAPINetworkMode())
 	})
 
 	t.Run("test_to_api_network_mode_host", func(t *testing.T) {
-		testutil.AssertEqual(t, host.toAPINetworkMode(), types.NetworkModeHost)
+		testutil.AssertEqual(t, types.NetworkModeHost, host.toAPINetworkMode())
 	})
 }
 

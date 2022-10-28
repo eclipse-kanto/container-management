@@ -14,19 +14,19 @@ package things
 
 import "github.com/eclipse-kanto/container-management/containerm/containers/types"
 
-type decryption struct {
+type decryptionConfiguration struct {
 	Keys       []string `json:"keys,omitempty"`
 	Recipients []string `json:"recipients,omitempty"`
 }
 
-func fromAPIDecryptConfig(apiDev *types.DecryptConfig) *decryption {
-	return &decryption{
+func fromAPIDecryptConfig(apiDev *types.DecryptConfig) *decryptionConfiguration {
+	return &decryptionConfiguration{
 		Keys:       apiDev.Keys,
 		Recipients: apiDev.Recipients,
 	}
 }
 
-func toAPIDecryptConfig(internalDev *decryption) *types.DecryptConfig {
+func toAPIDecryptConfig(internalDev *decryptionConfiguration) *types.DecryptConfig {
 	return &types.DecryptConfig{
 		Keys:       internalDev.Keys,
 		Recipients: internalDev.Recipients,

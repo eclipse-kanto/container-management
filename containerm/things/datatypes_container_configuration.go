@@ -15,12 +15,12 @@ package things
 import "github.com/eclipse-kanto/container-management/containerm/containers/types"
 
 type configuration struct {
-	DomainName  string        `json:"domainName,omitempty"`
-	MountPoints []*mountPoint `json:"mountPoints,omitempty"`
-	HostName    string        `json:"hostName,omitempty"`
-	Env         []string      `json:"env,omitempty"`
-	Cmd         []string      `json:"cmd,omitempty"`
-	Decryption  *decryption   `json:"decryption,omitempty"`
+	DomainName  string                   `json:"domainName,omitempty"`
+	MountPoints []*mountPoint            `json:"mountPoints,omitempty"`
+	HostName    string                   `json:"hostName,omitempty"`
+	Env         []string                 `json:"env,omitempty"`
+	Cmd         []string                 `json:"cmd,omitempty"`
+	Decryption  *decryptionConfiguration `json:"decryption,omitempty"`
 	// host resources
 	Devices       []*device      `json:"devices,omitempty"`
 	Privileged    bool           `json:"privileged,omitempty"`

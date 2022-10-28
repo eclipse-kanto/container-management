@@ -200,7 +200,7 @@ var (
 		HostName:   hostName,
 		Env:        envVar,
 		Cmd:        cmdVar,
-		Decryption: &decryption{},
+		Decryption: &decryptionConfiguration{},
 		Devices:    []*device{{}},
 		Privileged: hostConfigPrivileged,
 		RestartPolicy: &restartPolicy{
