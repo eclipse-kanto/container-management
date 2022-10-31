@@ -55,9 +55,7 @@ func TestContainerFactoryCreateFeature(t *testing.T) {
 func TestContainerFactoryOperationsHandlerCreate(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
-	expectedCtr.Image = types.Image{
-		Name: testContainerImage,
-	}
+	expectedCtr.Image.Name = testContainerImage
 
 	tests := map[string]struct {
 		operation     string

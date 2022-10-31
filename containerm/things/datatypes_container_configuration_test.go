@@ -25,7 +25,7 @@ const (
 	imageName            = "image.url"
 	name                 = "name"
 	domain               = "domain"
-	host                 = "host"
+	hostName             = "hostname"
 	env                  = "test-env"
 	cmd                  = "test-cmd"
 	mountSrc             = "/proc"
@@ -33,7 +33,7 @@ const (
 	mountPropagationMode = string(types.RPrivatePropagationMode)
 
 	hostConfigPrivileged                 = true
-	hostConfigNetType                    = "bridge"
+	hostConfigNetType                    = types.NetworkModeHost
 	hostConfigContainerPort              = 80
 	hostConfigHostPort                   = 81
 	hostConfigHostPortEnd                = 82
@@ -56,7 +56,7 @@ const (
 )
 
 var (
-	internalImage  = types.Image{Name: imageName}
+	internalImage  = types.Image{Name: imageName, DecryptConfig: &types.DecryptConfig{}}
 	internalMounts = []types.MountPoint{{
 		Destination:     mountDest,
 		Source:          mountSrc,
@@ -125,7 +125,7 @@ func TestFromAPIContainerConfig(t *testing.T) {
 		Name:       name,
 		Image:      internalImage,
 		DomainName: domain,
-		HostName:   host,
+		HostName:   hostName,
 		Mounts:     internalMounts,
 		HostConfig: internalHostConfig,
 		IOConfig:   internalIOConfig,
@@ -178,6 +178,15 @@ func TestFromAPIContainerConfig(t *testing.T) {
 	t.Run("test_from_api_container_config_resources", func(t *testing.T) {
 		testutil.AssertEqual(t, ctr.HostConfig.Resources, toAPIResources(ctrParsed.Resources))
 	})
+	t.Run("test_from_api_container_config_host_name", func(t *testing.T) {
+		testutil.AssertEqual(t, ctr.HostName, ctrParsed.HostName)
+	})
+	t.Run("test_from_api_container_decrypt_config", func(t *testing.T) {
+		testutil.AssertEqual(t, ctr.Image.DecryptConfig, toAPIDecryptionConfiguration(ctrParsed.Decryption))
+	})
+	t.Run("test_from_api_container_config_networkMode", func(t *testing.T) {
+		testutil.AssertEqual(t, ctr.HostConfig.NetworkMode, ctrParsed.NetworkMode.toAPINetworkMode())
+	})
 }
 
 var (
@@ -188,8 +197,10 @@ var (
 			Source:          mountPointSource,
 			PropagationMode: rprivate,
 		}},
+		HostName:   hostName,
 		Env:        envVar,
 		Cmd:        cmdVar,
+		Decryption: &decryptionConfiguration{},
 		Devices:    []*device{{}},
 		Privileged: hostConfigPrivileged,
 		RestartPolicy: &restartPolicy{
@@ -197,6 +208,7 @@ var (
 			RetryTimeout:  hostConfigRestartPolicyTimeout.Seconds(),
 			RpType:        onFailure,
 		},
+		NetworkMode:  host,
 		ExtraHosts:   hostConfigExtraHosts,
 		PortMappings: []*portMapping{{}},
 		OpenStdin:    internalIOConfig.OpenStdin,
@@ -262,5 +274,14 @@ func TestToAPIContainerConfig(t *testing.T) {
 	})
 	t.Run("test_to_api_container_config_resources", func(t *testing.T) {
 		testutil.AssertEqual(t, testContainerConfig.Resources, fromAPIResources(ctrParsed.HostConfig.Resources))
+	})
+	t.Run("test_to_api_container_config_host_name", func(t *testing.T) {
+		testutil.AssertEqual(t, testContainerConfig.HostName, ctrParsed.HostName)
+	})
+	t.Run("test_to_api_container_decrypt_config", func(t *testing.T) {
+		testutil.AssertEqual(t, testContainerConfig.Decryption, fromAPIDecryptionConfiguration(ctrParsed.Image.DecryptConfig))
+	})
+	t.Run("test_to_api_container_config_networkMode", func(t *testing.T) {
+		testutil.AssertEqual(t, testContainerConfig.NetworkMode, fromAPINetworkMode(ctrParsed.HostConfig.NetworkMode))
 	})
 }

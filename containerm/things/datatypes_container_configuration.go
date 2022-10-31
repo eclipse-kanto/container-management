@@ -15,16 +15,19 @@ package things
 import "github.com/eclipse-kanto/container-management/containerm/containers/types"
 
 type configuration struct {
-	DomainName  string        `json:"domainName,omitempty"`
-	MountPoints []*mountPoint `json:"mountPoints,omitempty"`
-	Env         []string      `json:"env,omitempty"`
-	Cmd         []string      `json:"cmd,omitempty"`
+	DomainName  string                   `json:"domainName,omitempty"`
+	MountPoints []*mountPoint            `json:"mountPoints,omitempty"`
+	HostName    string                   `json:"hostName,omitempty"`
+	Env         []string                 `json:"env,omitempty"`
+	Cmd         []string                 `json:"cmd,omitempty"`
+	Decryption  *decryptionConfiguration `json:"decryption,omitempty"`
 	// host resources
 	Devices       []*device      `json:"devices,omitempty"`
 	Privileged    bool           `json:"privileged,omitempty"`
 	RestartPolicy *restartPolicy `json:"restartPolicy,omitempty"`
 	ExtraHosts    []string       `json:"extraHosts,omitempty"`
 	PortMappings  []*portMapping `json:"portMappings,omitempty"`
+	NetworkMode   networkMode    `json:"networkMode,omitempty"`
 	// IO Config
 	OpenStdin bool              `json:"openStdin,omitempty"`
 	Tty       bool              `json:"tty,omitempty"`
@@ -63,6 +66,7 @@ func fromAPIContainerConfig(ctr *types.Container) *configuration {
 		if ctr.HostConfig.Resources != nil {
 			cfg.Resources = fromAPIResources(ctr.HostConfig.Resources)
 		}
+		cfg.NetworkMode = fromAPINetworkMode(ctr.HostConfig.NetworkMode)
 	}
 	if ctr.Mounts != nil && len(ctr.Mounts) > 0 {
 		for _, mp := range ctr.Mounts {
@@ -81,6 +85,12 @@ func fromAPIContainerConfig(ctr *types.Container) *configuration {
 		if ctr.Config.Cmd != nil && len(ctr.Config.Cmd) > 0 {
 			cfg.Cmd = ctr.Config.Cmd
 		}
+	}
+	if ctr.Image.DecryptConfig != nil {
+		cfg.Decryption = fromAPIDecryptionConfiguration(ctr.Image.DecryptConfig)
+	}
+	if len(ctr.HostName) > 0 {
+		cfg.HostName = ctr.HostName
 	}
 	return cfg
 }
@@ -137,5 +147,12 @@ func toAPIContainerConfig(cfg *configuration) *types.Container {
 			Cmd: cfg.Cmd,
 		}
 	}
+	if cfg.Decryption != nil {
+		ctr.Image.DecryptConfig = toAPIDecryptionConfiguration(cfg.Decryption)
+	}
+	if len(cfg.HostName) > 0 {
+		ctr.HostName = cfg.HostName
+	}
+	ctr.HostConfig.NetworkMode = cfg.NetworkMode.toAPINetworkMode()
 	return ctr
 }
