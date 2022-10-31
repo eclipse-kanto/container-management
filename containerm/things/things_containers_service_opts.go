@@ -14,6 +14,8 @@ package things
 
 import (
 	"time"
+
+	tlsconfig "github.com/eclipse-kanto/container-management/util/tls"
 )
 
 // ContainerThingsManagerOpt represents the available configuration options for the ContainerThingsManager service
@@ -31,9 +33,7 @@ type thingsOpts struct {
 	acknowledgeTimeout time.Duration
 	subscribeTimeout   time.Duration
 	unsubscribeTimeout time.Duration
-	rootCA             string
-	clientCert         string
-	clientKey          string
+	tlsConfig          tlsconfig.TLSConfig
 }
 
 func applyOptsThings(thingsOpts *thingsOpts, opts ...ContainerThingsManagerOpt) error {
@@ -133,26 +133,10 @@ func WithConnectionUnsubscribeTimeout(unsubscribeTimeout time.Duration) Containe
 	}
 }
 
-// WithRootCA configures the CA certificate for TLS communication
-func WithRootCA(rootCA string) ContainerThingsManagerOpt {
+// WithTLSConfig configures the CA certificate for TLS communication
+func WithTLSConfig(tlsConfig tlsconfig.TLSConfig) ContainerThingsManagerOpt {
 	return func(thingsOptions *thingsOpts) error {
-		thingsOptions.rootCA = rootCA
-		return nil
-	}
-}
-
-// WithClientCert configures certificate to authenticate to the MQTT server/broker
-func WithClientCert(clientCert string) ContainerThingsManagerOpt {
-	return func(thingsOptions *thingsOpts) error {
-		thingsOptions.clientCert = clientCert
-		return nil
-	}
-}
-
-// WithClientKey configures the private key to authenticate to the MQTT server/broker
-func WithClientKey(clientKey string) ContainerThingsManagerOpt {
-	return func(thingsOptions *thingsOpts) error {
-		thingsOptions.clientKey = clientKey
+		thingsOptions.tlsConfig = tlsConfig
 		return nil
 	}
 }

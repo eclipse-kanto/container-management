@@ -105,9 +105,7 @@ func extractThingsOptions(daemonConfig *config) []things.ContainerThingsManagerO
 		things.WithConnectionAcknowledgeTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout)*time.Millisecond),
 		things.WithConnectionSubscribeTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout)*time.Millisecond),
 		things.WithConnectionUnsubscribeTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout)*time.Millisecond),
-		things.WithRootCA(daemonConfig.ThingsConfig.ThingsConnectionConfig.Transport.RootCA),
-		things.WithClientCert(daemonConfig.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert),
-		things.WithClientKey(daemonConfig.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey),
+		things.WithTLSConfig(daemonConfig.ThingsConfig.ThingsConnectionConfig.Transport),
 	)
 	return thingsOpts
 }

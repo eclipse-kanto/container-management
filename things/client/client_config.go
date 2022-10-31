@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/eclipse-kanto/container-management/things/api/handlers"
+	tlsconfig "github.com/eclipse-kanto/container-management/util/tls"
 )
 
 // InitializedHook is used for initialized notification
@@ -39,9 +40,7 @@ type Configuration struct {
 	unsubscribeTimeout           time.Duration
 	initHook                     InitializedHook
 	thingsRegistryChangedHandler handlers.ThingsRegistryChangedHandler
-	rootCA                       string
-	clientCert                   string
-	clientKey                    string
+	tlsConfig                    tlsconfig.TLSConfig
 }
 
 // NewConfiguration creates a new Configuration instance
@@ -137,19 +136,9 @@ func (cfg *Configuration) RegistryChangedHandler() handlers.ThingsRegistryChange
 	return cfg.thingsRegistryChangedHandler
 }
 
-// RootCA provides the currently configured CA Certificate
-func (cfg *Configuration) RootCA() string {
-	return cfg.rootCA
-}
-
-// ClientCert provides the currently configured certificate used to authenticate to the MQTT server/broker
-func (cfg *Configuration) ClientCert() string {
-	return cfg.clientCert
-}
-
-// ClientKey provides the currently configured key used to authenticate to the MQTT server/broker
-func (cfg *Configuration) ClientKey() string {
-	return cfg.clientKey
+// TLSConfig provides the current TLS configuration
+func (cfg *Configuration) TLSConfig() string {
+	return cfg.TLSConfig()
 }
 
 // WithBroker configures the MQTT's broker the Client to connect to
@@ -248,20 +237,8 @@ func (cfg *Configuration) WithUnsubscribeTimeout(unsubscribeTimeout time.Duratio
 	return cfg
 }
 
-// WithRootCA configures the CA certificate for TLS communication
-func (cfg *Configuration) WithRootCA(rootCA string) *Configuration {
-	cfg.rootCA = rootCA
-	return cfg
-}
-
-// WithClientCert configures certificate to authenticate to the MQTT server/broker
-func (cfg *Configuration) WithClientCert(clientCert string) *Configuration {
-	cfg.clientCert = clientCert
-	return cfg
-}
-
-// WithClientKey configures the private key to authenticate to the MQTT server/broker
-func (cfg *Configuration) WithClientKey(clientKey string) *Configuration {
-	cfg.clientKey = clientKey
+// WithTLSConfig configures the TLS options to the MQTT server/broker
+func (cfg *Configuration) WithTLSConfig(tlsConfig tlsconfig.TLSConfig) *Configuration {
+	cfg.tlsConfig = tlsConfig
 	return cfg
 }

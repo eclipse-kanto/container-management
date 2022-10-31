@@ -10,7 +10,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
-package config
+package tlsconfig
 
 import (
 	"crypto/tls"
@@ -20,15 +20,22 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TLSConfig represents the TLS configuration data
+type TLSConfig struct {
+	RootCA     string `json:"root_ca"`
+	ClientCert string `json:"client_cert"`
+	ClientKey  string `json:"client_key"`
+}
+
 // NewLocalTLSConfig initializes the Local broker TLS.
-func NewLocalTLSConfig(rootCA, clientCert, clientKey string) (*tls.Config, error) {
-	caCertPool, err := NewCAPool(rootCA)
+func NewLocalTLSConfig(tlsConfig TLSConfig) (*tls.Config, error) {
+	caCertPool, err := NewCAPool(tlsConfig.RootCA)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(clientCert) > 0 || len(clientKey) > 0 {
-		return NewFSTLSConfig(caCertPool, clientCert, clientKey)
+	if len(tlsConfig.ClientCert) > 0 || len(tlsConfig.ClientKey) > 0 {
+		return NewFSTLSConfig(caCertPool, tlsConfig.ClientCert, tlsConfig.ClientKey)
 	}
 
 	cfg := &tls.Config{

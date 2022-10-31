@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
+	tlsconfig "github.com/eclipse-kanto/container-management/util/tls"
 	"github.com/eclipse/paho.mqtt.golang/packets"
 	"github.com/golang/mock/gomock"
 )
@@ -49,9 +50,8 @@ func TestThingsContainerServiceConnectWithCredentials(t *testing.T) {
 		0,
 		0,
 		0,
-		"",
-		"",
-		"")
+		tlsconfig.TLSConfig{},
+	)
 	setupThingMock(controller)
 
 	listener, err := net.Listen("tcp4", testMQTTBrokerURL)
@@ -97,9 +97,8 @@ func TestThingsContainerServiceConnectNoCredentials(t *testing.T) {
 		0,
 		0,
 		0,
-		"",
-		"",
-		"")
+		tlsconfig.TLSConfig{},
+	)
 	setupThingMock(controller)
 
 	listener, err := net.Listen("tcp4", testMQTTBrokerURL)
