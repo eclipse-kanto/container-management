@@ -25,7 +25,7 @@ func TestFromAPIDecryptConfig(t *testing.T) {
 		Recipients: []string{"recipient"},
 	}
 
-	thingsDecryptConfig := fromAPIDecryptConfig(apiDecryptConfig)
+	thingsDecryptConfig := fromAPIDecryptionConfiguration(apiDecryptConfig)
 
 	t.Run("test_from_api_decrypt_config_keys", func(t *testing.T) {
 		testutil.AssertEqual(t, apiDecryptConfig.Keys, thingsDecryptConfig.Keys)
@@ -42,7 +42,7 @@ func TestToAPIDecryptConfig(t *testing.T) {
 		Recipients: []string{"recipient"},
 	}
 
-	apiDecryptConfig := toAPIDecryptConfig(thingsDecryptConfig)
+	apiDecryptConfig := toAPIDecryptionConfiguration(thingsDecryptConfig)
 
 	t.Run("test_from_api_decrypt_config_keys", func(t *testing.T) {
 		testutil.AssertEqual(t, thingsDecryptConfig.Keys, apiDecryptConfig.Keys)

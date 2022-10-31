@@ -19,16 +19,16 @@ type decryptionConfiguration struct {
 	Recipients []string `json:"recipients,omitempty"`
 }
 
-func fromAPIDecryptConfig(apiDev *types.DecryptConfig) *decryptionConfiguration {
+func fromAPIDecryptionConfiguration(decryptConfig *types.DecryptConfig) *decryptionConfiguration {
 	return &decryptionConfiguration{
-		Keys:       apiDev.Keys,
-		Recipients: apiDev.Recipients,
+		Keys:       decryptConfig.Keys,
+		Recipients: decryptConfig.Recipients,
 	}
 }
 
-func toAPIDecryptConfig(internalDev *decryptionConfiguration) *types.DecryptConfig {
+func toAPIDecryptionConfiguration(decryptionConfiguration *decryptionConfiguration) *types.DecryptConfig {
 	return &types.DecryptConfig{
-		Keys:       internalDev.Keys,
-		Recipients: internalDev.Recipients,
+		Keys:       decryptionConfiguration.Keys,
+		Recipients: decryptionConfiguration.Recipients,
 	}
 }

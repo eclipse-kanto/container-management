@@ -87,7 +87,7 @@ func fromAPIContainerConfig(ctr *types.Container) *configuration {
 		}
 	}
 	if ctr.Image.DecryptConfig != nil {
-		cfg.Decryption = fromAPIDecryptConfig(ctr.Image.DecryptConfig)
+		cfg.Decryption = fromAPIDecryptionConfiguration(ctr.Image.DecryptConfig)
 	}
 	if len(ctr.HostName) > 0 {
 		cfg.HostName = ctr.HostName
@@ -148,7 +148,7 @@ func toAPIContainerConfig(cfg *configuration) *types.Container {
 		}
 	}
 	if cfg.Decryption != nil {
-		ctr.Image.DecryptConfig = toAPIDecryptConfig(cfg.Decryption)
+		ctr.Image.DecryptConfig = toAPIDecryptionConfiguration(cfg.Decryption)
 	}
 	if len(cfg.HostName) > 0 {
 		ctr.HostName = cfg.HostName
