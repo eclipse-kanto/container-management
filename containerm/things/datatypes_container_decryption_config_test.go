@@ -19,7 +19,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 )
 
-func TestFromAPIDecryptConfig(t *testing.T) {
+func TestFromAPIDecryptionConfiguration(t *testing.T) {
 	apiDecryptConfig := &types.DecryptConfig{
 		Keys:       []string{"key:pass"},
 		Recipients: []string{"recipient"},
@@ -36,7 +36,7 @@ func TestFromAPIDecryptConfig(t *testing.T) {
 	})
 }
 
-func TestToAPIDecryptConfig(t *testing.T) {
+func TestToAPIDecryptionConfiguration(t *testing.T) {
 	thingsDecryptConfig := &decryptionConfiguration{
 		Keys:       []string{"key:pass"},
 		Recipients: []string{"recipient"},
