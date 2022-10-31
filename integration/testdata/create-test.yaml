@@ -1,0 +1,36 @@
+name: create_help
+command:
+  binary: kanto-cm
+  args: ["create", "-h"]
+expected:
+  exitCode: 0
+goldenFile: "create-help.golden"
+---
+name: create_with_no_parameters
+command:
+  binary: kanto-cm
+  args: ["create"]
+expected:
+  exitCode: 1
+  err: "Error: requires at least 1 arg(s), only received 0"
+---
+name: create_influxdb_container
+command:
+  binary: kanto-cm
+  args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+expected:
+  exitCode: 0
+customResult:
+  name: REGEX
+  args: ["([A-Za-z0-9]+(-[A-Za-z0-9]+)+)"]
+onExit:
+  - binary: "kanto-cm"
+    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it"]
+---
+name: create_invalid_container
+command:
+  binary: kanto-cm
+  args: ["create", "--host", "$KANTO_HOST", "invalid"]
+expected:
+  exitCode: 1
+  err: "Error: rpc error: code = Unknown desc = failed to resolve reference \"invalid\": object required"

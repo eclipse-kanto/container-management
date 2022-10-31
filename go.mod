@@ -5,13 +5,14 @@ go 1.17
 replace github.com/docker/docker => github.com/moby/moby v20.10.3-0.20220603173024-38633e797195+incompatible
 
 require (
+	github.com/caarlos0/env/v6 v6.10.1
 	github.com/containerd/cgroups v1.0.3
 	github.com/containerd/containerd v1.6.10
 	github.com/containerd/imgcrypt v1.1.7
 	github.com/containerd/typeurl v1.0.2
 	github.com/containers/ocicrypt v1.1.6
 	github.com/docker/docker v20.10.17+incompatible
-	github.com/eclipse-kanto/kanto/integration/util v0.0.0-20221202082137-517d8d8a8766
+	github.com/eclipse-kanto/kanto/integration/util v0.0.0-20230103144956-911e45a2bf55
 	github.com/eclipse/ditto-clients-golang v0.0.0-20220225085802-cf3b306280d3
 	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/gogo/protobuf v1.3.2
@@ -35,6 +36,8 @@ require (
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 	google.golang.org/grpc v1.50.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
+	gopkg.in/yaml.v3 v3.0.1
+	gotest.tools/v3 v3.4.0
 )
 
 require (
@@ -43,7 +46,6 @@ require (
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/boltdb/bolt v1.3.1 // indirect
-	github.com/caarlos0/env/v6 v6.10.1 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect
@@ -57,6 +59,7 @@ require (
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/btree v1.0.1 // indirect
+	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect
@@ -96,5 +99,4 @@ require (
 	google.golang.org/genproto v0.0.0-20220502173005-c8bf987b8c21 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
