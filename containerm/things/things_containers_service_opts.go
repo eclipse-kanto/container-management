@@ -33,7 +33,7 @@ type thingsOpts struct {
 	acknowledgeTimeout time.Duration
 	subscribeTimeout   time.Duration
 	unsubscribeTimeout time.Duration
-	tlsConfig          tlsconfig.TLSConfig
+	tlsConfig          tlsconfig.Config
 }
 
 func applyOptsThings(thingsOpts *thingsOpts, opts ...ContainerThingsManagerOpt) error {
@@ -134,7 +134,7 @@ func WithConnectionUnsubscribeTimeout(unsubscribeTimeout time.Duration) Containe
 }
 
 // WithTLSConfig configures the CA certificate for TLS communication
-func WithTLSConfig(tlsConfig tlsconfig.TLSConfig) ContainerThingsManagerOpt {
+func WithTLSConfig(tlsConfig tlsconfig.Config) ContainerThingsManagerOpt {
 	return func(thingsOptions *thingsOpts) error {
 		thingsOptions.tlsConfig = tlsConfig
 		return nil

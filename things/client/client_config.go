@@ -40,7 +40,7 @@ type Configuration struct {
 	unsubscribeTimeout           time.Duration
 	initHook                     InitializedHook
 	thingsRegistryChangedHandler handlers.ThingsRegistryChangedHandler
-	tlsConfig                    tlsconfig.TLSConfig
+	tlsConfig                    tlsconfig.Config
 }
 
 // NewConfiguration creates a new Configuration instance
@@ -238,7 +238,7 @@ func (cfg *Configuration) WithUnsubscribeTimeout(unsubscribeTimeout time.Duratio
 }
 
 // WithTLSConfig configures the TLS options to the MQTT server/broker
-func (cfg *Configuration) WithTLSConfig(tlsConfig tlsconfig.TLSConfig) *Configuration {
+func (cfg *Configuration) WithTLSConfig(tlsConfig tlsconfig.Config) *Configuration {
 	cfg.tlsConfig = tlsConfig
 	return cfg
 }

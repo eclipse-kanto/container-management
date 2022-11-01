@@ -50,7 +50,7 @@ func TestThingsContainerServiceConnectWithCredentials(t *testing.T) {
 		0,
 		0,
 		0,
-		tlsconfig.TLSConfig{},
+		tlsconfig.Config{},
 	)
 	setupThingMock(controller)
 
@@ -97,7 +97,7 @@ func TestThingsContainerServiceConnectNoCredentials(t *testing.T) {
 		0,
 		0,
 		0,
-		tlsconfig.TLSConfig{},
+		tlsconfig.Config{},
 	)
 	setupThingMock(controller)
 

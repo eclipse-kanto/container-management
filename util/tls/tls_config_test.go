@@ -10,7 +10,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
-package tlsconfig_test
+package tls_test
 
 import (
 	"crypto/tls"
@@ -28,7 +28,7 @@ var (
 )
 
 func TestUseCertificateSettingsOK(t *testing.T) {
-	use, err := tlsconfig.NewFSTLSConfig(nil, "", "")
+	use, err := tlsconfig.NewFSConfig(nil, "", "")
 
 	if err.Error() != errors.New("failed to load X509 key pair: open : no such file or directory").Error() {
 		t.Fatalf("expected X509 load error, got: %s", err)
@@ -37,7 +37,7 @@ func TestUseCertificateSettingsOK(t *testing.T) {
 		t.Fatalf("expected nil, got: %v", use)
 	}
 
-	use, err = tlsconfig.NewFSTLSConfig(nil, certFile, keyFile)
+	use, err = tlsconfig.NewFSConfig(nil, certFile, keyFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestUseCertificateSettingsFail(t *testing.T) {
 }
 
 func assertCertError(t *testing.T, certFile, keyFile string, expectedErr error) {
-	use, err := tlsconfig.NewFSTLSConfig(nil, certFile, keyFile)
+	use, err := tlsconfig.NewFSConfig(nil, certFile, keyFile)
 	if expectedErr.Error() != err.Error() {
 		t.Fatalf("expected error : %s, got: %s", expectedErr, err)
 	}

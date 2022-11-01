@@ -20,7 +20,7 @@ import (
 
 	"github.com/eclipse-kanto/container-management/things/api/handlers"
 	"github.com/eclipse-kanto/container-management/things/api/model"
-	tlscofnig "github.com/eclipse-kanto/container-management/util/tls"
+	"github.com/eclipse-kanto/container-management/util/tls"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
@@ -90,7 +90,7 @@ func setupLocalTLS(pahoOpts *MQTT.ClientOptions, configuration *Configuration) e
 	}
 
 	if isConnectionSecure(u.Scheme) {
-		tlsConfig, err := tlscofnig.NewLocalTLSConfig(configuration.tlsConfig)
+		tlsConfig, err := tls.NewConfig(configuration.tlsConfig)
 		if err != nil {
 			return err
 		}

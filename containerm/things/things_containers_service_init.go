@@ -38,7 +38,7 @@ func newThingsContainerManager(mgr mgr.ContainerManager, eventsMgr events.Contai
 	acknowledgeTimeout time.Duration,
 	subscribeTimeout time.Duration,
 	unsubscribeTimeout time.Duration,
-	tlsConfig tlsconfig.TLSConfig) *containerThingsMgr {
+	tlsConfig tlsconfig.Config) *containerThingsMgr {
 	thingsMgr := &containerThingsMgr{
 		storageRoot:       storagePath,
 		mgr:               mgr,

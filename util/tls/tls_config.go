@@ -10,7 +10,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
-package tlsconfig
+package tls
 
 import (
 	"crypto/tls"
@@ -20,22 +20,22 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TLSConfig represents the TLS configuration data
-type TLSConfig struct {
+// Config represents the TLS configuration data
+type Config struct {
 	RootCA     string `json:"root_ca"`
 	ClientCert string `json:"client_cert"`
 	ClientKey  string `json:"client_key"`
 }
 
-// NewLocalTLSConfig initializes the Local broker TLS.
-func NewLocalTLSConfig(tlsConfig TLSConfig) (*tls.Config, error) {
+// NewConfig initializes the Local broker TLS.
+func NewConfig(tlsConfig Config) (*tls.Config, error) {
 	caCertPool, err := NewCAPool(tlsConfig.RootCA)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(tlsConfig.ClientCert) > 0 || len(tlsConfig.ClientKey) > 0 {
-		return NewFSTLSConfig(caCertPool, tlsConfig.ClientCert, tlsConfig.ClientKey)
+		return NewFSConfig(caCertPool, tlsConfig.ClientCert, tlsConfig.ClientKey)
 	}
 
 	cfg := &tls.Config{
@@ -64,8 +64,8 @@ func NewCAPool(caFile string) (*x509.CertPool, error) {
 	return caCertPool, nil
 }
 
-// NewFSTLSConfig initializes a file Hub TLS.
-func NewFSTLSConfig(caCertPool *x509.CertPool, certFile, keyFile string) (*tls.Config, error) {
+// NewFSConfig initializes a file Hub TLS.
+func NewFSConfig(caCertPool *x509.CertPool, certFile, keyFile string) (*tls.Config, error) {
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load X509 key pair")

@@ -86,5 +86,5 @@ func setupThingsContainerManager(controller *gomock.Controller) {
 		0,
 		0,
 		0,
-		tlsconfig.TLSConfig{})
+		tlsconfig.Config{})
 }
