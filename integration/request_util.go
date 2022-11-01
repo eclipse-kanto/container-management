@@ -23,24 +23,29 @@ import (
 	"strings"
 	"time"
 
+	"github.com/eclipse-kanto/container-management/things/api/model"
+	"github.com/eclipse-kanto/container-management/things/client"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/websocket"
 )
 
-func (suite *containerManagementSuite) doRequest(method string, url string, reqBody requestBody) ([]byte, error) {
-	var body *bytes.Buffer
+func (suite *containerManagementSuite) doRequest(method string, url string, reqBody *requestBody) ([]byte, error) {
+	var body io.Reader
 
-	if reqBody.param != "" {
-		body = bytes.NewBuffer([]byte(reqBody.param))
-	}
-	if len(reqBody.params) > 0 {
-		jsonValue, err := json.Marshal(reqBody.params)
-		if err != nil {
-			return nil, err
+	if reqBody != nil {
+		if reqBody.param != "" {
+			body = bytes.NewBuffer([]byte(reqBody.param))
 		}
-		body = bytes.NewBuffer(jsonValue)
+		if len(reqBody.params) > 0 {
+			jsonValue, err := json.Marshal(reqBody.params)
+			if err != nil {
+				return nil, err
+			}
+			body = bytes.NewBuffer(jsonValue)
+		}
+
 	}
 
 	req, err := http.NewRequest(method, url, body)
@@ -48,10 +53,12 @@ func (suite *containerManagementSuite) doRequest(method string, url string, reqB
 		return nil, err
 	}
 
-	correlationID := uuid.New().String()
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("correlation-id", correlationID)
-	req.Header.Add("response-required", "true")
+	if reqBody != nil {
+		correlationID := uuid.New().String()
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("correlation-id", correlationID)
+		req.Header.Add("response-required", "true")
+	}
 
 	req.SetBasicAuth(suite.cfg.DittoUser, suite.cfg.DittoPassword)
 	resp, err := http.DefaultClient.Do(req)
@@ -62,7 +69,7 @@ func (suite *containerManagementSuite) doRequest(method string, url string, reqB
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("%s %s request failed: %s", method, url, resp.Status)
+		return nil, fmt.Errorf("%s %s request failed: %s", http.MethodPost, url, resp.Status)
 	}
 
 	return io.ReadAll(resp.Body)
@@ -168,16 +175,16 @@ func (suite *containerManagementSuite) beginWSWait(ws *websocket.Conn, check fun
 
 func (suite *containerManagementSuite) execCreateCommand(command string, params map[string]interface{}) {
 	url := fmt.Sprintf("%s/inbox/messages/%s", suite.containerFactoryURL, command)
-	suite.doRequest(http.MethodPost, url, requestBody{params: params})
+	suite.doRequest(http.MethodPost, url, &requestBody{params: params})
 }
 
 func (suite *containerManagementSuite) execRemoveCommand(containerID string) {
 	containerURL := fmt.Sprintf("%s/features/%s", suite.containerURL, containerID)
 	url := fmt.Sprintf("%s/inbox/messages/remove", containerURL)
-	suite.doRequest(http.MethodPost, url, requestBody{param: "true"})
+	suite.doRequest(http.MethodPost, url, &requestBody{param: "true"})
 }
 
-func (suite *containerManagementSuite) startEventListener(eventType string, matcher func(map[string]interface{}) bool) (*websocket.Conn, chan bool) {
+func (suite *containerManagementSuite) startEventListener(eventType string, matcher func(map[string]interface{}) bool) chan bool {
 	ws, err := suite.newWSConnection()
 	require.NoError(suite.T(), err)
 
@@ -207,7 +214,7 @@ func (suite *containerManagementSuite) startEventListener(eventType string, matc
 	websocket.Message.Send(ws, fmt.Sprintf("%s?filter=like(resource:path,'/features/*/properties/status/state')", eventType))
 	result := suite.beginWSWait(ws, wsListener)
 	require.True(suite.T(), suite.awaitChan(ackChan), "event acknowledgement not received")
-	return ws, result
+	return result
 }
 
 func (suite *containerManagementSuite) awaitChan(ch chan bool) bool {
@@ -218,4 +225,15 @@ func (suite *containerManagementSuite) awaitChan(ch chan bool) bool {
 	case <-time.After(timeout):
 		return false
 	}
+}
+
+func (suite *containerManagementSuite) getContainerFeture(containerID string) model.Feature {
+	containerURL := fmt.Sprintf("%s/features/%s", suite.containerURL, containerID)
+	data, _ := suite.doRequest(http.MethodGet, containerURL, nil)
+	var jsonFeature = &jsonFeature{}
+	json.Unmarshal(data, &jsonFeature)
+
+	return client.NewFeature(containerID,
+		client.WithFeatureDefinition(client.NewDefinitionIDFromString(jsonFeature.Definition[0])),
+		client.WithFeatureProperties(jsonFeature.Properties))
 }

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/eclipse/ditto-clients-golang"
+	"github.com/eclipse/ditto-clients-golang/model"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -32,6 +33,7 @@ type containerManagementSuite struct {
 	containerID         string
 	containerURL        string
 	containerFactoryURL string
+	topicModify         string
 }
 
 type testConfig struct {
@@ -51,6 +53,15 @@ type edgeConfig struct {
 type requestBody struct {
 	param  string
 	params map[string]interface{}
+}
+
+type jsonFeature struct {
+	Definition []string               `json:"definition,omitempty"`
+	Properties map[string]interface{} `json:"properties,omitempty"`
+}
+
+type config struct {
+	DomainName string `json:"domainName,omitempty"`
 }
 
 const (
@@ -103,6 +114,8 @@ func (suite *containerManagementSuite) newTestConnection() {
 	suite.containerID = edgeDeviceCfg.DeviceID + ":edge:containers"
 	suite.containerURL = fmt.Sprintf("%s/api/2/things/%s", strings.TrimSuffix(cfg.DittoAddress, "/"), suite.containerID)
 	suite.containerFactoryURL = fmt.Sprintf("%s/features/%s", suite.containerURL, containerFactoryID)
+	ns := model.NewNamespacedIDFrom(suite.containerID)
+	suite.topicModify = fmt.Sprintf("%s/%s/things/twin/events/modified", ns.Namespace, ns.Name)
 }
 
 func (suite *containerManagementSuite) disconnect() {
