@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/log"
-	tlsconfig "github.com/eclipse-kanto/container-management/util/tls"
+	"github.com/eclipse-kanto/container-management/util/tls"
 )
 
 // config refers to daemon's whole configurations.
@@ -84,8 +84,8 @@ func (cfg *containerRuntimeConfig) UnmarshalJSON(data []byte) error {
 
 // registry config
 type registryConfig struct {
-	Credentials *authCredentials  `json:"credentials,omitempty"`
-	Transport   *tlsconfig.Config `json:"transport"`
+	Credentials *authCredentials `json:"credentials,omitempty"`
+	Transport   *tls.Config      `json:"transport"`
 }
 
 // basic authentication config
@@ -135,14 +135,14 @@ type thingsConfig struct {
 
 // things service connection config
 type thingsConnectionConfig struct {
-	BrokerURL          string           `json:"broker_url,omitempty"`
-	KeepAlive          int64            `json:"keep_alive,omitempty"`
-	DisconnectTimeout  int64            `json:"disconnect_timeout,omitempty"`
-	ClientUsername     string           `json:"client_username,omitempty"`
-	ClientPassword     string           `json:"client_password,omitempty"`
-	ConnectTimeout     int64            `json:"connect_timeout,omitempty"`
-	AcknowledgeTimeout int64            `json:"acknowledge_timeout,omitempty"`
-	SubscribeTimeout   int64            `json:"subscribe_timeout,omitempty"`
-	UnsubscribeTimeout int64            `json:"unsubscribe_timeout,omitempty"`
-	Transport          tlsconfig.Config `json:"transport,omitempty"`
+	BrokerURL          string     `json:"broker_url,omitempty"`
+	KeepAlive          int64      `json:"keep_alive,omitempty"`
+	DisconnectTimeout  int64      `json:"disconnect_timeout,omitempty"`
+	ClientUsername     string     `json:"client_username,omitempty"`
+	ClientPassword     string     `json:"client_password,omitempty"`
+	ConnectTimeout     int64      `json:"connect_timeout,omitempty"`
+	AcknowledgeTimeout int64      `json:"acknowledge_timeout,omitempty"`
+	SubscribeTimeout   int64      `json:"subscribe_timeout,omitempty"`
+	UnsubscribeTimeout int64      `json:"unsubscribe_timeout,omitempty"`
+	Transport          tls.Config `json:"transport,omitempty"`
 }

@@ -70,7 +70,7 @@ func (client *Client) Connect() error {
 		})
 	}
 
-	if err := setupLocalTLS(pahoOpts, client.cfg); err != nil {
+	if err := setupTLSConfiguration(pahoOpts, client.cfg); err != nil {
 		return err
 	}
 
@@ -83,7 +83,7 @@ func (client *Client) Connect() error {
 	return nil
 }
 
-func setupLocalTLS(pahoOpts *MQTT.ClientOptions, configuration *Configuration) error {
+func setupTLSConfiguration(pahoOpts *MQTT.ClientOptions, configuration *Configuration) error {
 	u, err := url.Parse(configuration.broker)
 	if err != nil {
 		return err

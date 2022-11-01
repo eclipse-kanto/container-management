@@ -15,7 +15,7 @@ package tls
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 )
@@ -27,7 +27,7 @@ type Config struct {
 	ClientKey  string `json:"client_key"`
 }
 
-// NewConfig initializes the Local broker TLS.
+// NewConfig initializes the broker TLS.
 func NewConfig(tlsConfig Config) (*tls.Config, error) {
 	caCertPool, err := NewCAPool(tlsConfig.RootCA)
 	if err != nil {
@@ -38,20 +38,18 @@ func NewConfig(tlsConfig Config) (*tls.Config, error) {
 		return NewFSConfig(caCertPool, tlsConfig.ClientCert, tlsConfig.ClientKey)
 	}
 
-	cfg := &tls.Config{
+	return &tls.Config{
 		InsecureSkipVerify: false,
 		RootCAs:            caCertPool,
 		MinVersion:         tls.VersionTLS12,
 		MaxVersion:         tls.VersionTLS13,
 		CipherSuites:       supportedCipherSuites(),
-	}
-
-	return cfg, nil
+	}, nil
 }
 
 // NewCAPool opens a certificates pool.
 func NewCAPool(caFile string) (*x509.CertPool, error) {
-	caCert, err := ioutil.ReadFile(caFile)
+	caCert, err := os.ReadFile(caFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load CA")
 	}
@@ -71,16 +69,14 @@ func NewFSConfig(caCertPool *x509.CertPool, certFile, keyFile string) (*tls.Conf
 		return nil, errors.Wrap(err, "failed to load X509 key pair")
 	}
 
-	cfg := &tls.Config{
+	return &tls.Config{
 		InsecureSkipVerify: false,
 		RootCAs:            caCertPool,
 		Certificates:       []tls.Certificate{cert},
 		MinVersion:         tls.VersionTLS12,
 		MaxVersion:         tls.VersionTLS13,
 		CipherSuites:       supportedCipherSuites(),
-	}
-
-	return cfg, nil
+	}, nil
 }
 
 func supportedCipherSuites() []uint16 {

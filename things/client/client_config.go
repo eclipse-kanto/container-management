@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/eclipse-kanto/container-management/things/api/handlers"
-	tlsconfig "github.com/eclipse-kanto/container-management/util/tls"
+	"github.com/eclipse-kanto/container-management/util/tls"
 )
 
 // InitializedHook is used for initialized notification
@@ -40,7 +40,7 @@ type Configuration struct {
 	unsubscribeTimeout           time.Duration
 	initHook                     InitializedHook
 	thingsRegistryChangedHandler handlers.ThingsRegistryChangedHandler
-	tlsConfig                    tlsconfig.Config
+	tlsConfig                    tls.Config
 }
 
 // NewConfiguration creates a new Configuration instance
@@ -238,7 +238,7 @@ func (cfg *Configuration) WithUnsubscribeTimeout(unsubscribeTimeout time.Duratio
 }
 
 // WithTLSConfig configures the TLS options to the MQTT server/broker
-func (cfg *Configuration) WithTLSConfig(tlsConfig tlsconfig.Config) *Configuration {
+func (cfg *Configuration) WithTLSConfig(tlsConfig tls.Config) *Configuration {
 	cfg.tlsConfig = tlsConfig
 	return cfg
 }

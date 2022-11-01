@@ -10,25 +10,22 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
-package tls_test
+package tls
 
 import (
 	"crypto/tls"
 	"errors"
 	"fmt"
 	"testing"
-
-	tlsconfig "github.com/eclipse-kanto/container-management/util/tls"
 )
 
 var (
-	certFile    = "testdata/certificate.pem"
-	keyFile     = "testdata/key.pem"
-	nonExisting = "nonexisting.test"
+	certFile = "testdata/certificate.pem"
+	keyFile  = "testdata/key.pem"
 )
 
 func TestUseCertificateSettingsOK(t *testing.T) {
-	use, err := tlsconfig.NewFSConfig(nil, "", "")
+	use, err := NewFSConfig(nil, "", "")
 
 	if err.Error() != errors.New("failed to load X509 key pair: open : no such file or directory").Error() {
 		t.Fatalf("expected X509 load error, got: %s", err)
@@ -37,7 +34,7 @@ func TestUseCertificateSettingsOK(t *testing.T) {
 		t.Fatalf("expected nil, got: %v", use)
 	}
 
-	use, err = tlsconfig.NewFSConfig(nil, certFile, keyFile)
+	use, err = NewFSConfig(nil, certFile, keyFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,6 +60,7 @@ func TestUseCertificateSettingsOK(t *testing.T) {
 }
 
 func TestUseCertificateSettingsFail(t *testing.T) {
+	nonExisting := "nonexisting.test"
 	expectedErrorStr := "failed to load X509 key pair: open %s: no such file or directory"
 
 	assertCertError(t, "", "", fmt.Errorf(expectedErrorStr, ""))
@@ -82,14 +80,14 @@ func TestUseCertificateSettingsFail(t *testing.T) {
 	assertCertError(t, nonExisting, keyFile, fmt.Errorf(expectedErrorStr, nonExisting))
 
 	expectedErr := errors.New("failed to parse CA tls_config.go")
-	_, err := tlsconfig.NewCAPool("tls_config.go")
+	_, err := NewCAPool("tls_config.go")
 	if expectedErr.Error() != err.Error() {
 		t.Fatalf("expected error : %s, got: %s", expectedErr, err)
 	}
 }
 
 func assertCertError(t *testing.T, certFile, keyFile string, expectedErr error) {
-	use, err := tlsconfig.NewFSConfig(nil, certFile, keyFile)
+	use, err := NewFSConfig(nil, certFile, keyFile)
 	if expectedErr.Error() != err.Error() {
 		t.Fatalf("expected error : %s, got: %s", expectedErr, err)
 	}
