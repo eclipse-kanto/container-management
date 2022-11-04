@@ -14,6 +14,7 @@ package client
 
 import (
 	"net"
+	"net/url"
 	"time"
 
 	pbcontainers "github.com/eclipse-kanto/container-management/containerm/api/services/containers"
@@ -26,7 +27,7 @@ func New(connectionAddress string) (Client, error) {
 	// Set up a connection to the server.
 	gopts := []grpc.DialOption{
 		grpc.WithInsecure(),
-		grpc.WithDialer(unixConnect),
+		grpc.WithDialer(getDialer),
 	}
 
 	conn, err := grpc.Dial(connectionAddress, gopts...)
@@ -46,8 +47,24 @@ func newContainersClient(conn *grpc.ClientConn) (Client, error) {
 	}, nil
 }
 
-func unixConnect(addr string, duration time.Duration) (net.Conn, error) {
+func getDialer(addr string, duration time.Duration) (net.Conn, error) {
+	url, err := url.Parse(addr)
+	if err != nil {
+		return nil, err
+	}
+	switch url.Scheme {
+	case "tcp", "tcp4", "tcp6":
+		return net.DialTimeout(url.Scheme, url.Host, duration)
+	default:
+		return unixConnect(addr)
+	}
+}
+
+func unixConnect(addr string) (net.Conn, error) {
 	unixAddr, err := net.ResolveUnixAddr("unix", addr)
+	if err != nil {
+		return nil, err
+	}
 	conn, err := net.DialUnix("unix", nil, unixAddr)
 	return conn, err
 }
