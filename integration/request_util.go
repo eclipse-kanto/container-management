@@ -25,7 +25,7 @@ import (
 
 	"github.com/eclipse-kanto/container-management/things/api/model"
 	"github.com/eclipse-kanto/container-management/things/client"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/websocket"
@@ -60,7 +60,7 @@ func (suite *containerManagementSuite) doRequest(method string, url string, reqB
 		req.Header.Add("response-required", "true")
 	}
 
-	req.SetBasicAuth(suite.cfg.DittoUser, suite.cfg.DittoPassword)
+	req.SetBasicAuth(suite.cfg.DigitalTwinAPIUser, suite.cfg.DigitalTwinAPIPassword)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (suite *containerManagementSuite) doRequest(method string, url string, reqB
 	return io.ReadAll(resp.Body)
 }
 
-func getEdgeDeviceConfig(mqttClient mqtt.Client) (*edgeConfig, error) {
+func getEdgeDeviceConfig(mqttClient MQTT.Client) (*edgeConfig, error) {
 	type result struct {
 		cfg *edgeConfig
 		err error
@@ -83,7 +83,7 @@ func getEdgeDeviceConfig(mqttClient mqtt.Client) (*edgeConfig, error) {
 
 	ch := make(chan result)
 
-	if token := mqttClient.Subscribe("edge/thing/response", 1, func(client mqtt.Client, message mqtt.Message) {
+	if token := mqttClient.Subscribe("edge/thing/response", 1, func(client MQTT.Client, message MQTT.Message) {
 		var cfg edgeConfig
 		if err := json.Unmarshal(message.Payload(), &cfg); err != nil {
 			ch <- result{nil, err}
@@ -107,18 +107,18 @@ func getEdgeDeviceConfig(mqttClient mqtt.Client) (*edgeConfig, error) {
 }
 
 func (suite *containerManagementSuite) newWSConnection() (*websocket.Conn, error) {
-	wsAddress, err := asWSAddress(suite.cfg.DittoAddress)
+	wsAddress, err := asWSAddress(suite.cfg.DigitalTwinAPIAddress)
 	if err != nil {
 		return nil, err
 	}
 
 	url := fmt.Sprintf("%s/ws/2", wsAddress)
-	cfg, err := websocket.NewConfig(url, suite.cfg.DittoAddress)
+	cfg, err := websocket.NewConfig(url, suite.cfg.DigitalTwinAPIAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	auth := fmt.Sprintf("%s:%s", suite.cfg.DittoUser, suite.cfg.DittoPassword)
+	auth := fmt.Sprintf("%s:%s", suite.cfg.DigitalTwinAPIUser, suite.cfg.DigitalTwinAPIPassword)
 	enc := base64.StdEncoding.EncodeToString([]byte(auth))
 	cfg.Header = http.Header{
 		"Authorization": {"Basic " + enc},
@@ -174,17 +174,22 @@ func (suite *containerManagementSuite) beginWSWait(ws *websocket.Conn, check fun
 }
 
 func (suite *containerManagementSuite) execCreateCommand(command string, params map[string]interface{}) {
-	url := fmt.Sprintf("%s/inbox/messages/%s", suite.containerFactoryURL, command)
-	suite.doRequest(http.MethodPost, url, &requestBody{params: params})
+	url := fmt.Sprintf("%s/inbox/messages/%s", suite.ctrFactoryFeatureURL, command)
+	if _, err := suite.doRequest(http.MethodPost, url, &requestBody{params: params}); err != nil {
+		suite.T().Logf("error while creating container feature: %v", err)
+	}
+
 }
 
 func (suite *containerManagementSuite) execRemoveCommand(containerID string) {
-	containerURL := fmt.Sprintf("%s/features/%s", suite.containerURL, containerID)
+	containerURL := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, containerID)
 	url := fmt.Sprintf("%s/inbox/messages/remove", containerURL)
-	suite.doRequest(http.MethodPost, url, &requestBody{param: "true"})
+	if _, err := suite.doRequest(http.MethodPost, url, &requestBody{param: "true"}); err != nil {
+		suite.T().Logf("error while removing container feature: %v", err)
+	}
 }
 
-func (suite *containerManagementSuite) startEventListener(eventType string, matcher func(map[string]interface{}) bool) chan bool {
+func (suite *containerManagementSuite) startEventListener(eventType, filter string, matcher func(map[string]interface{}) bool) chan bool {
 	ws, err := suite.newWSConnection()
 	require.NoError(suite.T(), err)
 
@@ -211,7 +216,7 @@ func (suite *containerManagementSuite) startEventListener(eventType string, matc
 		suite.T().Logf("error while waiting for event: %v", err)
 		return false
 	}
-	websocket.Message.Send(ws, fmt.Sprintf("%s?filter=like(resource:path,'/features/*/properties/status/state')", eventType))
+	websocket.Message.Send(ws, fmt.Sprintf("%s?filter=like(resource:path,'%s')", eventType, filter))
 	result := suite.beginWSWait(ws, wsListener)
 	require.True(suite.T(), suite.awaitChan(ackChan), "event acknowledgement not received")
 	return result
@@ -227,13 +232,13 @@ func (suite *containerManagementSuite) awaitChan(ch chan bool) bool {
 	}
 }
 
-func (suite *containerManagementSuite) getContainerFeture(containerID string) model.Feature {
-	containerURL := fmt.Sprintf("%s/features/%s", suite.containerURL, containerID)
-	data, _ := suite.doRequest(http.MethodGet, containerURL, nil)
-	var jsonFeature = &jsonFeature{}
-	json.Unmarshal(data, &jsonFeature)
+func (suite *containerManagementSuite) getCtrFeature(containerID string) model.Feature {
+	ctrThingURL := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, containerID)
+	data, _ := suite.doRequest(http.MethodGet, ctrThingURL, nil)
+	var containerFeature = &containerFeature{}
+	json.Unmarshal(data, &containerFeature)
 
 	return client.NewFeature(containerID,
-		client.WithFeatureDefinition(client.NewDefinitionIDFromString(jsonFeature.Definition[0])),
-		client.WithFeatureProperties(jsonFeature.Properties))
+		client.WithFeatureDefinition(client.NewDefinitionIDFromString(containerFeature.Definition[0])),
+		client.WithFeatureProperties(containerFeature.Properties))
 }

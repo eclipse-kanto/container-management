@@ -28,14 +28,14 @@ func initConfigFromEnv(cfg interface{}) error {
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 
-		configValue := f.Tag.Get("def")
+		configValue, ok := f.Tag.Lookup("def")
 
 		envName := toSnakeCase(f.Name)
 		if env, ok := os.LookupEnv(envName); ok {
 			configValue = env
 		}
 
-		if configValue == "" {
+		if !ok && configValue == "" {
 			return fmt.Errorf("env variable %s not set", envName)
 		}
 
@@ -71,8 +71,8 @@ func getConfigHelp(cfg interface{}) string {
 		result.WriteString("\n\t - ")
 		result.WriteString(name)
 
-		def := f.Tag.Get("def")
-		if len(def) > 0 {
+		def, ok := f.Tag.Lookup("def")
+		if ok {
 			result.WriteString(fmt.Sprintf(" (default '%s')", def))
 		}
 	}
@@ -81,6 +81,8 @@ func getConfigHelp(cfg interface{}) string {
 }
 
 func toSnakeCase(name string) string {
+	name = strings.ReplaceAll(name, "API", "Api")
+
 	var result, word strings.Builder
 
 	for i, ch := range name {

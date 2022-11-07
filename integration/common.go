@@ -19,7 +19,7 @@ import (
 
 	"github.com/eclipse/ditto-clients-golang"
 	"github.com/eclipse/ditto-clients-golang/model"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -27,21 +27,23 @@ import (
 
 type containerManagementSuite struct {
 	suite.Suite
-	mqttClient          mqtt.Client
-	dittoClient         *ditto.Client
-	cfg                 *testConfig
-	containerID         string
-	containerURL        string
-	containerFactoryURL string
-	topicModify         string
+	mqttClient           MQTT.Client
+	dittoClient          *ditto.Client
+	cfg                  *testConfig
+	ctrThingID           string
+	ctrThingURL          string
+	ctrFactoryFeatureURL string
+	topicCreated         string
+	topicModify          string
+	topicDeleted         string
 }
 
 type testConfig struct {
 	Broker                   string `def:"tcp://localhost:1883"`
 	MqttQuiesceMs            int    `def:"500"`
-	DittoAddress             string
-	DittoUser                string `def:"ditto"`
-	DittoPassword            string `def:"ditto"`
+	DigitalTwinAPIAddress    string
+	DigitalTwinAPIUser       string `def:"ditto"`
+	DigitalTwinAPIPassword   string `def:"ditto"`
 	EventTimeoutMs           int    `def:"30000"`
 	MqttAcknowledgeTimeoutMs int    `def:"3000"`
 }
@@ -55,20 +57,16 @@ type requestBody struct {
 	params map[string]interface{}
 }
 
-type jsonFeature struct {
+type containerFeature struct {
 	Definition []string               `json:"definition,omitempty"`
 	Properties map[string]interface{} `json:"properties,omitempty"`
 }
 
-type config struct {
-	DomainName string `json:"domainName,omitempty"`
-}
-
 const (
-	containerFactoryID = "ContainerFactory"
+	ctrFactoryFeatureID = "ContainerFactory"
 )
 
-func (suite *containerManagementSuite) newTestConnection() {
+func (suite *containerManagementSuite) connect() {
 	cfg := &testConfig{}
 
 	suite.T().Log(getConfigHelp(*cfg))
@@ -79,14 +77,14 @@ func (suite *containerManagementSuite) newTestConnection() {
 
 	suite.T().Logf("test config: %+v", *cfg)
 
-	opts := mqtt.NewClientOptions().
+	opts := MQTT.NewClientOptions().
 		AddBroker(cfg.Broker).
 		SetClientID(uuid.New().String()).
 		SetKeepAlive(30 * time.Second).
 		SetCleanSession(true).
 		SetAutoReconnect(true)
 
-	mqttClient := mqtt.NewClient(opts)
+	mqttClient := MQTT.NewClient(opts)
 
 	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
 		require.NoError(suite.T(), token.Error(), "connect to MQTT broker")
@@ -111,11 +109,13 @@ func (suite *containerManagementSuite) newTestConnection() {
 	suite.cfg = cfg
 	suite.dittoClient = dittoClient
 	suite.mqttClient = mqttClient
-	suite.containerID = edgeDeviceCfg.DeviceID + ":edge:containers"
-	suite.containerURL = fmt.Sprintf("%s/api/2/things/%s", strings.TrimSuffix(cfg.DittoAddress, "/"), suite.containerID)
-	suite.containerFactoryURL = fmt.Sprintf("%s/features/%s", suite.containerURL, containerFactoryID)
-	ns := model.NewNamespacedIDFrom(suite.containerID)
-	suite.topicModify = fmt.Sprintf("%s/%s/things/twin/events/modified", ns.Namespace, ns.Name)
+	suite.ctrThingID = edgeDeviceCfg.DeviceID + ":edge:containers"
+	suite.ctrThingURL = fmt.Sprintf("%s/api/2/things/%s", strings.TrimSuffix(cfg.DigitalTwinAPIAddress, "/"), suite.ctrThingID)
+	suite.ctrFactoryFeatureURL = fmt.Sprintf("%s/features/%s", suite.ctrThingURL, ctrFactoryFeatureID)
+	namespaceID := model.NewNamespacedIDFrom(suite.ctrThingID)
+	suite.topicCreated = fmt.Sprintf("%s/%s/things/twin/events/created", namespaceID.Namespace, namespaceID.Name)
+	suite.topicModify = fmt.Sprintf("%s/%s/things/twin/events/modified", namespaceID.Namespace, namespaceID.Name)
+	suite.topicDeleted = fmt.Sprintf("%s/%s/things/twin/events/deleted", namespaceID.Namespace, namespaceID.Name)
 }
 
 func (suite *containerManagementSuite) disconnect() {
@@ -123,7 +123,7 @@ func (suite *containerManagementSuite) disconnect() {
 	suite.mqttClient.Disconnect(uint(suite.cfg.MqttQuiesceMs))
 }
 
-func getContainerID(s string) string {
-	result := strings.Split(s, "/")
+func getCtrFeatureID(topic string) string {
+	result := strings.Split(topic, "/")
 	return result[2]
 }

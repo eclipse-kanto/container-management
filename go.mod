@@ -12,7 +12,7 @@ require (
 	github.com/containers/ocicrypt v1.1.6
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/eclipse/ditto-clients-golang v0.0.0-20220225085802-cf3b306280d3
-	github.com/eclipse/paho.mqtt.golang v1.3.5
+	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
