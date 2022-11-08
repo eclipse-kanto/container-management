@@ -14,8 +14,6 @@ package things
 
 import (
 	"time"
-
-	"github.com/eclipse-kanto/container-management/util/tls"
 )
 
 // ContainerThingsManagerOpt represents the available configuration options for the ContainerThingsManager service
@@ -33,7 +31,14 @@ type thingsOpts struct {
 	acknowledgeTimeout time.Duration
 	subscribeTimeout   time.Duration
 	unsubscribeTimeout time.Duration
-	tlsConfig          tls.Config
+	tlsConfig          *tlsConfig
+}
+
+// tls-secured communication config
+type tlsConfig struct {
+	RootCA     string
+	ClientCert string
+	ClientKey  string
 }
 
 func applyOptsThings(thingsOpts *thingsOpts, opts ...ContainerThingsManagerOpt) error {
@@ -134,9 +139,13 @@ func WithConnectionUnsubscribeTimeout(unsubscribeTimeout time.Duration) Containe
 }
 
 // WithTLSConfig configures the CA certificate for TLS communication
-func WithTLSConfig(tlsConfig tls.Config) ContainerThingsManagerOpt {
+func WithTLSConfig(rootCA, clientCert, clientKey string) ContainerThingsManagerOpt {
 	return func(thingsOptions *thingsOpts) error {
-		thingsOptions.tlsConfig = tlsConfig
+		thingsOptions.tlsConfig = &tlsConfig{
+			RootCA:     rootCA,
+			ClientCert: clientCert,
+			ClientKey:  clientKey,
+		}
 		return nil
 	}
 }

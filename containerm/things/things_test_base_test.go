@@ -19,7 +19,6 @@ import (
 	mockseventsspb "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/events"
 	mocksmgrpb "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/mgr"
 	mocksthingspb "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/things"
-	"github.com/eclipse-kanto/container-management/util/tls"
 )
 
 const (
@@ -86,5 +85,5 @@ func setupThingsContainerManager(controller *gomock.Controller) {
 		0,
 		0,
 		0,
-		tls.Config{})
+		&tlsConfig{})
 }

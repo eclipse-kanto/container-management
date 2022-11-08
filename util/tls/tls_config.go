@@ -20,22 +20,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Config represents the TLS configuration data
-type Config struct {
-	RootCA     string `json:"root_ca"`
-	ClientCert string `json:"client_cert"`
-	ClientKey  string `json:"client_key"`
-}
-
 // NewConfig initializes the broker TLS.
-func NewConfig(tlsConfig Config) (*tls.Config, error) {
-	caCertPool, err := NewCAPool(tlsConfig.RootCA)
+func NewConfig(rootCA, clientCert, clientKey string) (*tls.Config, error) {
+	caCertPool, err := NewCAPool(rootCA)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(tlsConfig.ClientCert) > 0 || len(tlsConfig.ClientKey) > 0 {
-		return NewFSConfig(caCertPool, tlsConfig.ClientCert, tlsConfig.ClientKey)
+	if len(clientCert) > 0 || len(clientKey) > 0 {
+		return NewFSConfig(caCertPool, clientCert, clientKey)
 	}
 
 	return &tls.Config{

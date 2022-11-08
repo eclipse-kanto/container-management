@@ -90,7 +90,7 @@ func setupTLSConfiguration(pahoOpts *MQTT.ClientOptions, configuration *Configur
 	}
 
 	if isConnectionSecure(u.Scheme) {
-		tlsConfig, err := tls.NewConfig(configuration.tlsConfig)
+		tlsConfig, err := tls.NewConfig(configuration.tlsConfig.RootCA, configuration.tlsConfig.ClientCert, configuration.tlsConfig.ClientKey)
 		if err != nil {
 			return err
 		}

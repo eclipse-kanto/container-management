@@ -25,16 +25,7 @@ var (
 )
 
 func TestUseCertificateSettingsOK(t *testing.T) {
-	use, err := NewFSConfig(nil, "", "")
-
-	if err.Error() != errors.New("failed to load X509 key pair: open : no such file or directory").Error() {
-		t.Fatalf("expected X509 load error, got: %s", err)
-	}
-	if use != nil {
-		t.Fatalf("expected nil, got: %v", use)
-	}
-
-	use, err = NewFSConfig(nil, certFile, keyFile)
+	use, err := NewFSConfig(nil, certFile, keyFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,8 +51,17 @@ func TestUseCertificateSettingsOK(t *testing.T) {
 }
 
 func TestUseCertificateSettingsFail(t *testing.T) {
-	nonExisting := "nonexisting.test"
 	expectedErrorStr := "failed to load X509 key pair: open %s: no such file or directory"
+	nonExisting := "nonexisting.test"
+
+	use, err := NewFSConfig(nil, "", "")
+
+	if err.Error() != fmt.Errorf(expectedErrorStr, "").Error() {
+		t.Fatalf("expected X509 load error, got: %s", err)
+	}
+	if use != nil {
+		t.Fatalf("expected nil, got: %v", use)
+	}
 
 	assertCertError(t, "", "", fmt.Errorf(expectedErrorStr, ""))
 
@@ -69,18 +69,11 @@ func TestUseCertificateSettingsFail(t *testing.T) {
 	assertCertError(t, certFile, nonExisting, fmt.Errorf(expectedErrorStr, nonExisting))
 	assertCertError(t, nonExisting, nonExisting, fmt.Errorf(expectedErrorStr, nonExisting))
 
-	assertCertError(t, certFile, "", fmt.Errorf(expectedErrorStr, ""))
-	assertCertError(t, certFile, nonExisting, fmt.Errorf(expectedErrorStr, nonExisting))
-	assertCertError(t, nonExisting, nonExisting, fmt.Errorf(expectedErrorStr, nonExisting))
-
-	assertCertError(t, "", keyFile, fmt.Errorf(expectedErrorStr, ""))
-	assertCertError(t, nonExisting, keyFile, fmt.Errorf(expectedErrorStr, nonExisting))
-
 	assertCertError(t, "", keyFile, fmt.Errorf(expectedErrorStr, ""))
 	assertCertError(t, nonExisting, keyFile, fmt.Errorf(expectedErrorStr, nonExisting))
 
 	expectedErr := errors.New("failed to parse CA tls_config.go")
-	_, err := NewCAPool("tls_config.go")
+	_, err = NewCAPool("tls_config.go")
 	if expectedErr.Error() != err.Error() {
 		t.Fatalf("expected error : %s, got: %s", expectedErr, err)
 	}

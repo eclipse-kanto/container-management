@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/log"
-	"github.com/eclipse-kanto/container-management/util/tls"
 )
 
 // config refers to daemon's whole configurations.
@@ -85,13 +84,20 @@ func (cfg *containerRuntimeConfig) UnmarshalJSON(data []byte) error {
 // registry config
 type registryConfig struct {
 	Credentials *authCredentials `json:"credentials,omitempty"`
-	Transport   *tls.Config      `json:"transport"`
+	Transport   *tlsConfig       `json:"transport"`
 }
 
 // basic authentication config
 type authCredentials struct {
 	UserID   string `json:"user_id,omitempty"`
 	Password string `json:"password,omitempty"`
+}
+
+// tls-secured communication config
+type tlsConfig struct {
+	RootCA     string `json:"root_ca"`
+	ClientCert string `json:"client_cert"`
+	ClientKey  string `json:"client_key"`
 }
 
 // network manager config - e.g. for the Libnetwork client
@@ -144,5 +150,5 @@ type thingsConnectionConfig struct {
 	AcknowledgeTimeout int64      `json:"acknowledge_timeout,omitempty"`
 	SubscribeTimeout   int64      `json:"subscribe_timeout,omitempty"`
 	UnsubscribeTimeout int64      `json:"unsubscribe_timeout,omitempty"`
-	Transport          tls.Config `json:"transport,omitempty"`
+	Transport          *tlsConfig `json:"transport,omitempty"`
 }

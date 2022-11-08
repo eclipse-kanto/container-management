@@ -13,12 +13,13 @@
 package main
 
 import (
+	"time"
+
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/ctr"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/network"
 	"github.com/eclipse-kanto/container-management/containerm/things"
-	"time"
 )
 
 const (
@@ -160,6 +161,7 @@ func getDefaultInstance() *config {
 				AcknowledgeTimeout: thingsAcknowledgeTimeoutDefault,
 				SubscribeTimeout:   thingsSubscribeTimeoutDefault,
 				UnsubscribeTimeout: thingsUnsubscribeTimeoutDefault,
+				Transport:          &tlsConfig{},
 			},
 		},
 	}

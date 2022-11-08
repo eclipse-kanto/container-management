@@ -19,7 +19,6 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/mgr"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
 	"github.com/eclipse-kanto/container-management/things/client"
-	"github.com/eclipse-kanto/container-management/util/tls"
 )
 
 const (
@@ -38,7 +37,7 @@ func newThingsContainerManager(mgr mgr.ContainerManager, eventsMgr events.Contai
 	acknowledgeTimeout time.Duration,
 	subscribeTimeout time.Duration,
 	unsubscribeTimeout time.Duration,
-	tlsConfig tls.Config) *containerThingsMgr {
+	tlsConfig *tlsConfig) *containerThingsMgr {
 	thingsMgr := &containerThingsMgr{
 		storageRoot:       storagePath,
 		mgr:               mgr,
@@ -59,7 +58,7 @@ func newThingsContainerManager(mgr mgr.ContainerManager, eventsMgr events.Contai
 		WithAcknowledgeTimeout(acknowledgeTimeout).
 		WithSubscribeTimeout(subscribeTimeout).
 		WithUnsubscribeTimeout(unsubscribeTimeout).
-		WithTLSConfig(tlsConfig)
+		WithTLSConfig(tlsConfig.RootCA, tlsConfig.ClientCert, tlsConfig.ClientKey)
 
 	thingsMgr.thingsClient = client.NewClient(thingsClientOpts)
 	return thingsMgr
