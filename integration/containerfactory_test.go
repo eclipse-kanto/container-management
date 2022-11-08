@@ -30,6 +30,8 @@ const (
 	ctrFactoryFeatureDefinition = "com.bosch.iot.suite.edge.containers:ContainerFactory:1.2.0"
 )
 
+var ctrFeatureIDs []string
+
 type ctrFactorySuite struct {
 	containerManagementSuite
 	ctrFeatureID string
@@ -38,14 +40,21 @@ type ctrFactorySuite struct {
 func (suite *ctrFactorySuite) SetupSuite() {
 	suite.connect()
 	ctrFactoryFeature := suite.getCtrFeature(ctrFactoryFeatureID)
-	require.NotNil(suite.T(), ctrFactoryFeature, "ContainerFactory feature must not be nil.")
+	require.NotNil(suite.T(), ctrFactoryFeature, "ContainerFactory feature must not be nil")
 
 	ctrFactoryFeatureDef := ctrFactoryFeature.GetDefinition()
-	require.NotNil(suite.T(), ctrFactoryFeatureDef, "ContainerFactory feature definition must not bi nil.")
-	require.Equal(suite.T(), ctrFactoryFeatureDefinition, ctrFactoryFeatureDef[0].String(), "ContainerFactory feature definition is not equals as expected.")
+	require.NotNil(suite.T(), ctrFactoryFeatureDef, "ContainerFactory feature definition must not bi nil")
+	require.Equal(suite.T(), ctrFactoryFeatureDefinition, ctrFactoryFeatureDef[0].String(), "ContainerFactory feature definition is not equals as expected")
 }
 
 func (suite *ctrFactorySuite) TearDownSuite() {
+	for _, element := range ctrFeatureIDs {
+		if element != "" {
+			chEvent := suite.isDeleted()
+			suite.execRemoveCommand(element)
+			require.True(suite.T(), suite.awaitChan(chEvent), "event for deleting feature not received")
+		}
+	}
 	suite.disconnect()
 }
 
@@ -62,12 +71,14 @@ func (suite *ctrFactorySuite) TestCreateOperation() {
 
 	suite.execCreateCommand("create", params)
 
-	require.True(suite.T(), suite.awaitChan(chEvent), "The created events are not received.")
-	require.Equal(suite.T(), statusRunning, suite.getActualCtrState(), "The container state is not expected.")
+	require.True(suite.T(), suite.awaitChan(chEvent), "event for creating feature not received")
+	ctrFeatureIDs = append(ctrFeatureIDs, suite.ctrFeatureID)
+	require.Equal(suite.T(), statusRunning, suite.getActualCtrState(), "container state is not expected")
 
 	chEvent = suite.isDeleted()
 	suite.execRemoveCommand(suite.ctrFeatureID)
-	require.True(suite.T(), suite.awaitChan(chEvent), "The deleted event not received.")
+	require.True(suite.T(), suite.awaitChan(chEvent), "event for deleting feature not received.")
+	ctrFeatureIDs[len(ctrFeatureIDs)-1] = ""
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfigOperation() {
@@ -80,12 +91,14 @@ func (suite *ctrFactorySuite) TestCreateWithConfigOperation() {
 
 	suite.execCreateCommand("createWithConfig", params)
 
-	require.True(suite.T(), suite.awaitChan(chEvent), "The event not received.")
-	require.Equal(suite.T(), statusRunning, suite.getActualCtrState(), "The container state is not expected.")
+	require.True(suite.T(), suite.awaitChan(chEvent), "event for creating feature not received")
+	ctrFeatureIDs = append(ctrFeatureIDs, suite.ctrFeatureID)
+	require.Equal(suite.T(), statusRunning, suite.getActualCtrState(), "container state is not expected")
 
 	chEvent = suite.isDeleted()
 	suite.execRemoveCommand(suite.ctrFeatureID)
-	require.True(suite.T(), suite.awaitChan(chEvent), "The deleted event not received.")
+	require.True(suite.T(), suite.awaitChan(chEvent), "event for deleting feature not received")
+	ctrFeatureIDs[len(ctrFeatureIDs)-1] = ""
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
@@ -107,14 +120,20 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 
 	suite.execCreateCommand("createWithConfig", params)
 
-	require.True(suite.T(), suite.awaitChan(chEvent), "The event not received.")
+	require.True(suite.T(), suite.awaitChan(chEvent), "event for creating feature not received")
+	ctrFeatureIDs = append(ctrFeatureIDs, suite.ctrFeatureID)
 
-	data, _ := suite.doRequest(http.MethodGet, requestURL, nil)
-	require.Equal(suite.T(), httpResponse, string(data), "The HTTP response is not expected.")
+	body, err := suite.doRequest(http.MethodGet, requestURL, nil)
+	if err != nil {
+		suite.T().Logf("error while getting the requested URL: %v", err)
+	}
+
+	require.Equal(suite.T(), httpResponse, string(body), "HTTP response is not expected")
 
 	chEvent = suite.isDeleted()
 	suite.execRemoveCommand(suite.ctrFeatureID)
-	require.True(suite.T(), suite.awaitChan(chEvent), "The deleted event not received.")
+	require.True(suite.T(), suite.awaitChan(chEvent), "event for deleting feature not received")
+	ctrFeatureIDs[len(ctrFeatureIDs)-1] = ""
 }
 
 func (suite *ctrFactorySuite) isCreated() chan bool {
@@ -148,6 +167,9 @@ func (suite *ctrFactorySuite) isDeleted() chan bool {
 
 func (suite *ctrFactorySuite) getActualCtrState() string {
 	ctrPropertyPath := fmt.Sprintf("%s/features/%s/properties/status/state/status", suite.ctrThingURL, suite.ctrFeatureID)
-	data, _ := suite.doRequest(http.MethodGet, ctrPropertyPath, nil)
-	return strings.Trim(string(data), "\"")
+	body, err := suite.doRequest(http.MethodGet, ctrPropertyPath, nil)
+	if err != nil {
+		suite.T().Logf("error while getting the container feature property status: %v", err)
+	}
+	return strings.Trim(string(body), "\"")
 }

@@ -234,9 +234,14 @@ func (suite *containerManagementSuite) awaitChan(ch chan bool) bool {
 
 func (suite *containerManagementSuite) getCtrFeature(containerID string) model.Feature {
 	ctrThingURL := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, containerID)
-	data, _ := suite.doRequest(http.MethodGet, ctrThingURL, nil)
+	body, err := suite.doRequest(http.MethodGet, ctrThingURL, nil)
+
+	if err != nil {
+		suite.T().Logf("error while getting the container feature: %v", err)
+	}
+
 	var containerFeature = &containerFeature{}
-	json.Unmarshal(data, &containerFeature)
+	json.Unmarshal(body, &containerFeature)
 
 	return client.NewFeature(containerID,
 		client.WithFeatureDefinition(client.NewDefinitionIDFromString(containerFeature.Definition[0])),
