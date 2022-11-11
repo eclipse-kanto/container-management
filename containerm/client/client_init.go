@@ -13,12 +13,14 @@
 package client
 
 import (
+	"fmt"
 	"net"
 	"net/url"
 	"time"
 
 	pbcontainers "github.com/eclipse-kanto/container-management/containerm/api/services/containers"
 	pbsysinfo "github.com/eclipse-kanto/container-management/containerm/api/services/sysinfo"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -28,11 +30,16 @@ func New(connectionAddress string) (Client, error) {
 	gopts := []grpc.DialOption{
 		grpc.WithInsecure(),
 		grpc.WithDialer(getDialer),
+		grpc.WithBlock(),
 	}
 
-	conn, err := grpc.Dial(connectionAddress, gopts...)
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, 30*time.Second)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, connectionAddress, gopts...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while dialing %s: %s", connectionAddress, err)
 	}
 	return newContainersClient(conn)
 }
@@ -54,7 +61,7 @@ func getDialer(addr string, duration time.Duration) (net.Conn, error) {
 	}
 	switch url.Scheme {
 	case "tcp", "tcp4", "tcp6":
-		return net.DialTimeout(url.Scheme, url.Host, duration)
+		return tcpConnect(url.Scheme, url.Host)
 	default:
 		return unixConnect(addr)
 	}
@@ -66,5 +73,14 @@ func unixConnect(addr string) (net.Conn, error) {
 		return nil, err
 	}
 	conn, err := net.DialUnix("unix", nil, unixAddr)
+	return conn, err
+}
+
+func tcpConnect(scheme, addr string) (net.Conn, error) {
+	tcpAddr, err := net.ResolveTCPAddr(scheme, addr)
+	if err != nil {
+		return nil, err
+	}
+	conn, err := net.DialTCP(scheme, nil, tcpAddr)
 	return conn, err
 }
