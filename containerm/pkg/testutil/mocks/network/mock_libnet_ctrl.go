@@ -17,10 +17,10 @@
 package mocks
 
 import (
-	libnetwork "github.com/docker/libnetwork"
-	cluster "github.com/docker/libnetwork/cluster"
-	config "github.com/docker/libnetwork/config"
-	types "github.com/docker/libnetwork/types"
+	libnetwork "github.com/docker/docker/libnetwork"
+	cluster "github.com/docker/docker/libnetwork/cluster"
+	config "github.com/docker/docker/libnetwork/config"
+	types "github.com/docker/docker/libnetwork/types"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )

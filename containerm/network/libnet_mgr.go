@@ -16,8 +16,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/docker/libnetwork"
-	libnetcfg "github.com/docker/libnetwork/config"
+	"github.com/docker/docker/libnetwork"
+	libnetcfg "github.com/docker/docker/libnetwork/config"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/registry"

@@ -17,7 +17,7 @@
 package mocks
 
 import (
-	libnetwork "github.com/docker/libnetwork"
+	libnetwork "github.com/docker/docker/libnetwork"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )

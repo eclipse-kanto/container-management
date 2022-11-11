@@ -18,8 +18,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/docker/libnetwork"
-	libnettypes "github.com/docker/libnetwork/types"
+	"github.com/docker/docker/libnetwork"
+	libnettypes "github.com/docker/docker/libnetwork/types"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"

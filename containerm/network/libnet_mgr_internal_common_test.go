@@ -16,9 +16,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	libnetconfig "github.com/docker/libnetwork/config"
-	"github.com/docker/libnetwork/netlabel"
-	"github.com/docker/libnetwork/options"
+	libnetconfig "github.com/docker/docker/libnetwork/config"
+	"github.com/docker/docker/libnetwork/netlabel"
+	"github.com/docker/docker/libnetwork/options"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 )
 

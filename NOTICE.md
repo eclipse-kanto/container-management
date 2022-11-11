@@ -66,10 +66,6 @@ containerd/cgroups (1.0.3)
 * Project: https://github.com/containerd/cgroups
 * Source:  https://github.com/containerd/cgroups/releases/tag/v1.0.3
 
-* License: MIT License
-* Project: https://github.com/BurntSushi/toml
-* Source:  https://github.com/BurntSushi/toml/releases/tag/v0.3.1
-
 containerd/containerd (1.5.13)
 
 * License: Apache License 2.0
@@ -118,29 +114,17 @@ etcd-io/etcd (3.3.18)
 * Project: https://github.com/etcd-io/etcd
 * Source:  https://github.com/etcd-io/etcd/releases/tag/v3.3.18
 
-coreos/go-semver (0.3.0)
-
-* License: Apache License 2.0
-* Project: https://github.com/coreos/go-semver
-* Source:  https://github.com/coreos/go-semver/releases/tag/v0.3.0
-
-coreos/go-systemd (22.3.2)
-
-* License: Apache License 2.0
-* Project: https://github.com/coreos/go-systemd
-* Source:  https://github.com/coreos/go-systemd/releases/tag/v22.3.2
-
 deckarep/golang-set (1.8.0)
 
 * License: MIT
 * Project: https://github.com/deckarep/golang-set
 * Source:  https://github.com/deckarep/golang-set/releases/tag/v1.8.0
 
-moby/moby (20.10.12)
+moby/moby (20.10.3-0.20220603173024-38633e797195)
 
 * License: Apache License 2.0
 * Project: https://github.com/moby/moby
-* Source:  https://github.com/moby/moby/releases/tag/v20.10.12
+* Source:  https://github.com/moby/moby/releases/tag/v22.06.0-beta.0
 
 docker/go-connections (0.4.0)
 
@@ -160,23 +144,11 @@ docker/libkv (0.2.1)
 * Project: https://github.com/docker/libkv
 * Source:  https://github.com/docker/libkv/releases/tag/v0.2.1
 
-moby/libnetwork (0.8.0-dev.2.0.20200318182600-ef149a924dfd)
-
-* License: Apache License 2.0
-* Project: https://github.com/moby/libnetwork
-* Source:  https://github.com/moby/libnetwork/tree/ef149a924dfde2e506ea3cb3f617d7d0fa96b8ee
-
 eclipse/paho.mqtt.golang (1.4.1)
 
 * License: Eclipse Distribution License v1.0
 * Project: https://github.com/eclipse/paho.mqtt.golang
 * Source:  https://github.com/eclipse/paho.mqtt.golang/releases/tag/v1.4.1
-
-fatih/color (1.9.0)
-
-* License: MIT License
-* Project: https://github.com/fatih/color
-* Source:  https://github.com/fatih/color/releases/tag/v1.9.0
 
 godbus/dbus (5.0.6)
 
@@ -200,7 +172,7 @@ golang/mock (1.6.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/golang/mock
-* Source:  https://github.com/golang/mock/tree/v1.6.0
+* Source:  https://github.com/golang/mock/releases/tag/v1.6.0
 
 golang/protobuf (1.5.2)
 
@@ -226,29 +198,11 @@ gorilla/websocket (1.4.2)
 * Project: https://github.com/gorilla/websocket
 * Source:  https://github.com/gorilla/websocket/releases/tag/v1.4.2
 
-hashicorp/consul/api (1.12.0)
-
-* License: Mozilla Public License 2.0
-* Project: https://github.com/hashicorp/consul/tree/main/api
-* Source:  https://github.com/hashicorp/consul/releases/tag/api/v1.12.0
-
 hashicorp/errwrap (1.1.0)
 
 * License: Mozilla Public License 2.0
 * Project: https://github.com/hashicorp/errwrap
 * Source:  https://github.com/hashicorp/errwrap/releases/tag/v1.1.0
-
-hashicorp/go-cleanhttp (0.5.1)
-
-* License: Mozilla Public License 2.0
-* Project: https://github.com/hashicorp/go-cleanhttp
-* Source:  https://github.com/hashicorp/go-cleanhttp/releases/tag/v0.5.1
-
-hashicorp/go-hclog (0.12.0)
-
-* License: MIT License
-* Project: https://github.com/hashicorp/go-hclog
-* Source:  https://github.com/hashicorp/go-hclog/releases/tag/v0.12.0
 
 hashicorp/go-immutable-radix (1.0.0)
 
@@ -274,12 +228,6 @@ hashicorp/go-multierror (1.1.0)
 * Project: https://github.com/hashicorp/go-multierror
 * Source:  https://github.com/hashicorp/go-multierror/releases/tag/v1.1.0
 
-hashicorp/go-rootcerts (1.0.2)
-
-* License: Mozilla Public License 2.0
-* Project: https://github.com/hashicorp/go-rootcerts
-* Source:  https://github.com/hashicorp/go-rootcerts/releases/tag/v1.0.2
-
 hashicorp/go-sockaddr (1.0.0)
 
 * License: Mozilla Public License 2.0
@@ -304,29 +252,11 @@ ishidawataru/sctp (0.0.0-20210707070123-9a39160e9062)
 * Project: https://github.com/ishidawataru/sctp
 * Source:  https://github.com/ishidawataru/sctp/tree/9a39160e9062ad0b3e6522f838a116918e58a811
 
-json-iterator/go (1.1.10)
-
-* License: MIT License
-* Project: https://github.com/json-iterator/go
-* Source:  https://github.com/json-iterator/go/releases/tag/v1.1.10
-
 klauspost/compress (1.13.6)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/klauspost/compress
 * Source:  https://github.com/klauspost/compress/releases/tag/v1.13.6
-
-mattn/go-colorable (0.1.6)
-
-* License: MIT License
-* Project: https://github.com/mattn/go-colorable
-* Source:  https://github.com/mattn/go-colorable/releases/tag/v0.1.6
-
-mattn/go-isatty (0.0.12)
-
-* License: MIT License
-* Project: https://github.com/mattn/go-isatty
-* Source:  https://github.com/mattn/go-isatty/releases/tag/v0.0.12
 
 miekg/dns (1.1.46)
 
@@ -339,12 +269,6 @@ miekg/pkcs11 (1.1.1)
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/miekg/pkcs11
 * Source:  https://github.com/miekg/pkcs11/releases/tag/v1.1.1
-
-mitchellh/mapstructure (1.1.2)
-
-* License: MIT License
-* Project: https://github.com/mitchellh/mapstructure
-* Source:  https://github.com/mitchellh/mapstructure/releases/tag/v1.1.2
 
 moby/ipvs (1.0.1)
 
@@ -363,18 +287,6 @@ moby/sys/mountinfo (0.6.0)
 * License: Apache License 2.0
 * Project: https://github.com/moby/sys/mountinfo
 * Source:  https://github.com/moby/sys/tree/mountinfo/v0.6.0
-
-modern-go/concurrent (0.0.0-20180306012644-bacd9c7ef1dd)
-
-* License: Apache License 2.0
-* Project: https://github.com/modern-go/concurrent
-* Source:  https://github.com/modern-go/concurrent/tree/bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94
-
-modern-go/reflect2 (1.0.1)
-
-* License: Apache License 2.0
-* Project: https://github.com/modern-go/reflect2
-* Source:  https://github.com/modern-go/reflect2/releases/tag/v1.0.1
 
 opencontainers/go-digest (1.0.0)
 
@@ -406,6 +318,12 @@ opencontainers/selinux (1.10.0)
 * Project: https://github.com/opencontainers/selinux
 * Source:  https://github.com/opencontainers/selinux/releases/tag/v1.10.0
 
+github.com/pelletier/go-toml (1.8.1)
+
+* License: MIT License
+* Project: https://github.com/pelletier/go-toml
+* Source:  https://github.com/pelletier/go-toml/releases/tag/v1.8.1
+
 pkg/errors (0.9.1)
 
 * License: BSD 2-Clause "Simplified" License
@@ -417,12 +335,6 @@ shirou/gopsutil (3.22.7)
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/shirou/gopsutil
 * Source:  https://github.com/shirou/gopsutil/releases/tag/v3.22.7
-
-samuel/go-zookeeper (0.0.0-20201211165307-7117e9ea2414)
-
-* License: BSD 3-Clause "New" or "Revised" License
-* Project: https://github.com/samuel/go-zookeeper
-* Source:  https://github.com/samuel/go-zookeeper/tree/7117e9ea24146db92d453f4dbf1fd9ba1e262989
 
 sean-/seed (0.0.0-20170313163322-e2103e2c3529)
 
@@ -526,11 +438,11 @@ googleapis/go-genproto (0.0.0-20201110150050-8816d57aaa9a)
 * Project: https://github.com/googleapis/go-genproto
 * Source:  https://github.com/googleapis/go-genproto/tree/8816d57aaa9ad8cba31b2a8ecb6199c494bdf8b4
 
-grpc/grpc-go (1.29.1)
+grpc/grpc-go (1.50.1)
 
 * License: Apache License 2.0
 * Project: https://github.com/grpc/grpc-go
-* Source:  https://github.com/grpc/grpc-go/releases/tag/v1.29.1
+* Source:  https://github.com/grpc/grpc-go/releases/tag/v1.50.1
 
 protocolbuffers/protobuf-go (1.27.1)
 
