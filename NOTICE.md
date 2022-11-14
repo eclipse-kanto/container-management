@@ -124,7 +124,7 @@ moby/moby (20.10.3-0.20220603173024-38633e797195)
 
 * License: Apache License 2.0
 * Project: https://github.com/moby/moby
-* Source:  https://github.com/moby/moby/releases/tag/v22.06.0-beta.0
+* Source:  https://github.com/moby/moby/tree/38633e797195643580ce5c4af7c5422aad3eb7de
 
 docker/go-connections (0.4.0)
 
