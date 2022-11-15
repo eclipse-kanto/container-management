@@ -25,7 +25,7 @@ var (
 )
 
 func TestUseCertificateSettingsOK(t *testing.T) {
-	use, err := NewFSConfig(nil, certFile, keyFile)
+	use, err := newFSConfig(nil, certFile, keyFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func TestUseCertificateSettingsFail(t *testing.T) {
 	expectedErrorStr := "failed to load X509 key pair: open %s: no such file or directory"
 	nonExisting := "nonexisting.test"
 
-	use, err := NewFSConfig(nil, "", "")
+	use, err := newFSConfig(nil, "", "")
 
 	if err.Error() != fmt.Errorf(expectedErrorStr, "").Error() {
 		t.Fatalf("expected X509 load error, got: %s", err)
@@ -73,14 +73,14 @@ func TestUseCertificateSettingsFail(t *testing.T) {
 	assertCertError(t, nonExisting, keyFile, fmt.Errorf(expectedErrorStr, nonExisting))
 
 	expectedErr := errors.New("failed to parse CA tls_config.go")
-	_, err = NewCAPool("tls_config.go")
+	_, err = newCAPool("tls_config.go")
 	if expectedErr.Error() != err.Error() {
 		t.Fatalf("expected error : %s, got: %s", expectedErr, err)
 	}
 }
 
 func assertCertError(t *testing.T, certFile, keyFile string, expectedErr error) {
-	use, err := NewFSConfig(nil, certFile, keyFile)
+	use, err := newFSConfig(nil, certFile, keyFile)
 	if expectedErr.Error() != err.Error() {
 		t.Fatalf("expected error : %s, got: %s", expectedErr, err)
 	}

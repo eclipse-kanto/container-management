@@ -22,13 +22,13 @@ import (
 
 // NewConfig initializes the broker TLS.
 func NewConfig(rootCA, clientCert, clientKey string) (*tls.Config, error) {
-	caCertPool, err := NewCAPool(rootCA)
+	caCertPool, err := newCAPool(rootCA)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(clientCert) > 0 || len(clientKey) > 0 {
-		return NewFSConfig(caCertPool, clientCert, clientKey)
+		return newFSConfig(caCertPool, clientCert, clientKey)
 	}
 
 	return &tls.Config{
@@ -40,8 +40,8 @@ func NewConfig(rootCA, clientCert, clientKey string) (*tls.Config, error) {
 	}, nil
 }
 
-// NewCAPool opens a certificates pool.
-func NewCAPool(caFile string) (*x509.CertPool, error) {
+// newCAPool opens a certificates pool.
+func newCAPool(caFile string) (*x509.CertPool, error) {
 	caCert, err := os.ReadFile(caFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load CA")
@@ -55,8 +55,8 @@ func NewCAPool(caFile string) (*x509.CertPool, error) {
 	return caCertPool, nil
 }
 
-// NewFSConfig initializes a file Hub TLS.
-func NewFSConfig(caCertPool *x509.CertPool, certFile, keyFile string) (*tls.Config, error) {
+// newFSConfig initializes a file Hub TLS.
+func newFSConfig(caCertPool *x509.CertPool, certFile, keyFile string) (*tls.Config, error) {
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load X509 key pair")

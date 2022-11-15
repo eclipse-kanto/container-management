@@ -280,6 +280,11 @@ func dumpThingsClient(configInstance *config) {
 				log.Debug("[daemon_cfg][things-conn-ack-timeout] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout)
 				log.Debug("[daemon_cfg][things-conn-sub-timeout] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout)
 				log.Debug("[daemon_cfg][things-conn-unsub-timeout] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout)
+				if configInstance.ThingsConfig.ThingsConnectionConfig.Transport != nil {
+					log.Debug("[daemon_cfg][things-conn-root-ca] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.Transport.RootCA)
+					log.Debug("[daemon_cfg][things-conn-client-cert] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert)
+					log.Debug("[daemon_cfg][things-conn-client-key] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey)
+				}
 			}
 		}
 	}
