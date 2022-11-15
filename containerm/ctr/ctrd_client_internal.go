@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/opencontainers/image-spec/identity"
+	"regexp"
 	"syscall"
 	"time"
 
@@ -94,9 +95,33 @@ func (ctrdClient *containerdClient) getImage(ctx context.Context, imageInfo type
 	if err != nil {
 		return nil, err
 	}
+	verKeys, err := ctrdClient.verMgr.GetVerificationKeys(imageInfo.VerifyConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	ctrdImage, err := ctrdClient.spi.GetImage(ctx, imageInfo.Name)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(verKeys) > 0 {
+		signatureImage, verErr := ctrdClient.verMgr.GetSignature(ctx, ctrdImage)
+		if err != nil {
+			if errdefs.IsNotFound(verErr) {
+				log.Debug("no signature found of image = %s", imageInfo.Name)
+			} else {
+				return nil, verErr
+			}
+		} else {
+			verErr = ctrdClient.verMgr.VerifySignature(ctx, ctrdImage, signatureImage, verKeys)
+			if verErr != nil {
+				return nil, verErr
+			}
+		}
+	} else {
+		// no public keys, skip verification
+		log.Debug("no keys provided, signature verification will be skipped for image = %s", imageInfo.Name)
 	}
 
 	if err = ctrdClient.decMgr.CheckAuthorization(ctx, ctrdImage, decryptConfig); err != nil {
@@ -111,11 +136,22 @@ func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageInfo typ
 		return nil, dcErr
 	}
 
+	verKeys, vkErr := ctrdClient.verMgr.GetVerificationKeys(imageInfo.VerifyConfig)
+	if vkErr != nil {
+		return nil, vkErr
+	}
+	verify := len(verKeys) > 0
+	if !verify {
+		// no public keys, skip verification
+		log.Debug("no keys provided, signature verification will be skipped for image = %s", imageInfo.Name)
+	}
+
 	ctrdImage, err := ctrdClient.spi.GetImage(ctx, imageInfo.Name)
 	if err != nil {
 		// if the image is not present locally - pull it
 		if errdefs.IsNotFound(err) {
-			ctrdImage, err = ctrdClient.spi.PullImage(ctx, imageInfo.Name, ctrdClient.generateRemoteOpts(imageInfo)...)
+			remoteOpts := ctrdClient.generateRemoteOpts(imageInfo)
+			ctrdImage, err = ctrdClient.spi.PullImage(ctx, imageInfo.Name, remoteOpts...)
 			if err != nil {
 				return nil, err
 			}
@@ -124,6 +160,11 @@ func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageInfo typ
 			// it's essential to perform an authorization check to prevent leased content leaks
 			if checkErr := ctrdClient.decMgr.CheckAuthorization(ctx, ctrdImage, dc); checkErr != nil {
 				return nil, checkErr
+			}
+			if verify {
+				if verifyErr := ctrdClient.verifyImage(ctx, ctrdImage, verKeys, remoteOpts...); verifyErr != nil {
+					return nil, verifyErr
+				}
 			}
 			unpackOpts, optsErr := ctrdClient.generateUnpackOpts(imageInfo)
 			if optsErr != nil {
@@ -137,8 +178,26 @@ func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageInfo typ
 		if checkErr := ctrdClient.decMgr.CheckAuthorization(ctx, ctrdImage, dc); checkErr != nil {
 			return nil, checkErr
 		}
+		if verify {
+			if verifyErr := ctrdClient.verifyImage(ctx, ctrdImage, verKeys, ctrdClient.generateRemoteOpts(imageInfo)...); verifyErr != nil {
+				return nil, verifyErr
+			}
+		}
 	}
 	return ctrdImage, err
+}
+
+func (ctrdClient *containerdClient) verifyImage(ctx context.Context, image containerd.Image, verKeys []*verificationKey, remoteOpts ...containerd.RemoteOpt) error {
+	signatureImage, err := ctrdClient.verMgr.PullSignature(ctx, image, remoteOpts...)
+	if err != nil {
+		if err == errNoSignatureFound {
+			// the image is not signed, skip verification
+			log.WarnErr(err, "will skip verification of image = %s", image.Name())
+			return nil
+		}
+		return err
+	}
+	return ctrdClient.verMgr.VerifySignature(ctx, image, signatureImage, verKeys)
 }
 
 func (ctrdClient *containerdClient) createSnapshot(ctx context.Context, containerID string, image containerd.Image, imageInfo types.Image) error {
@@ -393,22 +452,31 @@ func (ctrdClient *containerdClient) processEvents(namespace string) {
 	}
 }
 
+var signatureRegex = regexp.MustCompile(`-[a-f0-9]{64}.sig$`)
+
 func (ctrdClient *containerdClient) initImagesExpiryManagement(ctx context.Context) error {
 	log.Debug("initializing cached images and content expiry management")
 	images, err := ctrdClient.spi.ListImages(ctx)
 	if err != nil {
 		return err
 	}
+
 	ctrdClient.imagesExpiryLock.Lock()
 	defer ctrdClient.imagesExpiryLock.Unlock()
 
 	for _, image := range images {
-		watchErr := ctrdClient.manageImageExpiry(ctx, image)
-		if watchErr != nil {
-			log.DebugErr(watchErr, "error while initializing expiry management for image = %s", image.Name())
+		imageRef := image.Name()
+		if signatureRegex.MatchString(imageRef) {
+			// skip signatures they will be removed together with the corresponding image
 			continue
 		}
-		log.Debug("successfully managed expiry for image = %s", image.Name())
+
+		watchErr := ctrdClient.manageImageExpiry(ctx, image)
+		if watchErr != nil {
+			log.DebugErr(watchErr, "error while initializing expiry management for image = %s", imageRef)
+			continue
+		}
+		log.Debug("successfully managed expiry for image = %s", imageRef)
 	}
 	return nil
 }
@@ -512,6 +580,18 @@ func (ctrdClient *containerdClient) removeUnusedImage(ctx context.Context, image
 		return errImageIsInUse
 	}
 
+	// delete signature if found
+	if delSigErr := ctrdClient.verMgr.DeleteSignature(ctx, image); delSigErr != nil {
+		if errdefs.IsNotFound(delSigErr) {
+			log.Debug("no signature found of image = %s", imgRef)
+		} else {
+			return delSigErr
+		}
+	} else {
+		log.Debug("deleted signature of unused image = %s", imgRef)
+	}
+
+	// delete image
 	if delErr := ctrdClient.spi.DeleteImage(ctx, imgRef); delErr != nil {
 		if errdefs.IsNotFound(delErr) {
 			log.Debug("image = %s is already removed", imgRef)

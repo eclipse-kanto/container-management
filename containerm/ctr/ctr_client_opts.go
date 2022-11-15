@@ -33,6 +33,7 @@ type ctrOpts struct {
 	imageExpiry        time.Duration
 	imageExpiryDisable bool
 	leaseID            string
+	imageVerKeys       []string
 }
 
 // RegistryConfig represents a single registry's access configuration.
@@ -153,6 +154,14 @@ func WithCtrdImageExpiryDisable(disable bool) ContainerOpts {
 func WithCtrdLeaseID(leaseID string) ContainerOpts {
 	return func(ctrOptions *ctrOpts) error {
 		ctrOptions.leaseID = leaseID
+		return nil
+	}
+}
+
+// WithCtrdImageVerifyKeys sets the keys for verifying signed images.
+func WithCtrdImageVerifyKeys(keys ...string) ContainerOpts {
+	return func(ctrOptions *ctrOpts) error {
+		ctrOptions.imageVerKeys = keys
 		return nil
 	}
 }

@@ -17,6 +17,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"syscall"
 	"testing"
@@ -47,6 +48,7 @@ import (
 	protoTypes "github.com/gogo/protobuf/types"
 	"github.com/golang/mock/gomock"
 	"github.com/opencontainers/go-digest"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 )
 
@@ -258,6 +260,7 @@ func TestClientInternalGetImage(t *testing.T) {
 			spiMock := mocksCtrd.NewMockcontainerdSpi(ctrl)
 			ctrdClient := &containerdClient{
 				decMgr: decryptMgrMock,
+				verMgr: &ctrVerifyMgr{},
 				spi:    spiMock,
 			}
 			expectedImage, expectedErr := testCaseData.mockExec(decryptMgrMock, spiMock, ctrl)
@@ -391,6 +394,7 @@ func TestClientInternalPullImage(t *testing.T) {
 			registriesResolverMock := mocksCtrd.NewMockcontainerImageRegistriesResolver(ctrl)
 			ctrdClient := &containerdClient{
 				decMgr:             decryptMgrMock,
+				verMgr:             &ctrVerifyMgr{},
 				spi:                spiMock,
 				registriesResolver: registriesResolverMock,
 			}
@@ -1204,6 +1208,7 @@ func TestClientInternalIsImageUsed(t *testing.T) {
 func TestClientInternalRemoveUnusedImage(t *testing.T) {
 	const testImgRef = "test.image/ref:latest"
 	entryDigest := digest.NewDigest(digest.SHA256, sha256.New())
+	signRef := fmt.Sprintf("%s:%s-%s.sig", strings.Split(testImgRef, ":")[0], entryDigest.Algorithm().String(), entryDigest.Hex())
 
 	testCases := map[string]struct {
 		mockExec func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error
@@ -1226,18 +1231,22 @@ func TestClientInternalRemoveUnusedImage(t *testing.T) {
 		},
 		"test_not_used_delete_not_found_error": {
 			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
-				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
+				imageMock.EXPECT().Name().Return(testImgRef).Times(3)
 				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
 				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
+				imageMock.EXPECT().Target().Return(ocispec.Descriptor{Digest: entryDigest})
+				spiMock.EXPECT().DeleteImage(ctx, signRef).Return(nil)
 				spiMock.EXPECT().DeleteImage(ctx, testImgRef).Return(errdefs.ErrNotFound)
 				return nil
 			},
 		},
 		"test_not_used_delete_error": {
 			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
-				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
+				imageMock.EXPECT().Name().Return(testImgRef).Times(3)
 				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
 				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
+				imageMock.EXPECT().Target().Return(ocispec.Descriptor{Digest: entryDigest})
+				spiMock.EXPECT().DeleteImage(ctx, signRef).Return(nil)
 				err := log.NewError("test error")
 				spiMock.EXPECT().DeleteImage(ctx, testImgRef).Return(err)
 				return err
@@ -1245,9 +1254,11 @@ func TestClientInternalRemoveUnusedImage(t *testing.T) {
 		},
 		"test_not_used_delete_no_error": {
 			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
-				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
+				imageMock.EXPECT().Name().Return(testImgRef).Times(3)
 				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
 				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
+				imageMock.EXPECT().Target().Return(ocispec.Descriptor{Digest: entryDigest})
+				spiMock.EXPECT().DeleteImage(ctx, signRef).Return(nil)
 				spiMock.EXPECT().DeleteImage(ctx, testImgRef).Return(nil)
 				return nil
 			},
@@ -1265,7 +1276,8 @@ func TestClientInternalRemoveUnusedImage(t *testing.T) {
 
 			ctx := context.Background()
 			ctrdClient := &containerdClient{
-				spi: spiMock,
+				verMgr: &ctrVerifyMgr{spi: spiMock},
+				spi:    spiMock,
 			}
 			// mock exec
 			expectedErr := testCaseData.mockExec(ctx, spiMock, imageMock)
@@ -1279,6 +1291,7 @@ func TestClientInternalRemoveUnusedImage(t *testing.T) {
 func TestClientInternalHandleImageExpired(t *testing.T) {
 	const testImgRef = "test.image/ref:latest"
 	entryDigest := digest.NewDigest(digest.SHA256, sha256.New())
+	signRef := fmt.Sprintf("%s:%s-%s.sig", strings.Split(testImgRef, ":")[0], entryDigest.Algorithm().String(), entryDigest.Hex())
 
 	testCases := map[string]struct {
 		mockExec func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error
@@ -1317,9 +1330,11 @@ func TestClientInternalHandleImageExpired(t *testing.T) {
 		"test_no_error": {
 			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, imageMock *mocksContainerd.MockImage) error {
 				spiMock.EXPECT().GetImage(ctx, testImgRef).Return(imageMock, nil)
-				imageMock.EXPECT().Name().Return(testImgRef).Times(2)
+				imageMock.EXPECT().Name().Return(testImgRef).Times(3)
 				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
 				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
+				imageMock.EXPECT().Target().Return(ocispec.Descriptor{Digest: entryDigest})
+				spiMock.EXPECT().DeleteImage(ctx, signRef).Return(nil)
 				spiMock.EXPECT().DeleteImage(ctx, testImgRef).Return(nil)
 				return nil
 			},
@@ -1337,7 +1352,8 @@ func TestClientInternalHandleImageExpired(t *testing.T) {
 
 			ctx := context.Background()
 			ctrdClient := &containerdClient{
-				spi: spiMock,
+				verMgr: &ctrVerifyMgr{spi: spiMock},
+				spi:    spiMock,
 			}
 			// mock exec
 			expectedErr := testCaseData.mockExec(ctx, spiMock, imageMock)
@@ -1351,6 +1367,7 @@ func TestClientInternalHandleImageExpired(t *testing.T) {
 func TestClientInternalManageImageExpiry(t *testing.T) {
 	const testImgRef = "test.image/ref:latest"
 	entryDigest := digest.NewDigest(digest.SHA256, sha256.New())
+	signRef := fmt.Sprintf("%s:%s-%s.sig", strings.Split(testImgRef, ":")[0], entryDigest.Algorithm().String(), entryDigest.Hex())
 
 	testCases := map[string]struct {
 		imagesExpiry time.Duration
@@ -1369,10 +1386,12 @@ func TestClientInternalManageImageExpiry(t *testing.T) {
 		"test_expired_not_used_no_error": {
 			imagesExpiry: 1 * time.Second,
 			mockExec: func(ctx context.Context, spiMock *mocksCtrd.MockcontainerdSpi, watcherMock *MockresourcesWatcher, imageMock *mocksContainerd.MockImage) error {
-				imageMock.EXPECT().Name().Return(testImgRef).Times(3)
+				imageMock.EXPECT().Name().Return(testImgRef).Times(4)
 				imageMock.EXPECT().Metadata().Return(images.Image{CreatedAt: time.Now().Add(-24 * time.Hour)})
 				imageMock.EXPECT().RootFS(ctx).Return([]digest.Digest{entryDigest}, nil)
 				spiMock.EXPECT().ListSnapshots(ctx, fmt.Sprintf(snapshotsWalkFilterFormat, entryDigest.String())).Return(nil, nil)
+				imageMock.EXPECT().Target().Return(ocispec.Descriptor{Digest: entryDigest})
+				spiMock.EXPECT().DeleteImage(ctx, signRef).Return(nil)
 				spiMock.EXPECT().DeleteImage(ctx, testImgRef).Return(nil)
 				return nil
 			},
@@ -1429,6 +1448,7 @@ func TestClientInternalManageImageExpiry(t *testing.T) {
 
 			ctx := context.Background()
 			ctrdClient := &containerdClient{
+				verMgr:        &ctrVerifyMgr{spi: spiMock},
 				spi:           spiMock,
 				imagesWatcher: watcherMock,
 				imageExpiry:   testCaseData.imagesExpiry,

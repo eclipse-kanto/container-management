@@ -26,8 +26,9 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pkg/errors v0.9.1
 	github.com/shirou/gopsutil/v3 v3.22.7
+	github.com/sigstore/sigstore v1.4.4
 	github.com/sirupsen/logrus v1.9.0
-	github.com/spf13/cobra v1.2.1
+	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.1
 	github.com/vishvananda/netlink v1.2.1-beta.2
@@ -45,7 +46,7 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Microsoft/hcsshim v0.9.6 // indirect
-	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
+	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
@@ -60,22 +61,24 @@ require (
 	github.com/godbus/dbus/v5 v5.0.6 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/google/btree v1.0.1 // indirect
+	github.com/google/btree v1.1.2 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-containerregistry v0.11.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect
+	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-msgpack v0.5.3 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/hashicorp/go-sockaddr v1.0.0 // indirect
+	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/memberlist v0.3.1 // indirect
 	github.com/hashicorp/serf v0.9.7 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/ishidawataru/sctp v0.0.0-20210707070123-9a39160e9062 // indirect
-	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/klauspost/compress v1.15.8 // indirect
+	github.com/letsencrypt/boulder v0.0.0-20220929215747-76583552c2be // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
-	github.com/miekg/dns v1.1.46 // indirect
+	github.com/miekg/dns v1.1.50 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
 	github.com/moby/ipvs v1.0.1 // indirect
 	github.com/moby/locker v1.0.1 // indirect
@@ -87,6 +90,8 @@ require (
 	github.com/rootless-containers/rootlesskit v1.1.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/stefanberger/go-pkcs11uri v0.0.0-20201008174630-78d3cae3a980 // indirect
+	github.com/theupdateframework/go-tuf v0.5.2-0.20220930112810-3890c1e7ace4 // indirect
+	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
@@ -98,5 +103,5 @@ require (
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
-	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
+	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 )

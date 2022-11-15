@@ -40,11 +40,11 @@ alibaba/pouch (1.3.0)
 * Project: https://github.com/alibaba/pouch
 * Source:  https://github.com/alibaba/pouch/releases/tag/1.3.0
 
-armon/go-metrics (0.0.0-20180917152333-f0300d1749da)
+armon/go-metrics (0.4.1)
 
 * License: MIT License
 * Project: https://github.com/armon/go-metrics
-* Source:  https://github.com/armon/go-metrics/tree/f0300d1749da6fa982027e449ec0c7a145510c3c
+* Source:  https://github.com/armon/go-metrics/tree/v0.4.1
 
 armon/go-radix (1.0.0)
 
@@ -172,11 +172,17 @@ golang/protobuf (1.5.3)
 * Project: https://github.com/golang/protobuf
 * Source:  https://github.com/golang/protobuf/releases/tag/v1.5.3
 
-google/btree (1.0.1)
+google/btree (1.1.2)
 
 * License: Apache License 2.0
 * Project: https://github.com/google/btree
-* Source:  https://github.com/google/btree/tree/v1.0.1
+* Source:  https://github.com/google/btree/tree/v1.1.2
+
+google/go-containerregistry (0.11.0)
+
+* License: Apache License 2.0
+* Project: https://github.com/google/go-containerregistry
+* Source:  https://github.com/google/go-containerregistry/releases/tag/v0.11.0
 
 google/uuid (1.3.0)
 
@@ -196,11 +202,11 @@ hashicorp/errwrap (1.1.0)
 * Project: https://github.com/hashicorp/errwrap
 * Source:  https://github.com/hashicorp/errwrap/releases/tag/v1.1.0
 
-hashicorp/go-immutable-radix (1.0.0)
+hashicorp/go-immutable-radix (1.3.1)
 
 * License: Mozilla Public License 2.0
 * Project: https://github.com/hashicorp/go-immutable-radix
-* Source:  https://github.com/hashicorp/go-immutable-radix/releases/tag/v1.0.0
+* Source:  https://github.com/hashicorp/go-immutable-radix/releases/tag/v1.3.1
 
 hashicorp/golang-lru (0.5.4)
 
@@ -220,11 +226,11 @@ hashicorp/go-multierror (1.1.1)
 * Project: https://github.com/hashicorp/go-multierror
 * Source:  https://github.com/hashicorp/go-multierror/releases/tag/v1.1.1
 
-hashicorp/go-sockaddr (1.0.0)
+hashicorp/go-sockaddr (1.0.2)
 
 * License: Mozilla Public License 2.0
 * Project: https://github.com/hashicorp/go-sockaddr
-* Source:  https://github.com/hashicorp/go-sockaddr/releases/tag/v1.0.0
+* Source:  https://github.com/hashicorp/go-sockaddr/releases/tag/v1.0.2
 
 hashicorp/memberlist (0.3.1)
 
@@ -244,17 +250,23 @@ ishidawataru/sctp (0.0.0-20210707070123-9a39160e9062)
 * Project: https://github.com/ishidawataru/sctp
 * Source:  https://github.com/ishidawataru/sctp/tree/9a39160e9062ad0b3e6522f838a116918e58a811
 
-klauspost/compress (1.13.6)
+klauspost/compress (1.15.8)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/klauspost/compress
-* Source:  https://github.com/klauspost/compress/releases/tag/v1.13.6
+* Source:  https://github.com/klauspost/compress/releases/tag/v1.15.8
 
-miekg/dns (1.1.46)
+letsencrypt/boulder (0.0.0-20220929215747-76583552c2be)
+
+* License: Mozilla Public License 2.0
+* Project: https://ggithub.com/letsencrypt/boulder
+* Source:  https://github.com/letsencrypt/boulder/tree/76583552c2bea517f03b48444e586fcd25e70745
+
+miekg/dns (1.1.50)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/miekg/dns
-* Source:  https://github.com/miekg/dns/releases/tag/v1.1.46
+* Source:  https://github.com/miekg/dns/releases/tag/v1.1.50
 
 miekg/pkcs11 (1.1.1)
 
@@ -340,17 +352,23 @@ sean-/seed (0.0.0-20170313163322-e2103e2c3529)
 * Project: https://github.com/sean-/seed
 * Source:  https://github.com/sean-/seed/tree/e2103e2c35297fb7e17febb81e49b312087a2372
 
-sirupsen/logrus (v1.9.0)
+sigstore/sigstore (1.4.4)
+
+* License: Apache License 2.0
+* Project: https://github.com/sigstore/sigstore
+* Source:  https://github.com/sigstore/sigstore/releases/tag/v1.4.4
+
+sirupsen/logrus (1.9.0)
 
 * License: MIT License
 * Project: https://github.com/sirupsen/logrus
 * Source:  https://github.com/sirupsen/logrus/releases/tag/v1.9.0
 
-spf13/cobra (1.2.1)
+spf13/cobra (1.6.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/spf13/cobra
-* Source:  https://github.com/spf13/cobra/releases/tag/v1.2.1
+* Source:  https://github.com/spf13/cobra/releases/tag/v1.6.0
 
 spf13/pflag (1.0.5)
 
@@ -363,6 +381,18 @@ stefanberger/go-pkcs11uri (0.0.0-20201008174630-78d3cae3a980)
 * License: Apache License 2.0
 * Project: https://github.com/stefanberger/go-pkcs11uri
 * Source:  https://github.com/stefanberger/go-pkcs11uri/tree/78d3cae3a9805d89aa4fa80a362ca944c89a1b99
+
+theupdateframework/go-tuf (0.5.2-0.20220930112810-3890c1e7ace4)
+
+* License: BSD 3-Clause "New" or "Revised" License
+* Project: https://github.com/theupdateframework/go-tuf
+* Source:  https://github.com/theupdateframework/go-tuf/tree/3890c1e7ace43d67622428187a85ba486c2528e5
+
+titanous/rocacheck (0.0.0-20171023193734-afe73141d399)
+
+* License: MIT License
+* Project: https://github.com/titanous/rocacheck
+* Source:  https://github.com/titanous/rocacheck/tree/afe73141d399b0c79c3d6412d4bdcf4c672c496a
 
 tklauser/go-sysconf (0.3.10)
 
@@ -454,11 +484,11 @@ natefinch/lumberjack (2.0.0)
 * Project: https://github.com/natefinch/lumberjack
 * Source:  https://github.com/natefinch/lumberjack/releases/tag/v2.0.0
 
-square/go-jose (2.5.1)
+square/go-jose (2.6.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/square/go-jose
-* Source:  https://github.com/square/go-jose/releases/tag/v2.5.1
+* Source:  https://github.com/square/go-jose/releases/tag/v2.6.0
 
 go-yaml/yaml (3.0.1)
 

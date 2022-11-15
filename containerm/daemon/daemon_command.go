@@ -56,6 +56,7 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.DurationVar(&cfg.ContainerClientConfig.CtrImageExpiry, "ccl-image-expiry", cfg.ContainerClientConfig.CtrImageExpiry, "Specify the time period for the cached images and content to be kept in the form of e.g. 72h3m0.5s")
 	flagSet.BoolVar(&cfg.ContainerClientConfig.CtrImageExpiryDisable, "ccl-image-expiry-disable", cfg.ContainerClientConfig.CtrImageExpiryDisable, "Disables expiry management of cached images and content - must be used with caution as it may lead to large memory volumes being persistently allocated")
 	flagSet.StringVar(&cfg.ContainerClientConfig.CtrLeaseID, "ccl-lease-id", cfg.ContainerClientConfig.CtrLeaseID, "Specify the lease identifier to be used for container resources persistence")
+	flagSet.StringSliceVar(&cfg.ContainerClientConfig.CtrImageVerKeys, "ccl-image-ver-keys", cfg.ContainerClientConfig.CtrImageVerKeys, "Specify a list of public key filenames to verify image signatures. Each entry can include an optional hash function(e.g. sha512) separated by a colon after the filename. If a hash function is not included, then sha256 will be used by default.")
 
 	// init network manager flags
 	flagSet.StringVar(&cfg.NetworkConfig.NetType, "net-type", cfg.NetworkConfig.NetType, "Specify the default network management type for containers")

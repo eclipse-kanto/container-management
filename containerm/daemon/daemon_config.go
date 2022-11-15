@@ -63,6 +63,7 @@ type containerRuntimeConfig struct {
 	CtrImageExpiry        time.Duration              `json:"image_expiry,omitempty"`
 	CtrImageExpiryDisable bool                       `json:"image_expiry_disable,omitempty"`
 	CtrLeaseID            string                     `json:"lease_id,omitempty"`
+	CtrImageVerKeys       []string                   `json:"image_ver_keys,omitempty"`
 }
 
 // deployment manager config

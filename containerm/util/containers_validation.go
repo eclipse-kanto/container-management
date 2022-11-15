@@ -13,10 +13,9 @@
 package util
 
 import (
-	"regexp"
-
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
+	"regexp"
 )
 
 const (
@@ -31,7 +30,7 @@ var (
 	envVarRegex             = regexp.MustCompile(envVarRegexp)
 )
 
-// ValidateContainer validats all container properties
+// ValidateContainer validates all container properties
 func ValidateContainer(container *types.Container) error {
 	if container.ID == "" {
 		log.NewError("container ID must be provided")
@@ -64,6 +63,23 @@ func ValidateContainer(container *types.Container) error {
 func ValidateImage(img types.Image) error {
 	if img.Name == "" {
 		return log.NewError("image is not provided")
+	}
+	if img.VerifyConfig != nil {
+		return ValidateVerifyConfig(img.VerifyConfig)
+	}
+	return nil
+}
+
+// ValidateVerifyConfig validates the image verification configuration
+func ValidateVerifyConfig(verifyConfig *types.VerifyConfig) error {
+	for _, key := range verifyConfig.Keys {
+		filename, _, err := splitVerificationKey(key)
+		if err != nil {
+			return err
+		}
+		if err = FileNotExistEmptyOrDir(filename); err != nil {
+			return err
+		}
 	}
 	return nil
 }

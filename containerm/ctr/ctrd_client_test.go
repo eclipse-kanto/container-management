@@ -64,6 +64,7 @@ func TestCtrdClientCreateContainer(t *testing.T) {
 		logsMgr: mockLogMgr,
 		decMgr:  mockDecrypctMgr,
 		spi:     mockSpi,
+		verMgr:  &ctrVerifyMgr{},
 	}
 
 	testCtr := &types.Container{
@@ -296,6 +297,7 @@ func TestCtrdClientStartContainer(t *testing.T) {
 		logsMgr:   mockLogMgr,
 		decMgr:    mockDecMgr,
 		spi:       mockSpi,
+		verMgr:    &ctrVerifyMgr{},
 	}
 	ctx := context.Background()
 
