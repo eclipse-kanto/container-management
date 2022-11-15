@@ -186,11 +186,11 @@ google/btree (1.0.1)
 * Project: https://github.com/google/btree
 * Source:  https://github.com/google/btree/tree/v1.0.1
 
-google/uuid (1.2.0)
+google/uuid (1.3.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/google/uuid
-* Source:  https://github.com/google/uuid/releases/tag/v1.2.0
+* Source:  https://github.com/google/uuid/releases/tag/v1.3.0
 
 gorilla/websocket (1.4.2)
 
@@ -210,11 +210,11 @@ hashicorp/go-immutable-radix (1.0.0)
 * Project: https://github.com/hashicorp/go-immutable-radix
 * Source:  https://github.com/hashicorp/go-immutable-radix/releases/tag/v1.0.0
 
-hashicorp/golang-lru (0.5.1)
+hashicorp/golang-lru (0.5.4)
 
 * License: Mozilla Public License 2.0
 * Project: https://github.com/hashicorp/golang-lru
-* Source:  https://github.com/hashicorp/golang-lru/releases/tag/v0.5.1
+* Source:  https://github.com/hashicorp/golang-lru/releases/tag/v0.5.4
 
 hashicorp/go-msgpack (0.5.3)
 
@@ -300,11 +300,11 @@ opencontainers/go-digest (1.0.0)
 * Project: https://github.com/opencontainers/go-digest
 * Source:  https://github.com/opencontainers/go-digest/releases/tag/v1.0.0
 
-opencontainers/image-spec (1.0.3-0.20211202183452-c5a74bcca799)
+opencontainers/image-spec (1.0.3-0.20220114050600-8b9d41f48198)
 
 * License: Apache License 2.0
 * Project: https://github.com/opencontainers/image-spec
-* Source:  https://github.com/opencontainers/image-spec/tree/c5a74bcca799bef045e7fbe74e1b75580fd18d4c
+* Source:  https://github.com/opencontainers/image-spec/tree/8b9d41f48198a7d6d0a5c1a12dc2d1f7f47fc97f
 
 opencontainers/runc (1.1.2)
 
@@ -324,11 +324,11 @@ opencontainers/selinux (1.10.1)
 * Project: https://github.com/opencontainers/selinux
 * Source:  https://github.com/opencontainers/selinux/releases/tag/v1.10.1
 
-github.com/pelletier/go-toml (1.9.3)
+github.com/pelletier/go-toml (1.9.4)
 
 * License: MIT License
 * Project: https://github.com/pelletier/go-toml
-* Source:  https://github.com/pelletier/go-toml/releases/tag/v1.9.3
+* Source:  https://github.com/pelletier/go-toml/releases/tag/v1.9.4
 
 pkg/errors (0.9.1)
 
@@ -354,11 +354,11 @@ sirupsen/logrus (1.8.1)
 * Project: https://github.com/sirupsen/logrus
 * Source:  https://github.com/sirupsen/logrus/releases/tag/v1.8.1
 
-spf13/cobra (1.1.3)
+spf13/cobra (1.2.1)
 
 * License: Apache License 2.0
 * Project: https://github.com/spf13/cobra
-* Source:  https://github.com/spf13/cobra/releases/tag/v1.1.3
+* Source:  https://github.com/spf13/cobra/releases/tag/v1.2.1
 
 spf13/pflag (1.0.5)
 
