@@ -17,7 +17,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/docker/libnetwork"
+	"github.com/docker/docker/libnetwork"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"

@@ -17,8 +17,8 @@
 package mocks
 
 import (
-	libnetwork "github.com/docker/libnetwork"
-	networkdb "github.com/docker/libnetwork/networkdb"
+	libnetwork "github.com/docker/docker/libnetwork"
+	networkdb "github.com/docker/docker/libnetwork/networkdb"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 	time "time"

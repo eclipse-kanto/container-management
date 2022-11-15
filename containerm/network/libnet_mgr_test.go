@@ -19,8 +19,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/docker/libnetwork"
-	libnetTypes "github.com/docker/libnetwork/types"
+	"github.com/docker/docker/libnetwork"
+	libnetTypes "github.com/docker/docker/libnetwork/types"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
