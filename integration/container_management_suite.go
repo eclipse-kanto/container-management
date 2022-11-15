@@ -51,7 +51,7 @@ func (suite *containerManagementSuite) init() {
 	suite.suiteInit.Setup(suite.T())
 
 	edgeDeviceCfg, err := util.GetThingConfiguration(suite.suiteInit.Cfg, suite.suiteInit.MQTTClient)
-	require.Nil(suite.T(), err, "failed to get thing configuration")
+	require.NoError(suite.T(), err, "failed to get thing configuration")
 
 	suite.ctrThingID = edgeDeviceCfg.DeviceID + ":edge:containers"
 	suite.ctrThingURL = fmt.Sprintf("%s/api/2/things/%s", strings.TrimSuffix(suite.suiteInit.Cfg.DigitalTwinAPIAddress, "/"), suite.ctrThingID)
@@ -71,14 +71,14 @@ func (suite *containerManagementSuite) execCreateCommand(command string, params 
 	url := fmt.Sprintf("%s/inbox/messages/%s", suite.ctrFactoryFeatureURL, command)
 
 	_, err := util.SendDigitalTwinRequest(suite.suiteInit.Cfg, http.MethodPost, url, params)
-	require.Nil(suite.T(), err, "error while creating container feature")
+	require.NoError(suite.T(), err, "error while creating container feature")
 }
 
 func (suite *containerManagementSuite) execRemoveCommand(ctrFeatureID string) {
 	ctrFeatureURL := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, ctrFeatureID)
 	url := fmt.Sprintf("%s/inbox/messages/remove", ctrFeatureURL)
 	_, err := util.SendDigitalTwinRequest(suite.suiteInit.Cfg, http.MethodPost, url, true)
-	require.Nil(suite.T(), err, "error while removing container feature")
+	require.NoError(suite.T(), err, "error while removing container feature")
 }
 
 func (suite *containerManagementSuite) startListening(conn *websocket.Conn, eventType, filter string) {
