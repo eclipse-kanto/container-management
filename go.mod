@@ -11,6 +11,7 @@ require (
 	github.com/containerd/typeurl v1.0.2
 	github.com/containers/ocicrypt v1.1.6
 	github.com/docker/docker v20.10.17+incompatible
+	github.com/eclipse-kanto/kanto/integration/util v0.0.0-20221114101725-fadc1f231801
 	github.com/eclipse/ditto-clients-golang v0.0.0-20220225085802-cf3b306280d3
 	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/gogo/protobuf v1.3.2
@@ -29,7 +30,6 @@ require (
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
-	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 	google.golang.org/grpc v1.50.1
@@ -43,6 +43,7 @@ require (
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
+	github.com/caarlos0/env/v6 v6.10.1 // indirect
 	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
