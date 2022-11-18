@@ -10,13 +10,11 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
-//go:build integration
-
 package integration
 
 import (
-	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -37,89 +35,81 @@ const (
 )
 
 type ctrFactorySuite struct {
-	containerManagementSuite
+	ctrManagementSuite
 	ctrFeatureID string
 }
 
+var ctrFeatureIDs []string
+var isPropertyChanged bool
+
 func (suite *ctrFactorySuite) SetupSuite() {
-	suite.init()
+	suite.SetupCommonSuite()
 	suite.assertContainerFactoryFeature()
 }
 
 func (suite *ctrFactorySuite) TearDownSuite() {
-	url := fmt.Sprintf("%s/features", suite.ctrThingURL)
-	body, err := util.SendDigitalTwinRequest(suite.suiteInit.Cfg, http.MethodGet, url, nil)
-	require.NoError(suite.T(), err, "failed to get container thing features")
-
-	features := make(map[string]interface{})
-	err = json.Unmarshal(body, &features)
-	require.NoError(suite.T(), err, "failed to unmarshal container thing features")
-
-	for key := range features {
-		if strings.Contains(key, "Container:") {
-			connEvents, err := util.NewDigitalTwinWSConnection(suite.suiteInit.Cfg)
+	for _, element := range ctrFeatureIDs {
+		url := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, element)
+		body, _ := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, url, nil)
+		if string(body) != "" {
+			connEvents, err := util.NewDigitalTwinWSConnection(suite.Cfg)
 			require.NoError(suite.T(), err, "failed to create websocket connection")
 			defer connEvents.Close()
-			suite.processCtrFeatureRemoved(connEvents, key)
+			suite.removeCtrFeature(connEvents, element)
 		}
 	}
-
-	suite.suiteInit.TearDown()
+	suite.TearDown()
 }
 
-func TestContainerFactorySuite(t *testing.T) {
+func TestCtrFactorySuite(t *testing.T) {
 	suite.Run(t, new(ctrFactorySuite))
 }
 
-func (suite *ctrFactorySuite) TestCreateOperation() {
-	connEvents, err := util.NewDigitalTwinWSConnection(suite.suiteInit.Cfg)
-	require.NoError(suite.T(), err, "failed to create websocket connection")
-	defer connEvents.Close()
+func (suite *ctrFactorySuite) TestCreateCommand() {
+	wsConnection := suite.createConnection()
 
-	suite.startListening(connEvents, "START-SEND-EVENTS", "/features/Container:*")
+	defer wsConnection.Close()
 
 	params := make(map[string]interface{})
 	params["imageRef"] = "docker.io/library/influxdb:1.8.4"
 	params["start"] = true
 
-	suite.execCreateCommand("create", params)
+	suite.create(params)
 
-	err = util.ProcessWSMessages(suite.suiteInit.Cfg, connEvents, suite.processCtrFeatureCreated)
+	err := util.ProcessWSMessages(suite.Cfg, wsConnection, suite.processCtrFeatureCreated)
+	ctrFeatureIDs = append(ctrFeatureIDs, suite.ctrFeatureID)
 
 	require.NoError(suite.T(), err, "error while creating container feature")
 	require.Equal(suite.T(), statusRunning, suite.getActualCtrStatus(), "container status is not expected")
 
-	suite.processCtrFeatureRemoved(connEvents, suite.ctrFeatureID)
+	suite.removeCtrFeature(wsConnection, suite.ctrFeatureID)
 }
 
-func (suite *ctrFactorySuite) TestCreateWithConfigOperation() {
-	connEvents, err := util.NewDigitalTwinWSConnection(suite.suiteInit.Cfg)
-	require.NoError(suite.T(), err, "failed to create websocket connection")
-	defer connEvents.Close()
+func (suite *ctrFactorySuite) TestCreateWithConfigCommand() {
+	wsConnection := suite.createConnection()
 
-	suite.startListening(connEvents, "START-SEND-EVENTS", "/features/Container:*")
+	defer wsConnection.Close()
 
 	params := make(map[string]interface{})
 	params["imageRef"] = "docker.io/library/influxdb:1.8.4"
 	params["start"] = true
 	params["config"] = make(map[string]interface{})
 
-	suite.execCreateCommand("createWithConfig", params)
+	suite.createWithConfig(params)
 
-	err = util.ProcessWSMessages(suite.suiteInit.Cfg, connEvents, suite.processCtrFeatureCreated)
+	err := util.ProcessWSMessages(suite.Cfg, wsConnection, suite.processCtrFeatureCreated)
+	ctrFeatureIDs = append(ctrFeatureIDs, suite.ctrFeatureID)
 
 	require.NoError(suite.T(), err, "error while creating container feature")
 	require.Equal(suite.T(), statusRunning, suite.getActualCtrStatus(), "container status is not expected")
 
-	suite.processCtrFeatureRemoved(connEvents, suite.ctrFeatureID)
+	suite.removeCtrFeature(wsConnection, suite.ctrFeatureID)
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
-	connEvents, err := util.NewDigitalTwinWSConnection(suite.suiteInit.Cfg)
-	require.NoError(suite.T(), err, "failed to create websocket connection")
-	defer connEvents.Close()
+	wsConnection := suite.createConnection()
 
-	suite.startListening(connEvents, "START-SEND-EVENTS", "/features/Container:*")
+	defer wsConnection.Close()
 
 	config := make(map[string]interface{})
 	config["extraHosts"] = []string{"ctrhost:host_ip"}
@@ -135,33 +125,22 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 	params["start"] = true
 	params["config"] = config
 
-	suite.execCreateCommand("createWithConfig", params)
+	suite.createWithConfig(params)
 
-	err = util.ProcessWSMessages(suite.suiteInit.Cfg, connEvents, suite.processCtrFeatureCreated)
+	err := util.ProcessWSMessages(suite.Cfg, wsConnection, suite.processCtrFeatureCreated)
+	ctrFeatureIDs = append(ctrFeatureIDs, suite.ctrFeatureID)
 
-	body, err := util.SendDigitalTwinRequest(suite.suiteInit.Cfg, http.MethodGet, requestURL, nil)
+	body, err := doRequest()
 
-	require.NoError(suite.T(), err, "error while getting the requested URL")
-	require.Equal(suite.T(), httpResponse, string(body), "HTTP response is not expected")
+	require.NoError(suite.T(), err, "failed to reach requested URL on host from the running container")
+	require.Equal(suite.T(), httpResponse, string(body), "HTTP response from the running container is not expected")
 
-	suite.processCtrFeatureRemoved(connEvents, suite.ctrFeatureID)
-}
-
-func (suite *containerManagementSuite) assertContainerFactoryFeature() {
-	ctrFactoryFeature := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, ctrFactoryFeatureID)
-	body, err := util.SendDigitalTwinRequest(suite.suiteInit.Cfg, http.MethodGet, ctrFactoryFeature, nil)
-	require.NoError(suite.T(), err, "error while getting the container factory feature")
-
-	ctrFactoryDefinition := fmt.Sprintf("%s/definition", ctrFactoryFeature)
-	body, err = util.SendDigitalTwinRequest(suite.suiteInit.Cfg, http.MethodGet, ctrFactoryDefinition, nil)
-	require.NoError(suite.T(), err, "error while getting the container factory feature definition")
-
-	require.Equal(suite.T(), ctrFactoryFeatureDefinition, string(body), "container factory definition is not expected")
+	suite.removeCtrFeature(wsConnection, suite.ctrFeatureID)
 }
 
 func (suite *ctrFactorySuite) getActualCtrStatus() string {
 	ctrPropertyPath := fmt.Sprintf("%s/features/%s/properties/status/state/status", suite.ctrThingURL, suite.ctrFeatureID)
-	body, err := util.SendDigitalTwinRequest(suite.suiteInit.Cfg, http.MethodGet, ctrPropertyPath, nil)
+	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrPropertyPath, nil)
 	require.NoError(suite.T(), err, "error while getting the container feature property status")
 
 	return strings.Trim(string(body), "\"")
@@ -174,23 +153,27 @@ func (suite *ctrFactorySuite) processCtrFeatureCreated(event *protocol.Envelope)
 	}
 	if event.Topic.String() == suite.topicModify {
 		if suite.ctrFeatureID == "" {
-			return false, fmt.Errorf("container feature is not created")
+			return true, fmt.Errorf("event for creating container feature is not received")
 		}
 		status, check := event.Value.(map[string]interface{})
 		if status["status"].(string) == statusCreated {
+			isPropertyChanged = true
 			return false, nil
 		}
-		return check && status["status"].(string) == statusRunning, nil
+		if isPropertyChanged && status["status"].(string) == statusRunning {
+			return check && status["status"].(string) == statusRunning, nil
+		}
+		return true, fmt.Errorf("event for modify container feature status is not received")
 	}
-	return false, fmt.Errorf("event for creating feature not received")
+	return false, fmt.Errorf("container feature is not created")
 }
 
-func (suite *ctrFactorySuite) processCtrFeatureRemoved(connEvents *websocket.Conn, ctrFeatureID string) {
+func (suite *ctrFactorySuite) removeCtrFeature(connEvents *websocket.Conn, ctrFeatureID string) {
 	suite.startListening(connEvents, "START-SEND-EVENTS", fmt.Sprintf("/features/%s", ctrFeatureID))
 
-	suite.execRemoveCommand(ctrFeatureID)
+	suite.remove(ctrFeatureID)
 
-	err := util.ProcessWSMessages(suite.suiteInit.Cfg, connEvents, func(event *protocol.Envelope) (bool, error) {
+	err := util.ProcessWSMessages(suite.Cfg, connEvents, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicDeleted {
 			return true, nil
 		}
@@ -198,4 +181,42 @@ func (suite *ctrFactorySuite) processCtrFeatureRemoved(connEvents *websocket.Con
 	})
 
 	require.NoError(suite.T(), err, "error while deleting container feature")
+}
+
+func (suite *ctrFactorySuite) createConnection() *websocket.Conn {
+	wsConnection, err := util.NewDigitalTwinWSConnection(suite.Cfg)
+	require.NoError(suite.T(), err, "failed to create websocket connection")
+	suite.startListening(wsConnection, "START-SEND-EVENTS", "/features/Container:*")
+	return wsConnection
+}
+
+func (suite *ctrFactorySuite) assertContainerFactoryFeature() {
+	ctrFactoryFeature := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, ctrFactoryFeatureID)
+	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrFactoryFeature, nil)
+	require.NoError(suite.T(), err, "error while getting the container factory feature")
+
+	ctrFactoryDefinition := fmt.Sprintf("%s/definition", ctrFactoryFeature)
+	body, err = util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrFactoryDefinition, nil)
+	require.NoError(suite.T(), err, "error while getting the container factory feature definition")
+
+	require.Equal(suite.T(), ctrFactoryFeatureDefinition, string(body), "container factory definition is not expected")
+}
+
+func doRequest() ([]byte, error) {
+	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("%s %s request failed: %s", http.MethodGet, requestURL, resp.Status)
+	}
+
+	return io.ReadAll(resp.Body)
 }

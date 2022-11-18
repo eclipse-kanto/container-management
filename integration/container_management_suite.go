@@ -10,8 +10,6 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
-//go:build integration
-
 package integration
 
 import (
@@ -21,14 +19,15 @@ import (
 
 	"github.com/eclipse-kanto/kanto/integration/util"
 	"github.com/eclipse/ditto-clients-golang/model"
+	"github.com/eclipse/ditto-clients-golang/protocol"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/websocket"
 )
 
-type containerManagementSuite struct {
+type ctrManagementSuite struct {
 	suite.Suite
-	suiteInit            util.SuiteInitializer
+	util.SuiteInitializer
 	ctrThingID           string
 	ctrThingURL          string
 	ctrFactoryFeatureURL string
@@ -37,29 +36,30 @@ type containerManagementSuite struct {
 	topicDeleted         string
 }
 
-type containerFeature struct {
-	Definition []string               `json:"definition,omitempty"`
-	Properties map[string]interface{} `json:"properties,omitempty"`
-}
-
 const (
 	ctrFactoryFeatureID = "ContainerFactory"
 )
 
-func (suite *containerManagementSuite) init() {
-	suite.suiteInit = util.SuiteInitializer{}
-	suite.suiteInit.Setup(suite.T())
+func (suite *ctrManagementSuite) SetupCommonSuite() {
+	suite.Setup(suite.T())
 
-	edgeDeviceCfg, err := util.GetThingConfiguration(suite.suiteInit.Cfg, suite.suiteInit.MQTTClient)
+	thingCfg, err := util.GetThingConfiguration(suite.Cfg, suite.MQTTClient)
 	require.NoError(suite.T(), err, "failed to get thing configuration")
 
-	suite.ctrThingID = edgeDeviceCfg.DeviceID + ":edge:containers"
-	suite.ctrThingURL = fmt.Sprintf("%s/api/2/things/%s", strings.TrimSuffix(suite.suiteInit.Cfg.DigitalTwinAPIAddress, "/"), suite.ctrThingID)
+	suite.ctrThingID = thingCfg.DeviceID + ":edge:containers"
+	suite.ctrThingURL = fmt.Sprintf("%s/api/2/things/%s", strings.TrimSuffix(suite.Cfg.DigitalTwinAPIAddress, "/"), suite.ctrThingID)
 	suite.ctrFactoryFeatureURL = fmt.Sprintf("%s/features/%s", suite.ctrThingURL, ctrFactoryFeatureID)
+
 	ctrThingID := model.NewNamespacedIDFrom(suite.ctrThingID)
-	suite.topicCreated = fmt.Sprintf("%s/%s/things/twin/events/created", ctrThingID.Namespace, ctrThingID.Name)
-	suite.topicModify = fmt.Sprintf("%s/%s/things/twin/events/modified", ctrThingID.Namespace, ctrThingID.Name)
-	suite.topicDeleted = fmt.Sprintf("%s/%s/things/twin/events/deleted", ctrThingID.Namespace, ctrThingID.Name)
+	eventTopic := (&protocol.Topic{}).
+		WithNamespace(ctrThingID.Namespace).
+		WithEntityName(ctrThingID.Name).
+		WithGroup(protocol.GroupThings).
+		WithChannel(protocol.ChannelTwin).
+		WithCriterion(protocol.CriterionEvents)
+	suite.topicCreated = eventTopic.WithAction(protocol.ActionCreated).String()
+	suite.topicModify = eventTopic.WithAction(protocol.ActionModified).String()
+	suite.topicDeleted = eventTopic.WithAction(protocol.ActionDeleted).String()
 }
 
 func getCtrFeatureID(topic string) string {
@@ -67,23 +67,30 @@ func getCtrFeatureID(topic string) string {
 	return result[2]
 }
 
-func (suite *containerManagementSuite) execCreateCommand(command string, params map[string]interface{}) {
-	url := fmt.Sprintf("%s/inbox/messages/%s", suite.ctrFactoryFeatureURL, command)
+func (suite *ctrManagementSuite) create(params map[string]interface{}) {
+	url := fmt.Sprintf("%s/inbox/messages/%s", suite.ctrFactoryFeatureURL, "create")
+	suite.execCommand(url, params)
+}
 
-	_, err := util.SendDigitalTwinRequest(suite.suiteInit.Cfg, http.MethodPost, url, params)
+func (suite *ctrManagementSuite) createWithConfig(params map[string]interface{}) {
+	url := fmt.Sprintf("%s/inbox/messages/%s", suite.ctrFactoryFeatureURL, "createWithConfig")
+	suite.execCommand(url, params)
+}
+
+func (suite *ctrManagementSuite) remove(ctrFeatureID string) {
+	ctrFeatureURL := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, ctrFeatureID)
+	url := fmt.Sprintf("%s/inbox/messages/remove", ctrFeatureURL)
+	suite.execCommand(url, true)
+}
+
+func (suite *ctrManagementSuite) execCommand(url string, params interface{}) {
+	_, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodPost, url, params)
 	require.NoError(suite.T(), err, "error while creating container feature")
 }
 
-func (suite *containerManagementSuite) execRemoveCommand(ctrFeatureID string) {
-	ctrFeatureURL := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, ctrFeatureID)
-	url := fmt.Sprintf("%s/inbox/messages/remove", ctrFeatureURL)
-	_, err := util.SendDigitalTwinRequest(suite.suiteInit.Cfg, http.MethodPost, url, true)
-	require.NoError(suite.T(), err, "error while removing container feature")
-}
-
-func (suite *containerManagementSuite) startListening(conn *websocket.Conn, eventType, filter string) {
+func (suite *ctrManagementSuite) startListening(conn *websocket.Conn, eventType, filter string) {
 	err := websocket.Message.Send(conn, fmt.Sprintf("%s?filter=like(resource:path,'%s')", eventType, filter))
 	require.NoError(suite.T(), err, "error sending listener request")
-	err = util.WaitForWSMessage(suite.suiteInit.Cfg, conn, fmt.Sprintf("%s:ACK", eventType))
+	err = util.WaitForWSMessage(suite.Cfg, conn, fmt.Sprintf("%s:ACK", eventType))
 	require.NoError(suite.T(), err, "acknowledgement not received in time")
 }
