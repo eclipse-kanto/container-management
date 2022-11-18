@@ -38,7 +38,7 @@ type ctrFactorySuite struct {
 }
 
 func (suite *ctrFactorySuite) SetupSuite() {
-	suite.connect()
+	suite.setup()
 	ctrFactoryFeature := suite.getCtrFeature(ctrFactoryFeatureID)
 	require.NotNil(suite.T(), ctrFactoryFeature, "ContainerFactory feature must not be nil")
 
@@ -55,7 +55,7 @@ func (suite *ctrFactorySuite) TearDownSuite() {
 			require.True(suite.T(), suite.awaitChan(chEvent), "event for deleting feature not received")
 		}
 	}
-	suite.disconnect()
+	suite.tearDown()
 }
 
 func TestContainerFactorySuite(t *testing.T) {
@@ -73,7 +73,7 @@ func (suite *ctrFactorySuite) TestCreateOperation() {
 
 	require.True(suite.T(), suite.awaitChan(chEvent), "event for creating feature not received")
 	ctrFeatureIDs = append(ctrFeatureIDs, suite.ctrFeatureID)
-	require.Equal(suite.T(), statusRunning, suite.getActualCtrState(), "container state is not expected")
+	require.Equal(suite.T(), statusRunning, suite.getActualCtrStatus(), "container status is not expected")
 
 	chEvent = suite.isDeleted()
 	suite.execRemoveCommand(suite.ctrFeatureID)
@@ -93,7 +93,7 @@ func (suite *ctrFactorySuite) TestCreateWithConfigOperation() {
 
 	require.True(suite.T(), suite.awaitChan(chEvent), "event for creating feature not received")
 	ctrFeatureIDs = append(ctrFeatureIDs, suite.ctrFeatureID)
-	require.Equal(suite.T(), statusRunning, suite.getActualCtrState(), "container state is not expected")
+	require.Equal(suite.T(), statusRunning, suite.getActualCtrStatus(), "container status is not expected")
 
 	chEvent = suite.isDeleted()
 	suite.execRemoveCommand(suite.ctrFeatureID)
@@ -125,7 +125,7 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 
 	body, err := suite.doRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
-		suite.T().Logf("error while getting the requested URL: %v", err)
+		suite.T().Errorf("error while getting the requested URL: %v", err)
 	}
 
 	require.Equal(suite.T(), httpResponse, string(body), "HTTP response is not expected")
@@ -165,11 +165,11 @@ func (suite *ctrFactorySuite) isDeleted() chan bool {
 	})
 }
 
-func (suite *ctrFactorySuite) getActualCtrState() string {
+func (suite *ctrFactorySuite) getActualCtrStatus() string {
 	ctrPropertyPath := fmt.Sprintf("%s/features/%s/properties/status/state/status", suite.ctrThingURL, suite.ctrFeatureID)
 	body, err := suite.doRequest(http.MethodGet, ctrPropertyPath, nil)
 	if err != nil {
-		suite.T().Logf("error while getting the container feature property status: %v", err)
+		suite.T().Errorf("error while getting the container feature property status: %v", err)
 	}
 	return strings.Trim(string(body), "\"")
 }

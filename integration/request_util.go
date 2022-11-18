@@ -176,16 +176,16 @@ func (suite *containerManagementSuite) beginWSWait(ws *websocket.Conn, check fun
 func (suite *containerManagementSuite) execCreateCommand(command string, params map[string]interface{}) {
 	url := fmt.Sprintf("%s/inbox/messages/%s", suite.ctrFactoryFeatureURL, command)
 	if _, err := suite.doRequest(http.MethodPost, url, &requestBody{params: params}); err != nil {
-		suite.T().Logf("error while creating container feature: %v", err)
+		suite.T().Errorf("error while creating container feature: %v", err)
 	}
 
 }
 
-func (suite *containerManagementSuite) execRemoveCommand(containerID string) {
-	containerURL := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, containerID)
-	url := fmt.Sprintf("%s/inbox/messages/remove", containerURL)
+func (suite *containerManagementSuite) execRemoveCommand(ctrFeatureID string) {
+	ctrFeatureURL := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, ctrFeatureID)
+	url := fmt.Sprintf("%s/inbox/messages/remove", ctrFeatureURL)
 	if _, err := suite.doRequest(http.MethodPost, url, &requestBody{param: "true"}); err != nil {
-		suite.T().Logf("error while removing container feature: %v", err)
+		suite.T().Errorf("error while removing container feature: %v", err)
 	}
 }
 
@@ -232,18 +232,18 @@ func (suite *containerManagementSuite) awaitChan(ch chan bool) bool {
 	}
 }
 
-func (suite *containerManagementSuite) getCtrFeature(containerID string) model.Feature {
-	ctrThingURL := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, containerID)
+func (suite *containerManagementSuite) getCtrFeature(ctrFeatureID string) model.Feature {
+	ctrThingURL := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, ctrFeatureID)
 	body, err := suite.doRequest(http.MethodGet, ctrThingURL, nil)
 
 	if err != nil {
-		suite.T().Logf("error while getting the container feature: %v", err)
+		suite.T().Errorf("error while getting the container feature: %v", err)
 	}
 
 	var containerFeature = &containerFeature{}
 	json.Unmarshal(body, &containerFeature)
 
-	return client.NewFeature(containerID,
+	return client.NewFeature(ctrFeatureID,
 		client.WithFeatureDefinition(client.NewDefinitionIDFromString(containerFeature.Definition[0])),
 		client.WithFeatureProperties(containerFeature.Properties))
 }

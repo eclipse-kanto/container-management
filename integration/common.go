@@ -66,7 +66,7 @@ const (
 	ctrFactoryFeatureID = "ContainerFactory"
 )
 
-func (suite *containerManagementSuite) connect() {
+func (suite *containerManagementSuite) setup() {
 	cfg := &testConfig{}
 
 	suite.T().Log(getConfigHelp(*cfg))
@@ -112,13 +112,13 @@ func (suite *containerManagementSuite) connect() {
 	suite.ctrThingID = edgeDeviceCfg.DeviceID + ":edge:containers"
 	suite.ctrThingURL = fmt.Sprintf("%s/api/2/things/%s", strings.TrimSuffix(cfg.DigitalTwinAPIAddress, "/"), suite.ctrThingID)
 	suite.ctrFactoryFeatureURL = fmt.Sprintf("%s/features/%s", suite.ctrThingURL, ctrFactoryFeatureID)
-	namespaceID := model.NewNamespacedIDFrom(suite.ctrThingID)
-	suite.topicCreated = fmt.Sprintf("%s/%s/things/twin/events/created", namespaceID.Namespace, namespaceID.Name)
-	suite.topicModify = fmt.Sprintf("%s/%s/things/twin/events/modified", namespaceID.Namespace, namespaceID.Name)
-	suite.topicDeleted = fmt.Sprintf("%s/%s/things/twin/events/deleted", namespaceID.Namespace, namespaceID.Name)
+	ctrThingID := model.NewNamespacedIDFrom(suite.ctrThingID)
+	suite.topicCreated = fmt.Sprintf("%s/%s/things/twin/events/created", ctrThingID.Namespace, ctrThingID.Name)
+	suite.topicModify = fmt.Sprintf("%s/%s/things/twin/events/modified", ctrThingID.Namespace, ctrThingID.Name)
+	suite.topicDeleted = fmt.Sprintf("%s/%s/things/twin/events/deleted", ctrThingID.Namespace, ctrThingID.Name)
 }
 
-func (suite *containerManagementSuite) disconnect() {
+func (suite *containerManagementSuite) tearDown() {
 	suite.dittoClient.Disconnect()
 	suite.mqttClient.Disconnect(uint(suite.cfg.MqttQuiesceMs))
 }
