@@ -11,7 +11,8 @@ require (
 	github.com/containerd/typeurl v1.0.2
 	github.com/containers/ocicrypt v1.1.6
 	github.com/docker/docker v20.10.17+incompatible
-	github.com/eclipse/paho.mqtt.golang v1.4.1
+	github.com/eclipse/ditto-clients-golang v0.0.0-20220225085802-cf3b306280d3
+	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
@@ -26,6 +27,7 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
+	github.com/stretchr/testify v1.8.0
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
@@ -42,6 +44,7 @@ require (
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
@@ -72,6 +75,7 @@ require (
 	github.com/moby/sys/signal v0.6.0 // indirect
 	github.com/opencontainers/selinux v1.10.1 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/stefanberger/go-pkcs11uri v0.0.0-20201008174630-78d3cae3a980 // indirect
