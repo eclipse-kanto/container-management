@@ -29,7 +29,7 @@ func New(connectionAddress string) (Client, error) {
 	// Set up a connection to the server.
 	gopts := []grpc.DialOption{
 		grpc.WithInsecure(),
-		grpc.WithDialer(getDialer),
+		grpc.WithContextDialer(getDialer),
 		grpc.WithBlock(),
 	}
 
@@ -54,7 +54,7 @@ func newContainersClient(conn *grpc.ClientConn) (Client, error) {
 	}, nil
 }
 
-func getDialer(addr string, duration time.Duration) (net.Conn, error) {
+func getDialer(ctx context.Context, addr string) (net.Conn, error) {
 	url, err := url.Parse(addr)
 	if err != nil {
 		return nil, err
