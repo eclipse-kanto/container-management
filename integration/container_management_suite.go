@@ -23,6 +23,7 @@ import (
 	"github.com/eclipse/ditto-clients-golang/protocol"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/net/websocket"
 )
 
 type ctrManagementSuite struct {
@@ -32,13 +33,18 @@ type ctrManagementSuite struct {
 	ctrThingURL          string
 	ctrFactoryFeatureURL string
 	topicCreated         string
-	topicModify          string
+	topicModified        string
 	topicDeleted         string
 }
 
 const (
+	statusCreated               = "CREATED"
+	statusRunning               = "RUNNING"
+	influxdbImageRef            = "docker.io/library/influxdb:1.8.4"
+	httpdImageRef               = "docker.io/library/httpd:latest"
 	ctrFactoryFeatureID         = "ContainerFactory"
 	ctrFactoryFeatureDefinition = "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.2.0\"]"
+	subscribeForEvents          = "START-SEND-EVENTS"
 )
 
 func (suite *ctrManagementSuite) SetupCtrManagementSuite() {
@@ -49,7 +55,7 @@ func (suite *ctrManagementSuite) SetupCtrManagementSuite() {
 	suite.ctrFactoryFeatureURL = util.GetFeatureURL(suite.ctrThingURL, ctrFactoryFeatureID)
 
 	suite.topicCreated = util.GetTwinEventTopic(suite.ctrThingID, protocol.ActionCreated)
-	suite.topicModify = util.GetTwinEventTopic(suite.ctrThingID, protocol.ActionModified)
+	suite.topicModified = util.GetTwinEventTopic(suite.ctrThingID, protocol.ActionModified)
 	suite.topicDeleted = util.GetTwinEventTopic(suite.ctrThingID, protocol.ActionDeleted)
 
 	suite.assertCtrFactoryFeature()
@@ -77,4 +83,27 @@ func (suite *ctrManagementSuite) assertCtrFactoryFeature() {
 	require.NoError(suite.T(), err, "error while getting the container factory feature definition")
 
 	require.Equal(suite.T(), ctrFactoryFeatureDefinition, string(body), "container factory definition is not expected")
+}
+
+func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
+	wsConnection, err := util.NewDigitalTwinWSConnection(suite.Cfg)
+	require.NoError(suite.T(), err, "failed to create websocket connection")
+	util.SubscribeForWSMessages(suite.Cfg, wsConnection, subscribeForEvents, "like(resource:path,'/features/Container:*')")
+	return wsConnection
+}
+
+func (suite *ctrManagementSuite) removeCtrFeature(connEvents *websocket.Conn, ctrFeatureID string) {
+	filter := fmt.Sprintf("like(resource:path,'%s')", fmt.Sprintf("/features/%s", ctrFeatureID))
+	util.SubscribeForWSMessages(suite.Cfg, connEvents, subscribeForEvents, filter)
+
+	util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), "remove", true)
+
+	err := util.ProcessWSMessages(suite.Cfg, connEvents, func(event *protocol.Envelope) (bool, error) {
+		if event.Topic.String() == suite.topicDeleted {
+			return true, nil
+		}
+		return false, fmt.Errorf("event for deleting feature is not received")
+	})
+
+	require.NoError(suite.T(), err, "error while deleting container feature")
 }

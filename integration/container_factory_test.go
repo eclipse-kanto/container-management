@@ -24,17 +24,11 @@ import (
 	"github.com/eclipse/ditto-clients-golang/protocol"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/net/websocket"
 )
 
 const (
-	statusCreated      = "CREATED"
-	statusRunning      = "RUNNING"
-	influxdbImageRef   = "docker.io/library/influxdb:1.8.4"
-	httpdImageRef      = "docker.io/library/httpd:latest"
-	httpdRequestURL    = "http://127.0.0.1:5000"
-	httpdResponse      = "<html><body><h1>It works!</h1></body></html>\n"
-	subscribeForEvents = "START-SEND-EVENTS"
+	httpdRequestURL = "http://127.0.0.1:5000"
+	httpdResponse   = "<html><body><h1>It works!</h1></body></html>\n"
 )
 
 type ctrFactorySuite struct {
@@ -56,21 +50,21 @@ func TestCtrFactorySuite(t *testing.T) {
 	suite.Run(t, new(ctrFactorySuite))
 }
 
-func (suite *ctrFactorySuite) TestCreateCommand() {
+func (suite *ctrFactorySuite) TestCreate() {
 	params := make(map[string]interface{})
 	params["imageRef"] = influxdbImageRef
 	params["start"] = true
 
-	suite.testCtrStatus("create", params)
+	suite.testCtrCreated("create", params)
 }
 
-func (suite *ctrFactorySuite) TestCreateWithConfigCommand() {
+func (suite *ctrFactorySuite) TestCreateWithConfig() {
 	params := make(map[string]interface{})
 	params["imageRef"] = influxdbImageRef
 	params["start"] = true
 	params["config"] = make(map[string]interface{})
 
-	suite.testCtrStatus("createWithConfig", params)
+	suite.testCtrCreated("createWithConfig", params)
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
@@ -108,7 +102,7 @@ func (suite *ctrFactorySuite) processCtrFeatureCreated(event *protocol.Envelope)
 		suite.ctrFeatureID = getCtrFeatureID(event.Path)
 		return false, nil
 	}
-	if event.Topic.String() == suite.topicModify {
+	if event.Topic.String() == suite.topicModified {
 		if suite.ctrFeatureID == "" {
 			return true, fmt.Errorf("event for creating container feature is not received")
 		}
@@ -128,30 +122,7 @@ func (suite *ctrFactorySuite) processCtrFeatureCreated(event *protocol.Envelope)
 	return false, fmt.Errorf("events for creating container feature are not received")
 }
 
-func (suite *ctrFactorySuite) removeCtrFeature(connEvents *websocket.Conn, ctrFeatureID string) {
-	filter := fmt.Sprintf("like(resource:path,'%s')", fmt.Sprintf("/features/%s", ctrFeatureID))
-	util.SubscribeForWSMessages(suite.Cfg, connEvents, subscribeForEvents, filter)
-
-	util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), "remove", true)
-
-	err := util.ProcessWSMessages(suite.Cfg, connEvents, func(event *protocol.Envelope) (bool, error) {
-		if event.Topic.String() == suite.topicDeleted {
-			return true, nil
-		}
-		return false, fmt.Errorf("event for deleting feature is not received")
-	})
-
-	require.NoError(suite.T(), err, "error while deleting container feature")
-}
-
-func (suite *ctrFactorySuite) createWSConnection() *websocket.Conn {
-	wsConnection, err := util.NewDigitalTwinWSConnection(suite.Cfg)
-	require.NoError(suite.T(), err, "failed to create websocket connection")
-	util.SubscribeForWSMessages(suite.Cfg, wsConnection, subscribeForEvents, "like(resource:path,'/features/Container:*')")
-	return wsConnection
-}
-
-func (suite *ctrFactorySuite) testCtrStatus(operation string, params interface{}) {
+func (suite *ctrFactorySuite) testCtrCreated(operation string, params interface{}) {
 	wsConnection := suite.createWSConnection()
 
 	defer wsConnection.Close()
