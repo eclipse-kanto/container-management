@@ -69,41 +69,46 @@ func getCtrFeatureID(topic string) string {
 func (suite *ctrManagementSuite) getActualCtrStatus(ctrFeatureID string) string {
 	ctrPropertyPath := fmt.Sprintf("%s/features/%s/properties/status/state/status", suite.ctrThingURL, ctrFeatureID)
 	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrPropertyPath, nil)
-	require.NoError(suite.T(), err, "error while getting the status property of the container feature: %s", ctrFeatureID)
+	require.NoError(suite.T(), err, "failed to get the status property of the container feature: %s", ctrFeatureID)
 
 	return strings.Trim(string(body), "\"")
 }
 
 func (suite *ctrManagementSuite) assertCtrFactoryFeature() {
 	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, suite.ctrFactoryFeatureURL, nil)
-	require.NoError(suite.T(), err, "error while getting the container factory feature")
+	require.NoError(suite.T(), err, "failed to get the container factory feature")
 
 	ctrFactoryDefinition := fmt.Sprintf("%s/definition", suite.ctrFactoryFeatureURL)
 	body, err = util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrFactoryDefinition, nil)
-	require.NoError(suite.T(), err, "error while getting the container factory feature definition")
+	require.NoError(suite.T(), err, "failed to get the container factory feature definition")
 
-	require.Equal(suite.T(), ctrFactoryFeatureDefinition, string(body), "container factory definition is not expected")
+	require.Equal(suite.T(), ctrFactoryFeatureDefinition, string(body), "the container factory definition is not expected")
 }
 
 func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 	wsConnection, err := util.NewDigitalTwinWSConnection(suite.Cfg)
-	require.NoError(suite.T(), err, "failed to create websocket connection")
-	util.SubscribeForWSMessages(suite.Cfg, wsConnection, subscribeForEvents, "like(resource:path,'/features/Container:*')")
+	require.NoError(suite.T(), err, "failed to create a websocket connection")
+
+	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, subscribeForEvents, "like(resource:path,'/features/Container:*')")
+	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", subscribeForEvents)
+
 	return wsConnection
 }
 
 func (suite *ctrManagementSuite) removeCtrFeature(connEvents *websocket.Conn, ctrFeatureID string) {
 	filter := fmt.Sprintf("like(resource:path,'%s')", fmt.Sprintf("/features/%s", ctrFeatureID))
-	util.SubscribeForWSMessages(suite.Cfg, connEvents, subscribeForEvents, filter)
+	err := util.SubscribeForWSMessages(suite.Cfg, connEvents, subscribeForEvents, filter)
+	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", subscribeForEvents)
 
-	util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), "remove", true)
+	_, err = util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), "remove", true)
+	require.NoError(suite.T(), err, "failed to remove the container feature with ID %s", ctrFeatureID)
 
-	err := util.ProcessWSMessages(suite.Cfg, connEvents, func(event *protocol.Envelope) (bool, error) {
+	err = util.ProcessWSMessages(suite.Cfg, connEvents, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicDeleted {
 			return true, nil
 		}
-		return false, fmt.Errorf("event for deleting feature is not received")
+		return false, fmt.Errorf("event for deleting the feature is not received")
 	})
 
-	require.NoError(suite.T(), err, "error while deleting container feature")
+	require.NoError(suite.T(), err, "failed to delete the container feature")
 }

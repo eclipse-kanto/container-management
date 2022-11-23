@@ -86,10 +86,11 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 	params["start"] = true
 	params["config"] = config
 
-	util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, "createWithConfig", params)
+	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, "createWithConfig", params)
+	require.NoError(suite.T(), err, "failed to execute the `createWithConfig` operation")
 
-	err := util.ProcessWSMessages(suite.Cfg, wsConnection, suite.processCtrFeatureCreated)
-	require.NoError(suite.T(), err, "failed to reach requested URL on host from the running container")
+	err = util.ProcessWSMessages(suite.Cfg, wsConnection, suite.processCtrFeatureCreated)
+	require.NoError(suite.T(), err, "failed to reach the requested URL on host from the running container")
 
 	defer suite.removeCtrFeature(wsConnection, suite.ctrFeatureID)
 
@@ -104,11 +105,11 @@ func (suite *ctrFactorySuite) processCtrFeatureCreated(event *protocol.Envelope)
 	}
 	if event.Topic.String() == suite.topicModified {
 		if suite.ctrFeatureID == "" {
-			return true, fmt.Errorf("event for creating container feature is not received")
+			return true, fmt.Errorf("event for creating the container feature is not received")
 		}
 		status, check := event.Value.(map[string]interface{})
 		if !check {
-			return true, fmt.Errorf("error while parsing the property status value from the received event")
+			return true, fmt.Errorf("failed to parsing the property status value from the received event")
 		}
 		if status["status"].(string) == statusCreated {
 			isCtrFeatureCreated = true
@@ -117,9 +118,9 @@ func (suite *ctrFactorySuite) processCtrFeatureCreated(event *protocol.Envelope)
 		if isCtrFeatureCreated && status["status"].(string) == statusRunning {
 			return true, nil
 		}
-		return true, fmt.Errorf("event for modify container feature status is not received")
+		return true, fmt.Errorf("event for modify the container feature status is not received")
 	}
-	return false, fmt.Errorf("events for creating container feature are not received")
+	return false, fmt.Errorf("events for creating the container feature are not received")
 }
 
 func (suite *ctrFactorySuite) testCtrCreated(operation string, params interface{}) {
@@ -127,10 +128,11 @@ func (suite *ctrFactorySuite) testCtrCreated(operation string, params interface{
 
 	defer wsConnection.Close()
 
-	util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
+	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
+	require.NoError(suite.T(), err, "failed to execute the %s operation", operation)
 
-	err := util.ProcessWSMessages(suite.Cfg, wsConnection, suite.processCtrFeatureCreated)
-	require.NoError(suite.T(), err, "error while creating container feature")
+	err = util.ProcessWSMessages(suite.Cfg, wsConnection, suite.processCtrFeatureCreated)
+	require.NoError(suite.T(), err, "failed to create the container feature")
 
 	defer suite.removeCtrFeature(wsConnection, suite.ctrFeatureID)
 
