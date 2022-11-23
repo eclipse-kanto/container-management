@@ -20,11 +20,9 @@ import (
 	"strings"
 
 	"github.com/eclipse-kanto/kanto/integration/util"
-	"github.com/eclipse/ditto-clients-golang/model"
 	"github.com/eclipse/ditto-clients-golang/protocol"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/net/websocket"
 )
 
 type ctrManagementSuite struct {
@@ -39,29 +37,22 @@ type ctrManagementSuite struct {
 }
 
 const (
-	ctrFactoryFeatureID = "ContainerFactory"
+	ctrFactoryFeatureID         = "ContainerFactory"
+	ctrFactoryFeatureDefinition = "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.2.0\"]"
 )
 
-func (suite *ctrManagementSuite) SetupCommonSuite() {
+func (suite *ctrManagementSuite) SetupCtrManagementSuite() {
 	suite.Setup(suite.T())
 
-	thingCfg, err := util.GetThingConfiguration(suite.Cfg, suite.MQTTClient)
-	require.NoError(suite.T(), err, "failed to get thing configuration")
+	suite.ctrThingID = suite.ThingCfg.DeviceID + ":edge:containers"
+	suite.ctrThingURL = util.GetThingURL(suite.Cfg.DigitalTwinAPIAddress, suite.ctrThingID)
+	suite.ctrFactoryFeatureURL = util.GetFeatureURL(suite.ctrThingURL, ctrFactoryFeatureID)
 
-	suite.ctrThingID = thingCfg.DeviceID + ":edge:containers"
-	suite.ctrThingURL = fmt.Sprintf("%s/api/2/things/%s", strings.TrimSuffix(suite.Cfg.DigitalTwinAPIAddress, "/"), suite.ctrThingID)
-	suite.ctrFactoryFeatureURL = fmt.Sprintf("%s/features/%s", suite.ctrThingURL, ctrFactoryFeatureID)
+	suite.topicCreated = util.GetTwinEventTopic(suite.ctrThingID, protocol.ActionCreated)
+	suite.topicModify = util.GetTwinEventTopic(suite.ctrThingID, protocol.ActionModified)
+	suite.topicDeleted = util.GetTwinEventTopic(suite.ctrThingID, protocol.ActionDeleted)
 
-	ctrThingID := model.NewNamespacedIDFrom(suite.ctrThingID)
-	eventTopic := (&protocol.Topic{}).
-		WithNamespace(ctrThingID.Namespace).
-		WithEntityName(ctrThingID.Name).
-		WithGroup(protocol.GroupThings).
-		WithChannel(protocol.ChannelTwin).
-		WithCriterion(protocol.CriterionEvents)
-	suite.topicCreated = eventTopic.WithAction(protocol.ActionCreated).String()
-	suite.topicModify = eventTopic.WithAction(protocol.ActionModified).String()
-	suite.topicDeleted = eventTopic.WithAction(protocol.ActionDeleted).String()
+	suite.assertCtrFactoryFeature()
 }
 
 func getCtrFeatureID(topic string) string {
@@ -69,30 +60,21 @@ func getCtrFeatureID(topic string) string {
 	return result[2]
 }
 
-func (suite *ctrManagementSuite) create(params map[string]interface{}) {
-	url := fmt.Sprintf("%s/inbox/messages/%s", suite.ctrFactoryFeatureURL, "create")
-	suite.execCommand(url, params)
+func (suite *ctrManagementSuite) getActualCtrStatus(ctrFeatureID string) string {
+	ctrPropertyPath := fmt.Sprintf("%s/features/%s/properties/status/state/status", suite.ctrThingURL, ctrFeatureID)
+	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrPropertyPath, nil)
+	require.NoError(suite.T(), err, "error while getting the status property of the container feature: %s", ctrFeatureID)
+
+	return strings.Trim(string(body), "\"")
 }
 
-func (suite *ctrManagementSuite) createWithConfig(params map[string]interface{}) {
-	url := fmt.Sprintf("%s/inbox/messages/%s", suite.ctrFactoryFeatureURL, "createWithConfig")
-	suite.execCommand(url, params)
-}
+func (suite *ctrManagementSuite) assertCtrFactoryFeature() {
+	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, suite.ctrFactoryFeatureURL, nil)
+	require.NoError(suite.T(), err, "error while getting the container factory feature")
 
-func (suite *ctrManagementSuite) remove(ctrFeatureID string) {
-	ctrFeatureURL := fmt.Sprintf("%s/features/%s", suite.ctrThingURL, ctrFeatureID)
-	url := fmt.Sprintf("%s/inbox/messages/remove", ctrFeatureURL)
-	suite.execCommand(url, true)
-}
+	ctrFactoryDefinition := fmt.Sprintf("%s/definition", suite.ctrFactoryFeatureURL)
+	body, err = util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrFactoryDefinition, nil)
+	require.NoError(suite.T(), err, "error while getting the container factory feature definition")
 
-func (suite *ctrManagementSuite) execCommand(url string, params interface{}) {
-	_, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodPost, url, params)
-	require.NoError(suite.T(), err, "error while creating container feature")
-}
-
-func (suite *ctrManagementSuite) startListening(conn *websocket.Conn, eventType, filter string) {
-	err := websocket.Message.Send(conn, fmt.Sprintf("%s?filter=like(resource:path,'%s')", eventType, filter))
-	require.NoError(suite.T(), err, "error sending listener request")
-	err = util.WaitForWSMessage(suite.Cfg, conn, fmt.Sprintf("%s:ACK", eventType))
-	require.NoError(suite.T(), err, "acknowledgement not received in time")
+	require.Equal(suite.T(), ctrFactoryFeatureDefinition, string(body), "container factory definition is not expected")
 }
