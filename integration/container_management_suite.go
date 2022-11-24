@@ -45,12 +45,13 @@ const (
 	ctrFactoryFeatureID         = "ContainerFactory"
 	ctrFactoryFeatureDefinition = "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.2.0\"]"
 	typeEvents                  = "START-SEND-EVENTS"
-	imageRefParam               = "imageRef"
-	startParam                  = "start"
-	configParam                 = "config"
-	createOperation             = "create"
-	createWithConfigOperation   = "createWithConfig"
-	ctrStatusProperty           = "status"
+	paramImageRef               = "imageRef"
+	paramStart                  = "start"
+	paramConfig                 = "config"
+	operationCreate             = "create"
+	operationCreateWithConfig   = "createWithConfig"
+	operationRemove             = "remove"
+	propertyStatus              = "status"
 )
 
 func (suite *ctrManagementSuite) SetupCtrManagementSuite() {
@@ -75,7 +76,7 @@ func getCtrFeatureID(topic string) string {
 func (suite *ctrManagementSuite) getActualCtrStatus(ctrFeatureID string) string {
 	ctrPropertyPath := fmt.Sprintf("%s/features/%s/properties/status/state/status", suite.ctrThingURL, ctrFeatureID)
 	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrPropertyPath, nil)
-	require.NoError(suite.T(), err, "failed to get the status property of the container feature: %s", ctrFeatureID)
+	require.NoError(suite.T(), err, "failed to get the property status of the container feature: %s", ctrFeatureID)
 
 	return strings.Trim(string(body), "\"")
 }
@@ -98,24 +99,51 @@ func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 	return wsConnection
 }
 
-func (suite *ctrManagementSuite) testCreate(operation string, params interface{}, process func(*protocol.Envelope) (bool, error)) *websocket.Conn {
+func (suite *ctrManagementSuite) create(operation string, params interface{}) (*websocket.Conn, string) {
 	wsConnection := suite.createWSConnection()
 
 	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
 	require.NoError(suite.T(), err, "failed to execute the %s operation", operation)
 
-	err = util.ProcessWSMessages(suite.Cfg, wsConnection, process)
+	var ctrFeatureID string
+	var isCtrFeatureCreated bool
+
+	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
+		if event.Topic.String() == suite.topicCreated {
+			ctrFeatureID = getCtrFeatureID(event.Path)
+			return false, nil
+		}
+		if event.Topic.String() == suite.topicModified {
+			if ctrFeatureID == "" {
+				return true, fmt.Errorf("event for creating the container feature is not received")
+			}
+			status, check := event.Value.(map[string]interface{})
+			if !check {
+				return true, fmt.Errorf("failed to parsing the property status value from the received event")
+			}
+			if status[propertyStatus].(string) == statusCreated {
+				isCtrFeatureCreated = true
+				return false, nil
+			}
+			if isCtrFeatureCreated && status[propertyStatus].(string) == statusRunning {
+				return true, nil
+			}
+			return true, fmt.Errorf("event for modify the container feature status is not received")
+		}
+		return false, fmt.Errorf("unknown message received")
+	})
+
 	require.NoError(suite.T(), err, "event for creating the container feature is not received")
 
-	return wsConnection
+	return wsConnection, ctrFeatureID
 }
 
-func (suite *ctrManagementSuite) testRemove(connEvents *websocket.Conn, ctrFeatureID string) {
+func (suite *ctrManagementSuite) remove(connEvents *websocket.Conn, ctrFeatureID string) {
 	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
 	err := util.SubscribeForWSMessages(suite.Cfg, connEvents, typeEvents, filter)
 	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", typeEvents)
 
-	_, err = util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), "remove", true)
+	_, err = util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), operationRemove, true)
 	require.NoError(suite.T(), err, "failed to remove the container feature with ID %s", ctrFeatureID)
 
 	err = util.ProcessWSMessages(suite.Cfg, connEvents, func(event *protocol.Envelope) (bool, error) {

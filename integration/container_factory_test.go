@@ -15,12 +15,10 @@
 package integration
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"testing"
 
-	"github.com/eclipse/ditto-clients-golang/protocol"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -32,8 +30,6 @@ const (
 
 type ctrFactorySuite struct {
 	ctrManagementSuite
-	ctrFeatureID        string
-	isCtrFeatureCreated bool
 }
 
 func (suite *ctrFactorySuite) SetupSuite() {
@@ -50,29 +46,19 @@ func TestCtrFactorySuite(t *testing.T) {
 
 func (suite *ctrFactorySuite) TestCreate() {
 	params := make(map[string]interface{})
-	params[imageRefParam] = influxdbImageRef
-	params[startParam] = true
+	params[paramImageRef] = influxdbImageRef
+	params[paramStart] = true
 
-	wsConnection := suite.testCreate(createOperation, params, suite.processCtrFeatureCreated)
-	defer wsConnection.Close()
-
-	defer suite.testRemove(wsConnection, suite.ctrFeatureID)
-
-	require.Equal(suite.T(), statusRunning, suite.getActualCtrStatus(suite.ctrFeatureID), "container status is not expected")
+	suite.testCreate(operationCreate, params)
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfig() {
 	params := make(map[string]interface{})
-	params[imageRefParam] = influxdbImageRef
-	params[startParam] = true
-	params[configParam] = make(map[string]interface{})
+	params[paramImageRef] = influxdbImageRef
+	params[paramStart] = true
+	params[paramConfig] = make(map[string]interface{})
 
-	wsConnection := suite.testCreate(createWithConfigOperation, params, suite.processCtrFeatureCreated)
-	defer wsConnection.Close()
-
-	defer suite.testRemove(wsConnection, suite.ctrFeatureID)
-
-	require.Equal(suite.T(), statusRunning, suite.getActualCtrStatus(suite.ctrFeatureID), "container status is not expected")
+	suite.testCreate(operationCreateWithConfig, params)
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
@@ -86,41 +72,22 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 	}
 
 	params := make(map[string]interface{})
-	params[imageRefParam] = httpdImageRef
-	params[startParam] = true
-	params[configParam] = config
+	params[paramImageRef] = httpdImageRef
+	params[paramStart] = true
+	params[paramConfig] = config
 
-	wsConnection := suite.testCreate(createWithConfigOperation, params, suite.processCtrFeatureCreated)
+	wsConnection, ctrFeatureID := suite.create(operationCreateWithConfig, params)
 	defer wsConnection.Close()
-
-	defer suite.testRemove(wsConnection, suite.ctrFeatureID)
+	defer suite.remove(wsConnection, ctrFeatureID)
 
 	suite.assertHTTPServer()
 }
 
-func (suite *ctrFactorySuite) processCtrFeatureCreated(event *protocol.Envelope) (bool, error) {
-	if event.Topic.String() == suite.topicCreated {
-		suite.ctrFeatureID = getCtrFeatureID(event.Path)
-		return false, nil
-	}
-	if event.Topic.String() == suite.topicModified {
-		if suite.ctrFeatureID == "" {
-			return true, fmt.Errorf("event for creating the container feature is not received")
-		}
-		status, check := event.Value.(map[string]interface{})
-		if !check {
-			return true, fmt.Errorf("failed to parsing the property status value from the received event")
-		}
-		if status[ctrStatusProperty].(string) == statusCreated {
-			suite.isCtrFeatureCreated = true
-			return false, nil
-		}
-		if suite.isCtrFeatureCreated && status[ctrStatusProperty].(string) == statusRunning {
-			return true, nil
-		}
-		return true, fmt.Errorf("event for modify the container feature status is not received")
-	}
-	return false, fmt.Errorf("unknown message received")
+func (suite *ctrFactorySuite) testCreate(operation string, params interface{}) {
+	wsConnection, ctrFeatureID := suite.create(operation, params)
+	defer wsConnection.Close()
+	defer suite.remove(wsConnection, ctrFeatureID)
+	require.Equal(suite.T(), statusRunning, suite.getActualCtrStatus(ctrFeatureID), "container status is not expected")
 }
 
 func (suite *ctrFactorySuite) assertHTTPServer() {
