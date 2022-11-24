@@ -44,7 +44,13 @@ const (
 	httpdImageRef               = "docker.io/library/httpd:latest"
 	ctrFactoryFeatureID         = "ContainerFactory"
 	ctrFactoryFeatureDefinition = "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.2.0\"]"
-	subscribeForEvents          = "START-SEND-EVENTS"
+	typeEvents                  = "START-SEND-EVENTS"
+	imageRefParam               = "imageRef"
+	startParam                  = "start"
+	configParam                 = "config"
+	createOperation             = "create"
+	createWithConfigOperation   = "createWithConfig"
+	ctrStatusProperty           = "status"
 )
 
 func (suite *ctrManagementSuite) SetupCtrManagementSuite() {
@@ -75,13 +81,10 @@ func (suite *ctrManagementSuite) getActualCtrStatus(ctrFeatureID string) string 
 }
 
 func (suite *ctrManagementSuite) assertCtrFactoryFeature() {
-	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, suite.ctrFactoryFeatureURL, nil)
-	require.NoError(suite.T(), err, "failed to get the container factory feature")
+	ctrFactoryDefinition := suite.ctrFactoryFeatureURL + "/definition"
+	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrFactoryDefinition, nil)
 
-	ctrFactoryDefinition := fmt.Sprintf("%s/definition", suite.ctrFactoryFeatureURL)
-	body, err = util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrFactoryDefinition, nil)
 	require.NoError(suite.T(), err, "failed to get the container factory feature definition")
-
 	require.Equal(suite.T(), ctrFactoryFeatureDefinition, string(body), "the container factory definition is not expected")
 }
 
@@ -89,16 +92,28 @@ func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 	wsConnection, err := util.NewDigitalTwinWSConnection(suite.Cfg)
 	require.NoError(suite.T(), err, "failed to create a websocket connection")
 
-	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, subscribeForEvents, "like(resource:path,'/features/Container:*')")
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", subscribeForEvents)
+	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, typeEvents, "like(resource:path,'/features/Container:*')")
+	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", typeEvents)
 
 	return wsConnection
 }
 
-func (suite *ctrManagementSuite) removeCtrFeature(connEvents *websocket.Conn, ctrFeatureID string) {
-	filter := fmt.Sprintf("like(resource:path,'%s')", fmt.Sprintf("/features/%s", ctrFeatureID))
-	err := util.SubscribeForWSMessages(suite.Cfg, connEvents, subscribeForEvents, filter)
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", subscribeForEvents)
+func (suite *ctrManagementSuite) testCreate(operation string, params interface{}, process func(*protocol.Envelope) (bool, error)) *websocket.Conn {
+	wsConnection := suite.createWSConnection()
+
+	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
+	require.NoError(suite.T(), err, "failed to execute the %s operation", operation)
+
+	err = util.ProcessWSMessages(suite.Cfg, wsConnection, process)
+	require.NoError(suite.T(), err, "event for creating the container feature is not received")
+
+	return wsConnection
+}
+
+func (suite *ctrManagementSuite) testRemove(connEvents *websocket.Conn, ctrFeatureID string) {
+	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
+	err := util.SubscribeForWSMessages(suite.Cfg, connEvents, typeEvents, filter)
+	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", typeEvents)
 
 	_, err = util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), "remove", true)
 	require.NoError(suite.T(), err, "failed to remove the container feature with ID %s", ctrFeatureID)
@@ -107,8 +122,8 @@ func (suite *ctrManagementSuite) removeCtrFeature(connEvents *websocket.Conn, ct
 		if event.Topic.String() == suite.topicDeleted {
 			return true, nil
 		}
-		return false, fmt.Errorf("event for deleting the feature is not received")
+		return false, fmt.Errorf("unknown message received")
 	})
 
-	require.NoError(suite.T(), err, "failed to delete the container feature")
+	require.NoError(suite.T(), err, "event for removing the container feature is not received")
 }

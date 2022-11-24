@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/eclipse-kanto/kanto/integration/util"
 	"github.com/eclipse/ditto-clients-golang/protocol"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -33,10 +32,9 @@ const (
 
 type ctrFactorySuite struct {
 	ctrManagementSuite
-	ctrFeatureID string
+	ctrFeatureID        string
+	isCtrFeatureCreated bool
 }
-
-var isCtrFeatureCreated bool
 
 func (suite *ctrFactorySuite) SetupSuite() {
 	suite.SetupCtrManagementSuite()
@@ -52,26 +50,32 @@ func TestCtrFactorySuite(t *testing.T) {
 
 func (suite *ctrFactorySuite) TestCreate() {
 	params := make(map[string]interface{})
-	params["imageRef"] = influxdbImageRef
-	params["start"] = true
+	params[imageRefParam] = influxdbImageRef
+	params[startParam] = true
 
-	suite.testCtrCreated("create", params)
+	wsConnection := suite.testCreate(createOperation, params, suite.processCtrFeatureCreated)
+	defer wsConnection.Close()
+
+	defer suite.testRemove(wsConnection, suite.ctrFeatureID)
+
+	require.Equal(suite.T(), statusRunning, suite.getActualCtrStatus(suite.ctrFeatureID), "container status is not expected")
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfig() {
 	params := make(map[string]interface{})
-	params["imageRef"] = influxdbImageRef
-	params["start"] = true
-	params["config"] = make(map[string]interface{})
+	params[imageRefParam] = influxdbImageRef
+	params[startParam] = true
+	params[configParam] = make(map[string]interface{})
 
-	suite.testCtrCreated("createWithConfig", params)
+	wsConnection := suite.testCreate(createWithConfigOperation, params, suite.processCtrFeatureCreated)
+	defer wsConnection.Close()
+
+	defer suite.testRemove(wsConnection, suite.ctrFeatureID)
+
+	require.Equal(suite.T(), statusRunning, suite.getActualCtrStatus(suite.ctrFeatureID), "container status is not expected")
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
-	wsConnection := suite.createWSConnection()
-
-	defer wsConnection.Close()
-
 	config := make(map[string]interface{})
 	config["extraHosts"] = []string{"ctrhost:host_ip"}
 	config["portMappings"] = []map[string]interface{}{
@@ -82,20 +86,16 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 	}
 
 	params := make(map[string]interface{})
-	params["imageRef"] = httpdImageRef
-	params["start"] = true
-	params["config"] = config
+	params[imageRefParam] = httpdImageRef
+	params[startParam] = true
+	params[configParam] = config
 
-	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, "createWithConfig", params)
-	require.NoError(suite.T(), err, "failed to execute the `createWithConfig` operation")
+	wsConnection := suite.testCreate(createWithConfigOperation, params, suite.processCtrFeatureCreated)
+	defer wsConnection.Close()
 
-	err = util.ProcessWSMessages(suite.Cfg, wsConnection, suite.processCtrFeatureCreated)
-	require.NoError(suite.T(), err, "failed to reach the requested URL on host from the running container")
+	defer suite.testRemove(wsConnection, suite.ctrFeatureID)
 
-	defer suite.removeCtrFeature(wsConnection, suite.ctrFeatureID)
-
-	body, err := sendHTTPGetRequest()
-	require.Equal(suite.T(), httpdResponse, string(body), "HTTP response from the running container is not expected")
+	suite.assertHTTPServer()
 }
 
 func (suite *ctrFactorySuite) processCtrFeatureCreated(event *protocol.Envelope) (bool, error) {
@@ -111,49 +111,30 @@ func (suite *ctrFactorySuite) processCtrFeatureCreated(event *protocol.Envelope)
 		if !check {
 			return true, fmt.Errorf("failed to parsing the property status value from the received event")
 		}
-		if status["status"].(string) == statusCreated {
-			isCtrFeatureCreated = true
+		if status[ctrStatusProperty].(string) == statusCreated {
+			suite.isCtrFeatureCreated = true
 			return false, nil
 		}
-		if isCtrFeatureCreated && status["status"].(string) == statusRunning {
+		if suite.isCtrFeatureCreated && status[ctrStatusProperty].(string) == statusRunning {
 			return true, nil
 		}
 		return true, fmt.Errorf("event for modify the container feature status is not received")
 	}
-	return false, fmt.Errorf("events for creating the container feature are not received")
+	return false, fmt.Errorf("unknown message received")
 }
 
-func (suite *ctrFactorySuite) testCtrCreated(operation string, params interface{}) {
-	wsConnection := suite.createWSConnection()
-
-	defer wsConnection.Close()
-
-	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
-	require.NoError(suite.T(), err, "failed to execute the %s operation", operation)
-
-	err = util.ProcessWSMessages(suite.Cfg, wsConnection, suite.processCtrFeatureCreated)
-	require.NoError(suite.T(), err, "failed to create the container feature")
-
-	defer suite.removeCtrFeature(wsConnection, suite.ctrFeatureID)
-
-	require.Equal(suite.T(), statusRunning, suite.getActualCtrStatus(suite.ctrFeatureID), "container status is not expected")
-}
-
-func sendHTTPGetRequest() ([]byte, error) {
+func (suite *ctrFactorySuite) assertHTTPServer() {
 	req, err := http.NewRequest(http.MethodGet, httpdRequestURL, nil)
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(suite.T(), err, "failed to create an HTTP request from the container")
+
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(suite.T(), err, "failed to get an HTTP response from the container")
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("%s %s request failed: %s", http.MethodGet, httpdRequestURL, resp.Status)
-	}
+	require.Equal(suite.T(), 200, resp.StatusCode, "HTTP response status code from the container is not expected")
 
-	return io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(suite.T(), err, "failed to reach the requested URL on the host from the container")
+	require.Equal(suite.T(), httpdResponse, string(body), "HTTP response from the container is not expected")
 }
