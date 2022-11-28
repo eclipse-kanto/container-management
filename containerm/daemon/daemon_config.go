@@ -51,19 +51,19 @@ type managerConfig struct {
 
 // container client config- e.g. containerd
 type containerRuntimeConfig struct {
-	CtrNamespace          string                     `json:"default_ns,omitempty"`
-	CtrAddressPath        string                     `json:"address_path,omitempty"`
-	CtrRegistryConfigs    map[string]*registryConfig `json:"registry_configurations,omitempty"`
-	CtrInsecureRegistries []string                   `json:"insecure_registries,omitempty"`
-	CtrRootExec           string                     `json:"exec_root_dir,omitempty"`
-	CtrMetaPath           string                     `json:"home_dir,omitempty"`
-	CtrImageDecKeys       []string                   `json:"image_dec_keys,omitempty"`
-	CtrImageDecRecipients []string                   `json:"image_dec_recipients,omitempty"`
-	CtrRuncRuntime        string                     `json:"runc_runtime,omitempty"`
-	CtrImageExpiry        time.Duration              `json:"image_expiry,omitempty"`
-	CtrImageExpiryDisable bool                       `json:"image_expiry_disable,omitempty"`
-	CtrLeaseID            string                     `json:"lease_id,omitempty"`
-	CtrImageVerKeys       []string                   `json:"image_ver_keys,omitempty"`
+	CtrNamespace             string                     `json:"default_ns,omitempty"`
+	CtrAddressPath           string                     `json:"address_path,omitempty"`
+	CtrRegistryConfigs       map[string]*registryConfig `json:"registry_configurations,omitempty"`
+	CtrInsecureRegistries    []string                   `json:"insecure_registries,omitempty"`
+	CtrRootExec              string                     `json:"exec_root_dir,omitempty"`
+	CtrMetaPath              string                     `json:"home_dir,omitempty"`
+	CtrImageDecKeys          []string                   `json:"image_dec_keys,omitempty"`
+	CtrImageDecRecipients    []string                   `json:"image_dec_recipients,omitempty"`
+	CtrRuncRuntime           string                     `json:"runc_runtime,omitempty"`
+	CtrImageExpiry           time.Duration              `json:"image_expiry,omitempty"`
+	CtrImageExpiryDisable    bool                       `json:"image_expiry_disable,omitempty"`
+	CtrLeaseID               string                     `json:"lease_id,omitempty"`
+	CtrImageVerificationKeys []string                   `json:"image_verification_keys,omitempty"`
 }
 
 // deployment manager config

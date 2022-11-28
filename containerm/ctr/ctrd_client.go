@@ -57,7 +57,7 @@ type containerdClient struct {
 	imageExpiryDisable bool
 	imagesExpiryLock   sync.Mutex
 	imagesWatcher      resourcesWatcher
-	verMgr             containerVerifyMgr
+	verificationMgr    containerVerificationMgr
 }
 
 // -------------------------------------- ContainerdAPIClient implementation with Containerd -------------------------------------

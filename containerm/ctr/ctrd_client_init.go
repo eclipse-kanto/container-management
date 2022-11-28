@@ -25,7 +25,7 @@ import (
 )
 
 func newContainerdClient(namespace string, socket string, rootExec string, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string,
-	runcRuntime types.Runtime, imageExpiry time.Duration, imageExpiryDisable bool, leaseID string, imageVerKeys []string) (ContainerAPIClient, error) {
+	runcRuntime types.Runtime, imageExpiry time.Duration, imageExpiryDisable bool, leaseID string, imageVerificationKeys []string) (ContainerAPIClient, error) {
 
 	//ensure storage
 	err := util.MkDir(rootExec)
@@ -46,9 +46,9 @@ func newContainerdClient(namespace string, socket string, rootExec string, metaP
 	if decrErr != nil {
 		return nil, decrErr
 	}
-	verifyMgr, verifyErr := newContainerVerifyManager(ctrdClientSpi, imageVerKeys)
-	if verifyErr != nil {
-		return nil, verifyErr
+	verificationMgr, verificationErr := newContainerVerificationManager(ctrdClientSpi, imageVerificationKeys)
+	if verificationErr != nil {
+		return nil, verificationErr
 	}
 
 	ctrdClient := &containerdClient{
@@ -63,7 +63,7 @@ func newContainerdClient(namespace string, socket string, rootExec string, metaP
 		runcRuntime:        runcRuntime,
 		imageExpiry:        imageExpiry,
 		imageExpiryDisable: imageExpiryDisable,
-		verMgr:             verifyMgr,
+		verificationMgr:    verificationMgr,
 	}
 	go ctrdClient.processEvents(namespace)
 	if !ctrdClient.imageExpiryDisable {
@@ -85,5 +85,5 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 		return nil, err
 	}
 	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys,
-		opts.imageDecRecipients, opts.runcRuntime, opts.imageExpiry, opts.imageExpiryDisable, opts.leaseID, opts.imageVerKeys)
+		opts.imageDecRecipients, opts.runcRuntime, opts.imageExpiry, opts.imageExpiryDisable, opts.leaseID, opts.imageVerificationKeys)
 }

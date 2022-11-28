@@ -14,7 +14,7 @@ package types
 
 // Image represents an image information for the container
 type Image struct {
-	Name          string         `json:"name"`
-	DecryptConfig *DecryptConfig `json:"decrypt_config,omitempty"`
-	VerifyConfig  *VerifyConfig  `json:"verify_config,omitempty"`
+	Name               string              `json:"name"`
+	DecryptConfig      *DecryptConfig      `json:"decrypt_config,omitempty"`
+	VerificationConfig *VerificationConfig `json:"verification_config,omitempty"`
 }

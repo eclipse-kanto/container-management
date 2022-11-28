@@ -22,18 +22,18 @@ import (
 type ContainerOpts func(ctrOptions *ctrOpts) error
 
 type ctrOpts struct {
-	namespace          string
-	connectionPath     string
-	registryConfigs    map[string]*RegistryConfig
-	rootExec           string
-	metaPath           string
-	imageDecKeys       []string
-	imageDecRecipients []string
-	runcRuntime        types.Runtime
-	imageExpiry        time.Duration
-	imageExpiryDisable bool
-	leaseID            string
-	imageVerKeys       []string
+	namespace             string
+	connectionPath        string
+	registryConfigs       map[string]*RegistryConfig
+	rootExec              string
+	metaPath              string
+	imageDecKeys          []string
+	imageDecRecipients    []string
+	runcRuntime           types.Runtime
+	imageExpiry           time.Duration
+	imageExpiryDisable    bool
+	leaseID               string
+	imageVerificationKeys []string
 }
 
 // RegistryConfig represents a single registry's access configuration.
@@ -158,10 +158,10 @@ func WithCtrdLeaseID(leaseID string) ContainerOpts {
 	}
 }
 
-// WithCtrdImageVerifyKeys sets the keys for verifying signed images.
-func WithCtrdImageVerifyKeys(keys ...string) ContainerOpts {
+// WithCtrdImageVerificationKeys sets the keys for verifying signed images.
+func WithCtrdImageVerificationKeys(keys ...string) ContainerOpts {
 	return func(ctrOptions *ctrOpts) error {
-		ctrOptions.imageVerKeys = keys
+		ctrOptions.imageVerificationKeys = keys
 		return nil
 	}
 }

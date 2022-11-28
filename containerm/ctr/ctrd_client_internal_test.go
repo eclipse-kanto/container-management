@@ -153,7 +153,7 @@ func TestClientInternalGenerateRemoteOpts(t *testing.T) {
 				registriesResolver: regResolverMock,
 			}
 			expectedOpts := testCaseData.mockExec(regResolverMock, ctrl)
-			actualOpts := ctrdClient.generateRemoteOpts(testImageInfo)
+			actualOpts := ctrdClient.generateRemoteOpts(testImageInfo.Name)
 			testutil.AssertTrue(t, matchers.MatchesResolverOpts(expectedOpts...).Matches(actualOpts))
 		})
 	}
@@ -259,9 +259,9 @@ func TestClientInternalGetImage(t *testing.T) {
 			decryptMgrMock := mocksCtrd.NewMockcontainerDecryptMgr(ctrl)
 			spiMock := mocksCtrd.NewMockcontainerdSpi(ctrl)
 			ctrdClient := &containerdClient{
-				decMgr: decryptMgrMock,
-				verMgr: &ctrVerifyMgr{},
-				spi:    spiMock,
+				decMgr:          decryptMgrMock,
+				verificationMgr: &ctrVerificationMgr{},
+				spi:             spiMock,
 			}
 			expectedImage, expectedErr := testCaseData.mockExec(decryptMgrMock, spiMock, ctrl)
 			actualImage, actualErr := ctrdClient.getImage(context.TODO(), testImageInfo)
@@ -314,6 +314,7 @@ func TestClientInternalPullImage(t *testing.T) {
 				imageMock := mocksContainerd.NewMockImage(ctrl)
 				spiMock.EXPECT().GetImage(gomock.Any(), testImageInfo.Name).Return(imageMock, nil)
 				decryptMgrMock.EXPECT().CheckAuthorization(gomock.Any(), imageMock, dc).Return(nil)
+				imageMock.EXPECT().Name().Return(testImageInfo.Name)
 				return imageMock, nil
 			},
 		},
@@ -350,6 +351,7 @@ func TestClientInternalPullImage(t *testing.T) {
 				imageMock := mocksContainerd.NewMockImage(ctrl)
 				spiMock.EXPECT().PullImage(gomock.Any(), testImageInfo.Name, matchers.MatchesResolverOpts(containerd.WithSchema1Conversion)).Return(imageMock, nil)
 				decryptMgrMock.EXPECT().CheckAuthorization(gomock.Any(), imageMock, dc).Return(nil)
+				imageMock.EXPECT().Name().Return(testImageInfo.Name)
 				err := log.NewError("test error")
 				decryptMgrMock.EXPECT().GetDecryptConfig(testImageInfo.DecryptConfig).Return(nil, err)
 				return nil, err
@@ -364,6 +366,7 @@ func TestClientInternalPullImage(t *testing.T) {
 				imageMock := mocksContainerd.NewMockImage(ctrl)
 				spiMock.EXPECT().PullImage(gomock.Any(), testImageInfo.Name, matchers.MatchesResolverOpts(containerd.WithSchema1Conversion)).Return(imageMock, nil)
 				decryptMgrMock.EXPECT().CheckAuthorization(gomock.Any(), imageMock, dc).Return(nil)
+				imageMock.EXPECT().Name().Return(testImageInfo.Name)
 				err := log.NewError("test error")
 				spiMock.EXPECT().UnpackImage(gomock.Any(), imageMock, matchers.MatchesUnpackOpts(encryption.WithUnpackConfigApplyOpts(encryption.WithDecryptedUnpack(&imgcrypt.Payload{DecryptConfig: *dc})))).Return(err)
 				return nil, err
@@ -378,6 +381,7 @@ func TestClientInternalPullImage(t *testing.T) {
 				imageMock := mocksContainerd.NewMockImage(ctrl)
 				spiMock.EXPECT().PullImage(gomock.Any(), testImageInfo.Name, matchers.MatchesResolverOpts(containerd.WithSchema1Conversion)).Return(imageMock, nil)
 				decryptMgrMock.EXPECT().CheckAuthorization(gomock.Any(), imageMock, dc).Return(nil)
+				imageMock.EXPECT().Name().Return(testImageInfo.Name)
 				spiMock.EXPECT().UnpackImage(gomock.Any(), imageMock, matchers.MatchesUnpackOpts(encryption.WithUnpackConfigApplyOpts(encryption.WithDecryptedUnpack(&imgcrypt.Payload{DecryptConfig: *dc})))).Return(nil)
 				return imageMock, nil
 			},
@@ -394,7 +398,7 @@ func TestClientInternalPullImage(t *testing.T) {
 			registriesResolverMock := mocksCtrd.NewMockcontainerImageRegistriesResolver(ctrl)
 			ctrdClient := &containerdClient{
 				decMgr:             decryptMgrMock,
-				verMgr:             &ctrVerifyMgr{},
+				verificationMgr:    &ctrVerificationMgr{},
 				spi:                spiMock,
 				registriesResolver: registriesResolverMock,
 			}
@@ -1276,8 +1280,8 @@ func TestClientInternalRemoveUnusedImage(t *testing.T) {
 
 			ctx := context.Background()
 			ctrdClient := &containerdClient{
-				verMgr: &ctrVerifyMgr{spi: spiMock},
-				spi:    spiMock,
+				verificationMgr: &ctrVerificationMgr{},
+				spi:             spiMock,
 			}
 			// mock exec
 			expectedErr := testCaseData.mockExec(ctx, spiMock, imageMock)
@@ -1352,8 +1356,8 @@ func TestClientInternalHandleImageExpired(t *testing.T) {
 
 			ctx := context.Background()
 			ctrdClient := &containerdClient{
-				verMgr: &ctrVerifyMgr{spi: spiMock},
-				spi:    spiMock,
+				verificationMgr: &ctrVerificationMgr{},
+				spi:             spiMock,
 			}
 			// mock exec
 			expectedErr := testCaseData.mockExec(ctx, spiMock, imageMock)
@@ -1448,10 +1452,10 @@ func TestClientInternalManageImageExpiry(t *testing.T) {
 
 			ctx := context.Background()
 			ctrdClient := &containerdClient{
-				verMgr:        &ctrVerifyMgr{spi: spiMock},
-				spi:           spiMock,
-				imagesWatcher: watcherMock,
-				imageExpiry:   testCaseData.imagesExpiry,
+				verificationMgr: &ctrVerificationMgr{},
+				spi:             spiMock,
+				imagesWatcher:   watcherMock,
+				imageExpiry:     testCaseData.imagesExpiry,
 			}
 			// mock exec
 			expectedErr := testCaseData.mockExec(ctx, spiMock, watcherMock, imageMock)

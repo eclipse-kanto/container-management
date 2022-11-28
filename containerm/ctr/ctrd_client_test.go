@@ -60,11 +60,11 @@ func TestCtrdClientCreateContainer(t *testing.T) {
 	mockImage := containerdMocks.NewMockImage(mockCtrl)
 
 	testClient := &containerdClient{
-		ioMgr:   mockIoMgr,
-		logsMgr: mockLogMgr,
-		decMgr:  mockDecrypctMgr,
-		spi:     mockSpi,
-		verMgr:  &ctrVerifyMgr{},
+		ioMgr:           mockIoMgr,
+		logsMgr:         mockLogMgr,
+		decMgr:          mockDecrypctMgr,
+		spi:             mockSpi,
+		verificationMgr: &ctrVerificationMgr{},
 	}
 
 	testCtr := &types.Container{
@@ -132,6 +132,7 @@ func TestCtrdClientCreateContainer(t *testing.T) {
 				mockDecrypctMgr.EXPECT().GetDecryptConfig(testCtr.Image.DecryptConfig).Times(2).Return(dc, nil)
 				mockSpi.EXPECT().GetImage(ctx, testCtr.Image.Name).Return(mockImage, nil)
 				mockDecrypctMgr.EXPECT().CheckAuthorization(ctx, mockImage, dc).Return(nil)
+				mockImage.EXPECT().Name().Return(testCtr.Image.Name)
 				mockSpi.EXPECT().PrepareSnapshot(ctx, testCtr.ID, mockImage, matchers.MatchesUnpackOpts(encryption.WithUnpackConfigApplyOpts(encryption.WithDecryptedUnpack(&imgcrypt.Payload{DecryptConfig: *dc})))).Return(nil)
 				mockSpi.EXPECT().MountSnapshot(ctx, testCtr.ID, rootFSPathDefault)
 				return nil
@@ -292,12 +293,12 @@ func TestCtrdClientStartContainer(t *testing.T) {
 	mockIo := containerdMocks.NewMockIO(mockCtrl)
 
 	testClient := &containerdClient{
-		ctrdCache: newContainerInfoCache(),
-		ioMgr:     mockIoMgr,
-		logsMgr:   mockLogMgr,
-		decMgr:    mockDecMgr,
-		spi:       mockSpi,
-		verMgr:    &ctrVerifyMgr{},
+		ctrdCache:       newContainerInfoCache(),
+		ioMgr:           mockIoMgr,
+		logsMgr:         mockLogMgr,
+		decMgr:          mockDecMgr,
+		spi:             mockSpi,
+		verificationMgr: &ctrVerificationMgr{},
 	}
 	ctx := context.Background()
 
