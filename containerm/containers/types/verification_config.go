@@ -12,9 +12,9 @@
 
 package types
 
-// VerifyConfig holds the data needed for verification of signed images
-type VerifyConfig struct {
-	// Keys a list of public key filenames to verify an image signature. Each entry can include
+// VerificationConfig holds the data needed for verification of signed images
+type VerificationConfig struct {
+	// Keys filenames of public keys to verify an image signature. Each entry can include
 	// an optional hash function(e.g. sha512) separated by a colon after the filename. If a hash
 	// function is not included, then sha256 will be used by default.
 	Keys []string `json:"keys,omitempty"`
