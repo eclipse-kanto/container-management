@@ -94,6 +94,7 @@ func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 	require.NoError(suite.T(), err, "failed to create a websocket connection")
 
 	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, typeEvents, "like(resource:path,'/features/Container:*')")
+	defer closeWSConnection(wsConnection, err)
 	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", typeEvents)
 
 	return wsConnection
@@ -103,6 +104,8 @@ func (suite *ctrManagementSuite) create(operation string, params interface{}) (*
 	wsConnection := suite.createWSConnection()
 
 	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
+	defer closeWSConnection(wsConnection, err)
+
 	require.NoError(suite.T(), err, "failed to execute the %s operation", operation)
 
 	var ctrFeatureID string
@@ -138,15 +141,16 @@ func (suite *ctrManagementSuite) create(operation string, params interface{}) (*
 	return wsConnection, ctrFeatureID
 }
 
-func (suite *ctrManagementSuite) remove(connEvents *websocket.Conn, ctrFeatureID string) {
+func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeatureID string) {
 	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
-	err := util.SubscribeForWSMessages(suite.Cfg, connEvents, typeEvents, filter)
+	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, typeEvents, filter)
+	defer closeWSConnection(wsConnection, err)
 	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", typeEvents)
 
 	_, err = util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), operationRemove, true)
 	require.NoError(suite.T(), err, "failed to remove the container feature with ID %s", ctrFeatureID)
 
-	err = util.ProcessWSMessages(suite.Cfg, connEvents, func(event *protocol.Envelope) (bool, error) {
+	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicDeleted {
 			return true, nil
 		}
@@ -154,4 +158,10 @@ func (suite *ctrManagementSuite) remove(connEvents *websocket.Conn, ctrFeatureID
 	})
 
 	require.NoError(suite.T(), err, "event for removing the container feature is not received")
+}
+
+func closeWSConnection(wsConnection *websocket.Conn, err error) {
+	if err != nil {
+		wsConnection.Close()
+	}
 }
