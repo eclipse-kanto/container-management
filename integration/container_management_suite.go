@@ -74,8 +74,8 @@ func getCtrFeatureID(topic string) string {
 }
 
 func (suite *ctrManagementSuite) getActualCtrStatus(ctrFeatureID string) string {
-	ctrPropertyPath := fmt.Sprintf("%s/features/%s/properties/status/state/status", suite.ctrThingURL, ctrFeatureID)
-	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrPropertyPath, nil)
+	featureURL := util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID)
+	body, err := util.GetFeaturePropertyValue(suite.Cfg, featureURL, "status/state/status")
 	require.NoError(suite.T(), err, "failed to get the property status of the container feature: %s", ctrFeatureID)
 
 	return strings.Trim(string(body), "\"")

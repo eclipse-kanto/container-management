@@ -389,6 +389,8 @@ github.com/dustin/go-humanize v0.0.0-20171111073723-bb3d318650d4/go.mod h1:Htrtb
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/eclipse-kanto/kanto/integration/util v0.0.0-20221123073842-14c133d7eb34 h1:V0hOoRzGsVxV+l7l/gHKO6RcGf5p1N0ooiL5YzOwuRc=
 github.com/eclipse-kanto/kanto/integration/util v0.0.0-20221123073842-14c133d7eb34/go.mod h1:mhkMBNIG+JDz35JAj8JVWMe0/ROpKmk/i6RYHU6Rea4=
+github.com/eclipse-kanto/kanto/integration/util v0.0.0-20221125134142-56b32f6b3e24 h1:bu1OgB2reUK1ZNi75IY8RGqWwb/BGuDWNy09ogMiLss=
+github.com/eclipse-kanto/kanto/integration/util v0.0.0-20221125134142-56b32f6b3e24/go.mod h1:mhkMBNIG+JDz35JAj8JVWMe0/ROpKmk/i6RYHU6Rea4=
 github.com/eclipse/ditto-clients-golang v0.0.0-20220225085802-cf3b306280d3 h1:bfFGs26yNSfhSi6xmnmykB0jZn1Vu5e1/7JA5Wu5aGc=
 github.com/eclipse/ditto-clients-golang v0.0.0-20220225085802-cf3b306280d3/go.mod h1:ey7YwfHSQJsinGkGbgeEgqZA7qJnoB0YiFVTFEY50Jg=
 github.com/eclipse/paho.mqtt.golang v1.3.5/go.mod h1:eTzb4gxwwyWpqBUHGQZ4ABAV7+Jgm1PklsYT/eo8Hcc=
