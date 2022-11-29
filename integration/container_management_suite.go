@@ -10,8 +10,6 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
-//go:build integration
-
 package integration
 
 import (
@@ -94,9 +92,7 @@ func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 	require.NoError(suite.T(), err, "failed to create a websocket connection")
 
 	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, typeEvents, "like(resource:path,'/features/Container:*')")
-	defer closeWSConnection(wsConnection, err)
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", typeEvents)
-
+	suite.assertNoError(wsConnection, err, "failed to subscribe for the %s messages", typeEvents)
 	return wsConnection
 }
 
@@ -104,9 +100,7 @@ func (suite *ctrManagementSuite) create(operation string, params interface{}) (*
 	wsConnection := suite.createWSConnection()
 
 	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
-	defer closeWSConnection(wsConnection, err)
-
-	require.NoError(suite.T(), err, "failed to execute the %s operation", operation)
+	suite.assertNoError(wsConnection, err, "failed to execute the %s operation", operation)
 
 	var ctrFeatureID string
 	var isCtrFeatureCreated bool
@@ -133,35 +127,33 @@ func (suite *ctrManagementSuite) create(operation string, params interface{}) (*
 			}
 			return true, fmt.Errorf("event for modify the container feature status is not received")
 		}
-		return false, fmt.Errorf("unknown message received")
+		return true, fmt.Errorf("unknown message is received")
 	})
-
-	require.NoError(suite.T(), err, "event for creating the container feature is not received")
-
+	suite.assertNoError(wsConnection, err, "failed to process creating the container feature")
 	return wsConnection, ctrFeatureID
 }
 
 func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeatureID string) {
 	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
 	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, typeEvents, filter)
-	defer closeWSConnection(wsConnection, err)
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", typeEvents)
+	suite.assertNoError(wsConnection, err, "failed to subscribe for the %s messages", typeEvents)
 
 	_, err = util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), operationRemove, true)
-	require.NoError(suite.T(), err, "failed to remove the container feature with ID %s", ctrFeatureID)
+	suite.assertNoError(wsConnection, err, "failed to remove the container feature with ID %s", ctrFeatureID)
 
 	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicDeleted {
 			return true, nil
 		}
-		return false, fmt.Errorf("unknown message received")
+		return true, fmt.Errorf("unknown message is received")
 	})
+	suite.assertNoError(wsConnection, err, "failed to process removing the container feature")
 
-	require.NoError(suite.T(), err, "event for removing the container feature is not received")
 }
 
-func closeWSConnection(wsConnection *websocket.Conn, err error) {
+func (suite *ctrManagementSuite) assertNoError(wsConnection *websocket.Conn, err error, message string, messageArs ...interface{}) {
 	if err != nil {
 		wsConnection.Close()
 	}
+	require.NoError(suite.T(), err, message, messageArs)
 }

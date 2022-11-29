@@ -92,7 +92,7 @@ func (suite *ctrFactorySuite) testCreate(operation string, params interface{}) {
 
 func (suite *ctrFactorySuite) assertHTTPServer() {
 	req, err := http.NewRequest(http.MethodGet, httpdRequestURL, nil)
-	require.NoError(suite.T(), err, "failed to create an HTTP request from the container")
+	require.NoError(suite.T(), err, "failed to create an HTTP request to the container")
 
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(suite.T(), err, "failed to get an HTTP response from the container")
@@ -102,6 +102,6 @@ func (suite *ctrFactorySuite) assertHTTPServer() {
 	require.Equal(suite.T(), 200, resp.StatusCode, "HTTP response status code from the container is not expected")
 
 	body, err := io.ReadAll(resp.Body)
-	require.NoError(suite.T(), err, "failed to reach the requested URL on the host from the container")
+	require.NoError(suite.T(), err, "failed to reach the requested URL on the host to the container")
 	require.Equal(suite.T(), httpdResponse, string(body), "HTTP response from the container is not expected")
 }
