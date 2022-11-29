@@ -28,7 +28,7 @@ const separator = ":"
 // function(e.g. sha512) separated by a colon after the filename. If a hash function is not included,
 // then sha256 will be returned.
 func ParseVerificationKey(key string, supportedHashFunc map[string]crypto.Hash) (crypto.PublicKey, crypto.Hash, error) {
-	filename, hashFuncionStr, err := splitVerificationKey(key)
+	filename, hashFunctionStr, err := splitVerificationKey(key)
 	if err != nil {
 		return nil, crypto.Hash(0), err
 	}
@@ -37,8 +37,8 @@ func ParseVerificationKey(key string, supportedHashFunc map[string]crypto.Hash) 
 		hashFunction = crypto.SHA256
 		publicKey    crypto.PublicKey
 	)
-	if len(hashFuncionStr) > 0 {
-		if hashFunction, err = ParseHashFunc(hashFuncionStr, supportedHashFunc); err != nil {
+	if len(hashFunctionStr) > 0 {
+		if hashFunction, err = ParseHashFunc(hashFunctionStr, supportedHashFunc); err != nil {
 			return nil, crypto.Hash(0), err
 		}
 	}

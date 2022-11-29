@@ -46,7 +46,7 @@ func newContainerdClient(namespace string, socket string, rootExec string, metaP
 	if decrErr != nil {
 		return nil, decrErr
 	}
-	verificationMgr, verificationErr := newContainerVerificationManager(ctrdClientSpi, imageVerificationKeys)
+	verificationMgr, verificationErr := newContainerVerificationManager(imageVerificationKeys)
 	if verificationErr != nil {
 		return nil, verificationErr
 	}

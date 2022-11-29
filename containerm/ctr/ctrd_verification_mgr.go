@@ -29,18 +29,18 @@ type verificationKey struct {
 	hashFunction crypto.Hash
 }
 
+type containerVerificationMgr interface {
+	GetVerificationKeys(config *types.VerificationConfig) ([]*verificationKey, error)
+	VerifySignature(ctx context.Context, image, signatureImage containerd.Image, keys []*verificationKey) error
+	GetSignatureReference(image containerd.Image) (string, error)
+}
+
 const (
 	cosignSignatureAnnotationKey = "dev.cosignproject.cosign/signature"
 	cosignSignatureSuffix        = ".sig"
 	tagDelimiter                 = ":"
 	digestDelimiter              = "@"
 )
-
-type containerVerificationMgr interface {
-	GetVerificationKeys(config *types.VerificationConfig) ([]*verificationKey, error)
-	VerifySignature(ctx context.Context, image, signatureImage containerd.Image, keys []*verificationKey) error
-	GetSignatureReference(image containerd.Image) (string, error)
-}
 
 type ctrVerificationMgr struct {
 	keys []*verificationKey
@@ -51,7 +51,7 @@ type signature struct {
 	base64  string
 }
 
-func newContainerVerificationManager(spi containerdSpi, imageVerificationKeys []string) (containerVerificationMgr, error) {
+func newContainerVerificationManager(imageVerificationKeys []string) (containerVerificationMgr, error) {
 	keys, err := parseVerificationKeys(imageVerificationKeys)
 	if err != nil {
 		return nil, err
