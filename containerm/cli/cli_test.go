@@ -19,8 +19,9 @@ import (
 
 const (
 	// command flags
-	cmdFlagHost  = "host"
-	cmdFlagDebug = "debug"
+	cmdFlagHost    = "host"
+	cmdFlagDebug   = "debug"
+	cmdFlagTimeout = "timeout"
 
 	// test input constants
 	testAddressPath = "test-address-path"
@@ -44,12 +45,14 @@ func TestCmdFlags(t *testing.T) {
 
 	expectedCfg := config{
 		addressPath: testAddressPath,
+		timeout:     30,
 		debug:       true,
 	}
 
 	flagsToApply := map[string]string{
-		cmdFlagHost:  expectedCfg.addressPath,
-		cmdFlagDebug: fmt.Sprintf("%v", expectedCfg.debug),
+		cmdFlagHost:    expectedCfg.addressPath,
+		cmdFlagTimeout: fmt.Sprintf("%d", expectedCfg.timeout),
+		cmdFlagDebug:   fmt.Sprintf("%v", expectedCfg.debug),
 	}
 
 	execTestSetupFlags(t, ct, flagsToApply, expectedCfg)
@@ -71,6 +74,7 @@ func (c *cliCmdTest) commandConfig() interface{} {
 func (c *cliCmdTest) commandConfigDefault() interface{} {
 	return config{
 		addressPath: cmdAddressPathDefault,
+		timeout:     cmdTimeoutDefault,
 		debug:       cmdDebugDefault,
 	}
 }

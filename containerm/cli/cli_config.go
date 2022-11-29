@@ -14,11 +14,13 @@ package main
 
 const (
 	cmdAddressPathDefault = "/run/container-management/container-management.sock"
+	cmdTimeoutDefault     = 30
 	cmdDebugDefault       = false
 )
 
 type config struct {
 	addressPath string
+	timeout     int
 	debug       bool
 }
 
@@ -27,6 +29,9 @@ func (c *cli) setupCommandFlags() {
 
 	// init connection address to the GW CM daemon flag
 	flagSet.StringVar(&c.config.addressPath, "host", cmdAddressPathDefault, "Specify the address path to the Eclipse Kanto container management")
+
+	// init connection timeout
+	flagSet.IntVar(&c.config.timeout, "timeout", cmdTimeoutDefault, "Specify the connection timeout in seconds to the Eclipse Kanto container management")
 
 	// init debug flags
 	flagSet.BoolVar(&c.config.debug, "debug", cmdDebugDefault, "Switch commands log level to DEBUG mode")

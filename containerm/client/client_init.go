@@ -25,7 +25,7 @@ import (
 )
 
 // New creates a new containers client.
-func New(connectionAddress string) (Client, error) {
+func New(connectionAddress string, timeout time.Duration) (Client, error) {
 	// Set up a connection to the server.
 	gopts := []grpc.DialOption{
 		grpc.WithInsecure(),
@@ -34,7 +34,7 @@ func New(connectionAddress string) (Client, error) {
 	}
 
 	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, 30*time.Second)
+	ctx, cancel := context.WithTimeout(parentCtx, timeout)
 	defer cancel()
 
 	conn, err := grpc.DialContext(ctx, connectionAddress, gopts...)
