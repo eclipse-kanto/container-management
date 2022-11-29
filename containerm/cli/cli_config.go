@@ -23,7 +23,7 @@ type config struct {
 }
 
 func (c *cli) setupCommandFlags() {
-	flagSet := c.rootCmd.Flags()
+	flagSet := c.rootCmd.PersistentFlags()
 
 	// init connection address to the GW CM daemon flag
 	flagSet.StringVar(&c.config.addressPath, "host", cmdAddressPathDefault, "Specify the address path to the Eclipse Kanto container management")
