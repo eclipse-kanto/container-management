@@ -22,9 +22,6 @@ const (
 	cmdFlagHost    = "host"
 	cmdFlagDebug   = "debug"
 	cmdFlagTimeout = "timeout"
-
-	// test input constants
-	testAddressPath = "test-address-path"
 )
 
 type cliCmdTest struct {
@@ -44,8 +41,8 @@ func TestCmdFlags(t *testing.T) {
 	ct.init()
 
 	expectedCfg := config{
-		addressPath: testAddressPath,
-		timeout:     30,
+		addressPath: "test-addr",
+		timeout:     42,
 		debug:       true,
 	}
 

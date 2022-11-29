@@ -62,8 +62,10 @@ func getDialer(ctx context.Context, addr string) (net.Conn, error) {
 	switch url.Scheme {
 	case "tcp", "tcp4", "tcp6":
 		return tcpConnect(url.Scheme, url.Host)
-	default:
+	case "unix", "":
 		return unixConnect(addr)
+	default:
+		return nil, fmt.Errorf("unsupported scheme %s", url.Scheme)
 	}
 }
 
