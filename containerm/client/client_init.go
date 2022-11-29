@@ -13,25 +13,33 @@
 package client
 
 import (
+	"fmt"
 	"net"
+	"net/url"
 	"time"
 
 	pbcontainers "github.com/eclipse-kanto/container-management/containerm/api/services/containers"
 	pbsysinfo "github.com/eclipse-kanto/container-management/containerm/api/services/sysinfo"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
 // New creates a new containers client.
-func New(connectionAddress string) (Client, error) {
+func New(connectionAddress string, timeout time.Duration) (Client, error) {
 	// Set up a connection to the server.
 	gopts := []grpc.DialOption{
 		grpc.WithInsecure(),
-		grpc.WithDialer(unixConnect),
+		grpc.WithContextDialer(getDialer),
+		grpc.WithBlock(),
 	}
 
-	conn, err := grpc.Dial(connectionAddress, gopts...)
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, timeout)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, connectionAddress, gopts...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while dialing %s: %s", connectionAddress, err)
 	}
 	return newContainersClient(conn)
 }
@@ -46,8 +54,35 @@ func newContainersClient(conn *grpc.ClientConn) (Client, error) {
 	}, nil
 }
 
-func unixConnect(addr string, duration time.Duration) (net.Conn, error) {
+func getDialer(ctx context.Context, addr string) (net.Conn, error) {
+	url, err := url.Parse(addr)
+	if err != nil {
+		return nil, err
+	}
+	switch url.Scheme {
+	case "tcp", "tcp4", "tcp6":
+		return tcpConnect(url.Scheme, url.Host)
+	case "unix", "":
+		return unixConnect(addr)
+	default:
+		return nil, fmt.Errorf("unsupported scheme %s", url.Scheme)
+	}
+}
+
+func unixConnect(addr string) (net.Conn, error) {
 	unixAddr, err := net.ResolveUnixAddr("unix", addr)
+	if err != nil {
+		return nil, err
+	}
 	conn, err := net.DialUnix("unix", nil, unixAddr)
+	return conn, err
+}
+
+func tcpConnect(scheme, addr string) (net.Conn, error) {
+	tcpAddr, err := net.ResolveTCPAddr(scheme, addr)
+	if err != nil {
+		return nil, err
+	}
+	conn, err := net.DialTCP(scheme, nil, tcpAddr)
 	return conn, err
 }

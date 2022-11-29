@@ -86,7 +86,7 @@ func (c *cli) initLog() {
 }
 
 func (c *cli) initGwManClient() {
-	gwClient, err := client.New(c.config.addressPath)
+	gwClient, err := client.New(c.config.addressPath, time.Duration(c.config.timeout)*time.Second)
 	if err != nil {
 		logrus.Fatal(err)
 	}
