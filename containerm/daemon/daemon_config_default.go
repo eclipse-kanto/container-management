@@ -161,7 +161,6 @@ func getDefaultInstance() *config {
 				AcknowledgeTimeout: thingsAcknowledgeTimeoutDefault,
 				SubscribeTimeout:   thingsSubscribeTimeoutDefault,
 				UnsubscribeTimeout: thingsUnsubscribeTimeoutDefault,
-				Transport:          &tlsConfig{},
 			},
 		},
 	}

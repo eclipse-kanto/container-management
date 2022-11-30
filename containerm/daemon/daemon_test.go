@@ -86,6 +86,12 @@ func TestThingsServiceFeaturesConfig(t *testing.T) {
 	testutil.AssertEqual(t, local.ThingsConfig.Features, []string{things.ContainerFactoryFeatureID})
 }
 
+func TestThingsTLSConfig(t *testing.T) {
+	local := &config{}
+	_ = loadLocalConfig("../pkg/testutil/config/daemon-things-tls-config.json", local)
+	testutil.AssertEqual(t, local.ThingsConfig.ThingsConnectionConfig.Transport, &tlsConfig{RootCA: "ca.crt", ClientCert: "client.crt", ClientKey: "client.key"})
+}
+
 func TestExtractOpts(t *testing.T) {
 	t.Run("test_extract_ctr_client_opts", func(t *testing.T) {
 		opts := extractCtrClientConfigOptions(cfg)
