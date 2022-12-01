@@ -73,15 +73,12 @@ func runDaemon(cmd *cobra.Command) error {
 	}
 
 	gwDaemon.init()
-	sockDir, _ := path.Split(gwDaemon.config.GrpcServerConfig.GrpcServerAddressPath)
-	runLockFile := path.Join(sockDir, string(os.PathSeparator), lockFileName)
-	l, lockErr := newRunLock(runLockFile)
+	l, lockErr := newRunLock(path.Join(gwDaemon.config.ManagerConfig.MgrExecPath, lockFileName))
 	if lockErr == nil {
 		err = l.TryLock()
 		if err == nil {
 			defer l.Unlock()
 
-			os.MkdirAll(sockDir, 0755)
 			os.Remove(gwDaemon.config.GrpcServerConfig.GrpcServerAddressPath)
 
 			err := gwDaemon.start()
@@ -103,7 +100,7 @@ func runDaemon(cmd *cobra.Command) error {
 			return err
 		}
 	} else {
-		log.ErrorErr(lockErr, "unable to create lock file at %s", runLockFile)
+		log.ErrorErr(lockErr, "unable to create lock file at %s", gwDaemon.config.ManagerConfig.MgrExecPath)
 		return lockErr
 	}
 	return nil

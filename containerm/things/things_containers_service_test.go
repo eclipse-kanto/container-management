@@ -37,7 +37,7 @@ func TestThingsContainerServiceConnectWithCredentials(t *testing.T) {
 	setupManagerMock(controller)
 	setupEventsManagerMock(controller)
 	setupThingsContainerManager(controller)
-	testThingsMgr = newThingsContainerManager(mockContainerManager, mockEventsManager,
+	testThingsMgr, err := newThingsContainerManager(mockContainerManager, mockEventsManager,
 		testMQTTBrokerURL,
 		0,
 		0,
@@ -51,6 +51,10 @@ func TestThingsContainerServiceConnectWithCredentials(t *testing.T) {
 		0,
 		&tlsConfig{},
 	)
+	if err != nil {
+		t.Errorf("unable to create things container manager: %s", err)
+	}
+
 	setupThingMock(controller)
 
 	listener, err := net.Listen("tcp4", testMQTTBrokerURL)
@@ -84,7 +88,7 @@ func TestThingsContainerServiceConnectNoCredentials(t *testing.T) {
 	setupManagerMock(controller)
 	setupEventsManagerMock(controller)
 	setupThingsContainerManager(controller)
-	testThingsMgr = newThingsContainerManager(mockContainerManager, mockEventsManager,
+	testThingsMgr, err := newThingsContainerManager(mockContainerManager, mockEventsManager,
 		testMQTTBrokerURL,
 		0,
 		0,
@@ -98,6 +102,10 @@ func TestThingsContainerServiceConnectNoCredentials(t *testing.T) {
 		0,
 		&tlsConfig{},
 	)
+	if err != nil {
+		t.Errorf("unable to create things container manager: %s", err)
+	}
+
 	setupThingMock(controller)
 
 	listener, err := net.Listen("tcp4", testMQTTBrokerURL)

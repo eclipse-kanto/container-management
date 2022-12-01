@@ -13,13 +13,23 @@
 package server
 
 import (
+	"path"
+
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
+	"github.com/eclipse-kanto/container-management/containerm/util"
 	"google.golang.org/grpc"
 )
 
 func newGrpcServer(network string, addressPath string, grpcServices []registry.GrpcService) (registry.GrpcServer, error) {
 	server := grpc.NewServer()
+
+	if network == "unix" {
+		addressDir, _ := path.Split(addressPath)
+		if err := util.MkDir(addressDir); err != nil {
+			return nil, err
+		}
+	}
 
 	for _, grpcService := range grpcServices {
 		grpcService.Register(server)

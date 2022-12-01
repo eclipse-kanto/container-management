@@ -73,7 +73,7 @@ const (
 )
 
 func setupThingsContainerManager(controller *gomock.Controller) {
-	testThingsMgr = newThingsContainerManager(mockContainerManager, mockEventsManager,
+	testThingsMgr, _ = newThingsContainerManager(mockContainerManager, mockEventsManager,
 		"",
 		0,
 		0,

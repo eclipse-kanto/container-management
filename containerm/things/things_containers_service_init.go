@@ -18,6 +18,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/events"
 	"github.com/eclipse-kanto/container-management/containerm/mgr"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
+	"github.com/eclipse-kanto/container-management/containerm/util"
 	"github.com/eclipse-kanto/container-management/things/client"
 )
 
@@ -37,7 +38,10 @@ func newThingsContainerManager(mgr mgr.ContainerManager, eventsMgr events.Contai
 	acknowledgeTimeout time.Duration,
 	subscribeTimeout time.Duration,
 	unsubscribeTimeout time.Duration,
-	tlsConfig *tlsConfig) *containerThingsMgr {
+	tlsConfig *tlsConfig) (*containerThingsMgr, error) {
+	if err := util.MkDir(storagePath); err != nil {
+		return nil, err
+	}
 	thingsMgr := &containerThingsMgr{
 		storageRoot:       storagePath,
 		mgr:               mgr,
@@ -61,7 +65,7 @@ func newThingsContainerManager(mgr mgr.ContainerManager, eventsMgr events.Contai
 		WithTLSConfig(tlsConfig.RootCA, tlsConfig.ClientCert, tlsConfig.ClientKey)
 
 	thingsMgr.thingsClient = client.NewClient(thingsClientOpts)
-	return thingsMgr
+	return thingsMgr, nil
 
 }
 
@@ -96,5 +100,5 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 		tOpts.subscribeTimeout,
 		tOpts.unsubscribeTimeout,
 		tOpts.tlsConfig,
-	), nil
+	)
 }

@@ -13,6 +13,7 @@
 package network
 
 import (
+	"os"
 	"testing"
 
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
@@ -20,12 +21,18 @@ import (
 )
 
 func TestInit(t *testing.T) {
+	testDir := "test"
+	defer os.Remove(testDir)
+
 	nOpts := []NetOpt{
 		WithLibNetType(bridgeNetworkName),
 		WithLibNetIPTables(true),
 		WithLibNetMtu(1500),
 		WithLibNetIPForward(true),
-		WithLibNetName("test0")}
+		WithLibNetName("test0"),
+		WithLibNetExecRoot(testDir),
+		WithLibNetMetaPath(testDir),
+	}
 	registryCtx := &registry.ServiceRegistryContext{
 		Config: nOpts,
 	}
