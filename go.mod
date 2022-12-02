@@ -11,7 +11,7 @@ require (
 	github.com/containerd/typeurl v1.0.2
 	github.com/containers/ocicrypt v1.1.6
 	github.com/docker/docker v20.10.17+incompatible
-	github.com/eclipse-kanto/kanto/integration/util v0.0.0-20221125134142-56b32f6b3e24
+	github.com/eclipse-kanto/kanto/integration/util v0.0.0-20221202082137-517d8d8a8766
 	github.com/eclipse/ditto-clients-golang v0.0.0-20220225085802-cf3b306280d3
 	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/gogo/protobuf v1.3.2

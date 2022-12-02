@@ -36,20 +36,11 @@ type ctrManagementSuite struct {
 }
 
 const (
-	statusCreated               = "CREATED"
-	statusRunning               = "RUNNING"
-	influxdbImageRef            = "docker.io/library/influxdb:1.8.4"
-	httpdImageRef               = "docker.io/library/httpd:latest"
 	ctrFactoryFeatureID         = "ContainerFactory"
-	ctrFactoryFeatureDefinition = "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.2.0\"]"
-	typeEvents                  = "START-SEND-EVENTS"
-	paramImageRef               = "imageRef"
-	paramStart                  = "start"
-	paramConfig                 = "config"
-	operationCreate             = "create"
-	operationCreateWithConfig   = "createWithConfig"
-	operationRemove             = "remove"
+	ctrFactoryFeatureDefinition = "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.3.0\"]"
 	propertyStatus              = "status"
+	filterCtrFeatures           = "like(resource:path,'/features/Container:*')"
+	filterCtrFeature            = "like(resource:path,'/features/%s')"
 )
 
 func (suite *ctrManagementSuite) SetupCtrManagementSuite() {
@@ -91,8 +82,8 @@ func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 	wsConnection, err := util.NewDigitalTwinWSConnection(suite.Cfg)
 	require.NoError(suite.T(), err, "failed to create a websocket connection")
 
-	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, typeEvents, "like(resource:path,'/features/Container:*')")
-	suite.assertNoError(wsConnection, err, "failed to subscribe for the %s messages", typeEvents)
+	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, filterCtrFeatures)
+	suite.assertNoError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
 	return wsConnection
 }
 
@@ -130,13 +121,15 @@ func (suite *ctrManagementSuite) create(operation string, params interface{}) (*
 		return true, fmt.Errorf("unknown message is received")
 	})
 	suite.assertNoError(wsConnection, err, "failed to process creating the container feature")
+	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
 	return wsConnection, ctrFeatureID
 }
 
 func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeatureID string) {
-	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, typeEvents, filter)
-	suite.assertNoError(wsConnection, err, "failed to subscribe for the %s messages", typeEvents)
+	filter := fmt.Sprintf(filterCtrFeature, ctrFeatureID)
+	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, filter)
+	suite.assertNoError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
+	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
 
 	_, err = util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), operationRemove, true)
 	suite.assertNoError(wsConnection, err, "failed to remove the container feature with ID %s", ctrFeatureID)
