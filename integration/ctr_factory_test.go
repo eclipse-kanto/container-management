@@ -23,11 +23,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-const (
-	httpdRequestURL = "http://127.0.0.1:5000"
-	httpdResponse   = "<html><body><h1>It works!</h1></body></html>\n"
-)
-
 type ctrFactorySuite struct {
 	ctrManagementSuite
 }
@@ -45,6 +40,7 @@ func TestCtrFactorySuite(t *testing.T) {
 }
 
 func (suite *ctrFactorySuite) TestCreate() {
+	const operationCreate = "create"
 	params := make(map[string]interface{})
 	params[paramImageRef] = influxdbImageRef
 	params[paramStart] = true
@@ -62,12 +58,19 @@ func (suite *ctrFactorySuite) TestCreateWithConfig() {
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
+	const (
+		paramExtraHosts    = "extraHosts"
+		paramPortMapping   = "portMappings"
+		paramHostPort      = "hostPort"
+		paramContainerPort = "containerPort"
+		httpdImageRef      = "docker.io/library/httpd:latest"
+	)
 	config := make(map[string]interface{})
-	config["extraHosts"] = []string{"ctrhost:host_ip"}
-	config["portMappings"] = []map[string]interface{}{
+	config[paramExtraHosts] = []string{"ctrhost:host_ip"}
+	config[paramPortMapping] = []map[string]interface{}{
 		{
-			"hostPort":      5000,
-			"containerPort": 80,
+			paramHostPort:      5000,
+			paramContainerPort: 80,
 		},
 	}
 
@@ -91,6 +94,11 @@ func (suite *ctrFactorySuite) testCreate(operation string, params interface{}) {
 }
 
 func (suite *ctrFactorySuite) assertHTTPServer() {
+	const (
+		httpdRequestURL = "http://127.0.0.1:5000"
+		httpdResponse   = "<html><body><h1>It works!</h1></body></html>\n"
+	)
+
 	req, err := http.NewRequest(http.MethodGet, httpdRequestURL, nil)
 	require.NoError(suite.T(), err, "failed to create an HTTP request to the container")
 

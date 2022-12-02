@@ -35,15 +35,8 @@ type ctrManagementSuite struct {
 	topicDeleted         string
 }
 
-const (
-	ctrFactoryFeatureID         = "ContainerFactory"
-	ctrFactoryFeatureDefinition = "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.3.0\"]"
-	propertyStatus              = "status"
-	filterCtrFeatures           = "like(resource:path,'/features/Container:*')"
-	filterCtrFeature            = "like(resource:path,'/features/%s')"
-)
-
 func (suite *ctrManagementSuite) SetupCtrManagementSuite() {
+	const ctrFactoryFeatureID = "ContainerFactory"
 	suite.Setup(suite.T())
 
 	suite.ctrThingID = suite.ThingCfg.DeviceID + ":edge:containers"
@@ -71,6 +64,7 @@ func (suite *ctrManagementSuite) getActualCtrStatus(ctrFeatureID string) string 
 }
 
 func (suite *ctrManagementSuite) assertCtrFactoryFeature() {
+	const ctrFactoryFeatureDefinition = "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.3.0\"]"
 	ctrFactoryDefinition := suite.ctrFactoryFeatureURL + "/definition"
 	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrFactoryDefinition, nil)
 
@@ -79,6 +73,8 @@ func (suite *ctrManagementSuite) assertCtrFactoryFeature() {
 }
 
 func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
+	const filterCtrFeatures = "like(resource:path,'/features/Container:*')"
+
 	wsConnection, err := util.NewDigitalTwinWSConnection(suite.Cfg)
 	require.NoError(suite.T(), err, "failed to create a websocket connection")
 
@@ -88,6 +84,8 @@ func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 }
 
 func (suite *ctrManagementSuite) create(operation string, params interface{}) (*websocket.Conn, string) {
+	const propertyStatus = "status"
+
 	wsConnection := suite.createWSConnection()
 
 	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
@@ -126,6 +124,11 @@ func (suite *ctrManagementSuite) create(operation string, params interface{}) (*
 }
 
 func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeatureID string) {
+	const (
+		filterCtrFeature = "like(resource:path,'/features/%s')"
+		operationRemove  = "remove"
+	)
+
 	filter := fmt.Sprintf(filterCtrFeature, ctrFeatureID)
 	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, filter)
 	suite.assertNoError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)

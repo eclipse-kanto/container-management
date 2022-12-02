@@ -16,11 +16,8 @@ const (
 	statusCreated             = "CREATED"
 	statusRunning             = "RUNNING"
 	influxdbImageRef          = "docker.io/library/influxdb:1.8.4"
-	httpdImageRef             = "docker.io/library/httpd:latest"
 	paramImageRef             = "imageRef"
 	paramStart                = "start"
 	paramConfig               = "config"
-	operationCreate           = "create"
 	operationCreateWithConfig = "createWithConfig"
-	operationRemove           = "remove"
 )
