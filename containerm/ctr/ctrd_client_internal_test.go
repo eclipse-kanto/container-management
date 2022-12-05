@@ -246,6 +246,7 @@ func TestClientInternalGetImage(t *testing.T) {
 				imageMock := mocksContainerd.NewMockImage(ctrl)
 				spiMock.EXPECT().GetImage(gomock.Any(), testImageInfo.Name).Return(imageMock, nil)
 				decryptMgrMock.EXPECT().CheckAuthorization(gomock.Any(), imageMock, dc).Return(nil)
+				imageMock.EXPECT().Name().Return(testImageInfo.Name)
 				return imageMock, nil
 			},
 		},

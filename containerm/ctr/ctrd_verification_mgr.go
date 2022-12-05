@@ -31,8 +31,8 @@ type verificationKey struct {
 
 type containerVerificationMgr interface {
 	GetVerificationKeys(config *types.VerificationConfig) ([]*verificationKey, error)
-	VerifySignature(ctx context.Context, image, signatureImage containerd.Image, keys []*verificationKey) error
 	GetSignatureReference(image containerd.Image) (string, error)
+	VerifySignature(ctx context.Context, image, signatureImage containerd.Image, keys ...*verificationKey) error
 }
 
 const (
@@ -82,7 +82,7 @@ func (mgr *ctrVerificationMgr) GetSignatureReference(image containerd.Image) (st
 	return fmt.Sprint(imageRef[:index], tagDelimiter, d.Algorithm().String(), "-", d.Hex(), cosignSignatureSuffix), nil
 }
 
-func (mgr *ctrVerificationMgr) VerifySignature(ctx context.Context, image, signatureImage containerd.Image, keys []*verificationKey) error {
+func (mgr *ctrVerificationMgr) VerifySignature(ctx context.Context, image, signatureImage containerd.Image, keys ...*verificationKey) error {
 	signatures, err := getSignatures(ctx, signatureImage.ContentStore(), signatureImage.Target())
 	if err != nil {
 		return err

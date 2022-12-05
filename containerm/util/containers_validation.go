@@ -64,23 +64,6 @@ func ValidateImage(img types.Image) error {
 	if img.Name == "" {
 		return log.NewError("image is not provided")
 	}
-	if img.VerificationConfig != nil {
-		return ValidateVerificationConfig(img.VerificationConfig)
-	}
-	return nil
-}
-
-// ValidateVerificationConfig validates the image verification configuration
-func ValidateVerificationConfig(verificationConfig *types.VerificationConfig) error {
-	for _, key := range verificationConfig.Keys {
-		filename, _, err := splitVerificationKey(key)
-		if err != nil {
-			return err
-		}
-		if err = FileNotExistEmptyOrDir(filename); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 

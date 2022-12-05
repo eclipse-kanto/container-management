@@ -106,30 +106,10 @@ func (ctrdClient *containerdClient) getImage(ctx context.Context, imageInfo type
 		return nil, err
 	}
 
-	if len(verificationKeys) > 0 {
-		signatureRef, verificationErr := ctrdClient.verificationMgr.GetSignatureReference(ctrdImage)
-		if err != nil {
-			return nil, verificationErr
-		}
-		signatureImage, verificationErr := ctrdClient.spi.GetImage(ctx, signatureRef)
-		if err != nil {
-			if errdefs.IsNotFound(verificationErr) {
-				log.Debug("no signature found of image = %s", imageInfo.Name)
-			} else {
-				return nil, verificationErr
-			}
-		} else {
-			verificationErr = ctrdClient.verificationMgr.VerifySignature(ctx, ctrdImage, signatureImage, verificationKeys)
-			if verificationErr != nil {
-				return nil, verificationErr
-			}
-		}
-	} else {
-		// no public keys, skip verification
-		log.Debug("no keys provided, signature verification will be skipped for image = %s", imageInfo.Name)
-	}
-
 	if err = ctrdClient.decMgr.CheckAuthorization(ctx, ctrdImage, decryptConfig); err != nil {
+		return nil, err
+	}
+	if err = ctrdClient.verifyImage(ctx, ctrdImage, false, verificationKeys); err != nil {
 		return nil, err
 	}
 	return ctrdImage, nil
@@ -160,7 +140,7 @@ func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageInfo typ
 			if checkErr := ctrdClient.decMgr.CheckAuthorization(ctx, ctrdImage, dc); checkErr != nil {
 				return nil, checkErr
 			}
-			if verifyErr := ctrdClient.verifyImage(ctx, ctrdImage, vk); verifyErr != nil {
+			if verifyErr := ctrdClient.verifyImage(ctx, ctrdImage, true, vk); verifyErr != nil {
 				return nil, verifyErr
 			}
 			unpackOpts, optsErr := ctrdClient.generateUnpackOpts(imageInfo)
@@ -175,18 +155,20 @@ func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageInfo typ
 		if checkErr := ctrdClient.decMgr.CheckAuthorization(ctx, ctrdImage, dc); checkErr != nil {
 			return nil, checkErr
 		}
-		if verifyErr := ctrdClient.verifyImage(ctx, ctrdImage, vk); verifyErr != nil {
+		if verifyErr := ctrdClient.verifyImage(ctx, ctrdImage, true, vk); verifyErr != nil {
 			return nil, verifyErr
 		}
 	}
 	return ctrdImage, err
 }
 
-func (ctrdClient *containerdClient) verifyImage(ctx context.Context, image containerd.Image, verificationKeys []*verificationKey) error {
+var skipVerificationMessage = "signature verification is skipped for image = %s, %s"
+
+func (ctrdClient *containerdClient) verifyImage(ctx context.Context, image containerd.Image, pull bool, verificationKeys []*verificationKey) error {
 	imageName := image.Name()
 	if len(verificationKeys) == 0 {
-		// no public keys , skip verification
-		log.Debug("no keys provided, signature verification will be skipped for image = %s", imageName)
+		// no public keys, skip verification
+		log.Debug(skipVerificationMessage, imageName, "no keys are provided")
 		return nil
 	}
 	signatureRef, err := ctrdClient.verificationMgr.GetSignatureReference(image)
@@ -195,13 +177,17 @@ func (ctrdClient *containerdClient) verifyImage(ctx context.Context, image conta
 	}
 	signatureImage, err := ctrdClient.spi.GetImage(ctx, signatureRef)
 	if err != nil {
-		// if the image is not present locally - pull it
+		// if the image is not present locally - either pull it(ctr create), or skip verification(ctr start)
 		if errdefs.IsNotFound(err) {
+			if !pull {
+				log.DebugErr(err, skipVerificationMessage, "no signature is found locally", imageName)
+				return nil
+			}
 			signatureImage, err = ctrdClient.spi.PullImage(ctx, signatureRef, ctrdClient.generateRemoteOpts(signatureRef)...)
 			if err != nil {
 				if strings.Contains(err.Error(), "not found") {
 					// the image is not signed, skip verification
-					log.WarnErr(err, "no signature is found, will skip verification of image = %s", imageName)
+					log.WarnErr(err, skipVerificationMessage, "no signature", imageName)
 					return nil
 				}
 				return err
@@ -210,7 +196,7 @@ func (ctrdClient *containerdClient) verifyImage(ctx context.Context, image conta
 			return err
 		}
 	}
-	return ctrdClient.verificationMgr.VerifySignature(ctx, image, signatureImage, verificationKeys)
+	return ctrdClient.verificationMgr.VerifySignature(ctx, image, signatureImage, verificationKeys...)
 }
 
 func (ctrdClient *containerdClient) createSnapshot(ctx context.Context, containerID string, image containerd.Image, imageInfo types.Image) error {
