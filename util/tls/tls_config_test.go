@@ -24,44 +24,25 @@ var (
 	keyFile  = "testdata/key.pem"
 )
 
-func TestUseCertificateSettingsOK(t *testing.T) {
-	use, err := newFSConfig(nil, certFile, keyFile)
+func TestNewConfig(t *testing.T) {
+	cfg, err := NewConfig("testdata/ca.crt", certFile, keyFile)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(use.Certificates) == 0 {
-		t.Fatal("certificates length must not be 0")
+	testTLSConfig(t, cfg)
+}
+
+func TestUseCertificateSettingsOK(t *testing.T) {
+	cfg, err := newFSConfig(nil, certFile, keyFile)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if len(use.CipherSuites) == 0 {
-		t.Fatal("cipher suites length must not be 0")
-	}
-	// assert that cipher suites identifiers are contained in tls.CipherSuites
-	for _, csID := range use.CipherSuites {
-		if !func() bool {
-			for _, cs := range tls.CipherSuites() {
-				if cs.ID == csID {
-					return true
-				}
-			}
-			return false
-		}() {
-			t.Fatalf("cipher suite %d is not implemented", csID)
-		}
-	}
+	testTLSConfig(t, cfg)
 }
 
 func TestUseCertificateSettingsFail(t *testing.T) {
 	expectedErrorStr := "failed to load X509 key pair: open %s: no such file or directory"
 	nonExisting := "nonexisting.test"
-
-	use, err := newFSConfig(nil, "", "")
-
-	if err.Error() != fmt.Errorf(expectedErrorStr, "").Error() {
-		t.Fatalf("expected X509 load error, got: %s", err)
-	}
-	if use != nil {
-		t.Fatalf("expected nil, got: %v", use)
-	}
 
 	assertCertError(t, "", "", fmt.Errorf(expectedErrorStr, ""))
 
@@ -72,8 +53,14 @@ func TestUseCertificateSettingsFail(t *testing.T) {
 	assertCertError(t, "", keyFile, fmt.Errorf(expectedErrorStr, ""))
 	assertCertError(t, nonExisting, keyFile, fmt.Errorf(expectedErrorStr, nonExisting))
 
-	expectedErr := errors.New("failed to parse CA tls_config.go")
-	_, err = newCAPool("tls_config.go")
+	expectedErr := errors.New("failed to parse CA testdata/invalid.pem")
+	_, err := newCAPool("testdata/invalid.pem")
+	if expectedErr.Error() != err.Error() {
+		t.Fatalf("expected error : %s, got: %s", expectedErr, err)
+	}
+
+	expectedErr = errors.New("failed to load CA: open \\\000: invalid argument")
+	_, err = newCAPool("\\\000")
 	if expectedErr.Error() != err.Error() {
 		t.Fatalf("expected error : %s, got: %s", expectedErr, err)
 	}
@@ -86,5 +73,36 @@ func assertCertError(t *testing.T, certFile, keyFile string, expectedErr error) 
 	}
 	if use != nil {
 		t.Fatalf("expected nil, got: %v", use)
+	}
+}
+
+func testTLSConfig(t *testing.T, cfg *tls.Config) {
+	if len(cfg.Certificates) == 0 {
+		t.Fatal("certificates length must not be 0")
+	}
+	if len(cfg.CipherSuites) == 0 {
+		t.Fatal("cipher suites length must not be 0")
+	}
+	// assert that cipher suites identifiers are contained in tls.CipherSuites
+	for _, csID := range cfg.CipherSuites {
+		if !func() bool {
+			for _, cs := range tls.CipherSuites() {
+				if cs.ID == csID {
+					return true
+				}
+			}
+			return false
+		}() {
+			t.Fatalf("cipher suite %d is not implemented", csID)
+		}
+	}
+	if cfg.InsecureSkipVerify {
+		t.Fatal("skip verify is set to true")
+	}
+	if cfg.MinVersion != tls.VersionTLS12 {
+		t.Fatalf("invalid min TLS version %d", cfg.MinVersion)
+	}
+	if cfg.MaxVersion != tls.VersionTLS13 {
+		t.Fatalf("invalid max TLS version %d", cfg.MaxVersion)
 	}
 }

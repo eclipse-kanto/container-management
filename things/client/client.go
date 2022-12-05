@@ -13,6 +13,7 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"sync"
@@ -90,11 +91,14 @@ func setupTLSConfiguration(pahoOpts *MQTT.ClientOptions, configuration *Configur
 	}
 
 	if isConnectionSecure(u.Scheme) {
+		if configuration.tlsConfig == nil {
+			return errors.New("connection is secure, but no TLS configuration is provided")
+		}
 		tlsConfig, err := tls.NewConfig(configuration.tlsConfig.RootCA, configuration.tlsConfig.ClientCert, configuration.tlsConfig.ClientKey)
 		if err != nil {
 			return err
 		}
-		pahoOpts.TLSConfig = tlsConfig
+		pahoOpts.SetTLSConfig(tlsConfig)
 	}
 
 	return nil
