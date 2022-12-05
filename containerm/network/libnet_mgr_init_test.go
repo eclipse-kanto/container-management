@@ -21,8 +21,10 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	testDir := "test"
-	defer os.Remove(testDir)
+	execRootDir := "testdata/execRoot"
+	metaPathDir := "testdata/metaPath"
+	defer os.Remove(execRootDir)
+	defer os.Remove(metaPathDir)
 
 	nOpts := []NetOpt{
 		WithLibNetType(bridgeNetworkName),
@@ -30,9 +32,10 @@ func TestInit(t *testing.T) {
 		WithLibNetMtu(1500),
 		WithLibNetIPForward(true),
 		WithLibNetName("test0"),
-		WithLibNetExecRoot(testDir),
-		WithLibNetMetaPath(testDir),
+		WithLibNetExecRoot(execRootDir),
+		WithLibNetMetaPath(metaPathDir),
 	}
+
 	registryCtx := &registry.ServiceRegistryContext{
 		Config: nOpts,
 	}
@@ -40,6 +43,14 @@ func TestInit(t *testing.T) {
 	testutil.AssertError(t, nil, err)
 	testNetMgr := netMgr.(*libnetworkMgr)
 	testutil.AssertNotNil(t, testNetMgr)
+
+	info, err := os.Stat(execRootDir)
+	testutil.AssertNil(t, err)
+	testutil.AssertNotNil(t, info)
+
+	info, err = os.Stat(metaPathDir)
+	testutil.AssertNil(t, err)
+	testutil.AssertNotNil(t, info)
 
 	expectedNetOpts := &netOpts{}
 	applyOptsNet(expectedNetOpts, nOpts...)

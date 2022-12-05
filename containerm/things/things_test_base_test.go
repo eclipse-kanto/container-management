@@ -13,6 +13,8 @@
 package things
 
 import (
+	"os"
+
 	"github.com/golang/mock/gomock"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
@@ -72,8 +74,9 @@ const (
 	testThingsStoragePath = "../pkg/testutil/metapath/valid/things"
 )
 
-func setupThingsContainerManager(controller *gomock.Controller) {
-	testThingsMgr, _ = newThingsContainerManager(mockContainerManager, mockEventsManager,
+func setupThingsContainerManager(controller *gomock.Controller) error {
+	defer os.RemoveAll(testThingsStoragePath)
+	mgr, err := newThingsContainerManager(mockContainerManager, mockEventsManager,
 		"",
 		0,
 		0,
@@ -85,5 +88,8 @@ func setupThingsContainerManager(controller *gomock.Controller) {
 		0,
 		0,
 		0,
-		&tlsConfig{})
+		&tlsConfig{},
+	)
+	testThingsMgr = mgr
+	return err
 }

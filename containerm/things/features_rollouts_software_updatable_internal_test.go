@@ -456,7 +456,7 @@ func mockExecInstallErrorWhileStartingContainer(t *testing.T) error {
 	return nil
 }
 
-//  Simulate - 1 of each in order: success, error, success after error
+// Simulate - 1 of each in order: success, error, success after error
 func mockExecSURemoveForced(t *testing.T) error {
 	setupSUFeature(t)
 	gomock.InOrder(
@@ -503,16 +503,19 @@ func setupSUFeature(t *testing.T) {
 	setupEventsManagerMock(controller)
 	setupThingMock(controller)
 	setupDummyHTTPServer(true)
-	setupThingsContainerManager(controller)
+	testutil.AssertNil(t, setupThingsContainerManager(controller))
 	testSoftwareUpdatable = newSoftwareUpdatable(mockThing, mockContainerManager, mockEventsManager)
 }
 
 // HTTP Server mock -----------------------------------------------
 
-/* Basically the expected outgoing http request could be asserted by either
+/*
+	Basically the expected outgoing http request could be asserted by either
+
 creating a wrapper http client and mocking it OR by mocking an http server.
 The second approach looks cleaner at the moment,
-as it does not require changes in the source code. */
+as it does not require changes in the source code.
+*/
 func setupDummyHTTPServer(plain bool) {
 	handler := http.NewServeMux()
 	handler.HandleFunc(testHTTPServerImageURLPathValid, validURLHandler)

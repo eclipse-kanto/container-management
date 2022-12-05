@@ -14,6 +14,7 @@ package things
 
 import (
 	"net"
+	"os"
 	"testing"
 	"time"
 
@@ -34,9 +35,11 @@ func TestThingsContainerServiceConnectWithCredentials(t *testing.T) {
 	defer func() {
 		controller.Finish()
 	}()
+	defer os.RemoveAll(testThingsStoragePath)
 	setupManagerMock(controller)
 	setupEventsManagerMock(controller)
-	setupThingsContainerManager(controller)
+	testutil.AssertNil(t, setupThingsContainerManager(controller))
+
 	testThingsMgr, err := newThingsContainerManager(mockContainerManager, mockEventsManager,
 		testMQTTBrokerURL,
 		0,
@@ -51,9 +54,7 @@ func TestThingsContainerServiceConnectWithCredentials(t *testing.T) {
 		0,
 		&tlsConfig{},
 	)
-	if err != nil {
-		t.Errorf("unable to create things container manager: %s", err)
-	}
+	testutil.AssertNil(t, err)
 
 	setupThingMock(controller)
 
@@ -85,9 +86,11 @@ func TestThingsContainerServiceConnectNoCredentials(t *testing.T) {
 	defer func() {
 		controller.Finish()
 	}()
+	defer os.RemoveAll(testThingsStoragePath)
 	setupManagerMock(controller)
 	setupEventsManagerMock(controller)
-	setupThingsContainerManager(controller)
+	testutil.AssertNil(t, setupThingsContainerManager(controller))
+
 	testThingsMgr, err := newThingsContainerManager(mockContainerManager, mockEventsManager,
 		testMQTTBrokerURL,
 		0,
@@ -102,9 +105,7 @@ func TestThingsContainerServiceConnectNoCredentials(t *testing.T) {
 		0,
 		&tlsConfig{},
 	)
-	if err != nil {
-		t.Errorf("unable to create things container manager: %s", err)
-	}
+	testutil.AssertNil(t, err)
 
 	setupThingMock(controller)
 

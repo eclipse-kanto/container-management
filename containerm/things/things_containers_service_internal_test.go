@@ -51,7 +51,7 @@ func TestProcessContainerThingDefault(t *testing.T) {
 			setupManagerMock(controller)
 			setupEventsManagerMock(controller)
 			setupThingMock(controller)
-			setupThingsContainerManager(controller)
+			testutil.AssertNil(t, setupThingsContainerManager(controller))
 
 			namespaceID := client.NewNamespacedID("things.containers.service", "test")
 			testThingsMgr.containerThingID = namespaceID.String()

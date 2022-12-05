@@ -73,7 +73,8 @@ func runDaemon(cmd *cobra.Command) error {
 	}
 
 	gwDaemon.init()
-	l, lockErr := newRunLock(path.Join(gwDaemon.config.ManagerConfig.MgrExecPath, lockFileName))
+	lockFilePath := path.Join(gwDaemon.config.ManagerConfig.MgrExecPath, lockFileName)
+	l, lockErr := newRunLock(lockFilePath)
 	if lockErr == nil {
 		err = l.TryLock()
 		if err == nil {
@@ -100,7 +101,7 @@ func runDaemon(cmd *cobra.Command) error {
 			return err
 		}
 	} else {
-		log.ErrorErr(lockErr, "unable to create lock file at %s", gwDaemon.config.ManagerConfig.MgrExecPath)
+		log.ErrorErr(lockErr, "unable to create lock file %s", lockFilePath)
 		return lockErr
 	}
 	return nil

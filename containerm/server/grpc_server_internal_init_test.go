@@ -14,6 +14,8 @@ package server
 
 import (
 	"context"
+	"os"
+	"path"
 	"testing"
 
 	"github.com/containerd/containerd/errdefs"
@@ -105,8 +107,14 @@ func TestRegistryInit(t *testing.T) {
 				testutil.AssertNotNil(t, grpcSrv)
 				testutil.AssertEqual(t, testCase.wantNewtork, grpcSrv.network)
 				testutil.AssertEqual(t, testCase.wantAdressPath, grpcSrv.addressPath)
+				if grpcSrv.network == "unix" {
+					addressDir, _ := path.Split(grpcSrv.addressPath)
+					info, err := os.Stat(addressDir)
+					testutil.AssertNil(t, err)
+					testutil.AssertNotNil(t, info)
+					testutil.AssertNil(t, os.Remove(addressDir))
+				}
 			}
-
 		})
 	}
 

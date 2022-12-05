@@ -67,5 +67,4 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 	}
 
 	return newGrpcServer(grpcServerOpts.network, grpcServerOpts.addressPath, grpcServices)
-
 }
