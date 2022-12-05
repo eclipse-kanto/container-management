@@ -40,12 +40,14 @@ func TestCtrFactorySuite(t *testing.T) {
 }
 
 func (suite *ctrFactorySuite) TestCreate() {
-	const operationCreate = "create"
 	params := make(map[string]interface{})
 	params[paramImageRef] = influxdbImageRef
 	params[paramStart] = true
 
-	suite.testCreate(operationCreate, params)
+	wsConnection, ctrFeatureID := suite.create(params)
+
+	defer wsConnection.Close()
+	defer suite.remove(wsConnection, ctrFeatureID)
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfig() {
@@ -54,7 +56,10 @@ func (suite *ctrFactorySuite) TestCreateWithConfig() {
 	params[paramStart] = true
 	params[paramConfig] = make(map[string]interface{})
 
-	suite.testCreate(operationCreateWithConfig, params)
+	wsConnection, ctrFeatureID := suite.createWithConfig(params)
+
+	defer wsConnection.Close()
+	defer suite.remove(wsConnection, ctrFeatureID)
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
@@ -79,18 +84,11 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 	params[paramStart] = true
 	params[paramConfig] = config
 
-	wsConnection, ctrFeatureID := suite.create(operationCreateWithConfig, params)
+	wsConnection, ctrFeatureID := suite.createWithConfig(params)
 	defer wsConnection.Close()
 	defer suite.remove(wsConnection, ctrFeatureID)
 
 	suite.assertHTTPServer()
-}
-
-func (suite *ctrFactorySuite) testCreate(operation string, params interface{}) {
-	wsConnection, ctrFeatureID := suite.create(operation, params)
-	defer wsConnection.Close()
-	defer suite.remove(wsConnection, ctrFeatureID)
-	require.Equal(suite.T(), statusRunning, suite.getActualCtrStatus(ctrFeatureID), "container status is not expected")
 }
 
 func (suite *ctrFactorySuite) assertHTTPServer() {

@@ -13,11 +13,8 @@
 package integration
 
 const (
-	statusCreated             = "CREATED"
-	statusRunning             = "RUNNING"
-	influxdbImageRef          = "docker.io/library/influxdb:1.8.4"
-	paramImageRef             = "imageRef"
-	paramStart                = "start"
-	paramConfig               = "config"
-	operationCreateWithConfig = "createWithConfig"
+	influxdbImageRef = "docker.io/library/influxdb:1.8.4"
+	paramImageRef    = "imageRef"
+	paramStart       = "start"
+	paramConfig      = "config"
 )

@@ -83,8 +83,12 @@ func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 	return wsConnection
 }
 
-func (suite *ctrManagementSuite) create(operation string, params interface{}) (*websocket.Conn, string) {
-	const propertyStatus = "status"
+func (suite *ctrManagementSuite) createOperation(operation string, params map[string]interface{}) (*websocket.Conn, string) {
+	const (
+		propertyStatus = "status"
+		statusCreated  = "CREATED"
+		statusRunning  = "RUNNING"
+	)
 
 	wsConnection := suite.createWSConnection()
 
@@ -105,13 +109,14 @@ func (suite *ctrManagementSuite) create(operation string, params interface{}) (*
 			}
 			status, check := event.Value.(map[string]interface{})
 			if !check {
-				return true, fmt.Errorf("failed to parsing the property status value from the received event")
+				return true, fmt.Errorf("failed to parse the property status value from the received event")
 			}
 			if status[propertyStatus].(string) == statusCreated {
 				isCtrFeatureCreated = true
 				return false, nil
 			}
-			if isCtrFeatureCreated && status[propertyStatus].(string) == statusRunning {
+			if isCtrFeatureCreated {
+				suite.expectedStatus(status[propertyStatus].(string), params[paramStart].(bool))
 				return true, nil
 			}
 			return true, fmt.Errorf("event for modify the container feature status is not received")
@@ -121,6 +126,26 @@ func (suite *ctrManagementSuite) create(operation string, params interface{}) (*
 	suite.assertNoError(wsConnection, err, "failed to process creating the container feature")
 	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
 	return wsConnection, ctrFeatureID
+}
+
+func (suite *ctrManagementSuite) expectedStatus(status string, isStarted bool) {
+	const (
+		statusCreated = "CREATED"
+		statusRunning = "RUNNING"
+	)
+	if isStarted {
+		require.Equal(suite.T(), statusRunning, status, "container status is not expected")
+		return
+	}
+	require.Equal(suite.T(), statusCreated, status, "container status is not expected")
+}
+
+func (suite *ctrManagementSuite) create(params map[string]interface{}) (*websocket.Conn, string) {
+	return suite.createOperation("create", params)
+}
+
+func (suite *ctrManagementSuite) createWithConfig(params map[string]interface{}) (*websocket.Conn, string) {
+	return suite.createOperation("createWithConfig", params)
 }
 
 func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeatureID string) {
@@ -134,7 +159,7 @@ func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeature
 	suite.assertNoError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
 	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
 
-	_, err = util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), operationRemove, true)
+	_, err = util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), "remove", true)
 	suite.assertNoError(wsConnection, err, "failed to remove the container feature with ID %s", ctrFeatureID)
 
 	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
