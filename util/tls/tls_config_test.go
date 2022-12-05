@@ -22,52 +22,45 @@ import (
 var (
 	certFile = "testdata/certificate.pem"
 	keyFile  = "testdata/key.pem"
+	caFile   = "testdata/ca.crt"
 )
 
-func TestNewConfig(t *testing.T) {
-	cfg, err := NewConfig("testdata/ca.crt", certFile, keyFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	testTLSConfig(t, cfg)
-}
-
-func TestUseCertificateSettingsOK(t *testing.T) {
-	cfg, err := newFSConfig(nil, certFile, keyFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	testTLSConfig(t, cfg)
+func TestValidCertificateConfig(t *testing.T) {
+	assertValidTLSConfig(t, caFile, certFile, keyFile)
 }
 
 func TestUseCertificateSettingsFail(t *testing.T) {
-	expectedErrorStr := "failed to load X509 key pair: open %s: no such file or directory"
+	failedToLoadError := "failed to load X509 key pair: open %s: no such file or directory"
+	noSuchCAFileError := "failed to load CA: open %s: no such file or directory"
 	nonExisting := "nonexisting.test"
+	invalidFile := "testdata/invalid.pem"
 
-	assertCertError(t, "", "", fmt.Errorf(expectedErrorStr, ""))
-
-	assertCertError(t, certFile, "", fmt.Errorf(expectedErrorStr, ""))
-	assertCertError(t, certFile, nonExisting, fmt.Errorf(expectedErrorStr, nonExisting))
-	assertCertError(t, nonExisting, nonExisting, fmt.Errorf(expectedErrorStr, nonExisting))
-
-	assertCertError(t, "", keyFile, fmt.Errorf(expectedErrorStr, ""))
-	assertCertError(t, nonExisting, keyFile, fmt.Errorf(expectedErrorStr, nonExisting))
-
-	expectedErr := errors.New("failed to parse CA testdata/invalid.pem")
-	_, err := newCAPool("testdata/invalid.pem")
-	if expectedErr.Error() != err.Error() {
-		t.Fatalf("expected error : %s, got: %s", expectedErr, err)
+	testCases := map[string]struct {
+		CAFile        string
+		KeyFile       string
+		CertFile      string
+		ExpectedError error
+	}{"no_files_provided": {CAFile: "", KeyFile: "", CertFile: "", ExpectedError: fmt.Errorf(noSuchCAFileError, "")},
+		"no_ca_file_provided":             {CAFile: "", KeyFile: keyFile, CertFile: certFile, ExpectedError: fmt.Errorf(noSuchCAFileError, "")},
+		"invalid_ca_file_arg":             {CAFile: "\\\000", KeyFile: keyFile, CertFile: certFile, ExpectedError: errors.New("failed to load CA: open \\\000: invalid argument")},
+		"invalid_ca_file":                 {CAFile: invalidFile, KeyFile: keyFile, CertFile: certFile, ExpectedError: fmt.Errorf("failed to parse CA %s", invalidFile)},
+		"no_key_file_provided":            {CAFile: caFile, KeyFile: "", CertFile: certFile, ExpectedError: fmt.Errorf(failedToLoadError, "")},
+		"no_cert_file_provided":           {CAFile: caFile, KeyFile: keyFile, CertFile: "", ExpectedError: fmt.Errorf(failedToLoadError, "")},
+		"non_existing_ca_file":            {CAFile: nonExisting, KeyFile: nonExisting, CertFile: certFile, ExpectedError: fmt.Errorf(noSuchCAFileError, nonExisting)},
+		"non_existing_key_file":           {CAFile: caFile, KeyFile: nonExisting, CertFile: certFile, ExpectedError: fmt.Errorf(failedToLoadError, nonExisting)},
+		"non_existing_cert_file":          {CAFile: caFile, KeyFile: keyFile, CertFile: nonExisting, ExpectedError: fmt.Errorf(failedToLoadError, nonExisting)},
+		"non_existing_key_and_cert_files": {CAFile: caFile, KeyFile: nonExisting, CertFile: nonExisting, ExpectedError: fmt.Errorf(failedToLoadError, nonExisting)},
 	}
 
-	expectedErr = errors.New("failed to load CA: open \\\000: invalid argument")
-	_, err = newCAPool("\\\000")
-	if expectedErr.Error() != err.Error() {
-		t.Fatalf("expected error : %s, got: %s", expectedErr, err)
+	for testName, testCase := range testCases {
+		t.Run(testName, func(t *testing.T) {
+			assertInvalidTLSConfig(t, testCase.CAFile, testCase.CertFile, testCase.KeyFile, testCase.ExpectedError)
+		})
 	}
 }
 
-func assertCertError(t *testing.T, certFile, keyFile string, expectedErr error) {
-	use, err := newFSConfig(nil, certFile, keyFile)
+func assertInvalidTLSConfig(t *testing.T, caFile, certFile, keyFile string, expectedErr error) {
+	use, err := NewConfig(caFile, certFile, keyFile)
 	if expectedErr.Error() != err.Error() {
 		t.Fatalf("expected error : %s, got: %s", expectedErr, err)
 	}
@@ -76,7 +69,11 @@ func assertCertError(t *testing.T, certFile, keyFile string, expectedErr error) 
 	}
 }
 
-func testTLSConfig(t *testing.T, cfg *tls.Config) {
+func assertValidTLSConfig(t *testing.T, caFile, certFile, keyFile string) {
+	cfg, err := NewConfig(caFile, certFile, keyFile)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(cfg.Certificates) == 0 {
 		t.Fatal("certificates length must not be 0")
 	}

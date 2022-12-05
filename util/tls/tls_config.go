@@ -27,17 +27,23 @@ func NewConfig(rootCA, clientCert, clientKey string) (*tls.Config, error) {
 		return nil, err
 	}
 
-	if len(clientCert) > 0 || len(clientKey) > 0 {
-		return newFSConfig(caCertPool, clientCert, clientKey)
-	}
-
-	return &tls.Config{
+	cfg := &tls.Config{
 		InsecureSkipVerify: false,
 		RootCAs:            caCertPool,
 		MinVersion:         tls.VersionTLS12,
 		MaxVersion:         tls.VersionTLS13,
 		CipherSuites:       supportedCipherSuites(),
-	}, nil
+	}
+
+	if len(clientCert) > 0 || len(clientKey) > 0 {
+		cert, err := tls.LoadX509KeyPair(clientCert, clientKey)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to load X509 key pair")
+		}
+		cfg.Certificates = []tls.Certificate{cert}
+	}
+
+	return cfg, nil
 }
 
 // newCAPool opens a certificates pool.
@@ -53,23 +59,6 @@ func newCAPool(caFile string) (*x509.CertPool, error) {
 	}
 
 	return caCertPool, nil
-}
-
-// newFSConfig initializes a file Hub TLS.
-func newFSConfig(caCertPool *x509.CertPool, certFile, keyFile string) (*tls.Config, error) {
-	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to load X509 key pair")
-	}
-
-	return &tls.Config{
-		InsecureSkipVerify: false,
-		RootCAs:            caCertPool,
-		Certificates:       []tls.Certificate{cert},
-		MinVersion:         tls.VersionTLS12,
-		MaxVersion:         tls.VersionTLS13,
-		CipherSuites:       supportedCipherSuites(),
-	}, nil
 }
 
 func supportedCipherSuites() []uint16 {
