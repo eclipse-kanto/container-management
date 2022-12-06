@@ -25,11 +25,7 @@ var (
 	caFile   = "testdata/ca.crt"
 )
 
-func TestValidCertificateConfig(t *testing.T) {
-	assertValidTLSConfig(t, caFile, certFile, keyFile)
-}
-
-func TestUseCertificateSettingsFail(t *testing.T) {
+func TesCertificateSettings(t *testing.T) {
 	failedToLoadError := "failed to load X509 key pair: open %s: no such file or directory"
 	noSuchCAFileError := "failed to load CA: open %s: no such file or directory"
 	nonExisting := "nonexisting.test"
@@ -40,7 +36,10 @@ func TestUseCertificateSettingsFail(t *testing.T) {
 		KeyFile       string
 		CertFile      string
 		ExpectedError error
-	}{"no_files_provided": {CAFile: "", KeyFile: "", CertFile: "", ExpectedError: fmt.Errorf(noSuchCAFileError, "")},
+	}{
+		"valid_config_no_credentials":     {CAFile: caFile, KeyFile: "", CertFile: "", ExpectedError: nil},
+		"valid_config_with_credentials":   {CAFile: caFile, KeyFile: keyFile, CertFile: certFile, ExpectedError: nil},
+		"no_files_provided":               {CAFile: "", KeyFile: "", CertFile: "", ExpectedError: fmt.Errorf(noSuchCAFileError, "")},
 		"no_ca_file_provided":             {CAFile: "", KeyFile: keyFile, CertFile: certFile, ExpectedError: fmt.Errorf(noSuchCAFileError, "")},
 		"invalid_ca_file_arg":             {CAFile: "\\\000", KeyFile: keyFile, CertFile: certFile, ExpectedError: errors.New("failed to load CA: open \\\000: invalid argument")},
 		"invalid_ca_file":                 {CAFile: invalidFile, KeyFile: keyFile, CertFile: certFile, ExpectedError: fmt.Errorf("failed to parse CA %s", invalidFile)},
@@ -54,52 +53,47 @@ func TestUseCertificateSettingsFail(t *testing.T) {
 
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
-			assertInvalidTLSConfig(t, testCase.CAFile, testCase.CertFile, testCase.KeyFile, testCase.ExpectedError)
-		})
-	}
-}
-
-func assertInvalidTLSConfig(t *testing.T, caFile, certFile, keyFile string, expectedErr error) {
-	use, err := NewConfig(caFile, certFile, keyFile)
-	if expectedErr.Error() != err.Error() {
-		t.Fatalf("expected error : %s, got: %s", expectedErr, err)
-	}
-	if use != nil {
-		t.Fatalf("expected nil, got: %v", use)
-	}
-}
-
-func assertValidTLSConfig(t *testing.T, caFile, certFile, keyFile string) {
-	cfg, err := NewConfig(caFile, certFile, keyFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(cfg.Certificates) == 0 {
-		t.Fatal("certificates length must not be 0")
-	}
-	if len(cfg.CipherSuites) == 0 {
-		t.Fatal("cipher suites length must not be 0")
-	}
-	// assert that cipher suites identifiers are contained in tls.CipherSuites
-	for _, csID := range cfg.CipherSuites {
-		if !func() bool {
-			for _, cs := range tls.CipherSuites() {
-				if cs.ID == csID {
-					return true
+			cfg, err := NewConfig(testCase.CAFile, testCase.CertFile, testCase.KeyFile)
+			if testCase.ExpectedError != nil {
+				if testCase.ExpectedError.Error() != err.Error() {
+					t.Fatalf("expected error : %s, got: %s", testCase.ExpectedError, err)
+				}
+				if cfg != nil {
+					t.Fatalf("expected nil, got: %v", cfg)
+				}
+			} else {
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(cfg.Certificates) == 0 && testCase.CertFile != "" && testCase.KeyFile != "" {
+					t.Fatal("certificates length must not be 0")
+				}
+				if len(cfg.CipherSuites) == 0 {
+					t.Fatal("cipher suites length must not be 0")
+				}
+				// assert that cipher suites identifiers are contained in tls.CipherSuites
+				for _, csID := range cfg.CipherSuites {
+					if !func() bool {
+						for _, cs := range tls.CipherSuites() {
+							if cs.ID == csID {
+								return true
+							}
+						}
+						return false
+					}() {
+						t.Fatalf("cipher suite %d is not implemented", csID)
+					}
+				}
+				if cfg.InsecureSkipVerify {
+					t.Fatal("skip verify is set to true")
+				}
+				if cfg.MinVersion != tls.VersionTLS12 {
+					t.Fatalf("invalid min TLS version %d", cfg.MinVersion)
+				}
+				if cfg.MaxVersion != tls.VersionTLS13 {
+					t.Fatalf("invalid max TLS version %d", cfg.MaxVersion)
 				}
 			}
-			return false
-		}() {
-			t.Fatalf("cipher suite %d is not implemented", csID)
-		}
-	}
-	if cfg.InsecureSkipVerify {
-		t.Fatal("skip verify is set to true")
-	}
-	if cfg.MinVersion != tls.VersionTLS12 {
-		t.Fatalf("invalid min TLS version %d", cfg.MinVersion)
-	}
-	if cfg.MaxVersion != tls.VersionTLS13 {
-		t.Fatalf("invalid max TLS version %d", cfg.MaxVersion)
+		})
 	}
 }
