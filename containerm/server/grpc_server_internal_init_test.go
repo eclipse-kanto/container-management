@@ -22,6 +22,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 	mockGrpc "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/registry"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
+	"github.com/eclipse-kanto/container-management/containerm/util"
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 )
@@ -55,7 +56,7 @@ func TestRegistryInit(t *testing.T) {
 	errServiceSet.Add(sInfoErr)
 	serviceSet.Add(sInfo)
 	emptyServiceSet := registry.NewServiceInfoSet()
-	grpcServiceMock.EXPECT().Register(gomock.Any()).Times(1).Return(nil)
+	grpcServiceMock.EXPECT().Register(gomock.Any()).Times(2).Return(nil)
 
 	testCases := map[string]struct {
 		arg            *registry.ServiceRegistryContext
@@ -72,6 +73,17 @@ func TestRegistryInit(t *testing.T) {
 			),
 			wantNewtork:    "bridge",
 			wantAdressPath: "/run/test.sock",
+			expectedErr:    nil,
+		},
+		"register_without_err_unix": {
+			arg: registry.NewContext(
+				context.Background(),
+				[]GrpcServerOpt{WithGrpcServerNetwork("unix"), WithGrpcServerAddressPath("testdata/run/test.sock")},
+				testRegValid,
+				serviceSet,
+			),
+			wantNewtork:    "unix",
+			wantAdressPath: "testdata/run/test.sock",
 			expectedErr:    nil,
 		},
 		"register_with_err_empty_service_set": {
@@ -109,10 +121,10 @@ func TestRegistryInit(t *testing.T) {
 				testutil.AssertEqual(t, testCase.wantAdressPath, grpcSrv.addressPath)
 				if grpcSrv.network == "unix" {
 					addressDir, _ := path.Split(grpcSrv.addressPath)
-					info, err := os.Stat(addressDir)
+					defer os.RemoveAll(addressDir)
+					isDirectory, err := util.IsDirectory(addressDir)
 					testutil.AssertNil(t, err)
-					testutil.AssertNotNil(t, info)
-					testutil.AssertNil(t, os.Remove(addressDir))
+					testutil.AssertTrue(t, isDirectory)
 				}
 			}
 		})

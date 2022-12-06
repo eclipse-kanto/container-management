@@ -18,13 +18,13 @@ import (
 
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
+	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
 func TestInit(t *testing.T) {
 	execRootDir := "testdata/execRoot"
 	metaPathDir := "testdata/metaPath"
-	defer os.Remove(execRootDir)
-	defer os.Remove(metaPathDir)
+	defer os.RemoveAll("testdata")
 
 	nOpts := []NetOpt{
 		WithLibNetType(bridgeNetworkName),
@@ -44,13 +44,13 @@ func TestInit(t *testing.T) {
 	testNetMgr := netMgr.(*libnetworkMgr)
 	testutil.AssertNotNil(t, testNetMgr)
 
-	info, err := os.Stat(execRootDir)
+	isDirectory, err := util.IsDirectory(execRootDir)
 	testutil.AssertNil(t, err)
-	testutil.AssertNotNil(t, info)
+	testutil.AssertTrue(t, isDirectory)
 
-	info, err = os.Stat(metaPathDir)
+	isDirectory, err = util.IsDirectory(metaPathDir)
 	testutil.AssertNil(t, err)
-	testutil.AssertNotNil(t, info)
+	testutil.AssertTrue(t, isDirectory)
 
 	expectedNetOpts := &netOpts{}
 	applyOptsNet(expectedNetOpts, nOpts...)

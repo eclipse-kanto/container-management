@@ -15,6 +15,7 @@ package things
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -59,6 +60,7 @@ var (
 )
 
 func TestCreateSUPFeature(t *testing.T) {
+	defer os.RemoveAll(testThingsStoragePath)
 	setupSUFeature(t)
 	testSUFeature = testSoftwareUpdatable.(*softwareUpdatable).createFeature()
 	testutil.AssertEqual(t, SoftwareUpdatableFeatureID, testSUFeature.GetID())
@@ -82,6 +84,7 @@ var (
 )
 
 func TestSUFeatureOperationsHandler(t *testing.T) {
+	defer os.RemoveAll(testThingsStoragePath)
 	tests := map[string]struct {
 		operation     string
 		opts          interface{}
@@ -255,6 +258,7 @@ func TestSUFeatureOperationsHandler(t *testing.T) {
 	// execute tests
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
+			defer os.RemoveAll(testThingsStoragePath)
 			t.Log(testName)
 
 			expectedRunErr := testCase.mockExecution(t)
