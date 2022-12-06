@@ -63,24 +63,17 @@ func (suite *ctrFactorySuite) TestCreateWithConfig() {
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
-	const (
-		paramExtraHosts    = "extraHosts"
-		paramPortMapping   = "portMappings"
-		paramHostPort      = "hostPort"
-		paramContainerPort = "containerPort"
-		httpdImageRef      = "docker.io/library/httpd:latest"
-	)
 	config := make(map[string]interface{})
-	config[paramExtraHosts] = []string{"ctrhost:host_ip"}
-	config[paramPortMapping] = []map[string]interface{}{
+	config["extraHosts"] = []string{"ctrhost:host_ip"}
+	config["portMappings"] = []map[string]interface{}{
 		{
-			paramHostPort:      5000,
-			paramContainerPort: 80,
+			"hostPort":      5000,
+			"containerPort": 80,
 		},
 	}
 
 	params := make(map[string]interface{})
-	params[paramImageRef] = httpdImageRef
+	params[paramImageRef] = "docker.io/library/httpd:latest"
 	params[paramStart] = true
 	params[paramConfig] = config
 
@@ -92,12 +85,7 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 }
 
 func (suite *ctrFactorySuite) assertHTTPServer() {
-	const (
-		httpdRequestURL = "http://127.0.0.1:5000"
-		httpdResponse   = "<html><body><h1>It works!</h1></body></html>\n"
-	)
-
-	req, err := http.NewRequest(http.MethodGet, httpdRequestURL, nil)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:5000", nil)
 	require.NoError(suite.T(), err, "failed to create an HTTP request to the container")
 
 	resp, err := http.DefaultClient.Do(req)
@@ -109,5 +97,5 @@ func (suite *ctrFactorySuite) assertHTTPServer() {
 
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(suite.T(), err, "failed to reach the requested URL on the host to the container")
-	require.Equal(suite.T(), httpdResponse, string(body), "HTTP response from the container is not expected")
+	require.Equal(suite.T(), "<html><body><h1>It works!</h1></body></html>\n", string(body), "HTTP response from the container is not expected")
 }

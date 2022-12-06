@@ -36,12 +36,11 @@ type ctrManagementSuite struct {
 }
 
 func (suite *ctrManagementSuite) SetupCtrManagementSuite() {
-	const ctrFactoryFeatureID = "ContainerFactory"
 	suite.Setup(suite.T())
 
 	suite.ctrThingID = suite.ThingCfg.DeviceID + ":edge:containers"
 	suite.ctrThingURL = util.GetThingURL(suite.Cfg.DigitalTwinAPIAddress, suite.ctrThingID)
-	suite.ctrFactoryFeatureURL = util.GetFeatureURL(suite.ctrThingURL, ctrFactoryFeatureID)
+	suite.ctrFactoryFeatureURL = util.GetFeatureURL(suite.ctrThingURL, "ContainerFactory")
 
 	suite.topicCreated = util.GetTwinEventTopic(suite.ctrThingID, protocol.ActionCreated)
 	suite.topicModified = util.GetTwinEventTopic(suite.ctrThingID, protocol.ActionModified)
@@ -50,8 +49,11 @@ func (suite *ctrManagementSuite) SetupCtrManagementSuite() {
 	suite.assertCtrFactoryFeature()
 }
 
-func getCtrFeatureID(topic string) string {
-	result := strings.Split(topic, "/")
+func getCtrFeatureID(path string) string {
+	result := strings.Split(path, "/")
+	if len(result) < 3 {
+		return ""
+	}
 	return result[2]
 }
 
@@ -64,36 +66,29 @@ func (suite *ctrManagementSuite) getActualCtrStatus(ctrFeatureID string) string 
 }
 
 func (suite *ctrManagementSuite) assertCtrFactoryFeature() {
-	const ctrFactoryFeatureDefinition = "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.3.0\"]"
 	ctrFactoryDefinition := suite.ctrFactoryFeatureURL + "/definition"
 	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrFactoryDefinition, nil)
 
 	require.NoError(suite.T(), err, "failed to get the container factory feature definition")
-	require.Equal(suite.T(), ctrFactoryFeatureDefinition, string(body), "the container factory definition is not expected")
+	require.Equal(suite.T(), "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.3.0\"]", string(body), "the container factory definition is not expected")
 }
 
 func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
-	const filterCtrFeatures = "like(resource:path,'/features/Container:*')"
-
 	wsConnection, err := util.NewDigitalTwinWSConnection(suite.Cfg)
 	require.NoError(suite.T(), err, "failed to create a websocket connection")
 
-	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, filterCtrFeatures)
-	suite.assertNoError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
+	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, "like(resource:path,'/features/Container:*')")
+	suite.closeOnError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
 	return wsConnection
 }
 
 func (suite *ctrManagementSuite) createOperation(operation string, params map[string]interface{}) (*websocket.Conn, string) {
-	const (
-		propertyStatus = "status"
-		statusCreated  = "CREATED"
-		statusRunning  = "RUNNING"
-	)
+	const propertyStatus = "status"
 
 	wsConnection := suite.createWSConnection()
 
 	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
-	suite.assertNoError(wsConnection, err, "failed to execute the %s operation", operation)
+	suite.closeOnError(wsConnection, err, "failed to execute the %s operation", operation)
 
 	var ctrFeatureID string
 	var isCtrFeatureCreated bool
@@ -123,18 +118,14 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 		}
 		return true, fmt.Errorf("unknown message is received")
 	})
-	suite.assertNoError(wsConnection, err, "failed to process creating the container feature")
+	suite.closeOnError(wsConnection, err, "failed to process creating the container feature")
 	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
 	return wsConnection, ctrFeatureID
 }
 
 func (suite *ctrManagementSuite) expectedStatus(status string, isStarted bool) {
-	const (
-		statusCreated = "CREATED"
-		statusRunning = "RUNNING"
-	)
 	if isStarted {
-		require.Equal(suite.T(), statusRunning, status, "container status is not expected")
+		require.Equal(suite.T(), "RUNNING", status, "container status is not expected")
 		return
 	}
 	require.Equal(suite.T(), statusCreated, status, "container status is not expected")
@@ -149,18 +140,13 @@ func (suite *ctrManagementSuite) createWithConfig(params map[string]interface{})
 }
 
 func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeatureID string) {
-	const (
-		filterCtrFeature = "like(resource:path,'/features/%s')"
-		operationRemove  = "remove"
-	)
-
-	filter := fmt.Sprintf(filterCtrFeature, ctrFeatureID)
+	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
 	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, filter)
-	suite.assertNoError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
+	suite.closeOnError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
 	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
 
 	_, err = util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), "remove", true)
-	suite.assertNoError(wsConnection, err, "failed to remove the container feature with ID %s", ctrFeatureID)
+	suite.closeOnError(wsConnection, err, "failed to remove the container feature with ID %s", ctrFeatureID)
 
 	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicDeleted {
@@ -168,11 +154,11 @@ func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeature
 		}
 		return true, fmt.Errorf("unknown message is received")
 	})
-	suite.assertNoError(wsConnection, err, "failed to process removing the container feature")
+	suite.closeOnError(wsConnection, err, "failed to process removing the container feature")
 
 }
 
-func (suite *ctrManagementSuite) assertNoError(wsConnection *websocket.Conn, err error, message string, messageArs ...interface{}) {
+func (suite *ctrManagementSuite) closeOnError(wsConnection *websocket.Conn, err error, message string, messageArs ...interface{}) {
 	if err != nil {
 		wsConnection.Close()
 	}
