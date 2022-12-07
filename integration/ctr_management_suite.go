@@ -83,36 +83,50 @@ func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 }
 
 func (suite *ctrManagementSuite) createOperation(operation string, params map[string]interface{}) (*websocket.Conn, string) {
-	const propertyStatus = "status"
-
 	wsConnection := suite.createWSConnection()
 
 	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
 	suite.closeOnError(wsConnection, err, "failed to execute the %s operation", operation)
 
+	const propertyStatus = "status"
 	var ctrFeatureID string
 	var isCtrFeatureCreated bool
+	var eventValue map[string]interface{}
 
 	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicCreated {
 			ctrFeatureID = getCtrFeatureID(event.Path)
+			if eventValue, err = parseEventValue(event.Value.(map[string]interface{})); err != nil {
+				return true, err
+			}
+			if eventValue["definition"].([]interface{})[0] != "com.bosch.iot.suite.edge.containers:Container:1.5.0" {
+				return true, fmt.Errorf("container feature definition is not expected")
+			}
 			return false, nil
 		}
 		if event.Topic.String() == suite.topicModified {
 			if ctrFeatureID == "" {
 				return true, fmt.Errorf("event for creating the container feature is not received")
 			}
-			status, check := event.Value.(map[string]interface{})
-			if !check {
-				return true, fmt.Errorf("failed to parse the property status value from the received event")
+			ctrState := fmt.Sprintf("/features/%s/properties/status/state", ctrFeatureID)
+			if ctrState != event.Path {
+				return true, fmt.Errorf("received event is not expected")
 			}
-			if status[propertyStatus].(string) == statusCreated {
-				isCtrFeatureCreated = true
-				return false, nil
+			if eventValue, err = parseEventValue(event.Value.(map[string]interface{})); err != nil {
+				return true, err
 			}
-			if isCtrFeatureCreated {
-				suite.expectedStatus(status[propertyStatus].(string), params[paramStart].(bool))
+			if eventValue[propertyStatus].(string) == "CREATED" {
+				if params[paramStart].(bool) {
+					isCtrFeatureCreated = true
+					return false, nil
+				}
 				return true, nil
+			}
+			if eventValue[propertyStatus].(string) == "RUNNING" {
+				if params[paramStart].(bool) && isCtrFeatureCreated {
+					return true, nil
+				}
+				return true, fmt.Errorf("container status is not expected")
 			}
 			return true, fmt.Errorf("event for modify the container feature status is not received")
 		}
@@ -123,12 +137,12 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 	return wsConnection, ctrFeatureID
 }
 
-func (suite *ctrManagementSuite) expectedStatus(status string, isStarted bool) {
-	if isStarted {
-		require.Equal(suite.T(), "RUNNING", status, "container status is not expected")
-		return
+func parseEventValue(eventValue interface{}) (map[string]interface{}, error) {
+	property, check := eventValue.(map[string]interface{})
+	if !check {
+		return nil, fmt.Errorf("failed to parse the property event value")
 	}
-	require.Equal(suite.T(), statusCreated, status, "container status is not expected")
+	return property, nil
 }
 
 func (suite *ctrManagementSuite) create(params map[string]interface{}) (*websocket.Conn, string) {

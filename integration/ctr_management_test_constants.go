@@ -17,5 +17,4 @@ const (
 	paramImageRef    = "imageRef"
 	paramStart       = "start"
 	paramConfig      = "config"
-	statusCreated    = "CREATED"
 )
