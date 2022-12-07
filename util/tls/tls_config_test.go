@@ -19,17 +19,16 @@ import (
 	"testing"
 )
 
-var (
-	certFile = "testdata/certificate.pem"
-	keyFile  = "testdata/key.pem"
-	caFile   = "testdata/ca.crt"
-)
-
-func TesCertificateSettings(t *testing.T) {
-	failedToLoadError := "failed to load X509 key pair: open %s: no such file or directory"
-	noSuchCAFileError := "failed to load CA: open %s: no such file or directory"
-	nonExisting := "nonexisting.test"
-	invalidFile := "testdata/invalid.pem"
+func TestCertificateSettings(t *testing.T) {
+	const (
+		failedToLoadError = "failed to load X509 key pair: open %s: no such file or directory"
+		noSuchCAFileError = "failed to load CA: open %s: no such file or directory"
+		nonExisting       = "nonexisting.test"
+		invalidFile       = "testdata/invalid.pem"
+		certFile          = "testdata/certificate.pem"
+		keyFile           = "testdata/key.pem"
+		caFile            = "testdata/ca.crt"
+	)
 
 	testCases := map[string]struct {
 		CAFile        string
