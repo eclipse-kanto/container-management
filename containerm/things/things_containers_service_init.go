@@ -36,7 +36,8 @@ func newThingsContainerManager(mgr mgr.ContainerManager, eventsMgr events.Contai
 	connectTimeout time.Duration,
 	acknowledgeTimeout time.Duration,
 	subscribeTimeout time.Duration,
-	unsubscribeTimeout time.Duration) *containerThingsMgr {
+	unsubscribeTimeout time.Duration,
+	tlsConfig *tlsConfig) *containerThingsMgr {
 	thingsMgr := &containerThingsMgr{
 		storageRoot:       storagePath,
 		mgr:               mgr,
@@ -56,7 +57,8 @@ func newThingsContainerManager(mgr mgr.ContainerManager, eventsMgr events.Contai
 		WithConnectTimeout(connectTimeout).
 		WithAcknowledgeTimeout(acknowledgeTimeout).
 		WithSubscribeTimeout(subscribeTimeout).
-		WithUnsubscribeTimeout(unsubscribeTimeout)
+		WithUnsubscribeTimeout(unsubscribeTimeout).
+		WithTLSConfig(tlsConfig.RootCA, tlsConfig.ClientCert, tlsConfig.ClientKey)
 
 	thingsMgr.thingsClient = client.NewClient(thingsClientOpts)
 	return thingsMgr
@@ -92,5 +94,7 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 		tOpts.connectTimeout,
 		tOpts.acknowledgeTimeout,
 		tOpts.subscribeTimeout,
-		tOpts.unsubscribeTimeout), nil
+		tOpts.unsubscribeTimeout,
+		tOpts.tlsConfig,
+	), nil
 }

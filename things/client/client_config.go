@@ -39,6 +39,14 @@ type Configuration struct {
 	unsubscribeTimeout           time.Duration
 	initHook                     InitializedHook
 	thingsRegistryChangedHandler handlers.ThingsRegistryChangedHandler
+	tlsConfig                    *tlsConfig
+}
+
+// tlsConfig represents the TLS configuration data
+type tlsConfig struct {
+	RootCA     string
+	ClientCert string
+	ClientKey  string
 }
 
 // NewConfiguration creates a new Configuration instance
@@ -134,6 +142,14 @@ func (cfg *Configuration) RegistryChangedHandler() handlers.ThingsRegistryChange
 	return cfg.thingsRegistryChangedHandler
 }
 
+// TLSConfig provides the current TLS configuration
+func (cfg *Configuration) TLSConfig() (rootCA, clientCert, clientKey string) {
+	if cfg.tlsConfig == nil {
+		return "", "", ""
+	}
+	return cfg.tlsConfig.RootCA, cfg.tlsConfig.ClientCert, cfg.tlsConfig.ClientKey
+}
+
 // WithBroker configures the MQTT's broker the Client to connect to
 func (cfg *Configuration) WithBroker(broker string) *Configuration {
 	cfg.broker = broker
@@ -227,5 +243,15 @@ func (cfg *Configuration) WithSubscribeTimeout(subscribeTimeout time.Duration) *
 // WithUnsubscribeTimeout configures unsubscribe timeout
 func (cfg *Configuration) WithUnsubscribeTimeout(unsubscribeTimeout time.Duration) *Configuration {
 	cfg.unsubscribeTimeout = unsubscribeTimeout
+	return cfg
+}
+
+// WithTLSConfig configures the TLS options to the MQTT server/broker
+func (cfg *Configuration) WithTLSConfig(rootCA, clientCert, clientKey string) *Configuration {
+	cfg.tlsConfig = &tlsConfig{
+		RootCA:     rootCA,
+		ClientCert: clientCert,
+		ClientKey:  clientKey,
+	}
 	return cfg
 }

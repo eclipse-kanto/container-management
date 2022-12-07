@@ -48,7 +48,9 @@ func TestThingsContainerServiceConnectWithCredentials(t *testing.T) {
 		0,
 		0,
 		0,
-		0)
+		0,
+		&tlsConfig{},
+	)
 	setupThingMock(controller)
 
 	listener, err := net.Listen("tcp4", testMQTTBrokerURL)
@@ -93,7 +95,9 @@ func TestThingsContainerServiceConnectNoCredentials(t *testing.T) {
 		0,
 		0,
 		0,
-		0)
+		0,
+		&tlsConfig{},
+	)
 	setupThingMock(controller)
 
 	listener, err := net.Listen("tcp4", testMQTTBrokerURL)

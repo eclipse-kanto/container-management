@@ -86,6 +86,12 @@ func TestThingsServiceFeaturesConfig(t *testing.T) {
 	testutil.AssertEqual(t, local.ThingsConfig.Features, []string{things.ContainerFactoryFeatureID})
 }
 
+func TestThingsTLSConfig(t *testing.T) {
+	local := &config{}
+	_ = loadLocalConfig("../pkg/testutil/config/daemon-things-tls-config.json", local)
+	testutil.AssertEqual(t, local.ThingsConfig.ThingsConnectionConfig.Transport, &tlsConfig{RootCA: "ca.crt", ClientCert: "client.crt", ClientKey: "client.key"})
+}
+
 func TestExtractOpts(t *testing.T) {
 	t.Run("test_extract_ctr_client_opts", func(t *testing.T) {
 		opts := extractCtrClientConfigOptions(cfg)
@@ -370,6 +376,18 @@ func TestSetCommandFlags(t *testing.T) {
 		"test_flags_things-conn-unsub-timeout": {
 			flag:         "things-conn-unsub-timeout",
 			expectedType: reflect.Int64.String(),
+		},
+		"test_flags_things-conn-root-ca": {
+			flag:         "things-conn-root-ca",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags_things-conn-client-cert": {
+			flag:         "things-conn-client-cert",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags_things-conn-client-key": {
+			flag:         "things-conn-client-key",
+			expectedType: reflect.String.String(),
 		},
 	}
 

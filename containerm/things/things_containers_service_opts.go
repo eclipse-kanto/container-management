@@ -12,7 +12,9 @@
 
 package things
 
-import "time"
+import (
+	"time"
+)
 
 // ContainerThingsManagerOpt represents the available configuration options for the ContainerThingsManager service
 type ContainerThingsManagerOpt func(thingsOptions *thingsOpts) error
@@ -29,6 +31,14 @@ type thingsOpts struct {
 	acknowledgeTimeout time.Duration
 	subscribeTimeout   time.Duration
 	unsubscribeTimeout time.Duration
+	tlsConfig          *tlsConfig
+}
+
+// tls-secured communication config
+type tlsConfig struct {
+	RootCA     string
+	ClientCert string
+	ClientKey  string
 }
 
 func applyOptsThings(thingsOpts *thingsOpts, opts ...ContainerThingsManagerOpt) error {
@@ -124,6 +134,18 @@ func WithConnectionSubscribeTimeout(subscribeTimeout time.Duration) ContainerThi
 func WithConnectionUnsubscribeTimeout(unsubscribeTimeout time.Duration) ContainerThingsManagerOpt {
 	return func(thingsOptions *thingsOpts) error {
 		thingsOptions.unsubscribeTimeout = unsubscribeTimeout
+		return nil
+	}
+}
+
+// WithTLSConfig configures the CA certificate for TLS communication
+func WithTLSConfig(rootCA, clientCert, clientKey string) ContainerThingsManagerOpt {
+	return func(thingsOptions *thingsOpts) error {
+		thingsOptions.tlsConfig = &tlsConfig{
+			RootCA:     rootCA,
+			ClientCert: clientCert,
+			ClientKey:  clientKey,
+		}
 		return nil
 	}
 }

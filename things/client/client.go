@@ -13,12 +13,16 @@
 package client
 
 import (
+	"errors"
 	"fmt"
+	"net/url"
 	"sync"
 	"time"
 
 	"github.com/eclipse-kanto/container-management/things/api/handlers"
 	"github.com/eclipse-kanto/container-management/things/api/model"
+	"github.com/eclipse-kanto/container-management/util/tls"
+
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
 )
@@ -67,6 +71,10 @@ func (client *Client) Connect() error {
 		})
 	}
 
+	if err := setupTLSConfiguration(pahoOpts, client.cfg); err != nil {
+		return err
+	}
+
 	//create and start a client using the created ClientOptions
 	client.pahoClient = MQTT.NewClient(pahoOpts)
 
@@ -74,6 +82,35 @@ func (client *Client) Connect() error {
 		return token.Error()
 	}
 	return nil
+}
+
+func setupTLSConfiguration(pahoOpts *MQTT.ClientOptions, configuration *Configuration) error {
+	u, err := url.Parse(configuration.broker)
+	if err != nil {
+		return err
+	}
+
+	if isConnectionSecure(u.Scheme) {
+		if configuration.tlsConfig == nil {
+			return errors.New("connection is secure, but no TLS configuration is provided")
+		}
+		tlsConfig, err := tls.NewConfig(configuration.tlsConfig.RootCA, configuration.tlsConfig.ClientCert, configuration.tlsConfig.ClientKey)
+		if err != nil {
+			return err
+		}
+		pahoOpts.SetTLSConfig(tlsConfig)
+	}
+
+	return nil
+}
+
+func isConnectionSecure(schema string) bool {
+	switch schema {
+	case "wss", "ssl", "tls", "mqtts", "mqtt+ssl", "tcps":
+		return true
+	default:
+	}
+	return false
 }
 
 // Disconnect unsubscribes and disconects the client

@@ -14,11 +14,11 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"io/ioutil"
 	"os"
 	"time"
 
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/ctr"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/mgr"
@@ -106,6 +106,10 @@ func extractThingsOptions(daemonConfig *config) []things.ContainerThingsManagerO
 		things.WithConnectionSubscribeTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout)*time.Millisecond),
 		things.WithConnectionUnsubscribeTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout)*time.Millisecond),
 	)
+	transport := daemonConfig.ThingsConfig.ThingsConnectionConfig.Transport
+	if transport != nil {
+		thingsOpts = append(thingsOpts, things.WithTLSConfig(transport.RootCA, transport.ClientCert, transport.ClientKey))
+	}
 	return thingsOpts
 }
 
@@ -276,6 +280,11 @@ func dumpThingsClient(configInstance *config) {
 				log.Debug("[daemon_cfg][things-conn-ack-timeout] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout)
 				log.Debug("[daemon_cfg][things-conn-sub-timeout] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout)
 				log.Debug("[daemon_cfg][things-conn-unsub-timeout] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout)
+				if configInstance.ThingsConfig.ThingsConnectionConfig.Transport != nil {
+					log.Debug("[daemon_cfg][things-conn-root-ca] : %s", configInstance.ThingsConfig.ThingsConnectionConfig.Transport.RootCA)
+					log.Debug("[daemon_cfg][things-conn-client-cert] : %s", configInstance.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert)
+					log.Debug("[daemon_cfg][things-conn-client-key] : %s", configInstance.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey)
+				}
 			}
 		}
 	}
