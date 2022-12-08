@@ -56,7 +56,7 @@ func WithCommonOptions(c *types.Container) crtdoci.SpecOpts {
 }
 
 // WithMounts sets the network resolution files generated
-//e.g. c.getRootResourceDir("resolv.conf"), "hostname", "hosts"
+// e.g. c.getRootResourceDir("resolv.conf"), "hostname", "hosts"
 func WithMounts(container *types.Container) crtdoci.SpecOpts {
 	return func(ctx context.Context, _ crtdoci.Client, _ *containers.Container, s *crtdoci.Spec) error {
 		if s.Mounts == nil {

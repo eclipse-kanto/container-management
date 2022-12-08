@@ -28,7 +28,7 @@ type eventsSink interface {
 }
 
 // channelledEventsSink provides an eventsSink that can be listened on.
-//The writer and channel listener must operate in separate goroutines.
+// The writer and channel listener must operate in separate goroutines.
 type channelledEventsSink struct {
 	eventsChannel chan event
 	closed        chan struct{}

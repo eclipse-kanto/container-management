@@ -397,7 +397,7 @@ func TestSetContainerStatus(t *testing.T) {
 	})
 }
 
-//type isRestartPolicyX func(*types.RestartPolicy) bool
+// type isRestartPolicyX func(*types.RestartPolicy) bool
 func TestRestartPolicyChecks(t *testing.T) {
 	tests := map[string]struct {
 		policy   *types.RestartPolicy

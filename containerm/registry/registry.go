@@ -77,7 +77,7 @@ type GrpcServer interface {
 	Stop() error
 }
 
-//internal struct to hold all registrations with a synced access
+// internal struct to hold all registrations with a synced access
 var register = struct {
 	sync.RWMutex
 	r []*Registration

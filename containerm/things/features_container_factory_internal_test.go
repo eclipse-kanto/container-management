@@ -23,8 +23,11 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-/* Feature Matcher definition (move to the tests base if needed)
--Using the standart Eq() matcher is not enough, as functions (as struct fields in this case) are not comparable even by DeepEqual. */
+/*
+	Feature Matcher definition (move to the tests base if needed)
+
+-Using the standart Eq() matcher is not enough, as functions (as struct fields in this case) are not comparable even by DeepEqual.
+*/
 type featureEq struct {
 	feature model.Feature
 }

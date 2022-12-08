@@ -22,8 +22,11 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-/* The const and vars declared for this test package are mirrored from util/util_base_test.go
-in order to avoid redundant publicly available fields and to retain the package structure as is. */
+/*
+	The const and vars declared for this test package are mirrored from util/util_base_test.go
+
+in order to avoid redundant publicly available fields and to retain the package structure as is.
+*/
 const (
 	id        = "test-id"
 	imageName = "image.url"

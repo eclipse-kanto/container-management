@@ -30,7 +30,7 @@ const (
 	JSONFileLogDriverName logger.LogDriverType = "json-file"
 )
 
-//marshalHandler is the function of marshalLogMessageToJSONBytes the logMessage
+// marshalHandler is the function of marshalLogMessageToJSONBytes the logMessage
 type marshalHandler func(message *logger.LogMessage) ([]byte, error)
 
 // jsonFileLogDriver is uses to log the container's stdout and stderr.
