@@ -91,8 +91,8 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicCreated {
 			ctrFeatureID = getCtrFeatureID(event.Path)
-			ctrFeatureUrl := util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID)
-			suite.assertCtrFeatureDefinition(ctrFeatureUrl, "[\"com.bosch.iot.suite.edge.containers:Container:1.5.0\"]")
+			ctrFeatureURL := util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID)
+			suite.assertCtrFeatureDefinition(ctrFeatureURL, "[\"com.bosch.iot.suite.edge.containers:Container:1.5.0\"]")
 			return false, nil
 		}
 		if event.Topic.String() == suite.topicModified {
