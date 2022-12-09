@@ -24,6 +24,14 @@ import (
 )
 
 func newContainerMgr(metaPath string, execPath string, defaultCtrsStopTimeout int64, ctrClient ctr.ContainerAPIClient, netMgr network.ContainerNetworkManager, eventsMgr events.ContainerEventsManager) (ContainerManager, error) {
+	if err := util.MkDir(execPath); err != nil {
+		return nil, err
+	}
+
+	if err := util.MkDir(metaPath); err != nil {
+		return nil, err
+	}
+
 	locksCache := util.NewLocksCache()
 	ctrRepository := containerFsRepository{metaPath: metaPath, locksCache: &locksCache}
 

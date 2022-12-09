@@ -72,8 +72,8 @@ const (
 	testThingsStoragePath = "../pkg/testutil/metapath/valid/things"
 )
 
-func setupThingsContainerManager(controller *gomock.Controller) {
-	testThingsMgr = newThingsContainerManager(mockContainerManager, mockEventsManager,
+func setupThingsContainerManager(controller *gomock.Controller) error {
+	mgr, err := newThingsContainerManager(mockContainerManager, mockEventsManager,
 		"",
 		0,
 		0,
@@ -85,5 +85,8 @@ func setupThingsContainerManager(controller *gomock.Controller) {
 		0,
 		0,
 		0,
-		&tlsConfig{})
+		&tlsConfig{},
+	)
+	testThingsMgr = mgr
+	return err
 }

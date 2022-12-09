@@ -14,6 +14,7 @@ package things
 
 import (
 	"net"
+	"os"
 	"testing"
 	"time"
 
@@ -34,10 +35,12 @@ func TestThingsContainerServiceConnectWithCredentials(t *testing.T) {
 	defer func() {
 		controller.Finish()
 	}()
+	defer os.RemoveAll(testThingsStoragePath)
 	setupManagerMock(controller)
 	setupEventsManagerMock(controller)
-	setupThingsContainerManager(controller)
-	testThingsMgr = newThingsContainerManager(mockContainerManager, mockEventsManager,
+	testutil.AssertNil(t, setupThingsContainerManager(controller))
+
+	testThingsMgr, err := newThingsContainerManager(mockContainerManager, mockEventsManager,
 		testMQTTBrokerURL,
 		0,
 		0,
@@ -51,6 +54,8 @@ func TestThingsContainerServiceConnectWithCredentials(t *testing.T) {
 		0,
 		&tlsConfig{},
 	)
+	testutil.AssertNil(t, err)
+
 	setupThingMock(controller)
 
 	listener, err := net.Listen("tcp4", testMQTTBrokerURL)
@@ -81,10 +86,12 @@ func TestThingsContainerServiceConnectNoCredentials(t *testing.T) {
 	defer func() {
 		controller.Finish()
 	}()
+	defer os.RemoveAll(testThingsStoragePath)
 	setupManagerMock(controller)
 	setupEventsManagerMock(controller)
-	setupThingsContainerManager(controller)
-	testThingsMgr = newThingsContainerManager(mockContainerManager, mockEventsManager,
+	testutil.AssertNil(t, setupThingsContainerManager(controller))
+
+	testThingsMgr, err := newThingsContainerManager(mockContainerManager, mockEventsManager,
 		testMQTTBrokerURL,
 		0,
 		0,
@@ -98,6 +105,8 @@ func TestThingsContainerServiceConnectNoCredentials(t *testing.T) {
 		0,
 		&tlsConfig{},
 	)
+	testutil.AssertNil(t, err)
+
 	setupThingMock(controller)
 
 	listener, err := net.Listen("tcp4", testMQTTBrokerURL)

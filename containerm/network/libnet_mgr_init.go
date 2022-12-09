@@ -14,9 +14,18 @@ package network
 
 import (
 	"github.com/eclipse-kanto/container-management/containerm/registry"
+	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
 func newLibnetworkMgr(netConfig config) (ContainerNetworkManager, error) {
+	if err := util.MkDirs(netConfig.execRoot); err != nil {
+		return nil, err
+	}
+
+	if err := util.MkDir(netConfig.metaPath); err != nil {
+		return nil, err
+	}
+
 	return &libnetworkMgr{&netConfig, nil}, nil
 }
 

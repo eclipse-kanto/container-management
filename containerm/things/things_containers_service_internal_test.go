@@ -13,6 +13,7 @@
 package things
 
 import (
+	"os"
 	"testing"
 
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
@@ -48,10 +49,11 @@ func TestProcessContainerThingDefault(t *testing.T) {
 			t.Log(testName)
 			controller := gomock.NewController(t)
 			defer controller.Finish()
+			defer os.RemoveAll(testThingsStoragePath)
 			setupManagerMock(controller)
 			setupEventsManagerMock(controller)
 			setupThingMock(controller)
-			setupThingsContainerManager(controller)
+			testutil.AssertNil(t, setupThingsContainerManager(controller))
 
 			namespaceID := client.NewNamespacedID("things.containers.service", "test")
 			testThingsMgr.containerThingID = namespaceID.String()
