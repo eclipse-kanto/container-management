@@ -46,7 +46,7 @@ func (suite *ctrManagementSuite) SetupCtrManagementSuite() {
 	suite.topicModified = util.GetTwinEventTopic(suite.ctrThingID, protocol.ActionModified)
 	suite.topicDeleted = util.GetTwinEventTopic(suite.ctrThingID, protocol.ActionDeleted)
 
-	suite.assertCtrFactoryFeature()
+	suite.assertCtrFeatureDefinition(suite.ctrFactoryFeatureURL, "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.3.0\"]")
 }
 
 func getCtrFeatureID(path string) string {
@@ -57,20 +57,12 @@ func getCtrFeatureID(path string) string {
 	return result[2]
 }
 
-func (suite *ctrManagementSuite) getActualCtrStatus(ctrFeatureID string) string {
-	featureURL := util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID)
-	body, err := util.GetFeaturePropertyValue(suite.Cfg, featureURL, "status/state/status")
-	require.NoError(suite.T(), err, "failed to get the property status of the container feature: %s", ctrFeatureID)
+func (suite *ctrManagementSuite) assertCtrFeatureDefinition(featureURL, expectedCtrDefinition string) {
+	actualCtrDefinition := featureURL + "/definition"
+	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, actualCtrDefinition, nil)
 
-	return strings.Trim(string(body), "\"")
-}
-
-func (suite *ctrManagementSuite) assertCtrFactoryFeature() {
-	ctrFactoryDefinition := suite.ctrFactoryFeatureURL + "/definition"
-	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrFactoryDefinition, nil)
-
-	require.NoError(suite.T(), err, "failed to get the container factory feature definition")
-	require.Equal(suite.T(), "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.3.0\"]", string(body), "the container factory definition is not expected")
+	require.NoError(suite.T(), err, "failed to get the container feature feature definition")
+	require.Equal(suite.T(), expectedCtrDefinition, string(body), "the container feature definition is not expected")
 }
 
 func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
@@ -88,47 +80,52 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
 	suite.closeOnError(wsConnection, err, "failed to execute the %s operation", operation)
 
-	const propertyStatus = "status"
-	var ctrFeatureID string
-	var isCtrFeatureCreated bool
-	var eventValue map[string]interface{}
+	var (
+		ctrFeatureID        string
+		isCtrFeatureCreated bool
+		eventValue          map[string]interface{}
+		propertyStatus      string
+		isCtrStarted        bool
+	)
 
 	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicCreated {
 			ctrFeatureID = getCtrFeatureID(event.Path)
-			if eventValue, err = parseEventValue(event.Value.(map[string]interface{})); err != nil {
-				return true, err
-			}
-			if eventValue["definition"].([]interface{})[0] != "com.bosch.iot.suite.edge.containers:Container:1.5.0" {
-				return true, fmt.Errorf("container feature definition is not expected")
-			}
+			ctrFeatureUrl := util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID)
+			suite.assertCtrFeatureDefinition(ctrFeatureUrl, "[\"com.bosch.iot.suite.edge.containers:Container:1.5.0\"]")
 			return false, nil
 		}
 		if event.Topic.String() == suite.topicModified {
 			if ctrFeatureID == "" {
 				return true, fmt.Errorf("event for creating the container feature is not received")
 			}
-			ctrState := fmt.Sprintf("/features/%s/properties/status/state", ctrFeatureID)
-			if ctrState != event.Path {
+			propertyStatePath := fmt.Sprintf("/features/%s/properties/status/state", ctrFeatureID)
+			if propertyStatePath != event.Path {
 				return true, fmt.Errorf("received event is not expected")
 			}
-			if eventValue, err = parseEventValue(event.Value.(map[string]interface{})); err != nil {
-				return true, err
-			}
-			if eventValue[propertyStatus].(string) == "CREATED" {
-				if params[paramStart].(bool) {
+			eventValue, err = parseMap(event.Value)
+			require.NoError(suite.T(), err, "failed to parse event value")
+
+			propertyStatus, err = parseString(eventValue["status"])
+			require.NoError(suite.T(), err, "failed to parse property status")
+
+			isCtrStarted, err = parseBool(params[paramStart])
+			require.NoError(suite.T(), err, "failed to parse param start")
+
+			if propertyStatus == "CREATED" {
+				if isCtrStarted {
 					isCtrFeatureCreated = true
 					return false, nil
 				}
 				return true, nil
 			}
-			if eventValue[propertyStatus].(string) == "RUNNING" {
-				if params[paramStart].(bool) && isCtrFeatureCreated {
+			if propertyStatus == "RUNNING" {
+				if isCtrStarted && isCtrFeatureCreated {
 					return true, nil
 				}
 				return true, fmt.Errorf("container status is not expected")
 			}
-			return true, fmt.Errorf("event for modify the container feature status is not received")
+			return true, fmt.Errorf("event for un expected container status is received")
 		}
 		return true, fmt.Errorf("unknown message is received")
 	})
@@ -137,10 +134,26 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 	return wsConnection, ctrFeatureID
 }
 
-func parseEventValue(eventValue interface{}) (map[string]interface{}, error) {
-	property, check := eventValue.(map[string]interface{})
+func parseMap(value interface{}) (map[string]interface{}, error) {
+	property, check := value.(map[string]interface{})
 	if !check {
-		return nil, fmt.Errorf("failed to parse the property event value")
+		return nil, fmt.Errorf("failed to parse the property to map")
+	}
+	return property, nil
+}
+
+func parseString(value interface{}) (string, error) {
+	property, check := value.(string)
+	if !check {
+		return "", fmt.Errorf("failed to parse the property to string")
+	}
+	return property, nil
+}
+
+func parseBool(value interface{}) (bool, error) {
+	property, check := value.(bool)
+	if !check {
+		return false, fmt.Errorf("failed to parse the property")
 	}
 	return property, nil
 }
