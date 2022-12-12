@@ -19,6 +19,7 @@ import (
 
 	"github.com/eclipse-kanto/kanto/integration/util"
 	"github.com/eclipse/ditto-clients-golang/protocol"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/websocket"
@@ -81,18 +82,19 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 	suite.closeOnError(wsConnection, err, "failed to execute the %s operation", operation)
 
 	var (
-		ctrFeatureID        string
-		isCtrFeatureCreated bool
-		eventValue          map[string]interface{}
-		propertyStatus      string
-		isCtrStarted        bool
+		ctrFeatureID   string
+		isCtrCreated   bool
+		eventValue     map[string]interface{}
+		propertyStatus string
+		isCtrStarted   bool
 	)
 
 	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicCreated {
 			ctrFeatureID = getCtrFeatureID(event.Path)
-			ctrFeatureURL := util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID)
-			suite.assertCtrFeatureDefinition(ctrFeatureURL, "[\"com.bosch.iot.suite.edge.containers:Container:1.5.0\"]")
+			definition, err := getCtrDefinition(event.Value)
+			assert.NoError(suite.T(), err, "failed to parse property definition")
+			assert.Equal(suite.T(), "com.bosch.iot.suite.edge.containers:Container:1.5.0", definition, "container feature definition is not expected")
 			return false, nil
 		}
 		if event.Topic.String() == suite.topicModified {
@@ -104,32 +106,32 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 				return true, fmt.Errorf("received event is not expected")
 			}
 			eventValue, err = parseMap(event.Value)
-			require.NoError(suite.T(), err, "failed to parse event value")
+			assert.NoError(suite.T(), err, "failed to parse event value")
 
 			propertyStatus, err = parseString(eventValue["status"])
-			require.NoError(suite.T(), err, "failed to parse property status")
+			assert.NoError(suite.T(), err, "failed to parse property status")
 
 			isCtrStarted, err = parseBool(params[paramStart])
-			require.NoError(suite.T(), err, "failed to parse param start")
+			assert.NoError(suite.T(), err, "failed to parse param start")
 
 			if propertyStatus == "CREATED" {
 				if isCtrStarted {
-					isCtrFeatureCreated = true
+					isCtrCreated = true
 					return false, nil
 				}
 				return true, nil
 			}
 			if propertyStatus == "RUNNING" {
-				if isCtrStarted && isCtrFeatureCreated {
+				if isCtrStarted && isCtrCreated {
 					return true, nil
 				}
 				return true, fmt.Errorf("container status is not expected")
 			}
-			return true, fmt.Errorf("event for un expected container status is received")
+			return true, fmt.Errorf("event for an unexpected container status is received")
 		}
 		return true, fmt.Errorf("unknown message is received")
 	})
-	suite.closeOnError(wsConnection, err, "failed to process creating the container feature")
+	assert.NoError(suite.T(), err, "failed to process creating the container feature")
 	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
 	return wsConnection, ctrFeatureID
 }
@@ -142,6 +144,21 @@ func parseMap(value interface{}) (map[string]interface{}, error) {
 	return property, nil
 }
 
+func getCtrDefinition(value interface{}) (string, error) {
+	eventValue, err := parseMap(value)
+	if err != nil {
+		return "", err
+	}
+	property, check := eventValue["definition"].([]interface{})
+	if !check {
+		return "", fmt.Errorf("failed to parse the property definition")
+	}
+	if len(property) != 1 {
+		return "", fmt.Errorf("property definition type is not expected")
+	}
+	return parseString(property[0])
+}
+
 func parseString(value interface{}) (string, error) {
 	property, check := value.(string)
 	if !check {
@@ -151,6 +168,9 @@ func parseString(value interface{}) (string, error) {
 }
 
 func parseBool(value interface{}) (bool, error) {
+	if value == nil {
+		return false, nil
+	}
 	property, check := value.(bool)
 	if !check {
 		return false, fmt.Errorf("failed to parse the property")
@@ -167,12 +187,16 @@ func (suite *ctrManagementSuite) createWithConfig(params map[string]interface{})
 }
 
 func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeatureID string) {
+	ctrFeatureURL := suite.isCtrFeatureAvailable(ctrFeatureID)
+	if ctrFeatureURL == "" {
+		return
+	}
 	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
 	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, filter)
 	suite.closeOnError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
 	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
 
-	_, err = util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), "remove", true)
+	_, err = util.ExecuteOperation(suite.Cfg, ctrFeatureURL, "remove", true)
 	suite.closeOnError(wsConnection, err, "failed to remove the container feature with ID %s", ctrFeatureID)
 
 	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
@@ -182,7 +206,15 @@ func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeature
 		return true, fmt.Errorf("unknown message is received")
 	})
 	suite.closeOnError(wsConnection, err, "failed to process removing the container feature")
+}
 
+func (suite *ctrManagementSuite) isCtrFeatureAvailable(ctrFeatureID string) string {
+	ctrFeatureURL := util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID)
+	_, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, ctrFeatureURL, nil)
+	if err != nil {
+		return ""
+	}
+	return ctrFeatureURL
 }
 
 func (suite *ctrManagementSuite) closeOnError(wsConnection *websocket.Conn, err error, message string, messageArs ...interface{}) {

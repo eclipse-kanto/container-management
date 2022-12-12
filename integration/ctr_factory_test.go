@@ -46,8 +46,8 @@ func (suite *ctrFactorySuite) TestCreate() {
 
 	wsConnection, ctrFeatureID := suite.create(params)
 
-	defer wsConnection.Close()
-	defer suite.remove(wsConnection, ctrFeatureID)
+	suite.remove(wsConnection, ctrFeatureID)
+	wsConnection.Close()
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfig() {
@@ -58,8 +58,8 @@ func (suite *ctrFactorySuite) TestCreateWithConfig() {
 
 	wsConnection, ctrFeatureID := suite.createWithConfig(params)
 
-	defer wsConnection.Close()
-	defer suite.remove(wsConnection, ctrFeatureID)
+	suite.remove(wsConnection, ctrFeatureID)
+	wsConnection.Close()
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
@@ -78,10 +78,10 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 	params[paramConfig] = config
 
 	wsConnection, ctrFeatureID := suite.createWithConfig(params)
-	defer wsConnection.Close()
-	defer suite.remove(wsConnection, ctrFeatureID)
-
 	suite.assertHTTPServer()
+
+	suite.remove(wsConnection, ctrFeatureID)
+	wsConnection.Close()
 }
 
 func (suite *ctrFactorySuite) assertHTTPServer() {
