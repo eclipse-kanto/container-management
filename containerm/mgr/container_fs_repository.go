@@ -118,21 +118,9 @@ func (repository *containerFsRepository) Read(containerID string) (*types.Contai
 	lock.Lock()
 	defer lock.Unlock()
 
-	var deepCopy *types.Container
 	pth := repository.getContainerConfigMetaPath(containerID)
 
-	reader, err := os.Open(pth)
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-
-	r := io.MultiReader(reader)
-	if err := json.NewDecoder(r).Decode(&deepCopy); err != nil {
-		return nil, err
-	}
-
-	return deepCopy, nil
+	return util.ReadContainer(pth)
 }
 
 func (repository *containerFsRepository) Delete(containerID string) error {

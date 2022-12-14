@@ -86,6 +86,9 @@ const (
 	thingsAcknowledgeTimeoutDefault          = 15000
 	thingsSubscribeTimeoutDefault            = 15000
 	thingsUnsubscribeTimeoutDefault          = 5000
+
+	// default deployment config
+	deploymentInitialPathDefault = "/etc/container-management/containers"
 )
 
 var (
@@ -162,6 +165,9 @@ func getDefaultInstance() *config {
 				SubscribeTimeout:   thingsSubscribeTimeoutDefault,
 				UnsubscribeTimeout: thingsUnsubscribeTimeoutDefault,
 			},
+		},
+		DeploymentManagerConfig: &deploymentManagerConfig{
+			DeploymentInitPath: deploymentInitialPathDefault,
 		},
 	}
 }

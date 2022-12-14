@@ -23,6 +23,8 @@ import (
 type config struct {
 	Log *log.Config `json:"log,omitempty"`
 
+	DeploymentManagerConfig *deploymentManagerConfig `json:"deployment,omitempty"`
+
 	ManagerConfig *managerConfig `json:"manager,omitempty"`
 
 	ContainerClientConfig *containerRuntimeConfig `json:"containers,omitempty"`
@@ -57,6 +59,11 @@ type containerRuntimeConfig struct {
 	CtrImageExpiry        time.Duration              `json:"image_expiry,omitempty"`
 	CtrImageExpiryDisable bool                       `json:"image_expiry_disable,omitempty"`
 	CtrLeaseID            string                     `json:"lease_id,omitempty"`
+}
+
+// deployment manager config
+type deploymentManagerConfig struct {
+	DeploymentInitPath string `json:"init_dir,omitempty"`
 }
 
 func (cfg *containerRuntimeConfig) UnmarshalJSON(data []byte) error {

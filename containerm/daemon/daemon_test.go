@@ -389,6 +389,10 @@ func TestSetCommandFlags(t *testing.T) {
 			flag:         "things-conn-client-key",
 			expectedType: reflect.String.String(),
 		},
+		"test_flags_deployment-init-dir": {
+			flag:         "deployment-init-dir",
+			expectedType: reflect.String.String(),
+		},
 	}
 
 	for testName, testCase := range tests {

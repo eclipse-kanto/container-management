@@ -63,5 +63,8 @@
       "subscribe_timeout": 15000,
       "unsubscribe_timeout": 5000
     }
+  },
+  "deployment": {
+    "init_dir": "/etc/container-management/containers"
   }
 }

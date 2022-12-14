@@ -15,6 +15,7 @@ package main
 import (
 	"context"
 
+	"github.com/eclipse-kanto/container-management/containerm/deployment"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/mgr"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
@@ -26,6 +27,11 @@ func (d *daemon) start() error {
 
 	if err := d.loadContainerManagersStoredInfo(); err != nil {
 		log.ErrorErr(err, "could not load and restore persistent data for the Container Manager Services")
+		return err
+	}
+
+	if err := d.initialDeploy(); err != nil {
+		log.ErrorErr(err, "could not perform initial deploy for Deployment Manager Services")
 		return err
 	}
 
@@ -44,6 +50,9 @@ func (d *daemon) stop() {
 	log.Debug("stopping of the GW CM daemon is requested and started")
 	log.Debug("stopping gRPC server ")
 	d.stopGrpcServers()
+
+	log.Debug("stopping deployment managers local services")
+	d.stopDeploymentManagers()
 
 	log.Debug("stopping management local services")
 	d.stopContainerManagers()
@@ -106,17 +115,17 @@ func (d *daemon) loadContainerManagersStoredInfo() error {
 	log.Debug("will load and restore stored data for container management local services")
 	ctrMrgServices := d.serviceInfoSet.GetAll(registry.ContainerManagerService)
 	var (
-		instnace interface{}
+		instance interface{}
 		err      error
 		ctrMgr   mgr.ContainerManager
 	)
 	log.Debug("there are %d container management services to load the data for", len(ctrMrgServices))
 	for _, servInfo := range ctrMrgServices {
-		instnace, err = servInfo.Instance()
+		instance, err = servInfo.Instance()
 		if err != nil {
 			log.ErrorErr(err, "could not get container management service instance for service ID = %s", servInfo.Registration.ID)
 		} else {
-			ctrMgr = instnace.(mgr.ContainerManager)
+			ctrMgr = instance.(mgr.ContainerManager)
 			ctx := context.Background()
 			if err = ctrMgr.Load(ctx); err != nil {
 				log.ErrorErr(err, "could not load stored data for container management service for service ID = %s", servInfo.Registration.ID)
@@ -125,6 +134,31 @@ func (d *daemon) loadContainerManagersStoredInfo() error {
 
 			if err = ctrMgr.Restore(ctx); err != nil {
 				log.ErrorErr(err, "could not restore stored containers for container management service for service ID = %s", servInfo.Registration.ID)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (d *daemon) initialDeploy() error {
+	log.Debug("will perform initial deploy for deployment managers local services")
+	deploymentMgrServices := d.serviceInfoSet.GetAll(registry.DeploymentManagerService)
+	var (
+		instance interface{}
+		err      error
+		dMgr     deployment.Manager
+	)
+	log.Debug("there are %d deployment manager services to load the data for", len(deploymentMgrServices))
+	for _, servInfo := range deploymentMgrServices {
+		instance, err = servInfo.Instance()
+		if err != nil {
+			log.ErrorErr(err, "could not get deployment manager service instance for service ID = %s", servInfo.Registration.ID)
+		} else {
+			dMgr = instance.(deployment.Manager)
+			ctx := context.Background()
+			if err = dMgr.InitialDeploy(ctx); err != nil {
+				log.ErrorErr(err, "could not perform initial deploy for deployment manager service for service ID = %s", servInfo.Registration.ID)
 				return err
 			}
 		}
@@ -194,6 +228,28 @@ func (d *daemon) stopContainerManagers() {
 			err = instnace.(mgr.ContainerManager).Dispose(ctx)
 			if err != nil {
 				log.ErrorErr(err, "could not stop container management service for service ID = %s", servInfo.Registration.ID)
+			}
+		}
+	}
+}
+
+func (d *daemon) stopDeploymentManagers() {
+	log.Debug("will stop deployment managers local services")
+	deployMgrServices := d.serviceInfoSet.GetAll(registry.DeploymentManagerService)
+	var (
+		instance interface{}
+		err      error
+	)
+	log.Debug("there are %d deployment manager services to be stopped", len(deployMgrServices))
+	for _, servInfo := range deployMgrServices {
+		instance, err = servInfo.Instance()
+		if err != nil {
+			log.ErrorErr(err, "could not get deployment manager service instance for service ID = %s", servInfo.Registration.ID)
+		} else {
+			ctx := context.Background()
+			err = instance.(deployment.Manager).Dispose(ctx)
+			if err != nil {
+				log.ErrorErr(err, "could not stop deployment manager service for service ID = %s", servInfo.Registration.ID)
 			}
 		}
 	}
