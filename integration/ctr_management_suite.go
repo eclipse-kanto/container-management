@@ -19,7 +19,6 @@ import (
 
 	"github.com/eclipse-kanto/kanto/integration/util"
 	"github.com/eclipse/ditto-clients-golang/protocol"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/websocket"
@@ -67,11 +66,16 @@ func (suite *ctrManagementSuite) assertCtrFeatureDefinition(featureURL, expected
 }
 
 func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
-	wsConnection, err := util.NewDigitalTwinWSConnection(suite.Cfg)
+	var (
+		wsConnection *websocket.Conn
+		err          error
+	)
+	defer suite.closeOnError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
+
+	wsConnection, err = util.NewDigitalTwinWSConnection(suite.Cfg)
 	require.NoError(suite.T(), err, "failed to create a websocket connection")
 
 	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, "like(resource:path,'/features/Container:*')")
-	suite.closeOnError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
 	return wsConnection
 }
 
@@ -93,8 +97,8 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 		if event.Topic.String() == suite.topicCreated {
 			ctrFeatureID = getCtrFeatureID(event.Path)
 			definition, err := getCtrDefinition(event.Value)
-			assert.NoError(suite.T(), err, "failed to parse property definition")
-			assert.Equal(suite.T(), "com.bosch.iot.suite.edge.containers:Container:1.5.0", definition, "container feature definition is not expected")
+			require.NoError(suite.T(), err, "failed to parse property definition")
+			require.Equal(suite.T(), "com.bosch.iot.suite.edge.containers:Container:1.5.0", definition, "container feature definition is not expected")
 			return false, nil
 		}
 		if event.Topic.String() == suite.topicModified {
@@ -106,13 +110,13 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 				return true, fmt.Errorf("received event is not expected")
 			}
 			eventValue, err = parseMap(event.Value)
-			assert.NoError(suite.T(), err, "failed to parse event value")
+			require.NoError(suite.T(), err, "failed to parse event value")
 
 			propertyStatus, err = parseString(eventValue["status"])
-			assert.NoError(suite.T(), err, "failed to parse property status")
+			require.NoError(suite.T(), err, "failed to parse property status")
 
 			isCtrStarted, err = parseBool(params[paramStart])
-			assert.NoError(suite.T(), err, "failed to parse param start")
+			require.NoError(suite.T(), err, "failed to parse param start")
 
 			if propertyStatus == "CREATED" {
 				if isCtrStarted {
@@ -131,8 +135,7 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 		}
 		return true, fmt.Errorf("unknown message is received")
 	})
-	assert.NoError(suite.T(), err, "failed to process creating the container feature")
-	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
+	suite.closeOnError(wsConnection, err, "failed to process creating the container feature")
 	return wsConnection, ctrFeatureID
 }
 
@@ -187,17 +190,17 @@ func (suite *ctrManagementSuite) createWithConfig(params map[string]interface{})
 }
 
 func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeatureID string) {
-	ctrFeatureURL := suite.isCtrFeatureAvailable(ctrFeatureID)
-	if ctrFeatureURL == "" {
-		return
-	}
 	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, filter)
-	suite.closeOnError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
-	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
+	defer func() {
+		wsConnection.Close()
+		util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
+	}()
 
-	_, err = util.ExecuteOperation(suite.Cfg, ctrFeatureURL, "remove", true)
-	suite.closeOnError(wsConnection, err, "failed to remove the container feature with ID %s", ctrFeatureID)
+	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, filter)
+	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
+
+	_, err = util.ExecuteOperation(suite.Cfg, util.GetFeatureURL(suite.ctrThingURL, ctrFeatureID), "remove", true)
+	require.NoError(suite.T(), err, "failed to remove the container feature with ID %s", ctrFeatureID)
 
 	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicDeleted {
@@ -205,7 +208,8 @@ func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeature
 		}
 		return true, fmt.Errorf("unknown message is received")
 	})
-	suite.closeOnError(wsConnection, err, "failed to process removing the container feature")
+	require.NoError(suite.T(), err, "failed to process removing the container feature")
+
 }
 
 func (suite *ctrManagementSuite) isCtrFeatureAvailable(ctrFeatureID string) string {
