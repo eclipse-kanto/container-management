@@ -192,8 +192,8 @@ func (suite *ctrManagementSuite) createWithConfig(params map[string]interface{})
 func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeatureID string) {
 	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
 	defer func() {
-		wsConnection.Close()
 		util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
+		wsConnection.Close()
 	}()
 
 	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, filter)

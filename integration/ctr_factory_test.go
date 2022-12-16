@@ -51,7 +51,9 @@ func (suite *ctrFactorySuite) TestCreate() {
 	)
 
 	defer func() {
-		suite.remove(wsConnection, ctrFeatureID)
+		if ctrFeatureID != "" {
+			suite.remove(wsConnection, ctrFeatureID)
+		}
 	}()
 
 	wsConnection, ctrFeatureID = suite.create(params)
@@ -69,9 +71,10 @@ func (suite *ctrFactorySuite) TestCreateWithConfig() {
 	)
 
 	defer func() {
-		suite.remove(wsConnection, ctrFeatureID)
+		if ctrFeatureID != "" {
+			suite.remove(wsConnection, ctrFeatureID)
+		}
 	}()
-
 	wsConnection, ctrFeatureID = suite.createWithConfig(params)
 }
 
@@ -96,7 +99,9 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 	)
 
 	defer func() {
-		suite.remove(wsConnection, ctrFeatureID)
+		if ctrFeatureID != "" {
+			suite.remove(wsConnection, ctrFeatureID)
+		}
 	}()
 
 	wsConnection, ctrFeatureID = suite.createWithConfig(params)
