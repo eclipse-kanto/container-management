@@ -70,7 +70,11 @@ func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 		wsConnection *websocket.Conn
 		err          error
 	)
-	defer suite.closeOnError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
+	defer func() {
+		if wsConnection != nil {
+			suite.closeOnError(wsConnection, err, "failed to subscribe for the %s messages", util.StartSendEvents)
+		}
+	}()
 
 	wsConnection, err = util.NewDigitalTwinWSConnection(suite.Cfg)
 	require.NoError(suite.T(), err, "failed to create a websocket connection")
