@@ -50,7 +50,7 @@ func verifySignatures(signatures []signature, digest string, verifier sig.Verifi
 	return verifyErrs
 }
 
-func verifySignature(signature signature, digest string, verifier sig.Verifier) error {
+func verifySignature(signature signature, expectedDigest string, verifier sig.Verifier) error {
 	signatureDecoded, err := base64.StdEncoding.DecodeString(signature.base64)
 	if err != nil {
 		return err
@@ -63,9 +63,9 @@ func verifySignature(signature signature, digest string, verifier sig.Verifier) 
 		return err
 	}
 
-	foundDigest := sci.Critical.Image.DockerManifestDigest
-	if foundDigest != digest {
-		return log.NewErrorf("unexpected digest = %s", foundDigest)
+	actualDigest := sci.Critical.Image.DockerManifestDigest
+	if actualDigest != expectedDigest {
+		return log.NewErrorf("the digest = %s from signature payload, does not match the expected digest = %s", actualDigest, expectedDigest)
 	}
 	return nil
 }
