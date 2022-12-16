@@ -24,7 +24,7 @@ import (
 )
 
 //EventsManagerServiceLocalID represents the ID of the local events manager service
-const EventsManagerServiceLocalID = "gw.containerm.service.local.v1.service-events-manager"
+const EventsManagerServiceLocalID = "container-management.service.local.v1.service-events-manager"
 
 func init() {
 	registry.Register(&registry.Registration{

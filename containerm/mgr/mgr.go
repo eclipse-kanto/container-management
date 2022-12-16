@@ -33,7 +33,7 @@ import (
 
 const (
 	// ManagerServiceLocalID local ID for the manager service.
-	ManagerServiceLocalID       = "gw.containerm.service.local.v1.service-manager"
+	ManagerServiceLocalID       = "container-management.service.local.v1.service-manager"
 	noSuchContainerErrorMsg     = "no such container with id = %s exists"
 	failedConfigStoringErrorMsg = "failed to store container's configuration to local storage"
 )
