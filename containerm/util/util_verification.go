@@ -16,10 +16,11 @@ import (
 	"crypto"
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/eclipse-kanto/container-management/containerm/log"
-	errorUtil "github.com/eclipse-kanto/container-management/containerm/util/error"
 	"os"
 	"strings"
+
+	"github.com/eclipse-kanto/container-management/containerm/log"
+	errorUtil "github.com/eclipse-kanto/container-management/containerm/util/error"
 )
 
 const separator = ":"

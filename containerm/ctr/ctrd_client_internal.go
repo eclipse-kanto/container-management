@@ -15,13 +15,10 @@ package ctr
 import (
 	"context"
 	"fmt"
-	"github.com/opencontainers/image-spec/identity"
 	"regexp"
 	"strings"
 	"syscall"
 	"time"
-
-	"golang.org/x/sys/unix"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/events"
@@ -33,6 +30,8 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"
+	"github.com/opencontainers/image-spec/identity"
+	"golang.org/x/sys/unix"
 )
 
 func (ctrdClient *containerdClient) generateRemoteOpts(imageRef string) []containerd.RemoteOpt {
@@ -162,9 +161,9 @@ func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageInfo typ
 	return ctrdImage, err
 }
 
-var skipVerificationMessage = "signature verification is skipped for image = %s, %s"
-
 func (ctrdClient *containerdClient) verifyImage(ctx context.Context, image containerd.Image, pull bool, verificationKeys []*verificationKey) error {
+	const skipVerificationMessage = "signature verification is skipped for image = %s, %s"
+
 	imageName := image.Name()
 	if len(verificationKeys) == 0 {
 		// no public keys, skip verification
@@ -451,8 +450,6 @@ func (ctrdClient *containerdClient) processEvents(namespace string) {
 	}
 }
 
-var signatureRegex = regexp.MustCompile(`-[a-f0-9]{64}.sig$`)
-
 func (ctrdClient *containerdClient) initImagesExpiryManagement(ctx context.Context) error {
 	log.Debug("initializing cached images and content expiry management")
 	images, err := ctrdClient.spi.ListImages(ctx)
@@ -463,6 +460,7 @@ func (ctrdClient *containerdClient) initImagesExpiryManagement(ctx context.Conte
 	ctrdClient.imagesExpiryLock.Lock()
 	defer ctrdClient.imagesExpiryLock.Unlock()
 
+	var signatureRegex = regexp.MustCompile(`-[a-f0-9]{64}.sig$`)
 	for _, image := range images {
 		imageRef := image.Name()
 		if signatureRegex.MatchString(imageRef) {

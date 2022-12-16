@@ -13,9 +13,10 @@
 package ctr
 
 import (
+	"time"
+
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
-	"time"
 )
 
 // ContainerOpts represents container engine client's configuration options.

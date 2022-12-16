@@ -13,11 +13,11 @@
 package ctr
 
 import (
-	"github.com/eclipse-kanto/container-management/containerm/containers/types"
-	"github.com/eclipse-kanto/container-management/containerm/log"
 	"testing"
 	"time"
 
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
+	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 )
 

@@ -16,12 +16,13 @@ import (
 	"context"
 	"crypto"
 	"fmt"
+	"strings"
+
 	"github.com/containerd/containerd"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	errorUtil "github.com/eclipse-kanto/container-management/containerm/util/error"
 	sig "github.com/sigstore/sigstore/pkg/signature"
-	"strings"
 )
 
 type verificationKey struct {

@@ -14,11 +14,11 @@ package ctr
 
 import (
 	"context"
-	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"path/filepath"
 	"time"
 
 	"github.com/containerd/containerd"
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
 	"github.com/eclipse-kanto/container-management/containerm/util"

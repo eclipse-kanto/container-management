@@ -13,9 +13,10 @@
 package util
 
 import (
+	"regexp"
+
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
-	"regexp"
 )
 
 const (
