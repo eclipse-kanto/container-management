@@ -106,7 +106,7 @@ func TestContainerFactoryOperationsHandlerCreate(t *testing.T) {
 		"test_container_factory_operations_handler_create_args_invalid": {
 			operation:     containerFactoryFeatureOperationCreate,
 			args:          testCreateOperationsHandlerInvalidArgs,
-			mockExecution: mockExecContainerFactoryFeatureOperationsHandlerCreategInvalidArgsType,
+			mockExecution: mockExecContainerFactoryFeatureOperationsHandlerCreateInvalidArgsType,
 		},
 		"test_container_factory_operations_handler_create_args_type": {
 			operation:     containerFactoryFeatureOperationCreate,
@@ -165,7 +165,8 @@ func TestContainerFactoryOperationsHandlerCreate(t *testing.T) {
 				ImageRef: testContainerImage,
 				Start:    true,
 				Config:   nil,
-			}, mockExecution: mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigNilConfig,
+			},
+			mockExecution: mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigNilConfig,
 		},
 		"test_container_factory_operations_handler_create_config_args_invalid": {
 			operation:     containerFactoryFeatureOperationCreateWithConfig,
@@ -203,7 +204,9 @@ func TestContainerFactoryOperationsHandlerCreate(t *testing.T) {
 			expectedRunErr := testCase.mockExecution(t)
 
 			result, resultErr := ctrFactory.(*containerFactoryFeature).featureOperationsHandler(testCase.operation, testCase.args)
-			testutil.AssertEqual(t, result, nil)
+			if expectedRunErr == nil {
+				testutil.AssertEqual(t, testContainerID, result)
+			}
 			testutil.AssertError(t, expectedRunErr, resultErr)
 		})
 	}
@@ -246,7 +249,7 @@ func mockExecContainerFactoryFeatureOperationsHandlerCreateStartNoErrors(t *test
 	return nil
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreategInvalidArgsType(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateInvalidArgsType(t *testing.T) error {
 	mockContainerManager.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 	mockContainerManager.EXPECT().Start(gomock.Any(), gomock.Any()).Times(0)
 	return client.NewMessagesParameterInvalidError("json: unsupported type: chan int")
