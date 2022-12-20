@@ -26,6 +26,7 @@ import (
 	mocksmgrspb "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/mgr"
 	mockssysinfopb "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/sysinfo"
 	"github.com/eclipse-kanto/container-management/containerm/util/protobuf"
+
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/ptypes/empty"
 )
@@ -640,6 +641,69 @@ func TestRename(t *testing.T) {
 	}
 }
 
+type testLogsArgs struct {
+	request *pbcontainers.GetLogsRequest
+	srv     *fakeLogsServer
+}
+type mockExecLogs func(args testLogsArgs) error
+
+type fakeLogsServer struct {
+	pbcontainers.Containers_LogsServer
+}
+
+func newFakeClient() *fakeLogsServer {
+	return &fakeLogsServer{}
+}
+
+func (f fakeLogsServer) Send(m *pbcontainers.GetLogsResponse) error {
+	return nil
+}
+
+func TestLogs(t *testing.T) {
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+	setup(controller)
+
+	tests := map[string]struct {
+		args          testLogsArgs
+		mockExecution mockExecLogs
+	}{
+		"test_logs_no_errs": {
+			args: testLogsArgs{
+				request: &pbcontainers.GetLogsRequest{
+					Id:   containerID,
+					Tail: 10,
+				},
+				srv: newFakeClient(),
+			},
+			mockExecution: mockExecLogsNoErrors,
+		},
+		"test_logs_errs": {
+			args: testLogsArgs{
+				request: &pbcontainers.GetLogsRequest{
+					Id:   containerID,
+					Tail: 10,
+				},
+				srv: newFakeClient(),
+			},
+			mockExecution: mockExecLogsErrors,
+		},
+	}
+
+	// execute tests
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			t.Log(testName)
+
+			expectedRunErr := testCase.mockExecution(testCase.args)
+
+			resultErr := testCtrsService.Logs(testCase.args.request, *testCase.args.srv)
+
+			testutil.AssertError(t, expectedRunErr, resultErr)
+		})
+	}
+}
+
 // Mock executions -------------------------------------------------------------
 // SystemInfo -------------------------------------------------------------
 // ProjectInfo -------------------------------------------------------------
@@ -657,7 +721,7 @@ func mockExecProjectInfoNoErrors(args testProjectInfoArgs) (*pbsysinfo.ProjectIn
 }
 
 // Containers -------------------------------------------------------------
-// Greate -------------------------------------------------------------
+// Create -------------------------------------------------------------
 func mockExecCreateNoErrors(args testCreateArgs) (*pbcontainers.CreateContainerResponse, error) {
 	pbCtr := &pbcontainerstypes.Container{
 		Id:    containerID,
@@ -817,4 +881,34 @@ func mockExecRenameErrors(args testRenameArgs) (*empty.Empty, error) {
 	err := errors.New("failed to rename container")
 	mockContainerManager.EXPECT().Rename(args.ctx, args.request.Id, gomock.Eq(args.request.Name)).Times(1).Return(err)
 	return nil, err
+}
+
+// Logs -------------------------------------------------------------
+func mockExecLogsNoErrors(args testLogsArgs) error {
+	pbCtr := &pbcontainerstypes.Container{
+		Id:    containerID,
+		Name:  containerName,
+		Image: &pbcontainerstypes.Image{Name: containerImageID},
+		HostConfig: &pbcontainerstypes.HostConfig{
+			LogConfig: &pbcontainerstypes.LogConfiguration{
+				DriverConfig: &pbcontainerstypes.LogDriverConfiguration{
+					RootDir: "../pkg/testutil/logs",
+				},
+			},
+		},
+	}
+	mockContainerManager.EXPECT().Get(context.TODO(), args.request.Id).Times(1).Return(protobuf.ToInternalContainer(pbCtr), nil)
+	return nil
+}
+
+func mockExecLogsErrors(args testLogsArgs) error {
+	err := errors.New("log file not found json.log")
+	pbCtr := &pbcontainerstypes.Container{
+		Id:    containerID,
+		Name:  containerName,
+		Image: &pbcontainerstypes.Image{Name: containerImageID},
+	}
+
+	mockContainerManager.EXPECT().Get(context.TODO(), args.request.Id).Times(1).Return(protobuf.ToInternalContainer(pbCtr), nil)
+	return err
 }

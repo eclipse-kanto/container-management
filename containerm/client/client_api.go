@@ -63,6 +63,9 @@ type Client interface {
 
 	ProjectInfo(ctx context.Context) (sysinfotypes.ProjectInfo, error)
 
+	// Logs prints the logs for a container
+	Logs(ctx context.Context, id string, tail int32) error
+
 	// Dispose the client instance
 	Dispose() error
 }

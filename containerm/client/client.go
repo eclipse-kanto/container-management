@@ -14,6 +14,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	pbcontainers "github.com/eclipse-kanto/container-management/containerm/api/services/containers"
@@ -164,4 +165,25 @@ func (cl *client) ProjectInfo(ctx context.Context) (sysinfotypes.ProjectInfo, er
 	}
 
 	return protobuf.ToInternalProjectInfo(pbResponse.ProjectInfo), nil
+}
+
+// Logs print the logs of a container.
+func (cl *client) Logs(ctx context.Context, id string, tail int32) error {
+	stream, err := cl.grpcContainersClient.Logs(ctx, &pbcontainers.GetLogsRequest{Id: id, Tail: tail})
+	if err != nil {
+		return fmt.Errorf("error while opening stream: %s", err)
+	}
+
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", resp.Log)
+	}
+
+	return nil
 }

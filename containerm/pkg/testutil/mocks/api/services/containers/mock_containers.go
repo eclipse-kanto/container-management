@@ -446,3 +446,22 @@ func (mr *MockContainers_AttachClientMockRecorder) Trailer() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Trailer", reflect.TypeOf((*MockContainers_AttachClient)(nil).Trailer))
 }
+
+// Logs mocks base method.
+func (m *MockContainersClient) Logs(arg0 context.Context, arg1 *containers.GetLogsRequest, arg2 ...grpc.CallOption) (containers.Containers_LogsClient, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Logs", varargs...)
+	ret0, _ := ret[0].(containers.Containers_LogsClient)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Logs indicates an expected call of Logs.
+func (mr *MockContainersClientMockRecorder) Logs(arg0, arg1 interface{}, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Logs", reflect.TypeOf((*MockContainersClient)(nil).Logs), []interface{}{arg0, arg1, arg2}...)
+}
