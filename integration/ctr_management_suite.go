@@ -93,7 +93,7 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 		if event.Topic.String() == suite.topicCreated {
 			ctrFeatureID = getCtrFeatureID(event.Path)
 			err := suite.assertCtrID(ctrFeatureID, string(ctrID))
-			require.NoError(suite.T(), err, "container feature ID is not expected")
+			require.NoError(suite.T(), err, "container ID is not expected")
 			definition, err := getCtrDefinition(event.Value)
 			require.NoError(suite.T(), err, "failed to parse property definition")
 			require.Equal(suite.T(), "com.bosch.iot.suite.edge.containers:Container:1.5.0", definition, "container feature definition is not expected")
@@ -151,7 +151,7 @@ func (suite *ctrManagementSuite) assertCtrID(ctrFeatureID, ctrID string) error {
 		return fmt.Errorf("failed to get container ID from container feature ID")
 	}
 	s1 := strings.Trim(ctrID, "\"")
-	require.Equal(suite.T(), s1, s[1], "container feature ID is not expected")
+	require.Equal(suite.T(), s1, s[1], "container ID is not expected")
 	return nil
 }
 

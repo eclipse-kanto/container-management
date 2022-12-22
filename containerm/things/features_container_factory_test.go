@@ -201,12 +201,10 @@ func TestContainerFactoryOperationsHandlerCreate(t *testing.T) {
 			setupThingMock(controller)
 			ctrFactory := newContainerFactoryFeature(mockContainerManager, mockEventsManager, mockThing, mockContainerStorage)
 
-			expectedRunErr := testCase.mockExecution(t)
+			expectedCtrID, expectedRunErr := testCase.mockExecution(t)
+			ctrID, resultErr := ctrFactory.(*containerFactoryFeature).featureOperationsHandler(testCase.operation, testCase.args)
 
-			result, resultErr := ctrFactory.(*containerFactoryFeature).featureOperationsHandler(testCase.operation, testCase.args)
-			if expectedRunErr == nil {
-				testutil.AssertEqual(t, testContainerID, result)
-			}
+			testutil.AssertEqual(t, expectedCtrID, ctrID)
 			testutil.AssertError(t, expectedRunErr, resultErr)
 		})
 	}
@@ -216,103 +214,103 @@ var (
 	testCreateOperationsHandlerInvalidArgs = make(chan int)
 )
 
-type mockExecCreate func(t *testing.T) error
+type mockExecCreate func(t *testing.T) (interface{}, error)
 
 // create without config mocks
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateNoErrors(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateNoErrors(t *testing.T) (interface{}, error) {
 	mockContainerManager.EXPECT().Create(gomock.Any(), testContainerToCreate).Times(1).Return(testContainerCreated, nil)
-	return nil
+	return testContainerCreated.ID, nil
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateNoRefError(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateNoRefError(t *testing.T) (interface{}, error) {
 	mockContainerManager.EXPECT().Create(gomock.Any(), testContainerToCreate).Times(0)
-	return log.NewError("imageRef must be set")
+	return nil, log.NewError("imageRef must be set")
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateErrorReturned(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateErrorReturned(t *testing.T) (interface{}, error) {
 	err := log.NewError("error while creating")
 	mockContainerManager.EXPECT().Create(gomock.Any(), testContainerToCreate).Times(1).Return(nil, err)
-	return err
+	return nil, err
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateStartErrorReturned(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateStartErrorReturned(t *testing.T) (interface{}, error) {
 	err := log.NewError("error while starting")
 	mockContainerManager.EXPECT().Create(gomock.Any(), testContainerToCreate).Times(1).Return(testContainerCreated, nil)
 	mockContainerManager.EXPECT().Start(gomock.Any(), testContainerCreated.ID).Times(1).Return(err)
-	return nil
+	return testContainerCreated.ID, nil
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateStartNoErrors(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateStartNoErrors(t *testing.T) (interface{}, error) {
 	mockContainerManager.EXPECT().Create(gomock.Any(), testContainerToCreate).Times(1).Return(testContainerCreated, nil)
 	mockContainerManager.EXPECT().Start(gomock.Any(), testContainerCreated.ID).Times(1).Return(nil)
-	return nil
+	return testContainerCreated.ID, nil
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateInvalidArgsType(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateInvalidArgsType(t *testing.T) (interface{}, error) {
 	mockContainerManager.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 	mockContainerManager.EXPECT().Start(gomock.Any(), gomock.Any()).Times(0)
-	return client.NewMessagesParameterInvalidError("json: unsupported type: chan int")
+	return nil, client.NewMessagesParameterInvalidError("json: unsupported type: chan int")
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateInvalidCreateArgs(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateInvalidCreateArgs(t *testing.T) (interface{}, error) {
 	mockContainerManager.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 	mockContainerManager.EXPECT().Start(gomock.Any(), gomock.Any()).Times(0)
-	return client.NewMessagesParameterInvalidError("json: cannot unmarshal string into Go value of type things.createArgs")
+	return nil, client.NewMessagesParameterInvalidError("json: cannot unmarshal string into Go value of type things.createArgs")
 }
 
 // create with config mocks
 
-func mockExecCreateStartWithConfigNoErrors(t *testing.T) error {
+func mockExecCreateStartWithConfigNoErrors(t *testing.T) (interface{}, error) {
 	mockContainerManager.EXPECT().Create(gomock.Any(), expectedCtr).Times(1).Return(testContainerCreated, nil)
 	mockContainerManager.EXPECT().Start(gomock.Any(), testContainerCreated.ID).Times(1).Return(nil)
-	return nil
+	return testContainerCreated.ID, nil
 }
-func mockExecCreateStartWithConfigNoImageRefError(t *testing.T) error {
+func mockExecCreateStartWithConfigNoImageRefError(t *testing.T) (interface{}, error) {
 	mockContainerManager.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 	mockContainerManager.EXPECT().Start(gomock.Any(), gomock.Any()).Times(0)
-	return log.NewError("imageRef must be set")
+	return nil, log.NewError("imageRef must be set")
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigErrorReturned(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigErrorReturned(t *testing.T) (interface{}, error) {
 	err := log.NewError("error while creating")
 	mockContainerManager.EXPECT().Create(gomock.Any(), expectedCtr).Times(1).Return(nil, err)
-	return err
+	return nil, err
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigStartErrorReturned(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigStartErrorReturned(t *testing.T) (interface{}, error) {
 	err := log.NewError("error while starting")
 	mockContainerManager.EXPECT().Create(gomock.Any(), expectedCtr).Times(1).Return(testContainerCreated, nil)
 	mockContainerManager.EXPECT().Start(gomock.Any(), testContainerCreated.ID).Times(1).Return(err)
-	return nil
+	return testContainerCreated.ID, nil
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigStartNoErrors(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigStartNoErrors(t *testing.T) (interface{}, error) {
 	mockContainerManager.EXPECT().Create(gomock.Any(), expectedCtr).Times(1).Return(testContainerCreated, nil)
 	mockContainerManager.EXPECT().Start(gomock.Any(), testContainerCreated.ID).Times(1).Return(nil)
-	return nil
+	return testContainerCreated.ID, nil
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigNilConfig(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigNilConfig(t *testing.T) (interface{}, error) {
 	mockContainerManager.EXPECT().Create(gomock.Any(), testContainerToCreate).Times(1).Return(testContainerCreated, nil)
 	mockContainerManager.EXPECT().Start(gomock.Any(), testContainerCreated.ID).Times(1).Return(nil)
-	return nil
+	return testContainerCreated.ID, nil
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigInvalidArgsType(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigInvalidArgsType(t *testing.T) (interface{}, error) {
 	mockContainerManager.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 	mockContainerManager.EXPECT().Start(gomock.Any(), gomock.Any()).Times(0)
-	return client.NewMessagesParameterInvalidError("json: unsupported type: chan int")
+	return nil, client.NewMessagesParameterInvalidError("json: unsupported type: chan int")
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigInvalidCreateArgs(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerCreateWithConfigInvalidCreateArgs(t *testing.T) (interface{}, error) {
 	mockContainerManager.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 	mockContainerManager.EXPECT().Start(gomock.Any(), gomock.Any()).Times(0)
-	return client.NewMessagesParameterInvalidError("json: cannot unmarshal string into Go value of type things.createWithConfigArgs")
+	return nil, client.NewMessagesParameterInvalidError("json: cannot unmarshal string into Go value of type things.createWithConfigArgs")
 }
 
-func mockExecContainerFactoryFeatureOperationsHandlerDefault(t *testing.T) error {
+func mockExecContainerFactoryFeatureOperationsHandlerDefault(t *testing.T) (interface{}, error) {
 	mockContainerManager.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 	mockContainerManager.EXPECT().Start(gomock.Any(), gomock.Any()).Times(0)
-	return client.NewMessagesSubjectNotFound(log.NewErrorf("unsupported operation %s", "unsupported-operation").Error())
+	return nil, client.NewMessagesSubjectNotFound(log.NewErrorf("unsupported operation %s", "unsupported-operation").Error())
 }

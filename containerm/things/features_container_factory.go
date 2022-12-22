@@ -113,7 +113,11 @@ func (ctrFactory *containerFactoryFeature) featureOperationsHandler(operationNam
 		if err != nil {
 			return nil, client.NewMessagesParameterInvalidError(err.Error())
 		}
-		return ctrFactory.create(ctx, cArgs.ImageRef, cArgs.Start)
+		result, err := ctrFactory.create(ctx, cArgs.ImageRef, cArgs.Start)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
 	case containerFactoryFeatureOperationCreateWithConfig:
 		bytes, err := json.Marshal(args)
 		if err != nil {
@@ -124,7 +128,11 @@ func (ctrFactory *containerFactoryFeature) featureOperationsHandler(operationNam
 		if err != nil {
 			return nil, client.NewMessagesParameterInvalidError(err.Error())
 		}
-		return ctrFactory.createWithConfig(ctx, cArgs.ImageRef, cArgs.Name, cArgs.Config, cArgs.Start)
+		result, err := ctrFactory.createWithConfig(ctx, cArgs.ImageRef, cArgs.Name, cArgs.Config, cArgs.Start)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
 	default:
 		err := log.NewErrorf("unsupported operation %s", operationName)
 		log.ErrorErr(err, "unsupported operation %s", operationName)
