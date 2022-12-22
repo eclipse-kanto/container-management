@@ -113,11 +113,7 @@ func (ctrFactory *containerFactoryFeature) featureOperationsHandler(operationNam
 		if err != nil {
 			return nil, client.NewMessagesParameterInvalidError(err.Error())
 		}
-		result, err := ctrFactory.create(ctx, cArgs.ImageRef, cArgs.Start)
-		if err != nil {
-			return nil, err
-		}
-		return result, nil
+		return ctrFactory.create(ctx, cArgs.ImageRef, cArgs.Start)
 	case containerFactoryFeatureOperationCreateWithConfig:
 		bytes, err := json.Marshal(args)
 		if err != nil {
@@ -128,11 +124,7 @@ func (ctrFactory *containerFactoryFeature) featureOperationsHandler(operationNam
 		if err != nil {
 			return nil, client.NewMessagesParameterInvalidError(err.Error())
 		}
-		result, err := ctrFactory.createWithConfig(ctx, cArgs.ImageRef, cArgs.Name, cArgs.Config, cArgs.Start)
-		if err != nil {
-			return nil, err
-		}
-		return result, nil
+		return ctrFactory.createWithConfig(ctx, cArgs.ImageRef, cArgs.Name, cArgs.Config, cArgs.Start)
 	default:
 		err := log.NewErrorf("unsupported operation %s", operationName)
 		log.ErrorErr(err, "unsupported operation %s", operationName)
@@ -140,9 +132,9 @@ func (ctrFactory *containerFactoryFeature) featureOperationsHandler(operationNam
 	}
 }
 
-func (ctrFactory *containerFactoryFeature) create(ctx context.Context, imageRef string, start bool) (string, error) {
+func (ctrFactory *containerFactoryFeature) create(ctx context.Context, imageRef string, start bool) (interface{}, error) {
 	if imageRef == "" {
-		return "", log.NewError("imageRef must be set")
+		return nil, log.NewError("imageRef must be set")
 	}
 	ctr := &types.Container{
 		Image: types.Image{
@@ -155,7 +147,7 @@ func (ctrFactory *containerFactoryFeature) create(ctx context.Context, imageRef 
 	)
 	if resCtr, err = ctrFactory.mgr.Create(ctx, ctr); err != nil {
 		log.ErrorErr(err, "failed to create container")
-		return "", err
+		return nil, err
 	}
 	if start {
 		if err := ctrFactory.mgr.Start(ctx, resCtr.ID); err != nil {
@@ -165,9 +157,9 @@ func (ctrFactory *containerFactoryFeature) create(ctx context.Context, imageRef 
 	return resCtr.ID, nil
 }
 
-func (ctrFactory *containerFactoryFeature) createWithConfig(ctx context.Context, imageRef, name string, cfg *configuration, start bool) (string, error) {
+func (ctrFactory *containerFactoryFeature) createWithConfig(ctx context.Context, imageRef, name string, cfg *configuration, start bool) (interface{}, error) {
 	if imageRef == "" {
-		return "", log.NewError("imageRef must be set")
+		return nil, log.NewError("imageRef must be set")
 	}
 	var ctr *types.Container
 	if cfg != nil {
@@ -184,7 +176,7 @@ func (ctrFactory *containerFactoryFeature) createWithConfig(ctx context.Context,
 	)
 	if resCtr, err = ctrFactory.mgr.Create(ctx, ctr); err != nil {
 		log.ErrorErr(err, "failed to create container")
-		return "", err
+		return nil, err
 	}
 	if start {
 		if err := ctrFactory.mgr.Start(ctx, resCtr.ID); err != nil {
