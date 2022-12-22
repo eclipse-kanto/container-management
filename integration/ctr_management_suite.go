@@ -49,14 +49,6 @@ func (suite *ctrManagementSuite) SetupCtrManagementSuite() {
 	suite.assertCtrFeatureDefinition(suite.ctrFactoryFeatureURL, "[\"com.bosch.iot.suite.edge.containers:ContainerFactory:1.3.0\"]")
 }
 
-func getCtrFeatureID(path string) string {
-	result := strings.Split(path, "/")
-	if len(result) < 3 {
-		return ""
-	}
-	return result[2]
-}
-
 func (suite *ctrManagementSuite) assertCtrFeatureDefinition(featureURL, expectedCtrDefinition string) {
 	actualCtrDefinition := featureURL + "/definition"
 	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, actualCtrDefinition, nil)
@@ -86,7 +78,7 @@ func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 func (suite *ctrManagementSuite) createOperation(operation string, params map[string]interface{}) (*websocket.Conn, string) {
 	wsConnection := suite.createWSConnection()
 
-	_, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
+	ctrID, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
 	suite.closeOnError(wsConnection, err, "failed to execute the %s operation", operation)
 
 	var (
@@ -100,6 +92,8 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicCreated {
 			ctrFeatureID = getCtrFeatureID(event.Path)
+			err := suite.assertCtrID(ctrFeatureID, string(ctrID))
+			require.NoError(suite.T(), err, "container ID is not expected")
 			definition, err := getCtrDefinition(event.Value)
 			require.NoError(suite.T(), err, "failed to parse property definition")
 			require.Equal(suite.T(), "com.bosch.iot.suite.edge.containers:Container:1.5.0", definition, "container feature definition is not expected")
@@ -141,6 +135,24 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 	})
 	suite.closeOnError(wsConnection, err, "failed to process creating the container feature")
 	return wsConnection, ctrFeatureID
+}
+
+func getCtrFeatureID(path string) string {
+	result := strings.Split(path, "/")
+	if len(result) < 3 {
+		return ""
+	}
+	return result[2]
+}
+
+func (suite *ctrManagementSuite) assertCtrID(ctrFeatureID, ctrID string) error {
+	s := strings.Split(ctrFeatureID, ":")
+	if len(s) < 2 {
+		return fmt.Errorf("failed to get container ID from container feature ID")
+	}
+	s1 := strings.Trim(ctrID, "\"")
+	require.Equal(suite.T(), s1, s[1], "container ID is not expected")
+	return nil
 }
 
 func parseMap(value interface{}) (map[string]interface{}, error) {
