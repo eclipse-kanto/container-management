@@ -37,7 +37,7 @@ func (cc *logsCmd) init(cli *cli) {
 		Use:   "logs",
 		Short: "Print the logs for a container.",
 		Long:  "Print the logs for a container.",
-		Args:  cobra.NoArgs,
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cc.run(args)
 		},
