@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Contributors to the Eclipse Foundation
+// Copyright (c) 2023 Contributors to the Eclipse Foundation
 //
 // See the NOTICE file(s) distributed with this work for additional
 // information regarding copyright ownership.
@@ -34,7 +34,7 @@ type logsConfig struct {
 func (cc *logsCmd) init(cli *cli) {
 	cc.cli = cli
 	cc.cmd = &cobra.Command{
-		Use:   "logs",
+		Use:   "logs <container-id>",
 		Short: "Print the logs for a container.",
 		Long:  "Print the logs for a container.",
 		Args:  cobra.MaximumNArgs(1),
