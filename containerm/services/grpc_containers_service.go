@@ -186,6 +186,10 @@ func (server *containers) Logs(request *pbcontainers.GetLogsRequest, srv pbconta
 		return err
 	}
 
+	if container.State != nil && container.State.Status == types.Created {
+		return fmt.Errorf("there are no logs for container with status \"Created\"")
+	}
+
 	logFile := getLogFilePath(container)
 
 	isFile, err := util.IsFile(logFile)
