@@ -13,13 +13,9 @@
 package services
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
-	"path"
 
 	pbcontainers "github.com/eclipse-kanto/container-management/containerm/api/services/containers"
 	pbcontainerstypes "github.com/eclipse-kanto/container-management/containerm/api/types/containers"
@@ -190,7 +186,10 @@ func (server *containers) Logs(request *pbcontainers.GetLogsRequest, srv pbconta
 		return fmt.Errorf("there are no logs for container with status \"Created\"")
 	}
 
-	logFile := getLogFilePath(container)
+	logFile, err := getLogFilePath(container)
+	if err != nil {
+		return err
+	}
 
 	isFile, err := util.IsFile(logFile)
 	if !isFile {
@@ -212,90 +211,4 @@ func (server *containers) Logs(request *pbcontainers.GetLogsRequest, srv pbconta
 	}
 
 	return tailLogs(f, srv, int(request.Tail))
-}
-
-func sendAllLogs(file *os.File, srv pbcontainers.Containers_LogsServer) error {
-	scanner := bufio.NewScanner(file)
-	buff := bytes.NewBufferString("")
-	for {
-		if !scanner.Scan() {
-			if err := srv.Send(&pbcontainers.GetLogsResponse{Log: buff.String()}); err != nil {
-				return err
-			}
-			break
-		}
-		buff.WriteString(fmt.Sprintf("%s\n", scanner.Text()))
-		if float64(len(buff.Bytes()))/(1<<20) > 3.5 {
-			if err := srv.Send(&pbcontainers.GetLogsResponse{Log: buff.String()}); err != nil {
-				return err
-			}
-			buff.Reset()
-		}
-	}
-	return nil
-}
-
-func tailLogs(file *os.File, srv pbcontainers.Containers_LogsServer, tail int) error {
-	var (
-		cursor   int64 = 0
-		buff           = bytes.NewBufferString("")
-		logLines       = make([]string, 0)
-	)
-
-	stat, err := file.Stat()
-	if err != nil {
-		return err
-	}
-
-	fileSize := stat.Size()
-	if fileSize == 0 {
-		return nil
-	}
-
-	for {
-		cursor--
-		if _, err := file.Seek(cursor, io.SeekEnd); err != nil {
-			return err
-		}
-
-		char := make([]byte, 1)
-		if _, err := file.Read(char); err != nil {
-			return err
-		}
-
-		if cursor != -1 && (char[0] == 10 || char[0] == 13) {
-			logLines = append(logLines, reverse(buff.String()))
-			buff.Reset()
-		} else {
-			buff.WriteString(string(char))
-		}
-
-		if cursor == -fileSize || len(logLines) == tail {
-			break
-		}
-	}
-	for i := len(logLines) - 1; i >= 0; i-- {
-		if err := srv.Send(&pbcontainers.GetLogsResponse{Log: logLines[i]}); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func reverse(s string) (result string) {
-	for _, r := range s {
-		result = string(r) + result
-	}
-	return
-}
-
-func getLogFilePath(container *types.Container) string {
-	if container.HostConfig != nil &&
-		container.HostConfig.LogConfig != nil &&
-		container.HostConfig.LogConfig.DriverConfig != nil &&
-		container.HostConfig.LogConfig.DriverConfig.RootDir != "" {
-		return path.Join(container.HostConfig.LogConfig.DriverConfig.RootDir, "json.log")
-	}
-	logFileDir, _ := path.Split(container.HostsPath)
-	return path.Join(logFileDir, "json.log")
 }

@@ -24,7 +24,7 @@ import (
 
 // constants for json log file
 const (
-	jsonLogFileName              = "json.log"
+	JSONLogFileName              = "json.log"
 	jsonLogFilePerms os.FileMode = 0644
 
 	JSONFileLogDriverName logger.LogDriverType = "json-file"
@@ -57,7 +57,7 @@ func NewJSONFileLog(info logger.LogDriverInfo, configOpts ...logger.LogConfigOpt
 	if _, err := os.Stat(info.ContainerRootDir); err != nil {
 		return nil, err
 	}
-	logPath := filepath.Join(info.ContainerRootDir, jsonLogFileName)
+	logPath := filepath.Join(info.ContainerRootDir, JSONLogFileName)
 
 	f, err := os.OpenFile(logPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, jsonLogFilePerms)
 	if err != nil {

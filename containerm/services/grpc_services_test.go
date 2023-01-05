@@ -678,7 +678,7 @@ func TestLogs(t *testing.T) {
 			},
 			mockExecution: mockExecLogsNoErrors,
 		},
-		"test_logs_errs": {
+		"test_logs_no_host_cfg_errs": {
 			args: testLogsArgs{
 				request: &pbcontainers.GetLogsRequest{
 					Id:   containerID,
@@ -686,7 +686,7 @@ func TestLogs(t *testing.T) {
 				},
 				srv: newFakeClient(),
 			},
-			mockExecution: mockExecLogsErrors,
+			mockExecution: mockExecLogsNoHostConfig,
 		},
 	}
 
@@ -892,6 +892,7 @@ func mockExecLogsNoErrors(args testLogsArgs) error {
 		HostConfig: &pbcontainerstypes.HostConfig{
 			LogConfig: &pbcontainerstypes.LogConfiguration{
 				DriverConfig: &pbcontainerstypes.LogDriverConfiguration{
+					Type:    "json-file",
 					RootDir: "../pkg/testutil/logs",
 				},
 			},
@@ -901,8 +902,8 @@ func mockExecLogsNoErrors(args testLogsArgs) error {
 	return nil
 }
 
-func mockExecLogsErrors(args testLogsArgs) error {
-	err := errors.New("log file not found json.log")
+func mockExecLogsNoHostConfig(args testLogsArgs) error {
+	err := errors.New("no host config for container test-ctr")
 	pbCtr := &pbcontainerstypes.Container{
 		Id:    containerID,
 		Name:  containerName,
