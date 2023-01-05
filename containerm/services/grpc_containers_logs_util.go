@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 
 	pbcontainers "github.com/eclipse-kanto/container-management/containerm/api/services/containers"
@@ -32,11 +31,15 @@ func sendAllLogs(file *os.File, srv pbcontainers.Containers_LogsServer) error {
 	buff := bytes.NewBufferString("")
 	for {
 		if !scanner.Scan() {
+			if scanner.Err() != nil {
+				return scanner.Err()
+			}
 			if err := srv.Send(&pbcontainers.GetLogsResponse{Log: buff.String()}); err != nil {
 				return err
 			}
 			break
 		}
+
 		buff.WriteString(fmt.Sprintf("%s\n", scanner.Text()))
 		if len(buff.Bytes()) > maxBuffSize {
 			if err := srv.Send(&pbcontainers.GetLogsResponse{Log: buff.String()}); err != nil {
@@ -119,7 +122,7 @@ func getLogFilePath(container *types.Container) (string, error) {
 		if container.HostConfig.LogConfig.DriverConfig.RootDir != "" {
 			return filepath.Join(container.HostConfig.LogConfig.DriverConfig.RootDir, jsonfile.JSONLogFileName), nil
 		}
-		logFileDir, _ := path.Split(container.HostsPath)
+		logFileDir, _ := filepath.Split(container.HostsPath)
 		return filepath.Join(logFileDir, jsonfile.JSONLogFileName), nil
 	}
 	return "", fmt.Errorf("unknown log type %s", container.HostConfig.LogConfig.DriverConfig.Type)
