@@ -14,12 +14,17 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	pbcontainers "github.com/eclipse-kanto/container-management/containerm/api/services/containers"
 	pbcontainerstypes "github.com/eclipse-kanto/container-management/containerm/api/types/containers"
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/mgr"
 	"github.com/eclipse-kanto/container-management/containerm/streams"
+	"github.com/eclipse-kanto/container-management/containerm/util"
 	"github.com/eclipse-kanto/container-management/containerm/util/protobuf"
+
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 )
@@ -169,4 +174,41 @@ func (server *containers) Remove(ctx context.Context, request *pbcontainers.Remo
 		return nil, err
 	}
 	return &empty.Empty{}, nil
+}
+
+func (server *containers) Logs(request *pbcontainers.GetLogsRequest, srv pbcontainers.Containers_LogsServer) error {
+	container, err := server.mgr.Get(context.Background(), request.Id)
+	if err != nil {
+		return err
+	}
+
+	if container.State != nil && container.State.Status == types.Created {
+		return fmt.Errorf("there are no logs for container with status \"Created\"")
+	}
+
+	logFile, err := getLogFilePath(container)
+	if err != nil {
+		return err
+	}
+
+	isFile, err := util.IsFile(logFile)
+	if !isFile {
+		return fmt.Errorf("log file not found %s", logFile)
+	}
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Open(logFile)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	if request.Tail < 0 {
+		return sendAllLogs(f, srv)
+	}
+
+	return tailLogs(f, srv, int(request.Tail))
 }

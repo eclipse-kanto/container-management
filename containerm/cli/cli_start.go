@@ -35,6 +35,7 @@ func main() {
 	cli.addCommand(base, &sysInfoCmd{})
 	cli.addCommand(base, &updateCmd{})
 	cli.addCommand(base, &renameCtrCmd{})
+	cli.addCommand(base, &logsCmd{})
 
 	if err := cli.run(); err != nil {
 		// not ExitError, print error to os.Stderr, exit code 1.
