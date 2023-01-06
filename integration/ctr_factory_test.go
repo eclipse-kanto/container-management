@@ -91,7 +91,7 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 	}
 
 	params := make(map[string]interface{})
-	params[paramImageRef] = "docker.io/library/httpd:latest"
+	params[paramImageRef] = httpdImageRef
 	params[paramStart] = true
 	params[paramConfig] = config
 

@@ -14,6 +14,7 @@ package integration
 
 const (
 	influxdbImageRef = "docker.io/library/influxdb:1.8.4"
+	httpdImageRef    = "docker.io/library/httpd:latest"
 	paramImageRef    = "imageRef"
 	paramStart       = "start"
 	paramConfig      = "config"

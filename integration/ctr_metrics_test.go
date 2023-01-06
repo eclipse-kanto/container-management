@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Contributors to the Eclipse Foundation
+// Copyright (c) 2023 Contributors to the Eclipse Foundation
 //
 // See the NOTICE file(s) distributed with this work for additional
 // information regarding copyright ownership.
@@ -64,7 +64,7 @@ func (suite *ctrMetricsSuite) SetupSuite() {
 	suite.topicData = util.GetLiveMessageTopic(suite.ctrThingID, protocol.TopicAction(actionData))
 	suite.assertContainerMetricsFeatures()
 	params := make(map[string]interface{})
-	params[paramImageRef] = "docker.io/library/httpd:latest"
+	params[paramImageRef] = httpdImageRef
 	params[paramStart] = true
 	suite.firstWSConnection, suite.firstContainerID = suite.create(params)
 	suite.secondWSConnection, suite.secondContainerID = suite.create(params)
@@ -204,27 +204,9 @@ func (suite *ctrMetricsSuite) testMetrics(params map[string]interface{}, expecte
 			}
 
 			for _, mm := range m.Measurements {
-				if strings.HasPrefix(mm.ID, "cpu.") {
-					continue
+				if !allowedPrefixID(mm.ID) {
+					return true, fmt.Errorf("Invalid metrics ID: %s", mm.ID)
 				}
-
-				if strings.HasPrefix(mm.ID, "memory.") {
-					continue
-				}
-
-				if strings.HasPrefix(mm.ID, "io.") {
-					continue
-				}
-
-				if strings.HasPrefix(mm.ID, "net.") {
-					continue
-				}
-
-				if strings.HasPrefix(mm.ID, "pids") {
-					continue
-				}
-
-				return true, fmt.Errorf("Invalid metrics ID: %s", mm.ID)
 			}
 		}
 
@@ -232,4 +214,14 @@ func (suite *ctrMetricsSuite) testMetrics(params map[string]interface{}, expecte
 	})
 
 	return result
+}
+
+func allowedPrefixID(id string) bool {
+	allowedIDs := []string{"cpu.", "memory.", "io.", "net.", "pids"}
+	for _, allowedID := range allowedIDs {
+		if strings.HasPrefix(id, allowedID) {
+			return true
+		}
+	}
+	return false
 }
