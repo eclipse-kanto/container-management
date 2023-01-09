@@ -59,7 +59,7 @@ type containerdClient struct {
 	imagesWatcher      resourcesWatcher
 }
 
-//-------------------------------------- ContainerdAPIClient implementation with Containerd -------------------------------------
+// -------------------------------------- ContainerdAPIClient implementation with Containerd -------------------------------------
 // CreateContainer creates all resources needed in the underlying container management so that a container can be successfully started
 func (ctrdClient *containerdClient) CreateContainer(ctx context.Context, container *types.Container, checkpointDir string) error {
 	log.Debug("creating container resources in container client")

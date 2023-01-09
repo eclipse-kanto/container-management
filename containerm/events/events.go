@@ -23,7 +23,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-//EventsManagerServiceLocalID represents the ID of the local events manager service
+// EventsManagerServiceLocalID represents the ID of the local events manager service
 const EventsManagerServiceLocalID = "container-management.service.local.v1.service-events-manager"
 
 func init() {

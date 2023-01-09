@@ -71,8 +71,10 @@ func (cc *listCmd) setupFlags() {
 	flagSet.StringVarP(&cc.config.name, "name", "n", "", "List all containers with a specific name.")
 }
 
-/*Eventually a pretty print util could be created for the table-formatted
-container data printing or a respective 3-rd party go package could be used. */
+/*
+Eventually a pretty print util could be created for the table-formatted
+container data printing or a respective 3-rd party go package could be used.
+*/
 const tableRowTemplate = "%-37s\t%-37s\t%-60s\t%-10s\t%-32s\t%-10s\t\n"
 
 func prettyPrint(ctrs []*types.Container) {
