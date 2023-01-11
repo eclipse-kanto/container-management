@@ -28,7 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/net/websocket"
+	// "golang.org/x/net/websocket"
 )
 
 const (
@@ -41,45 +41,30 @@ const (
 
 type ctrMetricsSuite struct {
 	ctrManagementSuite
-	firstContainerID   string
-	firstWSConnection  *websocket.Conn
-	secondContainerID  string
-	secondWSConnection *websocket.Conn
-	metricsUrl         string
-	pathData           string
-	topicData          string
+	metricsUrl  string
+	firstCtrID  string
+	secondCtrID string
 }
-
-var (
-	stopParams = map[string]interface{}{
-		paramFrequency: "0s",
-	}
-)
 
 func (suite *ctrMetricsSuite) SetupSuite() {
 	suite.SetupCtrManagementSuite()
 	suite.metricsUrl = util.GetFeatureURL(suite.ctrThingURL, metricsFeatureID)
 
-	suite.pathData = util.GetFeatureOutboxMessagePath(metricsFeatureID, actionData)
-	suite.topicData = util.GetLiveMessageTopic(suite.ctrThingID, protocol.TopicAction(actionData))
+	ctrParams := map[string]interface{}{
+		paramImageRef: httpdImageRef,
+		paramStart:    true,
+	}
+
+	suite.firstCtrID = suite.create(ctrParams)
+	suite.secondCtrID = suite.create(ctrParams)
+
 	suite.assertContainerMetricsFeatures()
-	params := make(map[string]interface{})
-	params[paramImageRef] = httpdImageRef
-	params[paramStart] = true
-	suite.firstWSConnection, suite.firstContainerID = suite.create(params)
-	suite.secondWSConnection, suite.secondContainerID = suite.create(params)
 }
 
 func (suite *ctrMetricsSuite) TearDownSuite() {
 	suite.stopMetricsRequest()
-	suite.firstWSConnection.Close()
-	suite.firstWSConnection = suite.createWSConnection()
-	suite.remove(suite.firstWSConnection, suite.firstContainerID)
-	suite.firstWSConnection.Close()
-	suite.secondWSConnection.Close()
-	suite.secondWSConnection = suite.createWSConnection()
-	suite.remove(suite.secondWSConnection, suite.secondContainerID)
-	suite.secondWSConnection.Close()
+	suite.remove(suite.firstCtrID)
+	suite.remove(suite.secondCtrID)
 	suite.TearDown()
 }
 
@@ -91,20 +76,20 @@ func (suite *ctrMetricsSuite) TestRequestMetricsForAllContainers() {
 	params := make(map[string]interface{})
 	params[paramFrequency] = "3s"
 
-	err := suite.testMetrics(params, suite.firstContainerID, suite.secondContainerID)
-	assert.NoError(suite.T(), err, "error while receiving metrics for all container")
+	err := suite.testMetrics(params, suite.firstCtrID, suite.secondCtrID)
+	require.NoError(suite.T(), err, "error while receiving metrics for all container")
 }
 
 func (suite *ctrMetricsSuite) TestRequestMetricsForFirstContainer() {
 	filter := things.Filter{}
 	filter.ID = []string{"cpu.*", "memory.*", "io.*", "net.*", "pids"}
-	filter.Originator = suite.firstContainerID
+	filter.Originator = suite.firstCtrID
 	params := make(map[string]interface{})
 	params[paramFrequency] = "5s"
 	params[paramFilter] = []things.Filter{filter}
 
-	err := suite.testMetrics(params, suite.firstContainerID)
-	assert.NoErrorf(suite.T(), err, "error while receiving metrics for '%s' container", suite.firstContainerID)
+	err := suite.testMetrics(params, suite.firstCtrID)
+	require.NoErrorf(suite.T(), err, "error while receiving metrics for '%s' container", suite.firstCtrID)
 }
 
 func (suite *ctrMetricsSuite) TestFilterNotMatching() {
@@ -119,13 +104,12 @@ func (suite *ctrMetricsSuite) TestFilterNotMatching() {
 		"metrics event for non existing originator '%s' should not be received", filter.Originator)
 
 	filter.ID = []string{"test.io", "test.cpu", "test.memory", "test.net"}
-	filter.Originator = suite.secondContainerID
-	params[paramFrequency] = "5s"
+	filter.Originator = suite.secondCtrID
+	params[paramFrequency] = "1s"
 	params[paramFilter] = []things.Filter{filter}
 
 	err = suite.testMetrics(params, filter.Originator)
 	assert.Error(suite.T(), err, "metrics event for non existing measurements test.* should not be received")
-
 }
 
 func (suite *ctrMetricsSuite) TestInvalidRequestMetrics() {
@@ -146,6 +130,9 @@ func (suite *ctrMetricsSuite) assertContainerMetricsFeatures() {
 }
 
 func (suite *ctrMetricsSuite) stopMetricsRequest() {
+	stopParams := map[string]interface{}{
+		paramFrequency: "0s",
+	}
 	suite.executeMetrics(stopParams)
 }
 
@@ -159,21 +146,26 @@ func (suite *ctrMetricsSuite) testMetrics(params map[string]interface{}, expecte
 	defer wsConnection.Close()
 	require.NoError(suite.T(), err, "failed to create websocket connection")
 
-	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, "START-SEND-MESSAGES", "")
-	defer suite.stopMetricsRequest()
+	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendMessages, "")
+	defer func() {
+		suite.stopMetricsRequest()
+		util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendMessages)
+	}()
 	require.NoError(suite.T(), err, "unable to listen for events by using a websocket connection")
 
+	pathData := util.GetFeatureOutboxMessagePath(metricsFeatureID, actionData)
+	topicData := util.GetLiveMessageTopic(suite.ctrThingID, protocol.TopicAction(actionData))
 	timestamp := time.Now().Unix()
 	actualOriginators := make(map[string]bool)
 
 	suite.executeMetrics(params)
 
 	result := util.ProcessWSMessages(suite.Cfg, wsConnection, func(msg *protocol.Envelope) (bool, error) {
-		if msg.Path != suite.pathData {
+		if msg.Path != pathData {
 			return false, nil
 		}
 
-		if msg.Topic.String() != suite.topicData {
+		if msg.Topic.String() != topicData {
 			return false, nil
 		}
 
