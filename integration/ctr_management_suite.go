@@ -79,10 +79,7 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 	wsConnection := suite.createWSConnection()
 
 	defer func() {
-		if wsConnection != nil {
-			util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
-			wsConnection.Close()
-		}
+		suite.closeUnsubscribe(wsConnection)
 	}()
 
 	ctrID, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
@@ -219,10 +216,7 @@ func (suite *ctrManagementSuite) remove(ctrFeatureID string) {
 	wsConnection := suite.createWSConnection()
 
 	defer func() {
-		if wsConnection != nil {
-			util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
-			wsConnection.Close()
-		}
+		suite.closeUnsubscribe(wsConnection)
 	}()
 
 	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
@@ -257,4 +251,11 @@ func (suite *ctrManagementSuite) closeOnError(wsConnection *websocket.Conn, err 
 		wsConnection.Close()
 	}
 	require.NoError(suite.T(), err, message, messageArs)
+}
+
+func (suite *ctrManagementSuite) closeUnsubscribe(wsConnection *websocket.Conn) {
+	if wsConnection != nil {
+		util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
+		wsConnection.Close()
+	}
 }

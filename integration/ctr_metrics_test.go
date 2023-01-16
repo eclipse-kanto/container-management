@@ -28,7 +28,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	// "golang.org/x/net/websocket"
 )
 
 const (
@@ -95,8 +94,7 @@ func (suite *ctrMetricsSuite) TestRequestMetricsForFirstContainer() {
 func (suite *ctrMetricsSuite) TestFilterNotMatching() {
 	params := make(map[string]interface{})
 	params[paramFrequency] = "2s"
-	filter := things.Filter{}
-	filter.Originator = "test.process"
+	filter := things.Filter{Originator: "test.process"}
 	params[paramFilter] = []things.Filter{filter}
 
 	err := suite.testMetrics(params, filter.Originator)
@@ -105,7 +103,6 @@ func (suite *ctrMetricsSuite) TestFilterNotMatching() {
 
 	filter.ID = []string{"test.io", "test.cpu", "test.memory", "test.net"}
 	filter.Originator = suite.secondCtrID
-	params[paramFrequency] = "1s"
 	params[paramFilter] = []things.Filter{filter}
 
 	err = suite.testMetrics(params, filter.Originator)
