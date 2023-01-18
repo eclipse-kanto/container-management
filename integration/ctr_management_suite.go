@@ -53,7 +53,7 @@ func (suite *ctrManagementSuite) assertCtrFeatureDefinition(featureURL, expected
 	actualCtrDefinition := featureURL + "/definition"
 	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, actualCtrDefinition, nil)
 
-	require.NoError(suite.T(), err, "failed to get the container feature feature definition")
+	require.NoError(suite.T(), err, "failed to get the container feature definition")
 	require.Equal(suite.T(), expectedCtrDefinition, string(body), "the container feature definition is not expected")
 }
 
@@ -77,10 +77,7 @@ func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 
 func (suite *ctrManagementSuite) createOperation(operation string, params map[string]interface{}) string {
 	wsConnection := suite.createWSConnection()
-
-	defer func() {
-		suite.closeUnsubscribe(wsConnection)
-	}()
+	defer suite.closeUnsubscribe(wsConnection)
 
 	ctrID, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
 	suite.closeOnError(wsConnection, err, "failed to execute the %s operation", operation)
@@ -213,11 +210,9 @@ func (suite *ctrManagementSuite) remove(ctrFeatureID string) {
 	if ctrFeatureID == "" {
 		return
 	}
-	wsConnection := suite.createWSConnection()
 
-	defer func() {
-		suite.closeUnsubscribe(wsConnection)
-	}()
+	wsConnection := suite.createWSConnection()
+	defer suite.closeUnsubscribe(wsConnection)
 
 	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
 

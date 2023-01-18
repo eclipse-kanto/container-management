@@ -49,6 +49,8 @@ func (suite *ctrMetricsSuite) SetupSuite() {
 	suite.SetupCtrManagementSuite()
 	suite.metricsUrl = util.GetFeatureURL(suite.ctrThingURL, metricsFeatureID)
 
+	suite.assertContainerMetricsFeatures()
+
 	ctrParams := map[string]interface{}{
 		paramImageRef: httpdImageRef,
 		paramStart:    true,
@@ -56,12 +58,9 @@ func (suite *ctrMetricsSuite) SetupSuite() {
 
 	suite.firstCtrID = suite.create(ctrParams)
 	suite.secondCtrID = suite.create(ctrParams)
-
-	suite.assertContainerMetricsFeatures()
 }
 
 func (suite *ctrMetricsSuite) TearDownSuite() {
-	suite.stopMetricsRequest()
 	suite.remove(suite.firstCtrID)
 	suite.remove(suite.secondCtrID)
 	suite.TearDown()
@@ -72,65 +71,57 @@ func TestContainerMetricsSuite(t *testing.T) {
 }
 
 func (suite *ctrMetricsSuite) TestRequestMetricsForAllContainers() {
-	params := make(map[string]interface{})
-	params[paramFrequency] = "3s"
-
-	err := suite.testMetrics(params, suite.firstCtrID, suite.secondCtrID)
+	err := suite.testMetrics(map[string]interface{}{paramFrequency: "3s"}, suite.firstCtrID, suite.secondCtrID)
 	require.NoError(suite.T(), err, "error while receiving metrics for all container")
 }
 
 func (suite *ctrMetricsSuite) TestRequestMetricsForFirstContainer() {
-	filter := things.Filter{}
-	filter.ID = []string{"cpu.*", "memory.*", "io.*", "net.*", "pids"}
-	filter.Originator = suite.firstCtrID
-	params := make(map[string]interface{})
-	params[paramFrequency] = "5s"
-	params[paramFilter] = []things.Filter{filter}
+	filter := things.Filter{
+		ID:         []string{"cpu.*", "memory.*", "io.*", "net.*", "pids"},
+		Originator: suite.firstCtrID,
+	}
 
-	err := suite.testMetrics(params, suite.firstCtrID)
+	err := suite.testMetrics(createParams("5s", filter), suite.firstCtrID)
 	require.NoErrorf(suite.T(), err, "error while receiving metrics for '%s' container", suite.firstCtrID)
 }
 
 func (suite *ctrMetricsSuite) TestFilterNotMatching() {
-	params := make(map[string]interface{})
-	params[paramFrequency] = "2s"
 	filter := things.Filter{Originator: "test.process"}
-	params[paramFilter] = []things.Filter{filter}
 
-	err := suite.testMetrics(params, filter.Originator)
+	err := suite.testMetrics(createParams("2s", filter), filter.Originator)
 	assert.Errorf(suite.T(), err,
 		"metrics event for non existing originator '%s' should not be received", filter.Originator)
 
 	filter.ID = []string{"test.io", "test.cpu", "test.memory", "test.net"}
 	filter.Originator = suite.secondCtrID
-	params[paramFilter] = []things.Filter{filter}
 
-	err = suite.testMetrics(params, filter.Originator)
+	err = suite.testMetrics(createParams("2s", filter), filter.Originator)
 	assert.Error(suite.T(), err, "metrics event for non existing measurements test.* should not be received")
 }
 
-func (suite *ctrMetricsSuite) TestInvalidRequestMetrics() {
+func (suite *ctrMetricsSuite) TestInvalidFrequency() {
 	params := make(map[string]interface{})
 	params[paramFrequency] = "invalid frequency"
 	_, err := util.ExecuteOperation(suite.Cfg, suite.metricsUrl, actionRequest, params)
 	assert.Errorf(suite.T(), err, "error while sending metrics request with invalid params %v", params)
+}
 
-	params[paramFrequency] = "2s"
+func (suite *ctrMetricsSuite) TestInvalidAction() {
 	invalidAction := "invalidRequest"
-	_, err = util.ExecuteOperation(suite.Cfg, suite.metricsUrl, invalidAction, params)
-	assert.Errorf(suite.T(), err, "error while sending metrics request with wrong topic %v", invalidAction)
+	_, err := util.ExecuteOperation(suite.Cfg, suite.metricsUrl, invalidAction,
+		map[string]interface{}{paramFrequency: "2s"})
+	assert.Errorf(suite.T(), err, "error while sending metrics request with wrong topic %s", invalidAction)
 }
 
 func (suite *ctrMetricsSuite) assertContainerMetricsFeatures() {
 	_, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, suite.metricsUrl, nil)
 	require.NoError(suite.T(), err, "error while getting the metrics feature")
+
+	suite.assertCtrFeatureDefinition(suite.metricsUrl, "[\"com.bosch.iot.suite.edge.metric:Metrics:1.0.0\"]")
 }
 
 func (suite *ctrMetricsSuite) stopMetricsRequest() {
-	stopParams := map[string]interface{}{
-		paramFrequency: "0s",
-	}
-	suite.executeMetrics(stopParams)
+	suite.executeMetrics(map[string]interface{}{paramFrequency: "0s"})
 }
 
 func (suite *ctrMetricsSuite) executeMetrics(params map[string]interface{}) {
@@ -150,19 +141,17 @@ func (suite *ctrMetricsSuite) testMetrics(params map[string]interface{}, expecte
 	}()
 	require.NoError(suite.T(), err, "unable to listen for events by using a websocket connection")
 
-	pathData := util.GetFeatureOutboxMessagePath(metricsFeatureID, actionData)
-	topicData := util.GetLiveMessageTopic(suite.ctrThingID, protocol.TopicAction(actionData))
 	timestamp := time.Now().Unix()
 	actualOriginators := make(map[string]bool)
 
 	suite.executeMetrics(params)
 
 	result := util.ProcessWSMessages(suite.Cfg, wsConnection, func(msg *protocol.Envelope) (bool, error) {
-		if msg.Path != pathData {
+		if msg.Path != util.GetFeatureOutboxMessagePath(metricsFeatureID, actionData) {
 			return false, nil
 		}
 
-		if msg.Topic.String() != topicData {
+		if msg.Topic.String() != util.GetLiveMessageTopic(suite.ctrThingID, protocol.TopicAction(actionData)) {
 			return false, nil
 		}
 
@@ -213,4 +202,11 @@ func allowedPrefixID(id string) bool {
 		}
 	}
 	return false
+}
+
+func createParams(frequency string, filter things.Filter) map[string]interface{} {
+	return map[string]interface{}{
+		paramFrequency: frequency,
+		paramFilter:    []things.Filter{filter},
+	}
 }

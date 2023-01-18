@@ -44,13 +44,8 @@ func (suite *ctrFactorySuite) TestCreate() {
 	params[paramImageRef] = influxdbImageRef
 	params[paramStart] = true
 
-	var ctrFeatureID string
-
-	defer func() {
-		suite.remove(ctrFeatureID)
-	}()
-
-	ctrFeatureID = suite.create(params)
+	ctrFeatureID := suite.create(params)
+	suite.remove(ctrFeatureID)
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfig() {
@@ -59,12 +54,8 @@ func (suite *ctrFactorySuite) TestCreateWithConfig() {
 	params[paramStart] = true
 	params[paramConfig] = make(map[string]interface{})
 
-	var ctrFeatureID string
-
-	defer func() {
-		suite.remove(ctrFeatureID)
-	}()
-	ctrFeatureID = suite.createWithConfig(params)
+	ctrFeatureID := suite.createWithConfig(params)
+	suite.remove(ctrFeatureID)
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
@@ -82,13 +73,8 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 	params[paramStart] = true
 	params[paramConfig] = config
 
-	var ctrFeatureID string
-
-	defer func() {
-		suite.remove(ctrFeatureID)
-	}()
-
-	ctrFeatureID = suite.createWithConfig(params)
+	ctrFeatureID := suite.createWithConfig(params)
+	defer suite.remove(ctrFeatureID)
 	suite.assertHTTPServer()
 }
 
