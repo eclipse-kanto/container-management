@@ -53,7 +53,7 @@ func (suite *ctrManagementSuite) assertCtrFeatureDefinition(featureURL, expected
 	actualCtrDefinition := featureURL + "/definition"
 	body, err := util.SendDigitalTwinRequest(suite.Cfg, http.MethodGet, actualCtrDefinition, nil)
 
-	require.NoError(suite.T(), err, "failed to get the container feature feature definition")
+	require.NoError(suite.T(), err, "failed to get the container feature definition")
 	require.Equal(suite.T(), expectedCtrDefinition, string(body), "the container feature definition is not expected")
 }
 
@@ -75,8 +75,9 @@ func (suite *ctrManagementSuite) createWSConnection() *websocket.Conn {
 	return wsConnection
 }
 
-func (suite *ctrManagementSuite) createOperation(operation string, params map[string]interface{}) (*websocket.Conn, string) {
+func (suite *ctrManagementSuite) createOperation(operation string, params map[string]interface{}) string {
 	wsConnection := suite.createWSConnection()
+	defer suite.closeUnsubscribe(wsConnection)
 
 	ctrID, err := util.ExecuteOperation(suite.Cfg, suite.ctrFactoryFeatureURL, operation, params)
 	suite.closeOnError(wsConnection, err, "failed to execute the %s operation", operation)
@@ -134,7 +135,7 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 		return true, fmt.Errorf("unknown message is received")
 	})
 	suite.closeOnError(wsConnection, err, "failed to process creating the container feature")
-	return wsConnection, ctrFeatureID
+	return ctrFeatureID
 }
 
 func getCtrFeatureID(path string) string {
@@ -197,18 +198,23 @@ func parseBool(value interface{}) (bool, error) {
 	return property, nil
 }
 
-func (suite *ctrManagementSuite) create(params map[string]interface{}) (*websocket.Conn, string) {
+func (suite *ctrManagementSuite) create(params map[string]interface{}) string {
 	return suite.createOperation("create", params)
 }
 
-func (suite *ctrManagementSuite) createWithConfig(params map[string]interface{}) (*websocket.Conn, string) {
+func (suite *ctrManagementSuite) createWithConfig(params map[string]interface{}) string {
 	return suite.createOperation("createWithConfig", params)
 }
 
-func (suite *ctrManagementSuite) remove(wsConnection *websocket.Conn, ctrFeatureID string) {
-	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
+func (suite *ctrManagementSuite) remove(ctrFeatureID string) {
+	if ctrFeatureID == "" {
+		return
+	}
 
-	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
+	wsConnection := suite.createWSConnection()
+	defer suite.closeUnsubscribe(wsConnection)
+
+	filter := fmt.Sprintf("like(resource:path,'/features/%s')", ctrFeatureID)
 
 	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, filter)
 	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
@@ -240,4 +246,11 @@ func (suite *ctrManagementSuite) closeOnError(wsConnection *websocket.Conn, err 
 		wsConnection.Close()
 	}
 	require.NoError(suite.T(), err, message, messageArs)
+}
+
+func (suite *ctrManagementSuite) closeUnsubscribe(wsConnection *websocket.Conn) {
+	if wsConnection != nil {
+		util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
+		wsConnection.Close()
+	}
 }

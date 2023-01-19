@@ -21,7 +21,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/net/websocket"
 )
 
 type ctrFactorySuite struct {
@@ -45,19 +44,8 @@ func (suite *ctrFactorySuite) TestCreate() {
 	params[paramImageRef] = influxdbImageRef
 	params[paramStart] = true
 
-	var (
-		ctrFeatureID string
-		wsConnection *websocket.Conn
-	)
-
-	defer func() {
-		if ctrFeatureID != "" {
-			suite.remove(wsConnection, ctrFeatureID)
-		}
-		wsConnection.Close()
-	}()
-
-	wsConnection, ctrFeatureID = suite.create(params)
+	ctrFeatureID := suite.create(params)
+	suite.remove(ctrFeatureID)
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfig() {
@@ -66,18 +54,8 @@ func (suite *ctrFactorySuite) TestCreateWithConfig() {
 	params[paramStart] = true
 	params[paramConfig] = make(map[string]interface{})
 
-	var (
-		ctrFeatureID string
-		wsConnection *websocket.Conn
-	)
-
-	defer func() {
-		if ctrFeatureID != "" {
-			suite.remove(wsConnection, ctrFeatureID)
-		}
-		wsConnection.Close()
-	}()
-	wsConnection, ctrFeatureID = suite.createWithConfig(params)
+	ctrFeatureID := suite.createWithConfig(params)
+	suite.remove(ctrFeatureID)
 }
 
 func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
@@ -91,23 +69,12 @@ func (suite *ctrFactorySuite) TestCreateWithConfigPortMapping() {
 	}
 
 	params := make(map[string]interface{})
-	params[paramImageRef] = "docker.io/library/httpd:latest"
+	params[paramImageRef] = httpdImageRef
 	params[paramStart] = true
 	params[paramConfig] = config
 
-	var (
-		ctrFeatureID string
-		wsConnection *websocket.Conn
-	)
-
-	defer func() {
-		if ctrFeatureID != "" {
-			suite.remove(wsConnection, ctrFeatureID)
-		}
-		wsConnection.Close()
-	}()
-
-	wsConnection, ctrFeatureID = suite.createWithConfig(params)
+	ctrFeatureID := suite.createWithConfig(params)
+	defer suite.remove(ctrFeatureID)
 	suite.assertHTTPServer()
 }
 
