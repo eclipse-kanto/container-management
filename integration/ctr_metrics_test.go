@@ -40,9 +40,9 @@ const (
 
 type ctrMetricsSuite struct {
 	ctrManagementSuite
-	metricsUrl  string
-	firstCtrID  string
-	secondCtrID string
+	metricsUrl         string
+	firstCtrFeatureID  string
+	secondCtrFeatureID string
 }
 
 func (suite *ctrMetricsSuite) SetupSuite() {
@@ -56,13 +56,13 @@ func (suite *ctrMetricsSuite) SetupSuite() {
 		paramStart:    true,
 	}
 
-	suite.firstCtrID = suite.create(ctrParams)
-	suite.secondCtrID = suite.create(ctrParams)
+	suite.firstCtrFeatureID = suite.create(ctrParams)
+	suite.secondCtrFeatureID = suite.create(ctrParams)
 }
 
 func (suite *ctrMetricsSuite) TearDownSuite() {
-	suite.remove(suite.firstCtrID)
-	suite.remove(suite.secondCtrID)
+	suite.remove(suite.firstCtrFeatureID)
+	suite.remove(suite.secondCtrFeatureID)
 	suite.TearDown()
 }
 
@@ -71,18 +71,18 @@ func TestContainerMetricsSuite(t *testing.T) {
 }
 
 func (suite *ctrMetricsSuite) TestRequestMetricsForAllContainers() {
-	err := suite.testMetrics(map[string]interface{}{paramFrequency: "3s"}, suite.firstCtrID, suite.secondCtrID)
+	err := suite.testMetrics(map[string]interface{}{paramFrequency: "3s"}, suite.firstCtrFeatureID, suite.secondCtrFeatureID)
 	require.NoError(suite.T(), err, "error while receiving metrics for all container")
 }
 
 func (suite *ctrMetricsSuite) TestRequestMetricsForFirstContainer() {
 	filter := things.Filter{
 		ID:         []string{"cpu.*", "memory.*", "io.*", "net.*", "pids"},
-		Originator: suite.firstCtrID,
+		Originator: suite.firstCtrFeatureID,
 	}
 
-	err := suite.testMetrics(createParams("5s", filter), suite.firstCtrID)
-	require.NoErrorf(suite.T(), err, "error while receiving metrics for '%s' container", suite.firstCtrID)
+	err := suite.testMetrics(createParams("5s", filter), suite.firstCtrFeatureID)
+	require.NoErrorf(suite.T(), err, "error while receiving metrics for '%s' container", suite.firstCtrFeatureID)
 }
 
 func (suite *ctrMetricsSuite) TestFilterNotMatching() {
@@ -93,7 +93,7 @@ func (suite *ctrMetricsSuite) TestFilterNotMatching() {
 		"metrics event for non existing originator '%s' should not be received", filter.Originator)
 
 	filter.ID = []string{"test.io", "test.cpu", "test.memory", "test.net"}
-	filter.Originator = suite.secondCtrID
+	filter.Originator = suite.secondCtrFeatureID
 
 	err = suite.testMetrics(createParams("2s", filter), filter.Originator)
 	assert.Error(suite.T(), err, "metrics event for non existing measurements test.* should not be received")
@@ -132,6 +132,7 @@ func (suite *ctrMetricsSuite) executeMetrics(params map[string]interface{}) {
 func (suite *ctrMetricsSuite) testMetrics(params map[string]interface{}, expectedOriginators ...string) error {
 	wsConnection, err := util.NewDigitalTwinWSConnection(suite.Cfg)
 	defer wsConnection.Close()
+
 	require.NoError(suite.T(), err, "failed to create websocket connection")
 
 	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendMessages, "")
