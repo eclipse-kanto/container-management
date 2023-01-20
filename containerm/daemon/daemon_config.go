@@ -63,6 +63,7 @@ type containerRuntimeConfig struct {
 
 // deployment manager config
 type deploymentManagerConfig struct {
+	DeploymentMetaPath string `json:"home_dir,omitempty"`
 	DeploymentInitPath string `json:"init_dir,omitempty"`
 }
 

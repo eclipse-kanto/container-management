@@ -31,7 +31,8 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.BoolVar(&cfg.Log.Syslog, "log-syslog", cfg.Log.Syslog, "Enable logging in the local syslog (e.g. /dev/log, /var/run/syslog, /var/run/log)")
 
 	// init deployment flags
-	flagSet.StringVar(&cfg.DeploymentManagerConfig.DeploymentInitPath, "deployment-init-dir", cfg.DeploymentManagerConfig.DeploymentInitPath, "Specify a filename or directory for initial containers deploy.")
+	flagSet.StringVar(&cfg.DeploymentManagerConfig.DeploymentMetaPath, "deployment-home-dir", cfg.DeploymentManagerConfig.DeploymentMetaPath, "Specify the root directory of the deployment manager service")
+	flagSet.StringVar(&cfg.DeploymentManagerConfig.DeploymentInitPath, "deployment-init-dir", cfg.DeploymentManagerConfig.DeploymentInitPath, "Specify a directory for initial containers deploy.")
 
 	// init container manager flags
 	flagSet.StringVar(&cfg.ManagerConfig.MgrMetaPath, "cm-home-dir", cfg.ManagerConfig.MgrMetaPath, "Specify the root directory of the container manager service")

@@ -116,6 +116,7 @@ func extractThingsOptions(daemonConfig *config) []things.ContainerThingsManagerO
 
 func extractDeploymentMgrOptions(daemonConfig *config) []deployment.Opt {
 	return []deployment.Opt{
+		deployment.WithMetaPath(daemonConfig.DeploymentManagerConfig.DeploymentMetaPath),
 		deployment.WithInitialDeployPath(daemonConfig.DeploymentManagerConfig.DeploymentInitPath),
 	}
 }
@@ -302,6 +303,7 @@ func dumpThingsClient(configInstance *config) {
 
 func dumpDeploymentManager(configInstance *config) {
 	if configInstance.DeploymentManagerConfig != nil {
+		log.Debug("[daemon_cfg][deployment-home-dir] : %s", configInstance.DeploymentManagerConfig.DeploymentMetaPath)
 		log.Debug("[daemon_cfg][deployment-init-dir] : %s", configInstance.DeploymentManagerConfig.DeploymentInitPath)
 	}
 }

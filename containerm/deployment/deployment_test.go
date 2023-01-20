@@ -14,6 +14,8 @@ package deployment
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -22,53 +24,93 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/mgr"
+	"github.com/eclipse-kanto/container-management/containerm/util"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 )
 
 func TestInitialDeploy(t *testing.T) {
-	const testTimeoutDuration = 5 * time.Second
+	const (
+		redisImageRef       = "docker.io/library/redis:latest"
+		baseCtrJSONPath     = "../pkg/testutil/config/container"
+		testTimeoutDuration = 5 * time.Second
+	)
 
-	testContext := context.Background()
-	testWaitGroup := &sync.WaitGroup{}
+	var (
+		validCtrJSONPath = filepath.Join(baseCtrJSONPath, "valid.json")
+
+		testContext   = context.Background()
+		testWaitGroup = &sync.WaitGroup{}
+	)
+
+	createTmpMetaPath := func(t *testing.T) string {
+		path, err := os.MkdirTemp("", "container-management-test-")
+		testutil.AssertNil(t, err)
+		return path
+	}
 
 	tests := map[string]struct {
+		metaPath          string
 		initialDeployPath string
 		mockExec          func(*mocks.MockContainerManager) error
 	}{
+		"test_initial_deploy_containers_not_a_first_run": {
+			metaPath: func() string {
+				path := createTmpMetaPath(t)
+				err := util.MkDir(filepath.Join(path, "deployment"))
+				testutil.AssertNil(t, err)
+				return path
+			}(),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				return nil
+			},
+		},
 		"test_initial_deploy_containers_exist": {
+			metaPath: createTmpMetaPath(t),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				mockMgr.EXPECT().List(testContext).Return([]*types.Container{{}}, nil)
 				return nil
 			},
 		},
 		"test_initial_deploy_containers_list_error": {
+			metaPath: createTmpMetaPath(t),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				err := log.NewError("test error")
 				mockMgr.EXPECT().List(testContext).Return(nil, err)
 				return err
 			},
 		},
+		"test_initial_deploy_path_is_file_error": {
+			metaPath:          createTmpMetaPath(t),
+			initialDeployPath: validCtrJSONPath,
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				mockMgr.EXPECT().List(testContext).Return(nil, nil)
+				return log.NewErrorf("the initial containers deploy path = %s is not a directory", validCtrJSONPath)
+			},
+		},
 		"test_initial_deploy_path_not_exist": {
-			initialDeployPath: "../pkg/testutil/config/container/not/exist",
+			metaPath:          createTmpMetaPath(t),
+			initialDeployPath: filepath.Join(baseCtrJSONPath, "not/exist"),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				mockMgr.EXPECT().List(testContext).Return(nil, nil)
 				return nil
 			},
 		},
 		"test_initial_deploy_path_is_empty": {
-			initialDeployPath: "../pkg/testutil/config/container/empty",
+			metaPath:          createTmpMetaPath(t),
+			initialDeployPath: filepath.Join(baseCtrJSONPath, "empty"),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				mockMgr.EXPECT().List(testContext).Return(nil, nil)
 				return nil
 			},
 		},
 		"test_initial_deploy_container_create_error": {
-			initialDeployPath: "../pkg/testutil/config/container/nested",
+			metaPath:          createTmpMetaPath(t),
+			initialDeployPath: filepath.Join(baseCtrJSONPath, "nested"),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				testWaitGroup.Add(1)
 				mockMgr.EXPECT().List(testContext).Return(nil, nil)
-				testCtr := &types.Container{Image: types.Image{Name: "docker.io/library/redis:latest"}}
+				testCtr := &types.Container{Image: types.Image{Name: redisImageRef}}
 				mockMgr.EXPECT().Create(testContext, testCtr).Do(
 					func(ctx context.Context, container *types.Container) {
 						testWaitGroup.Done()
@@ -77,12 +119,13 @@ func TestInitialDeploy(t *testing.T) {
 			},
 		},
 		"test_initial_deploy_container_start_error": {
-			initialDeployPath: "../pkg/testutil/config/container/nested",
+			metaPath:          createTmpMetaPath(t),
+			initialDeployPath: filepath.Join(baseCtrJSONPath, "nested"),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				testWaitGroup.Add(1)
 				mockMgr.EXPECT().List(testContext).Return(nil, nil)
 				ctrID := uuid.NewString()
-				testCtr := &types.Container{Image: types.Image{Name: "docker.io/library/redis:latest"}}
+				testCtr := &types.Container{Image: types.Image{Name: redisImageRef}}
 				mockMgr.EXPECT().Create(testContext, testCtr).Do(
 					func(ctx context.Context, container *types.Container) {
 						testCtr.ID = ctrID
@@ -94,13 +137,14 @@ func TestInitialDeploy(t *testing.T) {
 			},
 		},
 		"test_initial_deploy_multiple_containers": {
-			initialDeployPath: "../pkg/testutil/config/container",
+			metaPath:          createTmpMetaPath(t),
+			initialDeployPath: baseCtrJSONPath,
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				testWaitGroup.Add(1)
 				mockMgr.EXPECT().List(testContext).Return(nil, nil)
 
 				ctrID1 := uuid.NewString()
-				testCtr1 := &types.Container{Image: types.Image{Name: "docker.io/library/redis:latest"}}
+				testCtr1 := &types.Container{Image: types.Image{Name: redisImageRef}}
 				mockMgr.EXPECT().Create(testContext, testCtr1).Do(
 					func(ctx context.Context, container *types.Container) {
 						testCtr1.ID = ctrID1
@@ -128,6 +172,7 @@ func TestInitialDeploy(t *testing.T) {
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Log(testName)
+			defer os.Remove(testCase.metaPath)
 
 			// set up
 			mockCtrl := gomock.NewController(t)
@@ -136,21 +181,22 @@ func TestInitialDeploy(t *testing.T) {
 
 			mockMgr := mocks.NewMockContainerManager(mockCtrl)
 
-			deployMgr, err := newDeploymentMgr(testCase.initialDeployPath, mockMgr)
-			testutil.AssertNil(t, err)
+			deployMgr := &deploymentMgr{
+				metaPath:          testCase.metaPath,
+				initialDeployPath: testCase.initialDeployPath,
+				ctrMgr:            mockMgr,
+			}
 
 			expectedErr := testCase.mockExec(mockMgr)
 			actualErr := deployMgr.InitialDeploy(testContext)
-			testutil.AssertEqual(t, expectedErr, actualErr)
+			testutil.AssertError(t, expectedErr, actualErr)
 			testutil.AssertWithTimeout(t, testWaitGroup, testTimeoutDuration)
 		})
 	}
 }
 
 func TestDispose(t *testing.T) {
-	deployMgr, err := newDeploymentMgr("", nil)
-	testutil.AssertNil(t, err)
-
-	err = deployMgr.Dispose(context.Background())
+	deployMgr := &deploymentMgr{}
+	err := deployMgr.Dispose(context.Background())
 	testutil.AssertNil(t, err)
 }

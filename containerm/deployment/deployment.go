@@ -40,6 +40,7 @@ func init() {
 }
 
 type deploymentMgr struct {
+	metaPath          string
 	initialDeployPath string
 	ctrMgr            mgr.ContainerManager
 	deploymentLock    sync.RWMutex
@@ -48,6 +49,16 @@ type deploymentMgr struct {
 }
 
 func (d *deploymentMgr) InitialDeploy(ctx context.Context) error {
+	deploymentMetaPath := filepath.Join(d.metaPath, "deployment")
+	if _, err := os.Stat(deploymentMetaPath); os.IsNotExist(err) {
+		if err = util.MkDir(deploymentMetaPath); err != nil {
+			return err
+		}
+	} else {
+		log.Debug("not a first run, will skip initial containers deploy")
+		return nil
+	}
+
 	listCtrs, err := d.ctrMgr.List(ctx)
 	if err != nil {
 		return err
@@ -57,9 +68,17 @@ func (d *deploymentMgr) InitialDeploy(ctx context.Context) error {
 		return nil
 	}
 
-	if _, err = os.Stat(d.initialDeployPath); os.IsNotExist(err) {
-		log.Debug("the initial deploy containers directory does not exist - will exit deploying ")
-		return nil
+	var fileInfo os.FileInfo
+	if fileInfo, err = os.Stat(d.initialDeployPath); err != nil {
+		if os.IsNotExist(err) {
+			log.Debug("the initial containers deploy directory does not exist - will exit deploying")
+			return nil
+		}
+		return err
+	}
+
+	if !fileInfo.IsDir() {
+		return log.NewErrorf("the initial containers deploy path = %s is not a directory", d.initialDeployPath)
 	}
 
 	var ctrs []*types.Container

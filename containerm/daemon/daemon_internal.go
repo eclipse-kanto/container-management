@@ -69,18 +69,18 @@ func (d *daemon) startGrpcServers() error {
 	log.Debug("starting gRPC servers ")
 	grpcServerInfos := d.serviceInfoSet.GetAll(registry.GRPCServer)
 	var (
-		instnace interface{}
+		instance interface{}
 		err      error
 	)
 
 	log.Debug("there are %d gRPC servers to be started", len(grpcServerInfos))
 	for _, servInfo := range grpcServerInfos {
 		log.Debug("will try to start gRPC server local service with ID = %s", servInfo.Registration.ID)
-		instnace, err = servInfo.Instance()
+		instance, err = servInfo.Instance()
 		if err != nil {
 			log.ErrorErr(err, "could not get gRPC server instance - local service ID = %s ", servInfo.Registration.ID)
 		} else {
-			err = instnace.(registry.GrpcServer).Start()
+			err = instance.(registry.GrpcServer).Start()
 			if err != nil {
 				log.ErrorErr(err, "could not start gRPC server with service ID = %s ", servInfo.Registration.ID)
 			} else {
@@ -95,16 +95,16 @@ func (d *daemon) stopGrpcServers() {
 	log.Debug("will stop gRPC servers")
 	grpcServerInfos := d.serviceInfoSet.GetAll(registry.GRPCServer)
 	var (
-		instnace interface{}
+		instance interface{}
 		err      error
 	)
 
 	for _, servInfo := range grpcServerInfos {
-		instnace, err = servInfo.Instance()
+		instance, err = servInfo.Instance()
 		if err != nil {
 			log.ErrorErr(err, "could not get gRPC server instance for service ID = %s", servInfo.Registration.ID)
 		} else {
-			err = instnace.(registry.GrpcServer).Stop()
+			err = instance.(registry.GrpcServer).Stop()
 			if err != nil {
 				log.ErrorErr(err, "could not stop gRPC server for service ID = %s ", servInfo.Registration.ID)
 			}
@@ -170,18 +170,18 @@ func (d *daemon) startThingsManagers() error {
 	log.Debug("starting Things Container Manager services ")
 	grpcServerInfos := d.serviceInfoSet.GetAll(registry.ThingsContainerManagerService)
 	var (
-		instnace interface{}
+		instance interface{}
 		err      error
 	)
 
 	log.Debug("there are %d Things Container Manager services to be started", len(grpcServerInfos))
 	for _, servInfo := range grpcServerInfos {
 		log.Debug("will try to start Things Container Manager service local service with ID = %s", servInfo.Registration.ID)
-		instnace, err = servInfo.Instance()
+		instance, err = servInfo.Instance()
 		if err != nil {
 			log.ErrorErr(err, "could not get Things Container Manager service instance - local service ID = %s ", servInfo.Registration.ID)
 		} else {
-			err = instnace.(things.ContainerThingsManager).Connect()
+			err = instance.(things.ContainerThingsManager).Connect()
 			if err != nil {
 				log.ErrorErr(err, "could not start Things Container Manager service with service ID = %s ", servInfo.Registration.ID)
 			} else {
@@ -196,16 +196,16 @@ func (d *daemon) stopThingsManagers() {
 	log.Debug("will stop Things Container Manager services")
 	grpcServerInfos := d.serviceInfoSet.GetAll(registry.ThingsContainerManagerService)
 	var (
-		instnace interface{}
+		instance interface{}
 		err      error
 	)
 
 	for _, servInfo := range grpcServerInfos {
-		instnace, err = servInfo.Instance()
+		instance, err = servInfo.Instance()
 		if err != nil {
 			log.ErrorErr(err, "could not get Things Container Manager service instance for service ID = %s", servInfo.Registration.ID)
 		} else {
-			instnace.(things.ContainerThingsManager).Disconnect()
+			instance.(things.ContainerThingsManager).Disconnect()
 			log.Debug("successfully stopped Things Container Manager service with service ID = %s ", servInfo.Registration.ID)
 		}
 	}
@@ -215,17 +215,17 @@ func (d *daemon) stopContainerManagers() {
 	log.Debug("will stop container management local services")
 	ctrMrgServices := d.serviceInfoSet.GetAll(registry.ContainerManagerService)
 	var (
-		instnace interface{}
+		instance interface{}
 		err      error
 	)
 	log.Debug("there are %d container management services to be stopped", len(ctrMrgServices))
 	for _, servInfo := range ctrMrgServices {
-		instnace, err = servInfo.Instance()
+		instance, err = servInfo.Instance()
 		if err != nil {
 			log.ErrorErr(err, "could not get container management service instance for service ID = %s", servInfo.Registration.ID)
 		} else {
 			ctx := context.Background()
-			err = instnace.(mgr.ContainerManager).Dispose(ctx)
+			err = instance.(mgr.ContainerManager).Dispose(ctx)
 			if err != nil {
 				log.ErrorErr(err, "could not stop container management service for service ID = %s", servInfo.Registration.ID)
 			}

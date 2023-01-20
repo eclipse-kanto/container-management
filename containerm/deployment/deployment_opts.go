@@ -16,6 +16,7 @@ package deployment
 type Opt func(options *opts) error
 
 type opts struct {
+	metaPath          string
 	initialDeployPath string
 }
 
@@ -26,6 +27,14 @@ func applyOpts(options *opts, opts ...Opt) error {
 		}
 	}
 	return nil
+}
+
+// WithMetaPath configures the directory to be used for storage by the service
+func WithMetaPath(metaPath string) Opt {
+	return func(dOpts *opts) error {
+		dOpts.metaPath = metaPath
+		return nil
+	}
 }
 
 // WithInitialDeployPath sets container initial deployment path.

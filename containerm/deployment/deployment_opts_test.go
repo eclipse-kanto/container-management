@@ -19,6 +19,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 )
 
+const testMetaPath = "testMetaPath"
 const testInitialDeployPath = "testInitialDeployPath"
 
 func TestApplyDeploymentOpts(t *testing.T) {
@@ -27,7 +28,10 @@ func TestApplyDeploymentOpts(t *testing.T) {
 		expectedError error
 	}{
 		"test_apply_without_error": {
-			testOpts: []Opt{WithInitialDeployPath("testInitialDeployPath")},
+			testOpts: []Opt{
+				WithMetaPath(testMetaPath),
+				WithInitialDeployPath(testInitialDeployPath),
+			},
 		},
 		"test_apply_with_error": {
 			testOpts: []Opt{func() Opt {
@@ -53,6 +57,12 @@ func TestDeploymentOpts(t *testing.T) {
 		testOpt      Opt
 		expectedOpts *opts
 	}{
+		"test_deployment_meta_path": {
+			testOpt: WithMetaPath(testMetaPath),
+			expectedOpts: &opts{
+				metaPath: testMetaPath,
+			},
+		},
 		"test_deployment_initial_deploy_path": {
 			testOpt: WithInitialDeployPath(testInitialDeployPath),
 			expectedOpts: &opts{

@@ -15,6 +15,7 @@ package deployment
 import (
 	"github.com/eclipse-kanto/container-management/containerm/mgr"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
+	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
 func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, error) {
@@ -31,12 +32,17 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 	}
 
 	//initialize the deployment manager local service
-	return newDeploymentMgr(options.initialDeployPath, mgrService.(mgr.ContainerManager))
+	return newDeploymentMgr(options.metaPath, options.initialDeployPath, mgrService.(mgr.ContainerManager))
 }
 
-func newDeploymentMgr(initialDeployPath string, ctrMgr mgr.ContainerManager) (Manager, error) {
+func newDeploymentMgr(metaPath, initialDeployPath string, ctrMgr mgr.ContainerManager) (Manager, error) {
+	if err := util.MkDir(metaPath); err != nil {
+		return nil, err
+	}
+
 	return &deploymentMgr{
-		ctrMgr:            ctrMgr,
+		metaPath:          metaPath,
 		initialDeployPath: initialDeployPath,
+		ctrMgr:            ctrMgr,
 	}, nil
 }

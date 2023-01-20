@@ -88,6 +88,7 @@ const (
 	thingsUnsubscribeTimeoutDefault          = 5000
 
 	// default deployment config
+	deploymentMetaPathDefault    = managerMetaPathDefault
 	deploymentInitialPathDefault = "/etc/container-management/containers"
 )
 
@@ -167,6 +168,7 @@ func getDefaultInstance() *config {
 			},
 		},
 		DeploymentManagerConfig: &deploymentManagerConfig{
+			DeploymentMetaPath: deploymentMetaPathDefault,
 			DeploymentInitPath: deploymentInitialPathDefault,
 		},
 	}
