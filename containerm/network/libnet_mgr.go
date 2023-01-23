@@ -15,13 +15,15 @@ package network
 import (
 	"context"
 	"os"
+	"sync"
 
-	"github.com/docker/docker/libnetwork"
-	libnetcfg "github.com/docker/docker/libnetwork/config"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
 	"github.com/eclipse-kanto/container-management/containerm/util"
+
+	"github.com/docker/docker/libnetwork"
+	libnetcfg "github.com/docker/docker/libnetwork/config"
 )
 
 const (
@@ -38,12 +40,13 @@ func init() {
 }
 
 type libnetworkMgr struct {
-	config        *config
-	netController libnetwork.NetworkController //internal libnetwork controller fields
+	config                        *config
+	netController                 libnetwork.NetworkController //internal libnetwork controller fields
+	bridgeConnectedContainers     map[string]*types.Container
+	bridgeConnectedContainersLock sync.RWMutex
 }
 
 func (netMgr *libnetworkMgr) Manage(ctx context.Context, container *types.Container) error {
-
 	if netMgr.netController == nil {
 		return log.NewErrorf("no network controller to connect to default network")
 	}
@@ -84,7 +87,6 @@ func (netMgr *libnetworkMgr) Manage(ctx context.Context, container *types.Contai
 }
 
 func (netMgr *libnetworkMgr) Connect(ctx context.Context, container *types.Container) error {
-
 	var (
 		sb          libnetwork.Sandbox
 		ep          libnetwork.Endpoint
@@ -145,8 +147,14 @@ func (netMgr *libnetworkMgr) Connect(ctx context.Context, container *types.Conta
 
 	container.NetworkSettings.Networks[ctrNetworkName] = cEpSettings
 
-	return nil
+	if util.IsContainerNetworkBridge(container) {
+		netMgr.bridgeConnectedContainersLock.Lock()
+		defer netMgr.bridgeConnectedContainersLock.Unlock()
+		netMgr.bridgeConnectedContainers[container.ID] = container
+		netMgr.refreshConnectedContainers(ctx)
+	}
 
+	return nil
 }
 
 func (netMgr *libnetworkMgr) Restore(ctx context.Context, containers []*types.Container) error {
@@ -160,12 +168,15 @@ func (netMgr *libnetworkMgr) Restore(ctx context.Context, containers []*types.Co
 		if netMgr.config.activeSandboxes == nil {
 			netMgr.config.activeSandboxes = make(map[string]interface{})
 		}
+		netMgr.bridgeConnectedContainersLock.Lock()
+		defer netMgr.bridgeConnectedContainersLock.Unlock()
+
 		for _, ctr := range containers {
 			if ctr.NetworkSettings == nil || ctr.NetworkSettings.SandboxID == "" {
 				log.Warn("no network settings are restored for container id = %s", ctr.ID)
 				continue
 			}
-			sbOpts, err := buildSandboxOptions(ctr, netMgr.config)
+			sbOpts, err := buildSandboxOptions(ctr, containers, netMgr.config)
 			if err != nil {
 				log.ErrorErr(err, "error building sandbox options for restored container id = %s ", ctr.ID)
 				continue
@@ -173,6 +184,10 @@ func (netMgr *libnetworkMgr) Restore(ctx context.Context, containers []*types.Co
 
 			netMgr.config.activeSandboxes[ctr.NetworkSettings.SandboxID] = sbOpts
 			log.Debug("added network sandbox config for container id = %s with sandbox id = %s", ctr.ID, ctr.NetworkSettings.SandboxID)
+
+			if util.IsContainerNetworkBridge(ctr) {
+				netMgr.bridgeConnectedContainers[ctr.ID] = ctr
+			}
 		}
 	}
 	//ensure storage
@@ -215,6 +230,12 @@ func (netMgr *libnetworkMgr) ReleaseNetworkResources(ctx context.Context, contai
 			log.ErrorErr(err, "error removing endpoint for network %s for container ID = %s", netName, container.ID)
 			return err
 		}
+	}
+	if util.IsContainerNetworkBridge(container) {
+		netMgr.bridgeConnectedContainersLock.Lock()
+		defer netMgr.bridgeConnectedContainersLock.Unlock()
+		delete(netMgr.bridgeConnectedContainers, container.ID)
+		netMgr.refreshConnectedContainers(ctx)
 	}
 	return nil
 }

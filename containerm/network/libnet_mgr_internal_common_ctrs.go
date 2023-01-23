@@ -18,11 +18,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/docker/docker/libnetwork"
 	libnettypes "github.com/docker/docker/libnetwork/types"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"
+
+	"github.com/docker/docker/libnetwork"
 )
 
 const (
@@ -31,10 +32,12 @@ const (
 
 	reservedHostIP       = "host_ip"
 	reservedHostIPPrefix = reservedHostIP + "_"
+	containerPrefix      = "container_"
 )
 
 var (
-	regexReservedAutoresolveHostIPMapping = regexp.MustCompile(fmt.Sprintf("^%s(.+)$", reservedHostIPPrefix))
+	regexReservedAutoresolveHostIPMapping    = regexp.MustCompile(fmt.Sprintf("^%s(.+)$", reservedHostIPPrefix))
+	regexReservedAutoresolveContainerMapping = regexp.MustCompile(fmt.Sprintf("^%s(.+)$", containerPrefix))
 )
 
 func getNetworkSandbox(netctrl libnetwork.NetworkController, containerID string) libnetwork.Sandbox {
@@ -49,7 +52,7 @@ func getNetworkSandbox(netctrl libnetwork.NetworkController, containerID string)
 	return sb
 }
 
-func buildSandboxOptions(container *types.Container, netConfig *config) ([]libnetwork.SandboxOption, error) {
+func buildSandboxOptions(container *types.Container, containers []*types.Container, netConfig *config) ([]libnetwork.SandboxOption, error) {
 	var sboxOptions []libnetwork.SandboxOption
 
 	sboxOptions = append(sboxOptions, libnetwork.OptionHostname(container.HostName),
@@ -79,10 +82,12 @@ func buildSandboxOptions(container *types.Container, netConfig *config) ([]libne
 	if extraHosts != nil {
 		for _, extraHost := range extraHosts {
 			host := strings.Split(strings.TrimSpace(extraHost), ":")
-			// check for ip_host[_interface]
-			resolved, err := resolveToHostIPOnInterface(container, netConfig, host[1])
+			if len(host) != 2 {
+				return nil, log.NewErrorf("host %s is incorrectly defined", host)
+			}
+			resolved, err := resolveToHostIPOnInterface(container, containers, netConfig, host[1])
 			if err != nil {
-				log.ErrorErr(err, "could not map the reserved host_ip_[interface] to an IP")
+				log.ErrorErr(err, "could not map the reserved interface to an IP")
 			} else {
 				sboxOptions = append(sboxOptions, libnetwork.OptionExtraHost(host[0], resolved))
 			}
@@ -107,18 +112,37 @@ func buildSandboxOptions(container *types.Container, netConfig *config) ([]libne
 	return sboxOptions, nil
 }
 
-func resolveToHostIPOnInterface(container *types.Container, netConfig *config, ipToCheck string) (string, error) {
+func resolveToHostIPOnInterface(container *types.Container, containers []*types.Container, netConfig *config, ipToCheck string) (string, error) {
 	var interfaceName string
 	if regexReservedAutoresolveHostIPMapping.MatchString(ipToCheck) {
 		interfaceName = regexReservedAutoresolveHostIPMapping.FindStringSubmatch(ipToCheck)[1]
 	} else if ipToCheck == reservedHostIPPrefix {
-		return "", log.NewError("a network interface name must be provided after the reserved host_ip_ prefix - e.g. host_ip_gw0 or use just host_ip if you want to resolve the host's IP on the default bridge network interface")
+		return "", log.NewError("a network interface name must be provided after the reserved host_ip_ prefix - e.g. host_ip_kanto-cm0 or use just host_ip if you want to resolve the host's IP on the default bridge network interface")
 	} else if ipToCheck == reservedHostIP {
-		if container.HostConfig.NetworkMode == types.NetworkModeBridge {
+		if util.IsContainerNetworkBridge(container) {
 			interfaceName = netConfig.bridgeConfig.name
 		} else {
 			return "", log.NewError("will not resolve host_ip as container with id = %s is not configured in bridge network mode, thus, not connected to the default bridge network interface")
 		}
+	} else if util.IsContainerNetworkBridge(container) && regexReservedAutoresolveContainerMapping.MatchString(ipToCheck) {
+		interfaceName = regexReservedAutoresolveContainerMapping.FindStringSubmatch(ipToCheck)[1]
+		containersFound := []string{}
+		for _, ctr := range containers {
+			if interfaceName == ctr.HostName && ctr.NetworkSettings != nil {
+				if network, isBridge := ctr.NetworkSettings.Networks[string(types.NetworkModeBridge)]; isBridge {
+					if len(containersFound) > 0 {
+						return "", log.NewErrorf("expected to resolve to exactly one container, instead multiple containers exists for interface %s", interfaceName)
+					}
+					containersFound = append(containersFound, network.IPAddress)
+				} else {
+					return "", log.NewErrorf("will not resolve container as container with id = %s is not configured in bridge network mode, use host_ip resolution instead", ctr.ID)
+				}
+			}
+		}
+		if len(containersFound) > 0 {
+			return containersFound[0], nil
+		}
+		return "", log.NewErrorf("unable to find container that matches interface %s for container with id = %s", ipToCheck, container.ID)
 	} else {
 		return ipToCheck, nil
 	}
@@ -142,7 +166,6 @@ func resolveToHostIPOnInterface(container *types.Container, netConfig *config, i
 		}
 	}
 	return "", log.NewErrorf("could not retrieve the host's IP on interface %s for container id = %s", interfaceName, container.ID)
-
 }
 
 func getNetworkEndPoint(container *types.Container, network libnetwork.Network) (libnetwork.Endpoint, error) {

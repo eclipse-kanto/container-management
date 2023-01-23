@@ -272,7 +272,7 @@ func (cc *createCmd) setupFlags() {
 	// init network mode
 	flagSet.StringVar(&cc.config.network, "network", string(types.NetworkModeBridge),
 		"Sets the networking mode for the container. Possible options are:\n"+
-			"bridge - the container is connected to the default bridge network interface of th eengine and is assigned an IP (this is the default)\n"+
+			"bridge - the container is connected to the default bridge network interface of th engine and is assigned an IP (this is the default)\n"+
 			"host - the container shares the network stack of the host (use with caution as this breaks the network's isolation!)")
 	// init extra hosts
 	flagSet.StringSliceVar(&cc.config.extraHosts, "hosts", nil, "Extra hosts to be added in the current container's /etc/hosts file. Example: \n"+
@@ -281,7 +281,9 @@ func (cc *createCmd) setupFlags() {
 		"--hosts=\"local.host.machine.ip.custom.if:host_ip_myNetIf0\" \n"+
 		"this will automatically resolve the host's IP on the myNetIf0 network interface and add it to the container's hosts file \n"+
 		"--hosts=\"local.host.machine.ip.default.bridge:host_ip\" \n"+
-		"this will automatically resolve the host's IP on the default bridge network interface for containerm (the default configuration is gw0) and add it to the container's hosts file if the container is configured to use it")
+		"this will automatically resolve the host's IP on the default bridge network interface for containerm (the default configuration is kanto-cm0) and add it to the container's hosts file if the container is configured to use it\n"+
+		"If the IP of a container in the same bridge network is to be added to the contains hosts file the reserved container[_<container-host_name>] must be provided. Example:\n"+
+		"--hosts=\"service:container_service-host\"")
 	flagSet.StringSliceVar(&cc.config.mountPoints, "mp", nil, "Sets mount points so a source directory on the host can be accessed via a destination directory in the container. Example:\n"+
 		"--mp=\"source1:destination1:propagation_mode, source2:destination2\" \n"+
 		"If the propagation mode parameter is omitted, 'rprivate' will be set by default.  \n"+

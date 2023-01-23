@@ -16,11 +16,13 @@ import (
 	"context"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
-	"github.com/docker/docker/libnetwork"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"
+
+	"github.com/docker/docker/libnetwork"
 )
 
 func (netMgr *libnetworkMgr) setupContainerNetworkSandbox(container *types.Container) (libnetwork.Sandbox, error) {
@@ -37,7 +39,13 @@ func (netMgr *libnetworkMgr) setupContainerNetworkSandbox(container *types.Conta
 			return nil, err
 		}
 	}
-	options, err := buildSandboxOptions(container, netMgr.config)
+
+	ctrArr := []*types.Container{}
+	for _, v := range netMgr.bridgeConnectedContainers {
+		ctrArr = append(ctrArr, v)
+	}
+
+	options, err := buildSandboxOptions(container, ctrArr, netMgr.config)
 	if err != nil {
 		return nil, err
 	}
@@ -140,4 +148,44 @@ func (netMgr *libnetworkMgr) removeEndpoint(ctx context.Context, sandboxID strin
 		}
 	}
 	return nil
+}
+
+func (netMgr *libnetworkMgr) refreshConnectedContainers(ctx context.Context) {
+	for _, ctr := range netMgr.bridgeConnectedContainers {
+		for _, extraHost := range ctr.HostConfig.ExtraHosts {
+			host := strings.Split(strings.TrimSpace(extraHost), ":")
+			if len(host) != 2 {
+				log.Warn("host %s is incorrectly defined", host)
+				continue
+			}
+			if regexReservedAutoresolveContainerMapping.MatchString(host[1]) {
+				log.Debug("container %s network will be refreshed", ctr.ID)
+				netMgr.refreshContainer(ctx, ctr)
+				break
+			}
+		}
+	}
+}
+
+func (netMgr *libnetworkMgr) refreshContainer(ctx context.Context, container *types.Container) error {
+	if container == nil || container.NetworkSettings == nil {
+		return nil
+	}
+
+	sb := getNetworkSandbox(netMgr.netController, container.ID)
+	if sb == nil {
+		return log.NewErrorf("no network sandbox for container %s ", container.ID)
+	}
+
+	ctrArr := []*types.Container{}
+	for _, v := range netMgr.bridgeConnectedContainers {
+		ctrArr = append(ctrArr, v)
+	}
+
+	options, err := buildSandboxOptions(container, ctrArr, netMgr.config)
+	if err != nil {
+		return err
+	}
+
+	return sb.Refresh(options...)
 }

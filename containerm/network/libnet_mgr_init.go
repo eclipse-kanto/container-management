@@ -13,6 +13,7 @@
 package network
 
 import (
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
@@ -26,7 +27,7 @@ func newLibnetworkMgr(netConfig config) (ContainerNetworkManager, error) {
 		return nil, err
 	}
 
-	return &libnetworkMgr{&netConfig, nil}, nil
+	return &libnetworkMgr{config: &netConfig, bridgeConnectedContainers: make(map[string]*types.Container)}, nil
 }
 
 func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, error) {

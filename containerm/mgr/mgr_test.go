@@ -13,6 +13,12 @@
 package mgr
 
 import (
+	"context"
+	"path/filepath"
+	"sync"
+	"testing"
+	"time"
+
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/ctr"
 	"github.com/eclipse-kanto/container-management/containerm/events"
@@ -23,18 +29,12 @@ import (
 	ctrMock "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctr"
 	eventsMock "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/events"
 	mgrMock "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/mgr"
+	networkMock "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/network"
 	"github.com/eclipse-kanto/container-management/containerm/streams"
 	errorUtil "github.com/eclipse-kanto/container-management/containerm/util/error"
-	"github.com/sirupsen/logrus/hooks/test"
-	"path/filepath"
-	"sync"
-	"time"
 
-	"context"
-	"testing"
-
-	networkMock "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/network"
 	"github.com/golang/mock/gomock"
+	"github.com/sirupsen/logrus/hooks/test"
 )
 
 const (

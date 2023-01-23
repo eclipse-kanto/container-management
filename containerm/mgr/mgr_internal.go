@@ -22,6 +22,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"
 	errorUtil "github.com/eclipse-kanto/container-management/containerm/util/error"
+
 	"golang.org/x/sync/semaphore"
 )
 
