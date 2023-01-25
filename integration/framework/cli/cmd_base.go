@@ -151,7 +151,7 @@ func fromAPITestCommand(cmd TestCommand) TestCaseCMD {
 			Err:      cmd.Expected.Err,
 		},
 		goldenFile:       cmd.GoldenFile,
-		customResult:     cmd.CustomResult.Name,
+		customResult:     cmd.CustomResult.Type,
 		customResultArgs: cmd.CustomResult.Args,
 		setupCmd:         buildCmdArrFromCommand(cmd.Setup),
 		onExit:           buildCmdArrFromCommand(cmd.OnExit),

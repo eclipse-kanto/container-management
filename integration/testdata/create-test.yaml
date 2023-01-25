@@ -21,7 +21,7 @@ command:
 expected:
   exitCode: 0
 customResult:
-  name: REGEX
+  type: REGEX
   args: ["([A-Za-z0-9]+(-[A-Za-z0-9]+)+)"]
 onExit:
   - binary: "kanto-cm"

@@ -50,6 +50,6 @@ type Expected struct {
 //     name: REGEX
 //     args: ["([A-Za-z0-9]+(-[A-Za-z0-9]+)+)"]
 type CustomResult struct {
-	Name string   `yaml:"name"`
+	Type string   `yaml:"type"`
 	Args []string `yaml:"args"`
 }
