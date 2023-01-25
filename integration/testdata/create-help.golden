@@ -1,0 +1,75 @@
+Create a container.
+
+Usage:
+  kanto-cm create [option]... container-image-id [command] [command-arg]...
+
+Examples:
+create container-image-id
+
+Flags:
+      --dec-keys strings             Sets a list of private keys filenames (GPG private key ring, JWE and PKCS7 private key). Each entry can include an optional password separated by a colon after the filename.
+      --dec-recipients strings       Sets a recipients certificates list of the image (used only for PKCS7 and must be an x509)
+      --devices strings              Devices to be made available in the current container and optional cgroups permissions configuration. Both path on host and in container must be set. Possible cgroup permissions options are "r" (read), "w" (write), "m" (mknod) and all combinations of the three are possible. If not set, "rwm" is default device configuration. Example: 
+                                     --devices=/dev/ttyACM0:/dev/ttyUSB0[:rwm]
+      --e stringArray                Sets the provided environment variables in the root container's process environment. Example:
+                                     --e=VAR1=2 --e=VAR2="a bc"
+                                     If --e=VAR1= is used, the environment variable would be set to empty.
+                                     If --e=VAR1 is used, the environment variable would be removed from the container environment inherited from the image.
+  -h, --help                         help for create
+      --hosts strings                Extra hosts to be added in the current container's /etc/hosts file. Example: 
+                                     --hosts="hostname1:<IP1>, hostname2:<IP2>.." 
+                                     If the IP of the host machine is to be added to the container's hosts file the reserved host_ip[_<network-interface>] must be provided. Example:
+                                     --hosts="local.host.machine.ip.custom.if:host_ip_myNetIf0" 
+                                     this will automatically resolve the host's IP on the myNetIf0 network interface and add it to the container's hosts file 
+                                     --hosts="local.host.machine.ip.default.bridge:host_ip" 
+                                     this will automatically resolve the host's IP on the default bridge network interface for containerm (the default configuration is gw0) and add it to the container's hosts file if the container is configured to use it
+      --i                            Enable interaction with the current container
+      --log-driver string            Sets the type of the log driver to be used for the container - json-file (default), none (default "json-file")
+      --log-max-buffer-size string   Sets the max size of the logger buffer in the form of 1, 1.2m - applicable for non-blocking mode only (default "1M")
+      --log-max-files int            Sets the max number of log files to be rotated - applicable for json-file log driver only (default 2)
+      --log-max-size string          Sets the max size of the logs files for rotation in the form of 1, 1.2m,1g, etc. - applicable for json-file log driver only (default "100M")
+      --log-mode string              Sets the mode of the logger - blocking (default), non-blocking (default "blocking")
+      --log-path string              Sets the path to the directory where the log files will be stored - applicable for json-file log driver only
+  -m, --memory string                Sets the max amount of memory the container can use in the form of 200m, 1.2g. The minimum allowed value is 3m
+                                     By default, a container has no memory constraints.
+      --memory-reservation string    Sets a soft memory limitation in the form of 200m, 1.2g. Must be smaller than --memory.
+                                     When the system detects memory contention or low memory, control groups are pushed back to their soft limits.
+                                     There is no guarantee that the container memory usage will not exceed the soft limit.
+      --memory-swap string           Sets the total amount of memory + swap that the container can use in the form of 200m, 1.2g.
+                                     If set must not be smaller than --memory. If equal to --memory, than the container will not have access to swap.
+                                     If not set and --memory is set, than the container can use as much swap as the --memory setting.
+                                     If set to -1, the container can use unlimited swap, up to the amount available on the host.
+      --mp strings                   Sets mount points so a source directory on the host can be accessed via a destination directory in the container. Example:
+                                     --mp="source1:destination1:propagation_mode, source2:destination2" 
+                                     If the propagation mode parameter is omitted, 'rprivate' will be set by default.  
+                                     Available propagation modes are: rprivate, private, rshared, shared, rslave, slave
+  -n, --name string                  Create a container with a specific name. A valid name must start with an uppercase or a lowercase letter, a digit or an underscore and not exceed 32 symbols. It can also contain a dot and a hyphen.
+      --network string               Sets the networking mode for the container. Possible options are:
+                                     bridge - the container is connected to the default bridge network interface of th eengine and is assigned an IP (this is the default)
+                                     host - the container shares the network stack of the host (use with caution as this breaks the network's isolation!) (default "bridge")
+      --ports strings                Ports to be mapped from the host to the container instance. Template: 
+                                     --ports=[<host-ip>:]<host-port>:<container-port>[-<range>][/<proto>] 
+                                     Most common use-case: 
+                                     --ports=80:80
+                                     Mapping the container's 80 port to a host port in the 5000-6000 range: 
+                                     --ports=5000-6000:80/udp
+                                     Specifying port protocol (default is tcp): 
+                                     --ports=80:80/udp
+                                     By default the port mappings will set on all network interfaces, but this is also manageable. Example with two mappings including an optional host port range and udp: 
+                                     --ports=0.0.0.0:80-100:80/udp
+      --privileged                   Create the container as privileged
+      --rp string                    Sets the restart policy for the container.Supported restart policies are - no, always, unless-stopped (the default), always. 
+                                     no - no attempts to restart the container for any reason will be made 
+                                     always - an attempt to restart the container will be me made each time the container exits regardless of the exit code 
+                                     unless-stopped - restart attempts will be made only if the container has not been stopped by the user 
+                                     on-failure - restart attempts will be made if the container exits with an exit code != 0; 
+                                     the additional flags (--rp-cnt and --rp-to) apply only for this policy; if max retry count if not provided - the system will retry until it succeeds endlessly 
+                                     
+      --rp-cnt int                   Sets the number of retries that will be made to restart the container on exit if the policy is set to Always (default 1)
+      --rp-to int                    Sets the time out period in seconds for each retry that will be made to restart the container on exit if the policy is set to Always (default 30)
+      --t                            Enable terminal for the current container
+
+Global Flags:
+      --debug         Switch commands log level to DEBUG mode
+      --host string   Specify the address path to the Eclipse Kanto container management (default "/run/container-management/container-management.sock")
+      --timeout int   Specify the connection timeout in seconds to the Eclipse Kanto container management (default 30)
