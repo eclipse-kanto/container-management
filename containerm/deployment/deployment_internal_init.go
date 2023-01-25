@@ -20,10 +20,8 @@ import (
 
 func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, error) {
 	initOpts := registryCtx.Config.([]Opt)
-	var (
-		options = &opts{}
-		err     error
-	)
+
+	options := &opts{}
 	applyOpts(options, initOpts...)
 
 	mgrService, err := registryCtx.Get(registry.ContainerManagerService)

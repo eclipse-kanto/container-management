@@ -27,8 +27,8 @@ import (
 )
 
 const (
-	// DeploymentManagerServiceLocalID local ID for the deploymentMgr service.
-	DeploymentManagerServiceLocalID = "container-management.service.local.v1.service-deploymentMgr-manager"
+	// DeploymentManagerServiceLocalID local ID for the deployment manager service.
+	DeploymentManagerServiceLocalID = "container-management.service.local.v1.service-deployment-manager"
 )
 
 func init() {

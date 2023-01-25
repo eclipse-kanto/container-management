@@ -35,11 +35,11 @@ func (d *deploymentMgr) processInitialDeploy(ctx context.Context, containers []*
 
 		ctr, createErr := d.ctrMgr.Create(ctx, container)
 		if createErr != nil {
-			log.ErrorErr(createErr, "could not create container with name = %s and image name = %s", container.Name, container.Image.Name)
+			log.WarnErr(createErr, "could not create container with name = %s and image name = %s", container.Name, container.Image.Name)
 		} else {
 			log.Debug("successfully created container with ID = %s", ctr.ID)
 			if startErr := d.ctrMgr.Start(ctx, ctr.ID); startErr != nil {
-				log.ErrorErr(startErr, "could not start container with ID = %s", ctr.ID)
+				log.WarnErr(startErr, "could not start container with ID = %s", ctr.ID)
 			} else {
 				log.Debug("successfully started container with ID = %s", ctr.ID)
 			}
