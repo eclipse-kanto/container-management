@@ -1,0 +1,59 @@
+name: remove_help
+command:
+  binary: kanto-cm
+  args: ["remove", "-h"]
+expected:
+  exitCode: 0
+goldenFile: "remove-help.golden"
+---
+name: remove_no_args
+command:
+  binary: kanto-cm
+  args: ["remove"]
+expected:
+  exitCode: 1
+  err: "Error: You must provide either an ID or a name for the container via --name (-n)"
+---
+name: remove_invalid_id
+command:
+  binary: kanto-cm
+  args: ["remove", "invalid"]
+expected:
+  exitCode: 1
+  err: "Error: The requested container with ID = invalid was not found."
+---
+name: remove_invalid_name
+command:
+  binary: kanto-cm
+  args: ["remove", "-n", "invalid"]
+expected:
+  exitCode: 1
+  err: "Error: The requested container with name = invalid was not found. Try using an ID instead."
+---
+name: remove_existing_container
+setupCmd:
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+command:
+  binary: kanto-cm
+  args: ["remove", "-n", "test-it"]
+expected:
+  exitCode: 0
+---
+name: remove_running_container
+setupCmd:
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+  - binary: kanto-cm
+    args: ["start", "-n", "test-it"]
+command:
+  binary: kanto-cm
+  args: ["remove", "-n", "test-it"]
+expected:
+  exitCode: 1
+customResult:
+  type: REGEX
+  args: ["Error: rpc error: code = Unknown desc = container with id = [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} is not stopped - must set the force flag to true to remove it"]
+onExit:
+  - binary: "kanto-cm"
+    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]

@@ -1,0 +1,19 @@
+Remove a container and frees the associated resources.
+
+Usage:
+  kanto-cm remove <container-id>
+
+Examples:
+remove <container-id>
+ remove --name <container-name>
+ remove -n <container-name>
+
+Flags:
+  -f, --force         Force stopping before removing a container
+  -h, --help          help for remove
+  -n, --name string   Remove a container with a specific name.
+
+Global Flags:
+      --debug         Switch commands log level to DEBUG mode
+      --host string   Specify the address path to the Eclipse Kanto container management (default "/run/container-management/container-management.sock")
+      --timeout int   Specify the connection timeout in seconds to the Eclipse Kanto container management (default 30)

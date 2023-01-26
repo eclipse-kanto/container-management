@@ -1,5 +1,3 @@
-//go:build integration
-
 // Copyright (c) 2023 Contributors to the Eclipse Foundation
 //
 // See the NOTICE file(s) distributed with this work for additional
@@ -11,6 +9,8 @@
 // which is available at https://www.apache.org/licenses/LICENSE-2.0.
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//go:build integration
+
 package integration
 
 import (

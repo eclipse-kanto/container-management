@@ -1,0 +1,20 @@
+Stop a container.
+
+Usage:
+  kanto-cm stop <container-id>
+
+Examples:
+stop <container-id>
+ stop --name <container-name>
+ stop -n <container-name>
+
+Flags:
+  -f, --force           Whether to send a SIGKILL signal to the container's process if it does not finish within the timeout specified.
+  -h, --help            help for stop
+  -n, --name string     Stop a container with a specific name.
+  -s, --signal string   Stop a container using a specific signal. Signals could be specified by using their names or numbers, e.g. SIGINT or 2. (default "SIGTERM")
+
+Global Flags:
+      --debug         Switch commands log level to DEBUG mode
+      --host string   Specify the address path to the Eclipse Kanto container management (default "/run/container-management/container-management.sock")
+      --timeout int   Specify the connection timeout in seconds to the Eclipse Kanto container management (default 30)

@@ -1,0 +1,20 @@
+Start a container.
+
+Usage:
+  kanto-cm start <container-id>
+
+Examples:
+start <container-id>
+ start --name <container-name>
+ start -n <container-name>
+
+Flags:
+      --a             Attach to the container's process STDOUT/STDERR and forward signals
+  -h, --help          help for start
+      --i             Enable interaction with the current container
+  -n, --name string   Start a container with a specific name.
+
+Global Flags:
+      --debug         Switch commands log level to DEBUG mode
+      --host string   Specify the address path to the Eclipse Kanto container management (default "/run/container-management/container-management.sock")
+      --timeout int   Specify the connection timeout in seconds to the Eclipse Kanto container management (default 30)
