@@ -13,10 +13,17 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
+	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 )
 
@@ -740,6 +747,65 @@ func TestGetImageHost(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			t.Log(testName)
 			testutil.AssertEqual(t, testData.expectedHost, GetImageHost(testData.testImgRef))
+		})
+	}
+}
+
+func TestReadContainer(t *testing.T) {
+	const prefix = "container-management-test-"
+
+	notExistPath := func() string {
+		for i := 0; i < 100; i++ {
+			path := filepath.Join(os.TempDir(), prefix+strconv.Itoa(rand.Int()))
+			if _, err := os.Stat(path); os.IsNotExist(err) {
+				return path
+			}
+		}
+		return ""
+	}()
+	testutil.AssertNotEqual(t, "", notExistPath)
+
+	tmpFile, err := os.CreateTemp("", prefix)
+	testutil.AssertNil(t, err)
+	defer func() {
+		tmpFile.Close()
+		os.Remove(tmpFile.Name())
+	}()
+
+	ctr := &types.Container{Image: types.Image{Name: "test-image-name"}}
+	data, err := json.Marshal(ctr)
+	testutil.AssertNil(t, err)
+	err = ioutil.WriteFile(tmpFile.Name(), data, 0644)
+	testutil.AssertNil(t, err)
+
+	testCases := map[string]struct {
+		path        string
+		expectedCtr *types.Container
+		expectedErr error
+	}{
+		"test_open_error": {
+			path:        notExistPath,
+			expectedCtr: nil,
+			expectedErr: log.NewErrorf("open %s: no such file or directory", notExistPath),
+		},
+		"test_read_error": {
+			path:        "/",
+			expectedCtr: nil,
+			expectedErr: log.NewError("read /: is a directory"),
+		},
+		"test_no_error": {
+			path:        tmpFile.Name(),
+			expectedCtr: ctr,
+			expectedErr: nil,
+		},
+	}
+
+	for testName, testData := range testCases {
+		t.Run(testName, func(t *testing.T) {
+			t.Log(testName)
+			actualCtr, actualErr := ReadContainer(testData.path)
+			testutil.AssertEqual(t, testData.expectedCtr, actualCtr)
+			testutil.AssertError(t, testData.expectedErr, actualErr)
 		})
 	}
 }

@@ -13,7 +13,9 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -478,4 +480,19 @@ func GetImageHost(imageRef string) string {
 	imageHost := strings.Split(imageRef, "/")[0]
 	log.Debug("image registry host for image ref = %s is %s", imageRef, imageHost)
 	return imageHost
+}
+
+// ReadContainer reads container from file
+func ReadContainer(path string) (*types.Container, error) {
+	reader, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+
+	var ctr *types.Container
+	if err = json.NewDecoder(reader).Decode(&ctr); err != nil {
+		return nil, err
+	}
+	return ctr, nil
 }

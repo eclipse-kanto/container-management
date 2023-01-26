@@ -20,6 +20,7 @@ import (
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/ctr"
+	"github.com/eclipse-kanto/container-management/containerm/deployment"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/mgr"
 	"github.com/eclipse-kanto/container-management/containerm/network"
@@ -113,6 +114,13 @@ func extractThingsOptions(daemonConfig *config) []things.ContainerThingsManagerO
 	return thingsOpts
 }
 
+func extractDeploymentMgrOptions(daemonConfig *config) []deployment.Opt {
+	return []deployment.Opt{
+		deployment.WithMetaPath(daemonConfig.DeploymentManagerConfig.DeploymentMetaPath),
+		deployment.WithInitialDeployPath(daemonConfig.DeploymentManagerConfig.DeploymentInitPath),
+	}
+}
+
 func initLogger(daemonConfig *config) {
 	log.Configure(daemonConfig.Log)
 }
@@ -178,6 +186,9 @@ func dumpConfiguration(configInstance *config) {
 
 	// dump things client config
 	dumpThingsClient(configInstance)
+
+	// dump deployment manager config
+	dumpDeploymentManager(configInstance)
 }
 
 func dumpDebug(configInstance *config) {
@@ -287,6 +298,13 @@ func dumpThingsClient(configInstance *config) {
 				}
 			}
 		}
+	}
+}
+
+func dumpDeploymentManager(configInstance *config) {
+	if configInstance.DeploymentManagerConfig != nil {
+		log.Debug("[daemon_cfg][deployment-home-dir] : %s", configInstance.DeploymentManagerConfig.DeploymentMetaPath)
+		log.Debug("[daemon_cfg][deployment-init-dir] : %s", configInstance.DeploymentManagerConfig.DeploymentInitPath)
 	}
 }
 

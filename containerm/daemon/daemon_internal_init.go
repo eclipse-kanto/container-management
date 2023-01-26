@@ -53,6 +53,9 @@ func (d *daemon) init() {
 		log.Info("Things support is disabled - no Things Container Manager Services will be registered. If you would like to enable Things support, please, reconfigure things-enable to true")
 	}
 
+	//init deployment manager service
+	initService(ctx, d, registrationsMap, registry.DeploymentManagerService)
+
 	//init grpc services
 	initService(ctx, d, registrationsMap, registry.GRPCService)
 
@@ -81,6 +84,9 @@ func initService(ctx context.Context, d *daemon, registrationsMap map[registry.T
 			break
 		case registry.GRPCServer:
 			config = extractGrpcOptions(d.config)
+			break
+		case registry.DeploymentManagerService:
+			config = extractDeploymentMgrOptions(d.config)
 			break
 		default:
 			config = nil

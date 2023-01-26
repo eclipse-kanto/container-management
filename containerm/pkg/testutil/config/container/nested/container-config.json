@@ -1,0 +1,5 @@
+{
+  "image": {
+    "name": "docker.io/library/redis:latest"
+  }
+}
