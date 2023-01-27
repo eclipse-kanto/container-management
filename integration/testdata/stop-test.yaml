@@ -1,0 +1,82 @@
+name: remove_help
+command:
+  binary: kanto-cm
+  args: ["stop", "-h"]
+expected:
+  exitCode: 0
+goldenFile: "stop-help.golden"
+---
+name: stop_no_args
+command:
+  binary: kanto-cm
+  args: ["stop"]
+expected:
+  exitCode: 1
+  err: "Error: You must provide either an ID or a name for the container via --name (-n)"
+---
+name: stop_invalid_id
+command:
+  binary: kanto-cm
+  args: ["start", "invalid"]
+expected:
+  exitCode: 1
+  err: "Error: The requested container with ID = invalid was not found."
+---
+name: stop_invalid_name
+command:
+  binary: kanto-cm
+  args: ["stop", "-n", "invalid"]
+expected:
+  exitCode: 1
+  err: "Error: The requested container with name = invalid was not found. Try using an ID instead."
+---
+name: stop_container_with_state_running
+setupCmd:
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+  - binary: kanto-cm
+    args: ["start", "-n", "test-it"]
+command:
+  binary: kanto-cm
+  args: ["stop", "-n", "test-it"]
+expected:
+  exitCode: 0
+onExit:
+  - binary: "kanto-cm"
+    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+---
+name: stop_container_with_state_created
+setupCmd:
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+command:
+  binary: kanto-cm
+  args: ["stop", "-n", "test-it"]
+expected:
+  exitCode: 1
+customResult:
+  type: REGEX
+  args: ["Error: rpc error: code = Unknown desc = cannot perform stop operation for container: [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}, with state: Created"]
+onExit:
+  - binary: "kanto-cm"
+    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+---
+name: stop_container_with_state_stopped
+setupCmd:
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+  - binary: kanto-cm
+    args: ["start", "-n", "test-it"]
+  - binary: kanto-cm
+    args: ["stop", "-n", "test-it"]
+command:
+  binary: kanto-cm
+  args: ["stop", "-n", "test-it"]
+expected:
+  exitCode: 1
+customResult:
+  type: REGEX
+  args: ["Error: rpc error: code = Unknown desc = cannot perform stop operation for container: [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}, with state: Stopped"]
+onExit:
+  - binary: "kanto-cm"
+    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
