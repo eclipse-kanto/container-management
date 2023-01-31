@@ -13,10 +13,14 @@
 package framework
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
+	"strings"
 
+	"github.com/eclipse-kanto/container-management/containerm/log"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/icmd"
 )
@@ -40,4 +44,32 @@ func checkRegex(r *regexp.Regexp, s string) assert.BoolOrComparison {
 		return fmt.Errorf("%s does not match regex", s)
 	}
 	return true
+}
+
+func logs(result icmd.Result, args ...string) assert.BoolOrComparison {
+	var logEntriesCount int
+	if result.Stdout() != "" {
+		lines := strings.Split(result.Stdout(), "\n")
+		for _, l := range lines {
+			if len(l) == 0 {
+				continue
+			}
+			var x map[string]interface{}
+			if err := json.Unmarshal([]byte(l), &x); err != nil {
+				return err
+			}
+			logEntriesCount++
+		}
+	}
+
+	if len(args) > 0 {
+		expectedLogEntries, err := strconv.Atoi(args[0])
+		if err != nil {
+			return err
+		}
+		if logEntriesCount != expectedLogEntries {
+			return log.NewErrorf("unexpected number of log entries: %d", logEntriesCount)
+		}
+	}
+	return nil
 }

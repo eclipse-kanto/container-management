@@ -1,0 +1,17 @@
+name: sysinfo_help
+command:
+  binary: kanto-cm
+  args: ["sysinfo", "-h"]
+expected:
+  exitCode: 0
+goldenFile: "sysinfo-help.golden"
+---
+name: sysinfo
+command:
+  binary: kanto-cm
+  args: ["sysinfo"]
+expected:
+  exitCode: 0
+customResult:
+  type: REGEX
+  args: ["Engine v[^ ]*, API v[^ ]*, \\(build [^ ]* [^ ]*\\) [\\r?\\n]CLI v[^ ]*, API v[^ ]*, \\(build [^ ]* [^ ]*\\) [\\r?\\n]"]

@@ -1,0 +1,33 @@
+Update a container without recreating it. The provided configurations will be merged with the current one.
+
+Usage:
+  kanto-cm update <container-id>
+
+Examples:
+update <container-id>
+update -n <container-name>
+
+
+Flags:
+  -h, --help                        help for update
+  -m, --memory string               Updates the max amount of memory the container can use in the form of 200m, 1.2g.
+                                    Use -1, to remove the memory usage limit.
+      --memory-reservation string   Updates the soft memory limitation in the form of 200m, 1.2g.
+                                    Use -1, to remove the reservation memory limit.
+      --memory-swap string          Updates the total amount of memory + swap that the container can use in the form of 200m, 1.2g.
+                                    Use -1, to remove the swap memory limit.
+  -n, --name string                 Updates the container with a specific name.
+      --rp string                   Updates the restart policy for the container. The policy will be applied when the container exits. Supported restart policies are - no, always, unless-stopped, on-failure. 
+                                    no - no attempts to restart the container for any reason will be made 
+                                    always - an attempt to restart the container will be made each time the container exits regardless of the exit code 
+                                    unless-stopped - restart attempts will be made only if the container has not been stopped by the user 
+                                    on-failure - restart attempts will be made if the container exits with an exit code != 0; 
+                                    the additional flags (--rp-cnt and --rp-to) apply only for this policy; if max retry count is not provided - the system will retry until it succeeds endlessly 
+                                    
+      --rp-cnt int                  Updates the number of retries that will be made to restart the container on exit if the policy is on-failure (default -2147483648)
+      --rp-to int                   Updates the time out period in seconds for each retry that will be made to restart the container on exit if the policy is set to on-failure (default -9223372036854775808)
+
+Global Flags:
+      --debug         Switch commands log level to DEBUG mode
+      --host string   Specify the address path to the Eclipse Kanto container management (default "/run/container-management/container-management.sock")
+      --timeout int   Specify the connection timeout in seconds to the Eclipse Kanto container management (default 30)

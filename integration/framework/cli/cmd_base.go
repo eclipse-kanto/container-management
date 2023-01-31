@@ -31,7 +31,8 @@ import (
 const TestData = "testdata"
 
 var customResultDefaultFns = map[string]func(result icmd.Result, args ...string) assert.BoolOrComparison{
-	"REGEX": regex,
+	"REGEX":     regex,
+	"LOGS_JSON": logs,
 }
 
 // TestCaseCMD represents a command and expected result
