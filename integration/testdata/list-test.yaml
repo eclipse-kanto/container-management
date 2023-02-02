@@ -33,7 +33,7 @@ onExit:
   - binary: "kanto-cm"
     args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
 ---
-name: list_all_containers_with_same_name
+name: list_existing_container
 setupCmd:
   - binary: kanto-cm
     args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
@@ -56,6 +56,14 @@ onExit:
   - binary: "kanto-cm"
     args: ["remove","--host", "$KANTO_HOST", "-n", "test", "-f"]
 ---
+name: list_not_existing_container
+command:
+  binary: kanto-cm
+  args: ["list", "-n", "invalid"]
+expected:
+  exitCode: 0
+  out: "No found containers."
+---
 name: list_invalid_arg
 command:
   binary: kanto-cm
@@ -63,11 +71,3 @@ command:
 expected:
   exitCode: 1
   err: "Error: unknown command \"invalid\" for \"kanto-cm list\""
----
-name: list_invalid_name
-command:
-  binary: kanto-cm
-  args: ["list", "-n", "invalid"]
-expected:
-  exitCode: 0
-  out: "No found containers."
