@@ -1,0 +1,73 @@
+name: list_help
+command:
+  binary: kanto-cm
+  args: ["list", "-h"]
+expected:
+  exitCode: 0
+goldenFile: "list-help.golden"
+---
+name: list_without_containers
+command:
+  binary: kanto-cm
+  args: ["list"]
+expected:
+  exitCode: 0
+  out: "No found containers."
+---
+name: list_all_containers
+setupCmd:
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+command:
+  binary: kanto-cm
+  args: ["list"]
+expected:
+  exitCode: 0
+customResult:
+  type: REGEX
+  args: ["ID                                      |Name                                   |Image                                                          |Status         |Finished At                     |Exit Code     |
+        -------------------------------------   |-------------------------------------  |------------------------------------------------------------   |----------     |------------------------------  |----------    |
+        [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}    |test-it                                |docker.io/library/influxdb:1.8.4                               |Created        |                                |0             |"
+        ]
+onExit:
+  - binary: "kanto-cm"
+    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+---
+name: list_all_containers_with_same_name
+setupCmd:
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "test", "docker.io/library/influxdb:1.8.4"]
+command:
+  binary: kanto-cm
+  args: ["list", "-n", "test-it"]
+expected:
+  exitCode: 0
+customResult:
+  type: REGEX
+  args: ["ID                                      |Name                                   |Image                                                          |Status         |Finished At                     |Exit Code     |
+        -------------------------------------   |-------------------------------------  |------------------------------------------------------------   |----------     |------------------------------  |----------    |
+        [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}    |test-it                                |docker.io/library/influxdb:1.8.4                               |Created        |                                |0             |"
+        ]
+onExit:
+  - binary: "kanto-cm"
+    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+  - binary: "kanto-cm"
+    args: ["remove","--host", "$KANTO_HOST", "-n", "test", "-f"]
+---
+name: list_invalid_arg
+command:
+  binary: kanto-cm
+  args: ["list", "invalid"]
+expected:
+  exitCode: 1
+  err: "Error: unknown command \"invalid\" for \"kanto-cm list\""
+---
+name: list_invalid_name
+command:
+  binary: kanto-cm
+  args: ["list", "-n", "invalid"]
+expected:
+  exitCode: 0
+  out: "No found containers."

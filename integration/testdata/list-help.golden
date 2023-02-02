@@ -1,0 +1,18 @@
+List all containers.
+
+Usage:
+  kanto-cm list
+
+Examples:
+list
+ list --name <container-name>
+ list -n <container-name>
+
+Flags:
+  -h, --help          help for list
+  -n, --name string   List all containers with a specific name.
+
+Global Flags:
+      --debug         Switch commands log level to DEBUG mode
+      --host string   Specify the address path to the Eclipse Kanto container management (default "/run/container-management/container-management.sock")
+      --timeout int   Specify the connection timeout in seconds to the Eclipse Kanto container management (default 30)
