@@ -77,6 +77,8 @@ command:
   args: ["logs", "-n", "test-it"]
 expected:
   exitCode: 0
+customResult:
+  type: LOGS_JSON
 onExit:
   - binary: "kanto-cm"
     args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]

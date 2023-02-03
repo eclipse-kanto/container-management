@@ -47,6 +47,17 @@ func checkRegex(r *regexp.Regexp, s string) assert.BoolOrComparison {
 }
 
 func logs(result icmd.Result, args ...string) assert.BoolOrComparison {
+	var (
+		expectedLogEntries int
+		err                error
+	)
+	if len(args) > 0 {
+		expectedLogEntries, err = strconv.Atoi(args[0])
+		if err != nil {
+			return err
+		}
+	}
+
 	var logEntriesCount int
 	if result.Stdout() != "" {
 		lines := strings.Split(result.Stdout(), "\n")
@@ -63,13 +74,9 @@ func logs(result icmd.Result, args ...string) assert.BoolOrComparison {
 	}
 
 	if len(args) > 0 {
-		expectedLogEntries, err := strconv.Atoi(args[0])
-		if err != nil {
-			return err
-		}
 		if logEntriesCount != expectedLogEntries {
 			return log.NewErrorf("unexpected number of log entries: %d", logEntriesCount)
 		}
 	}
-	return nil
+	return true
 }
