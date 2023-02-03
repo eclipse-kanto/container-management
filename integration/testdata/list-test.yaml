@@ -17,7 +17,11 @@ expected:
 name: list_all_containers
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it-container0", "docker.io/library/influxdb:1.8.4"]
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it-container1", "docker.io/library/influxdb:1.8.4"]
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it-container2", "docker.io/library/influxdb:1.8.4"]
 command:
   binary: kanto-cm
   args: ["list"]
@@ -25,13 +29,19 @@ expected:
   exitCode: 0
 customResult:
   type: REGEX
-  args: ["ID                                      |Name                                   |Image                                                          |Status         |Finished At                     |Exit Code     |
-        -------------------------------------   |-------------------------------------  |------------------------------------------------------------   |----------     |------------------------------  |----------    |
-        [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}    |test-it                                |docker.io/library/influxdb:1.8.4                               |Created        |                                |0             |"
-        ]
+  args: ["ID                                   	|Name                                 	|Image                                                       	|Status    	|Finished At                     |Exit Code 	|
+-------------------------------------	|-------------------------------------	|------------------------------------------------------------	|----------	|------------------------------  |----------	|
+[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} 	|test-it-container0                   	|docker.io/library/influxdb:1.8.4                            	|Created   	|                                |0         	|
+[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} 	|test-it-container1                   	|docker.io/library/influxdb:1.8.4                            	|Created   	|                                |0         	|
+[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} 	|test-it-container2                   	|docker.io/library/influxdb:1.8.4                            	|Created   	|                                |0         	|
+"]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it-container0", "-f"]
+  - binary: "kanto-cm"
+    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it-container1", "-f"]
+  - binary: "kanto-cm"
+    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it-container2", "-f"]
 ---
 name: list_existing_container
 setupCmd:
