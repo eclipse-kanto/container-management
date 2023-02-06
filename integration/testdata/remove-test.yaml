@@ -33,22 +33,22 @@ expected:
 name: remove_container_with_state_created
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "remove_container_with_state_created", "docker.io/library/influxdb:1.8.4"]
 command:
   binary: kanto-cm
-  args: ["remove", "-n", "test-it"]
+  args: ["remove", "-n", "remove_container_with_state_created"]
 expected:
   exitCode: 0
 ---
 name: remove_container_with_state_running
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "remove_container_with_state_running", "docker.io/library/influxdb:1.8.4"]
   - binary: kanto-cm
-    args: ["start", "-n", "test-it"]
+    args: ["start", "-n", "remove_container_with_state_running"]
 command:
   binary: kanto-cm
-  args: ["remove", "-n", "test-it"]
+  args: ["remove", "-n", "remove_container_with_state_running"]
 expected:
   exitCode: 1
 customResult:
@@ -56,4 +56,4 @@ customResult:
   args: ["Error: rpc error: code = Unknown desc = container with id = [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} is not stopped - must set the force flag to true to remove it"]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "remove_container_with_state_running", "-f"]

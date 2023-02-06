@@ -35,7 +35,7 @@ type cliTestConfiguration struct {
 	KantoHost string `env:"KANTO_HOST" envDefault:"/run/container-management/container-management.sock"`
 }
 
-func TestCommands(t *testing.T) {
+func TestCtrMgrCLI(t *testing.T) {
 	cliTestConfiguration := &cliTestConfiguration{}
 	require.NoError(t, env.Parse(cliTestConfiguration, env.Options{RequiredIfNoDef: true}))
 	require.NoError(t, os.Setenv("KANTO_HOST", cliTestConfiguration.KantoHost))

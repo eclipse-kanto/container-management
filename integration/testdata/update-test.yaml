@@ -33,44 +33,44 @@ expected:
 name: update_container_with_state_running
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "update_container_with_state_running", "docker.io/library/influxdb:1.8.4"]
   - binary: kanto-cm
-    args: ["start", "-n", "test-it"]
+    args: ["start", "-n", "update_container_with_state_running"]
 command:
   binary: kanto-cm
-  args: ["update", "-n", "test-it", "--rp", "no"]
+  args: ["update", "-n", "update_container_with_state_running", "--rp", "no"]
 expected:
   exitCode: 0
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "update_container_with_state_running", "-f"]
 ---
 name: update_container_with_state_created
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "update_container_with_state_created", "docker.io/library/influxdb:1.8.4"]
 command:
   binary: kanto-cm
-  args: ["update", "-n", "test-it", "--rp", "no"]
+  args: ["update", "-n", "update_container_with_state_created", "--rp", "no"]
 expected:
   exitCode: 0
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "update_container_with_state_created", "-f"]
 ---
 name: update_container_with_state_stopped
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "update_container_with_state_stopped", "docker.io/library/influxdb:1.8.4"]
   - binary: kanto-cm
-    args: [ "start", "-n", "test-it" ]
+    args: [ "start", "-n", "update_container_with_state_stopped" ]
   - binary: kanto-cm
-    args: [ "stop", "-n", "test-it" ]
+    args: [ "stop", "-n", "update_container_with_state_stopped" ]
 command:
   binary: kanto-cm
-  args: ["update", "-n", "test-it", "--rp", "no"]
+  args: ["update", "-n", "update_container_with_state_stopped", "--rp", "no"]
 expected:
   exitCode: 0
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "update_container_with_state_stopped", "-f"]

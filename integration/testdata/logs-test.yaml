@@ -33,28 +33,28 @@ expected:
 name: logs_of_container_with_state_created
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_created", "docker.io/library/influxdb:1.8.4"]
 command:
   binary: kanto-cm
-  args: ["logs", "-n", "test-it"]
+  args: ["logs", "-n", "logs_of_container_with_state_created"]
 expected:
   exitCode: 1
   err: "Error: rpc error: code = Unknown desc = there are no logs for container with status \"Created\""
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_created", "-f"]
 ---
 name: logs_of_container_with_state_running
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_running", "docker.io/library/influxdb:1.8.4"]
   - binary: kanto-cm
-    args: ["start", "-n", "test-it"]
+    args: ["start", "-n", "logs_of_container_with_state_running"]
   - binary: sleep
     args: ["2"]
 command:
   binary: kanto-cm
-  args: ["logs", "-n", "test-it", "-t", "5"]
+  args: ["logs", "-n", "logs_of_container_with_state_running", "-t", "5"]
 expected:
   exitCode: 0
 customResult:
@@ -62,23 +62,23 @@ customResult:
   args: ["5"]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_running", "-f"]
 ---
 name: logs_of_container_with_state_stopped
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_stopped", "docker.io/library/influxdb:1.8.4"]
   - binary: kanto-cm
-    args: ["start", "-n", "test-it"]
+    args: ["start", "-n", "logs_of_container_with_state_stopped"]
   - binary: kanto-cm
-    args: ["stop", "-n", "test-it"]
+    args: ["stop", "-n", "logs_of_container_with_state_stopped"]
 command:
   binary: kanto-cm
-  args: ["logs", "-n", "test-it"]
+  args: ["logs", "-n", "logs_of_container_with_state_stopped"]
 expected:
   exitCode: 0
 customResult:
   type: LOGS_JSON
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_stopped", "-f"]

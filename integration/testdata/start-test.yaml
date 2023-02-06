@@ -33,25 +33,25 @@ expected:
 name: start_container_with_state_created
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "start_container_with_state_created", "docker.io/library/influxdb:1.8.4"]
 command:
   binary: kanto-cm
-  args: ["start", "-n", "test-it"]
+  args: ["start", "-n", "start_container_with_state_created"]
 expected:
   exitCode: 0
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "start_container_with_state_created", "-f"]
 ---
 name: start_container_with_state_running
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "start_container_with_state_running", "docker.io/library/influxdb:1.8.4"]
   - binary: kanto-cm
-    args: ["start", "-n", "test-it"]
+    args: ["start", "-n", "start_container_with_state_running"]
 command:
   binary: kanto-cm
-  args: ["start", "-n", "test-it"]
+  args: ["start", "-n", "start_container_with_state_running"]
 expected:
   exitCode: 1
 customResult:
@@ -59,4 +59,4 @@ customResult:
   args: ["Error: the container with ID = [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} is already running - cannot start it again"]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "start_container_with_state_running", "-f"]
