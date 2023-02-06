@@ -1,0 +1,15 @@
+Show information about the container management runtime and its environment.
+
+Usage:
+  kanto-cm sysinfo
+
+Examples:
+sysinfo
+
+Flags:
+  -h, --help   help for sysinfo
+
+Global Flags:
+      --debug         Switch commands log level to DEBUG mode
+      --host string   Specify the address path to the Eclipse Kanto container management (default "/run/container-management/container-management.sock")
+      --timeout int   Specify the connection timeout in seconds to the Eclipse Kanto container management (default 30)

@@ -1,0 +1,19 @@
+Print the logs for a container.
+
+Usage:
+  kanto-cm logs <container-id>
+
+Examples:
+logs <container-id>
+logs --name <container-name>
+logs -n <container-name>
+
+Flags:
+  -h, --help          help for logs
+  -n, --name string   Print the logs of a container with a specific name.
+  -t, --tail int32    Lines of recent log file to display. Setting it to -1 will return all logs. (default 100)
+
+Global Flags:
+      --debug         Switch commands log level to DEBUG mode
+      --host string   Specify the address path to the Eclipse Kanto container management (default "/run/container-management/container-management.sock")
+      --timeout int   Specify the connection timeout in seconds to the Eclipse Kanto container management (default 30)

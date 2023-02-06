@@ -49,6 +49,11 @@ type Expected struct {
 //     customResult:
 //     name: REGEX
 //     args: ["([A-Za-z0-9]+(-[A-Za-z0-9]+)+)"]
+//   - LOGS_JSON - this function will validate that the stdout outputs consist of valid JSON entries and compare their count to args[0] if provided.
+//     example:
+//     customResult:
+//     name: LOGS_JSON
+//     args: ["5"]
 type CustomResult struct {
 	Type string   `yaml:"type"`
 	Args []string `yaml:"args"`
