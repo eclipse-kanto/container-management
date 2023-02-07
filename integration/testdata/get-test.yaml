@@ -1,0 +1,47 @@
+name: get_help
+command:
+  binary: kanto-cm
+  args: ["get", "-h"]
+expected:
+  exitCode: 0
+goldenFile: "get-help.golden"
+---
+name: get_no_args
+command:
+  binary: kanto-cm
+  args: ["get", "--host", "$KANTO_HOST"]
+expected:
+  exitCode: 1
+  err: "Error: You must provide either an ID or a name for the container via --name (-n)"
+---
+name: get_invalid_id
+command:
+  binary: kanto-cm
+  args: ["get", "--host", "$KANTO_HOST", "invalid"]
+expected:
+  exitCode: 1
+  err: "Error: The requested container with ID = invalid was not found"
+---
+name: get_invalid_name
+command:
+  binary: kanto-cm
+  args: ["get", "--host", "$KANTO_HOST", "-n", "invalid"]
+expected:
+  exitCode: 1
+  err: "Error: The requested container with name = invalid was not found. Try using an ID instead."
+---
+name: get_container
+setupCmd:
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "get_container", "docker.io/library/influxdb:1.8.4"]
+command:
+  binary: kanto-cm
+  args: ["get", "--host", "$KANTO_HOST", "-n", "get_container"]
+expected:
+  exitCode: 0
+customResult:
+  type: ASSERT_JSON_CONTAINER
+  args: []
+onExit:
+  - binary: "kanto-cm"
+    args: ["remove", "--host", "$KANTO_HOST", "-n", "get_container", "-f"]

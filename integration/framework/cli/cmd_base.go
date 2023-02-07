@@ -27,15 +27,15 @@ import (
 	"gotest.tools/v3/icmd"
 )
 
-// TestData constant for the testdata directory
+// TestData constant for the testdata directory.
 const TestData = "testdata"
 
-var customResultDefaultFns = map[string]func(result icmd.Result, args ...string) assert.BoolOrComparison{
+var customResultFns = map[string]func(result icmd.Result, args ...string) assert.BoolOrComparison{
 	"REGEX":     regex,
 	"LOGS_JSON": logs,
 }
 
-// TestCaseCMD represents a command and expected result
+// TestCaseCMD represents a command and expected result.
 type TestCaseCMD struct {
 	name             string
 	icmd             icmd.Cmd
@@ -45,6 +45,15 @@ type TestCaseCMD struct {
 	customResultArgs []string
 	setupCmd         *[]icmd.Cmd
 	onExit           *[]icmd.Cmd
+}
+
+// AddCustomResult adds custom result to customResultFns map or adds an error.
+func AddCustomResult(name string, f func(result icmd.Result, args ...string) assert.BoolOrComparison) error {
+	if _, ok := customResultFns[name]; ok {
+		return fmt.Errorf("function with name %s already exist", name)
+	}
+	customResultFns[name] = f
+	return nil
 }
 
 // GetTestCaseFromYamlFile parses yaml file to TestCaseCMD array.
@@ -135,7 +144,7 @@ func buildCmd(binary string, args ...string) *icmd.Cmd {
 }
 
 func assertCustomResult(t *testing.T, result icmd.Result, name string, args ...string) {
-	f, ok := customResultDefaultFns[name]
+	f, ok := customResultFns[name]
 	assert.Equal(t, ok, true, fmt.Sprintf("function %s not found", name))
 	assert.Assert(t, f(result, args...))
 }
