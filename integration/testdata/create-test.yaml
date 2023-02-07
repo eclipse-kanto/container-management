@@ -17,7 +17,7 @@ expected:
 name: create_influxdb_container
 command:
   binary: kanto-cm
-  args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+  args: ["create", "--host", "$KANTO_HOST", "-n", "create_influxdb_container", "docker.io/library/influxdb:1.8.4"]
 expected:
   exitCode: 0
 customResult:
@@ -25,7 +25,7 @@ customResult:
   args: ["([A-Za-z0-9]+(-[A-Za-z0-9]+)+)"]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "create_influxdb_container"]
 ---
 name: create_invalid_container
 command:
