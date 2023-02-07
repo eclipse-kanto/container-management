@@ -17,11 +17,17 @@ expected:
 name: list_all_containers
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it-container0", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "list_containers_with_state_running", "docker.io/library/influxdb:1.8.4"]
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it-container1", "docker.io/library/influxdb:1.8.4"]
+    args: ["start", "-n", "list_containers_with_state_running"]
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it-container2", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "list_containers_with_state_stopped", "docker.io/library/influxdb:1.8.4"]
+  - binary: kanto-cm
+    args: ["start", "-n", "list_containers_with_state_stopped"]
+  - binary: kanto-cm
+    args: ["stop", "-n", "list_containers_with_state_stopped"]
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "list_containers_with_state_created", "docker.io/library/influxdb:1.8.4"]
 command:
   binary: kanto-cm
   args: ["list"]
@@ -29,42 +35,41 @@ expected:
   exitCode: 0
 customResult:
   type: REGEX
-  args: ["ID                                   	|Name                                 	|Image                                                       	|Status    	|Finished At                     |Exit Code 	|
--------------------------------------	|-------------------------------------	|------------------------------------------------------------	|----------	|------------------------------  |----------	|
-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} 	|test-it-container0                   	|docker.io/library/influxdb:1.8.4                            	|Created   	|                                |0         	|
-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} 	|test-it-container1                   	|docker.io/library/influxdb:1.8.4                            	|Created   	|                                |0         	|
-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} 	|test-it-container2                   	|docker.io/library/influxdb:1.8.4                            	|Created   	|                                |0         	|
-"]
+  args: ["ID                                      |Name                                   |Image                                                          |Status         |Finished At                     |Exit Code     |
+        -------------------------------------   |-------------------------------------  |------------------------------------------------------------   |----------     |------------------------------  |----------    |
+        [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}    |list_containers_with_state_stopped                     |docker.io/library/influxdb:1.8.4                               |Stopped        |[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{9}Z  |2             |
+        [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}    |list_containers_with_state_running                     |docker.io/library/influxdb:1.8.4                               |Running        |                                |0             |
+        [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}    |list_containers_with_state_created                     |docker.io/library/influxdb:1.8.4                               |Created        |                                |0             |"]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it-container0", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "list_containers_with_state_running", "-f"]
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it-container1", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "list_containers_with_state_stopped", "-f"]
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it-container2", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "list_containers_with_state_created", "-f"]
 ---
 name: list_existing_container
 setupCmd:
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test-it", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "list_containers_ctr0", "docker.io/library/influxdb:1.8.4"]
   - binary: kanto-cm
-    args: ["create", "--host", "$KANTO_HOST", "-n", "test", "docker.io/library/influxdb:1.8.4"]
+    args: ["create", "--host", "$KANTO_HOST", "-n", "list_containers_ctr1", "docker.io/library/influxdb:1.8.4"]
 command:
   binary: kanto-cm
-  args: ["list", "-n", "test-it"]
+  args: ["list", "-n", "list_containers_ctr0"]
 expected:
   exitCode: 0
 customResult:
   type: REGEX
   args: ["ID                                      |Name                                   |Image                                                          |Status         |Finished At                     |Exit Code     |
         -------------------------------------   |-------------------------------------  |------------------------------------------------------------   |----------     |------------------------------  |----------    |
-        [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}    |test-it                                |docker.io/library/influxdb:1.8.4                               |Created        |                                |0             |"
+        [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}    |list_containers_ctr0                                |docker.io/library/influxdb:1.8.4                               |Created        |                                |0             |"
         ]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test-it", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "list_containers_ctr0", "-f"]
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "test", "-f"]
+    args: ["remove","--host", "$KANTO_HOST", "-n", "list_containers_ctr1", "-f"]
 ---
 name: list_not_existing_container
 command:
