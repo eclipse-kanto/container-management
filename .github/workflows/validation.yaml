@@ -45,4 +45,4 @@ jobs:
           go tool cover -func coverage.out
       - name: Build Integration Tests
         run: |
-          go test --tags=integration ./integration -c -o integration/cm-test
+          go test --tags=integration ./integration -c -o integration/bin/cm-test
