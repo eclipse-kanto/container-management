@@ -28,6 +28,17 @@ import (
 
 var emptyParams = make(map[string]interface{})
 
+const (
+	operationStart           = "start"
+	operationStop            = "stop"
+	operationPause           = "pause"
+	operationResume          = "resume"
+	operationRename          = "rename"
+	operationRemove          = "remove"
+	operationUpdate          = "update"
+	operationStopWithOptions = "stopWithOptions"
+)
+
 type ctrInstanceSuite struct {
 	ctrManagementSuite
 }
@@ -40,205 +51,134 @@ func (suite *ctrInstanceSuite) TearDownSuite() {
 	suite.TearDown()
 }
 
+func (suite *ctrInstanceSuite) setupCtrInstanceTest(ctrStart bool) (string, *websocket.Conn) {
+	ctrFeatureID := suite.createContainer(ctrStart)
+	wsConnection, err := util.NewDigitalTwinWSConnection(suite.Cfg)
+	require.NoError(suite.T(), err, "failed to create a websocket connection")
+	err = util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, "")
+	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
+	return ctrFeatureID, wsConnection
+}
+
+func (suite *ctrInstanceSuite) tearDownCtrInstanceTest(ctrFeatureID string, wsConnection *websocket.Conn) {
+	if wsConnection != nil {
+		util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
+		wsConnection.Close()
+	}
+	if ctrFeatureID != "" {
+		suite.remove(ctrFeatureID)
+	}
+}
+
 func TestCtrInstanceSuite(t *testing.T) {
 	suite.Run(t, new(ctrInstanceSuite))
 }
 
 func (suite *ctrInstanceSuite) TestStartContainer() {
-	ctrFeatureID := suite.createStoppedContainer()
+	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(false)
+	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
 
-	defer suite.remove(ctrFeatureID)
-
-	wsConnection, _ := util.NewDigitalTwinWSConnection(suite.Cfg)
-
-	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
-
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, "")
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, "start", emptyParams)
-
-	suite.processStateChange(wsConnection, ctrFeatureID, "RUNNING")
+	suite.executeWithExpectedSuccess(ctrFeatureID, operationStart, emptyParams)
+	suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusRunning)
 }
 
 func (suite *ctrInstanceSuite) TestStartContainerThatIsAlreadyStarted() {
-	ctrFeatureID := suite.createStartedContainer()
+	ctrFeatureID := suite.createContainer(true)
+	suite.remove(ctrFeatureID)
 
-	defer suite.remove(ctrFeatureID)
-
-	suite.executeWithExpectedError(ctrFeatureID, "start", emptyParams)
+	suite.executeWithExpectedError(ctrFeatureID, operationStart, emptyParams)
 }
 
 func (suite *ctrInstanceSuite) TestStopContainer() {
-	ctrFeatureID := suite.createStartedContainer()
+	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(true)
+	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
 
-	defer suite.remove(ctrFeatureID)
-
-	wsConnection, _ := util.NewDigitalTwinWSConnection(suite.Cfg)
-
-	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
-
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, "")
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, "stop", emptyParams)
-
-	suite.processStateChange(wsConnection, ctrFeatureID, "STOPPED")
+	suite.executeWithExpectedSuccess(ctrFeatureID, operationStop, emptyParams)
+	suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusStopped)
 }
 
 func (suite *ctrInstanceSuite) TestStopContainerThatIsAlreadyStopped() {
-	ctrFeatureID := suite.createStoppedContainer()
+	ctrFeatureID := suite.createContainer(false)
+	suite.remove(ctrFeatureID)
 
-	defer suite.remove(ctrFeatureID)
-
-	suite.executeWithExpectedError(ctrFeatureID, "stop", emptyParams)
+	suite.executeWithExpectedError(ctrFeatureID, operationStop, emptyParams)
 }
 
 func (suite *ctrInstanceSuite) TestPauseContainer() {
-	ctrFeatureID := suite.createStartedContainer()
+	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(true)
+	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
 
-	defer suite.remove(ctrFeatureID)
-
-	wsConnection, _ := util.NewDigitalTwinWSConnection(suite.Cfg)
-
-	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
-
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, "")
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, "pause", emptyParams)
-
-	suite.processStateChange(wsConnection, ctrFeatureID, "PAUSED")
+	suite.executeWithExpectedSuccess(ctrFeatureID, operationPause, emptyParams)
+	suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusPaused)
 }
 
 func (suite *ctrInstanceSuite) TestResumeContainer() {
-	ctrFeatureID := suite.createStartedContainer()
+	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(true)
+	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
 
-	defer suite.remove(ctrFeatureID)
+	suite.executeWithExpectedSuccess(ctrFeatureID, operationPause, emptyParams)
+	suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusPaused)
 
-	wsConnection, _ := util.NewDigitalTwinWSConnection(suite.Cfg)
-
-	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
-
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, "")
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, "pause", emptyParams)
-
-	suite.processStateChange(wsConnection, ctrFeatureID, "PAUSED")
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, "resume", emptyParams)
-
-	suite.processStateChange(wsConnection, ctrFeatureID, "RUNNING")
+	suite.executeWithExpectedSuccess(ctrFeatureID, operationResume, emptyParams)
+	suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusRunning)
 }
 
 func (suite *ctrInstanceSuite) TestRenameContainer() {
-	ctrFeatureID := suite.createStoppedContainer()
-
-	defer suite.remove(ctrFeatureID)
-
-	wsConnection, _ := util.NewDigitalTwinWSConnection(suite.Cfg)
-
-	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
-
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, "")
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
+	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(false)
+	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
 
 	newCtrName := "new_ctr_name"
-	suite.executeWithExpectedSuccess(ctrFeatureID, "rename", newCtrName)
-
+	suite.executeWithExpectedSuccess(ctrFeatureID, operationRename, newCtrName)
 	suite.processNameChange(wsConnection, ctrFeatureID, newCtrName)
 }
 
 func (suite *ctrInstanceSuite) TestRemoveStoppedContainer() {
-	ctrFeatureID := suite.createStoppedContainer()
+	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(false)
+	defer suite.tearDownCtrInstanceTest("", wsConnection)
 
-	wsConnection, _ := util.NewDigitalTwinWSConnection(suite.Cfg)
-
-	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
-
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, "")
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, "remove", false)
-
+	suite.executeWithExpectedSuccess(ctrFeatureID, operationRemove, false)
 	suite.processRemove(wsConnection, ctrFeatureID)
 }
 
 func (suite *ctrInstanceSuite) TestRemoveStartedContainerWithForce() {
-	ctrFeatureID := suite.createStartedContainer()
+	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(true)
+	defer suite.tearDownCtrInstanceTest("", wsConnection)
 
-	wsConnection, _ := util.NewDigitalTwinWSConnection(suite.Cfg)
-
-	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
-
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, "")
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, "remove", true)
-
+	suite.executeWithExpectedSuccess(ctrFeatureID, operationRemove, true)
 	suite.processRemove(wsConnection, ctrFeatureID)
 }
 
 func (suite *ctrInstanceSuite) TestRemoveStartedContainerWithoutForce() {
-	ctrFeatureID := suite.createStartedContainer()
-
+	ctrFeatureID := suite.createContainer(true)
 	defer suite.remove(ctrFeatureID)
 
-	suite.executeWithExpectedError(ctrFeatureID, "remove", false)
+	suite.executeWithExpectedError(ctrFeatureID, operationRemove, false)
 }
 
 func (suite *ctrInstanceSuite) TestStopContainerWithOptions() {
-	ctrFeatureID := suite.createStartedContainer()
-
-	defer suite.remove(ctrFeatureID)
-
-	wsConnection, _ := util.NewDigitalTwinWSConnection(suite.Cfg)
-
-	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
-
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, "")
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
+	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(true)
+	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
 
 	params := map[string]string{"signal": "SIGINT"}
-	suite.executeWithExpectedSuccess(ctrFeatureID, "stopWithOptions", params)
-
-	suite.processStateChange(wsConnection, ctrFeatureID, "STOPPED")
+	suite.executeWithExpectedSuccess(ctrFeatureID, operationStopWithOptions, params)
+	suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusStopped)
 }
 
 func (suite *ctrInstanceSuite) TestUpdateContainer() {
-	ctrFeatureID := suite.createStoppedContainer()
-
-	defer suite.remove(ctrFeatureID)
-
-	wsConnection, _ := util.NewDigitalTwinWSConnection(suite.Cfg)
-
-	defer util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
-
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, "")
-	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
+	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(false)
+	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
 
 	restartPolicyKey := "restartPolicy"
 	newRestartPolicy := map[string]interface{}{"type": "ALWAYS"}
 	params := map[string]interface{}{restartPolicyKey: newRestartPolicy}
-	suite.executeWithExpectedSuccess(ctrFeatureID, "update", params)
-
+	suite.executeWithExpectedSuccess(ctrFeatureID, operationUpdate, params)
 	suite.processUpdate(wsConnection, ctrFeatureID, restartPolicyKey, newRestartPolicy)
 }
 
-func (suite *ctrInstanceSuite) createStartedContainer() string {
+func (suite *ctrInstanceSuite) createContainer(start bool) string {
 	params := make(map[string]interface{})
 	params[paramImageRef] = influxdbImageRef
-	params[paramStart] = true
-
-	ctrFeatureID := suite.create(params)
-	return ctrFeatureID
-}
-
-func (suite *ctrInstanceSuite) createStoppedContainer() string {
-	params := make(map[string]interface{})
-	params[paramImageRef] = influxdbImageRef
-	params[paramStart] = false
+	params[paramStart] = start
 
 	ctrFeatureID := suite.create(params)
 	return ctrFeatureID

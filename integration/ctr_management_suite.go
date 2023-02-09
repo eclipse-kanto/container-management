@@ -117,14 +117,14 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 			isCtrStarted, err = parseBool(params[paramStart])
 			require.NoError(suite.T(), err, "failed to parse param start")
 
-			if propertyStatus == "CREATED" {
+			if propertyStatus == ctrStatusCreated {
 				if isCtrStarted {
 					isCtrCreated = true
 					return false, nil
 				}
 				return true, nil
 			}
-			if propertyStatus == "RUNNING" {
+			if propertyStatus == ctrStatusRunning {
 				if isCtrStarted && isCtrCreated {
 					return true, nil
 				}
