@@ -176,12 +176,11 @@ func (suite *ctrInstanceSuite) TestUpdateContainer() {
 }
 
 func (suite *ctrInstanceSuite) createContainer(start bool) string {
-	params := make(map[string]interface{})
-	params[paramImageRef] = influxdbImageRef
-	params[paramStart] = start
-
-	ctrFeatureID := suite.create(params)
-	return ctrFeatureID
+	params := map[string]interface{}{
+		paramImageRef: influxdbImageRef,
+		paramStart:    start,
+	}
+	return suite.create(params)
 }
 
 func (suite *ctrInstanceSuite) executeWithExpectedSuccess(ctrFeatureID string, operation string, params interface{}) {
