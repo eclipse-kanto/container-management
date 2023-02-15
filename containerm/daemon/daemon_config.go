@@ -116,7 +116,7 @@ type networkConfig struct {
 	DefaultBridgeNetworkConfig *bridgeNetworkConfig `json:"default_bridge,omitempty"`
 }
 
-// network default bridge network config - gw0
+// network default bridge network config - kanto-cm0
 type bridgeNetworkConfig struct {
 	NetBridgeDisableBridge bool   `json:"disable,omitempty"`
 	NetBridgeName          string `json:"name,omitempty"`

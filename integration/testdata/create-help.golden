@@ -22,7 +22,9 @@ Flags:
                                      --hosts="local.host.machine.ip.custom.if:host_ip_myNetIf0" 
                                      this will automatically resolve the host's IP on the myNetIf0 network interface and add it to the container's hosts file 
                                      --hosts="local.host.machine.ip.default.bridge:host_ip" 
-                                     this will automatically resolve the host's IP on the default bridge network interface for containerm (the default configuration is gw0) and add it to the container's hosts file if the container is configured to use it
+                                     this will automatically resolve the host's IP on the default bridge network interface for containerm (the default configuration is kanto-cm0) and add it to the container's hosts file if the container is configured to use it
+                                     If the IP of a container in the same bridge network is to be added to the hosts file the reserved container_<container-host_name> must be provided. Example:
+                                     --hosts="service:container_service-host"
       --i                            Enable interaction with the current container
       --log-driver string            Sets the type of the log driver to be used for the container - json-file (default), none (default "json-file")
       --log-max-buffer-size string   Sets the max size of the logger buffer in the form of 1, 1.2m - applicable for non-blocking mode only (default "1M")
@@ -45,7 +47,7 @@ Flags:
                                      Available propagation modes are: rprivate, private, rshared, shared, rslave, slave
   -n, --name string                  Create a container with a specific name. A valid name must start with an uppercase or a lowercase letter, a digit or an underscore and not exceed 32 symbols. It can also contain a dot and a hyphen.
       --network string               Sets the networking mode for the container. Possible options are:
-                                     bridge - the container is connected to the default bridge network interface of th eengine and is assigned an IP (this is the default)
+                                     bridge - the container is connected to the default bridge network interface of the engine and is assigned an IP (this is the default)
                                      host - the container shares the network stack of the host (use with caution as this breaks the network's isolation!) (default "bridge")
       --ports strings                Ports to be mapped from the host to the container instance. Template: 
                                      --ports=[<host-ip>:]<host-port>:<container-port>[-<range>][/<proto>] 

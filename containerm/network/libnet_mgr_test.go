@@ -19,13 +19,14 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/docker/docker/libnetwork"
-	libnetTypes "github.com/docker/docker/libnetwork/types"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 	mocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/network"
 	"github.com/eclipse-kanto/container-management/containerm/util"
+
+	"github.com/docker/docker/libnetwork"
+	libnetTypes "github.com/docker/docker/libnetwork/types"
 	"github.com/golang/mock/gomock"
 )
 
@@ -45,17 +46,6 @@ const (
 	netSettingsIPGW = "216.51.200.201"
 	netSettingsIP   = "216.58.208.238"
 	netSettingsMac  = "00:a0:c9:14:c8:29"
-)
-
-var (
-	defaultCfg = &config{
-		netType:  "bridge",
-		metaPath: testDirsRoot + "/meta",
-		execRoot: testDirsRoot + "/exec",
-		bridgeConfig: bridgeConfig{
-			name: "test0",
-		},
-	}
 )
 
 func newDefaultMgrConfig() *config {
@@ -85,7 +75,7 @@ func newDefaultConnectedContainer() *types.Container {
 		},
 		NetworkSettings: &types.NetworkSettings{
 			Networks: map[string]*types.EndpointSettings{
-				defaultCfg.netType: {
+				newDefaultMgrConfig().netType: {
 					ID: testCtrEndpointID,
 				},
 			},
@@ -98,25 +88,26 @@ func TestManage(t *testing.T) {
 	tests := map[string]struct {
 		mgrConfig         *config
 		container         *types.Container
+		containers        []*types.Container
 		prepareMgrForTest prepare
 		assertCtr         assertContainer
 		expectedErr       error
 	}{
 		"netmgr_test_manage_no_ctrl": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultContainer(),
 			prepareMgrForTest: prepareNilCtrl,
 			expectedErr:       log.NewErrorf("no network controller to connect to default network"),
 		},
 		"netmgr_test_manage_default": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultContainer(),
 			prepareMgrForTest: prepareDefault,
 			assertCtr:         assertManagedContainer,
 			expectedErr:       nil,
 		},
 		"netmgr_test_manage_default_host_mode": {
-			mgrConfig: defaultCfg,
+			mgrConfig: newDefaultMgrConfig(),
 			container: &types.Container{
 				ID: testCtrID,
 				HostConfig: &types.HostConfig{
@@ -128,7 +119,7 @@ func TestManage(t *testing.T) {
 			expectedErr:       nil,
 		},
 		"netmgr_test_manage_default_extra_hosts": {
-			mgrConfig: defaultCfg,
+			mgrConfig: newDefaultMgrConfig(),
 			container: &types.Container{
 				ID: testCtrID,
 				HostConfig: &types.HostConfig{
@@ -145,7 +136,7 @@ func TestManage(t *testing.T) {
 			expectedErr:       nil,
 		},
 		"netmgr_test_manage_default_extra_hosts_bad_key": {
-			mgrConfig: defaultCfg,
+			mgrConfig: newDefaultMgrConfig(),
 			container: &types.Container{
 				ID: testCtrID,
 				HostConfig: &types.HostConfig{
@@ -162,7 +153,7 @@ func TestManage(t *testing.T) {
 			expectedErr:       nil,
 		},
 		"netmgr_test_manage_default_extra_hosts_bad_key_host_mode": {
-			mgrConfig: defaultCfg,
+			mgrConfig: newDefaultMgrConfig(),
 			container: &types.Container{
 				ID: testCtrID,
 				HostConfig: &types.HostConfig{
@@ -179,7 +170,7 @@ func TestManage(t *testing.T) {
 			expectedErr:       nil,
 		},
 		"netmgr_test_manage_default_extra_hosts_reserved_key_bridge": {
-			mgrConfig: defaultCfg,
+			mgrConfig: newDefaultMgrConfig(),
 			container: &types.Container{
 				ID: testCtrID,
 				HostConfig: &types.HostConfig{
@@ -196,21 +187,21 @@ func TestManage(t *testing.T) {
 			expectedErr:       nil,
 		},
 		"netmgr_test_manage_default_existing_sb": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultContainer(),
 			prepareMgrForTest: prepareDefaultExistingSb,
 			assertCtr:         assertManagedContainer,
 			expectedErr:       nil,
 		},
 		"netmgr_test_manage_default_existing_sb_destroy_error": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultContainer(),
 			prepareMgrForTest: prepareDestroySbFailed,
 			assertCtr:         assertManagedContainer,
 			expectedErr:       log.NewErrorf("failed to destroy container sandbox"),
 		},
 		"netmgr_test_manage_default_existing_sb_create_error": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultContainer(),
 			prepareMgrForTest: prepareNewSbFailed,
 			assertCtr:         assertManagedContainer,
@@ -251,19 +242,19 @@ func TestConnect(t *testing.T) {
 		expectedErr       error
 	}{
 		"netmgr_test_connect_no_network": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultContainer(),
 			prepareMgrForTest: prepareConnectErrorGettingNetwork,
 			expectedErr:       log.NewErrorf("no network [%s] found while connecting container %s ", string(newDefaultContainer().HostConfig.NetworkMode), newDefaultContainer().ID),
 		},
 		"netmgr_test_connect_no_sandbox": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultContainer(),
 			prepareMgrForTest: prepareConnectErrorGettingSb,
 			expectedErr:       log.NewErrorf("no network sandbox for container %s ", newDefaultContainer().ID),
 		},
 		"netmgr_test_connect_no_ep": {
-			mgrConfig: defaultCfg,
+			mgrConfig: newDefaultMgrConfig(),
 			container: &types.Container{
 				ID: testCtrID,
 				HostConfig: &types.HostConfig{
@@ -281,7 +272,7 @@ func TestConnect(t *testing.T) {
 			assertCtr:         assertConnectedContainerFailed,
 		},
 		"netmgr_test_connect_no_ep_delete": {
-			mgrConfig: defaultCfg,
+			mgrConfig: newDefaultMgrConfig(),
 			container: &types.Container{
 				ID: testCtrID,
 				HostConfig: &types.HostConfig{
@@ -299,7 +290,7 @@ func TestConnect(t *testing.T) {
 			assertCtr:         assertConnectedContainerFailed,
 		},
 		"netmgr_test_connect_err_joining": {
-			mgrConfig: defaultCfg,
+			mgrConfig: newDefaultMgrConfig(),
 			container: &types.Container{
 				ID: testCtrID,
 				HostConfig: &types.HostConfig{
@@ -317,7 +308,7 @@ func TestConnect(t *testing.T) {
 			assertCtr:         assertConnectedContainerFailed,
 		},
 		"netmgr_test_connect_err_creating": {
-			mgrConfig: defaultCfg,
+			mgrConfig: newDefaultMgrConfig(),
 			container: &types.Container{
 				ID: testCtrID,
 				HostConfig: &types.HostConfig{
@@ -335,7 +326,7 @@ func TestConnect(t *testing.T) {
 			assertCtr:         assertConnectedContainerFailed,
 		},
 		"netmgr_test_connect_from_scratch": {
-			mgrConfig: defaultCfg,
+			mgrConfig: newDefaultMgrConfig(),
 			container: &types.Container{
 				ID: testCtrID,
 				HostConfig: &types.HostConfig{
@@ -346,7 +337,7 @@ func TestConnect(t *testing.T) {
 			assertCtr:         assertConnectedContainer,
 		},
 		"netmgr_test_connect_with_other_nets": {
-			mgrConfig: defaultCfg,
+			mgrConfig: newDefaultMgrConfig(),
 			container: &types.Container{
 				ID: testCtrID,
 				HostConfig: &types.HostConfig{
@@ -366,7 +357,7 @@ func TestConnect(t *testing.T) {
 			assertCtr:         assertConnectedContainer,
 		},
 		"netmgr_test_connect_with_nets": {
-			mgrConfig: defaultCfg,
+			mgrConfig: newDefaultMgrConfig(),
 			container: &types.Container{
 				ID: testCtrID,
 				HostConfig: &types.HostConfig{
@@ -414,26 +405,26 @@ func TestInitialize(t *testing.T) {
 		expectedErr       error
 	}{
 		"netmgr_test_init_no_sbs": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			prepareMgrForTest: prepareInitNoSbs,
 		},
 		"netmgr_test_init_no_sbs_error_deleting_old_bridge": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			prepareMgrForTest: prepareInitNoSbsErrorDeletingOldBridge,
 			expectedErr:       log.NewError("error deleting old bridge"),
 		},
 		"netmgr_test_init_no_sbs_error_creating_old_bridge": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			prepareMgrForTest: prepareInitNoSbsErrorCreatingNewBridge,
 			expectedErr:       log.NewError("error creating default bridge"),
 		},
 		"netmgr_test_init_no_sbs_error_getting_default_bridge": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			prepareMgrForTest: prepareInitNoSbsErrorDeletingNewBridge,
 			expectedErr:       log.NewError("error deleting default bridge"),
 		},
 		"netmgr_test_init_no_sbs_no_host_net_existing": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			prepareMgrForTest: prepareInitNoSbsNoExistingHostNet,
 		},
 		"netmgr_test_init_with_sbs": {
@@ -466,7 +457,7 @@ func TestInitialize(t *testing.T) {
 			expectedErr:       log.NewError("default bridge failed"),
 		},
 		"netmgr_test_init_host_net_failed": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			prepareMgrForTest: prepareInitHostNetFail,
 			expectedErr:       log.NewErrorf("could not create host network: %v", log.NewErrorf("no host net")),
 		},
@@ -501,53 +492,53 @@ func TestReleaseNetworkResources(t *testing.T) {
 		expectedErr       error
 	}{
 		"netmgr_test_rnr_nil_settings": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultContainer(),
 			prepareMgrForTest: prepareReleaseResourcesNilSettings,
 		},
 		"netmgr_test_rnr_default": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultConnectedContainer(),
 			prepareMgrForTest: prepareReleaseResourcesFull,
 		},
 		"netmgr_test_rnr_err_getting_sandbox": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultConnectedContainer(),
 			prepareMgrForTest: prepareReleaseResourcesGetSbErr,
 			expectedErr:       log.NewError("error getting sandbox"),
 		},
 		"netmgr_test_rnr_err_sb_nil": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultConnectedContainer(),
 			prepareMgrForTest: prepareReleaseResourcesSbNil,
 			expectedErr:       log.NewErrorf("failed to get sandbox with id = %s", testCtrSandboxID),
 		},
 		"netmgr_test_rnr_err_eps_nil": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultConnectedContainer(),
 			prepareMgrForTest: prepareReleaseResourcesEpsNil,
 			expectedErr:       log.NewErrorf("no endpoints in sandbox with id = %s", testCtrSandboxID),
 		},
 		"netmgr_test_rnr_err_ep_missing": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultConnectedContainer(),
 			prepareMgrForTest: prepareReleaseResourcesMissingEp,
 			expectedErr:       log.NewErrorf("the endpoint %s is not connected", testCtrEndpointID),
 		},
 		"netmgr_test_rnr_err_ep_leave_sb_err": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultConnectedContainer(),
 			prepareMgrForTest: prepareReleaseResourcesEpLeaveSbError,
 			expectedErr:       log.NewErrorf("error while leaving network %s", testCtrEndpointID),
 		},
 		"netmgr_test_rnr_err_ep_delete_err": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultConnectedContainer(),
 			prepareMgrForTest: prepareReleaseResourcesEpDeleteError,
 			expectedErr:       log.NewErrorf("error while deleting endpoint with id = %s", testCtrEndpointID),
 		},
 		"netmgr_test_rnr_err_sb_delete_err": {
-			mgrConfig:         defaultCfg,
+			mgrConfig:         newDefaultMgrConfig(),
 			container:         newDefaultConnectedContainer(),
 			prepareMgrForTest: prepareReleaseResourcesSbDeleteError,
 			expectedErr:       log.NewError("error deleting sandbox"),
@@ -580,7 +571,7 @@ func TestDispose(t *testing.T) {
 		controller := gomock.NewController(t)
 		defer controller.Finish()
 		mockLibnetMgr := mocks.NewMockNetworkController(controller)
-		testMgr := &libnetworkMgr{defaultCfg, mockLibnetMgr}
+		testMgr := &libnetworkMgr{config: newDefaultMgrConfig(), netController: mockLibnetMgr}
 
 		mockLibnetMgr.EXPECT().Stop().Times(1)
 		testMgr.Dispose(context.Background())
@@ -588,7 +579,7 @@ func TestDispose(t *testing.T) {
 }
 func TestDisconnect(t *testing.T) {
 	t.Run("netmgr_test_disconnect", func(t *testing.T) {
-		testMgr := &libnetworkMgr{defaultCfg, nil}
+		testMgr := &libnetworkMgr{config: newDefaultMgrConfig()}
 
 		testutil.AssertNil(t, testMgr.Disconnect(context.Background(), newDefaultContainer(), true))
 	})
@@ -650,7 +641,8 @@ func TestRestore(t *testing.T) {
 			}
 
 			testNetMgr := &libnetworkMgr{
-				config: testCase.mgrConfig,
+				config:                    testCase.mgrConfig,
+				bridgeConnectedContainers: make(map[string]*types.Container),
 			}
 			err := testNetMgr.Restore(context.Background(), testCase.containers)
 			testutil.AssertError(t, nil, err)
@@ -744,7 +736,7 @@ func assertConnectedContainer(t *testing.T, mgrConfig *config, container *types.
 }
 
 func prepareNilCtrl(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
-	return &libnetworkMgr{config, nil}
+	return &libnetworkMgr{config: config}
 }
 func prepareDefault(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -752,7 +744,7 @@ func prepareDefault(gomockCtrl *gomock.Controller, config *config, container *ty
 
 	mockLibnetMgr.EXPECT().WalkSandboxes(gomock.Any()).Times(1)
 	mockLibnetMgr.EXPECT().NewSandbox(container.ID, gomock.Any()).Times(1).Return(mockSb, nil)
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareDefaultExistingSb(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -770,8 +762,9 @@ func prepareDefaultExistingSb(gomockCtrl *gomock.Controller, config *config, con
 	mockLibnetMgr.EXPECT().SandboxDestroy(container.ID).Times(1).Return(nil)
 	mockLibnetMgr.EXPECT().NewSandbox(container.ID, gomock.Any()).Times(1).Return(mockSb, nil)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
+
 func prepareStatsDefault(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
 	mockSb := mocks.NewMockSandbox(gomockCtrl)
@@ -791,12 +784,12 @@ func prepareStatsDefault(gomockCtrl *gomock.Controller, config *config, containe
 			"test1": {RxBytes: 1024, TxBytes: 2048},
 		}, nil)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareStatsMissingSb(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
 	mockLibnetMgr.EXPECT().WalkSandboxes(gomock.Any()).Times(1)
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareStatsErrorGettingStatistics(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -813,7 +806,7 @@ func prepareStatsErrorGettingStatistics(gomockCtrl *gomock.Controller, config *c
 	mockSb.EXPECT().ContainerID().Times(1).Return(container.ID)
 	mockSb.EXPECT().Statistics().Times(1).Return(nil, log.NewError("error getting statistics"))
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareDestroySbFailed(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -831,7 +824,7 @@ func prepareDestroySbFailed(gomockCtrl *gomock.Controller, config *config, conta
 	mockLibnetMgr.EXPECT().SandboxDestroy(container.ID).Times(1).Return(log.NewErrorf("failed to destroy container sandbox"))
 	mockLibnetMgr.EXPECT().NewSandbox(container.ID, gomock.Any()).Times(0)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareNewSbFailed(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -840,14 +833,14 @@ func prepareNewSbFailed(gomockCtrl *gomock.Controller, config *config, container
 	mockLibnetMgr.EXPECT().WalkSandboxes(gomock.Any()).Times(1)
 	mockLibnetMgr.EXPECT().NewSandbox(container.ID, gomock.Any()).Return(mockSb, log.NewErrorf("failed to create container sandbox")).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 
 func prepareConnectErrorGettingNetwork(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
 
 	mockLibnetMgr.EXPECT().NetworkByName(string(container.HostConfig.NetworkMode)).Times(1).Return(nil, log.NewErrorf("no network"))
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareConnectErrorGettingSb(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -855,7 +848,7 @@ func prepareConnectErrorGettingSb(gomockCtrl *gomock.Controller, config *config,
 
 	mockLibnetMgr.EXPECT().NetworkByName(string(container.HostConfig.NetworkMode)).Times(1).Return(mockNetwork, nil)
 	mockLibnetMgr.EXPECT().WalkSandboxes(gomock.Any()).Times(1)
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareConnectErrorGettingEp(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -874,7 +867,7 @@ func prepareConnectErrorGettingEp(gomockCtrl *gomock.Controller, config *config,
 	mockSb.EXPECT().ContainerID().Times(1).Return(container.ID)
 	mockNetwork.EXPECT().Name().Times(4).Return("bridge")
 	mockNetwork.EXPECT().EndpointByID(container.NetworkSettings.Networks["bridge"].ID).Times(1).Return(nil, log.NewErrorf("no endpoint"))
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareConnectErrorGettingEpDelete(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -895,7 +888,7 @@ func prepareConnectErrorGettingEpDelete(gomockCtrl *gomock.Controller, config *c
 	mockNetwork.EXPECT().Name().Times(4).Return("bridge")
 	mockNetwork.EXPECT().EndpointByID(container.NetworkSettings.Networks["bridge"].ID).Times(1).Return(mockEp, nil)
 	mockEp.EXPECT().Delete(true).Return(log.NewErrorf("error deleting endpoint")).Times(1)
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareConnectErrorJoiningEp(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -918,7 +911,7 @@ func prepareConnectErrorJoiningEp(gomockCtrl *gomock.Controller, config *config,
 	mockNetwork.EXPECT().CreateEndpoint(container.ID+"-ep", gomock.Any()).Times(1).Return(mockEp, nil)
 	mockEp.EXPECT().Join(mockSb).Times(1).Return(log.NewErrorf("error joining endpoint"))
 	mockEp.EXPECT().Delete(true).Times(1).Return(nil)
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 
 func prepareConnectFullNoCtrNetworks(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
@@ -958,7 +951,7 @@ func prepareConnectFullNoCtrNetworks(gomockCtrl *gomock.Controller, config *conf
 	mockSb.EXPECT().Key().Return(testCtrSandboxKey).Times(1)
 	mockLibnetMgr.EXPECT().ID().Return(testNetworkControllerID).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr, bridgeConnectedContainers: make(map[string]*types.Container)}
 }
 
 func prepareConnectFullWithOtherCtrNetworks(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
@@ -1000,7 +993,7 @@ func prepareConnectFullWithOtherCtrNetworks(gomockCtrl *gomock.Controller, confi
 	mac, _ := net.ParseMAC(netSettingsMac)
 	mockIFaceInfo.EXPECT().MacAddress().Return(mac).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr, bridgeConnectedContainers: make(map[string]*types.Container)}
 }
 func prepareConnectFullWithNetSettings(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -1038,7 +1031,7 @@ func prepareConnectFullWithNetSettings(gomockCtrl *gomock.Controller, config *co
 	mac, _ := net.ParseMAC(netSettingsMac)
 	mockIFaceInfo.EXPECT().MacAddress().Return(mac).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr, bridgeConnectedContainers: make(map[string]*types.Container)}
 }
 func prepareConnectErrorCreatingEp(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -1058,7 +1051,7 @@ func prepareConnectErrorCreatingEp(gomockCtrl *gomock.Controller, config *config
 	mockNetwork.EXPECT().Name().Times(4).Return("bridge")
 	mockNetwork.EXPECT().EndpointByID(container.NetworkSettings.Networks["bridge"].ID).Times(1).Return(nil, libnetwork.ErrNoSuchEndpoint(container.NetworkSettings.Networks["bridge"].ID))
 	mockNetwork.EXPECT().CreateEndpoint(container.ID+"-ep", gomock.Any()).Times(1).Return(nil, log.NewErrorf("error creating endpoint"))
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareInitNoSbs(gomockCtrl *gomock.Controller, config *config) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -1073,7 +1066,7 @@ func prepareInitNoSbs(gomockCtrl *gomock.Controller, config *config) ContainerNe
 	mockNetwork.EXPECT().Name().Return(bridgeNetworkName).Times(1)
 	mockLibnetMgr.EXPECT().NewNetwork(config.netType, bridgeNetworkName, "", gomock.Any()).Times(1).Return(mockNetwork, nil)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareInitNoSbsErrorDeletingOldBridge(gomockCtrl *gomock.Controller, config *config) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -1084,7 +1077,7 @@ func prepareInitNoSbsErrorDeletingOldBridge(gomockCtrl *gomock.Controller, confi
 	mockLibnetMgr.EXPECT().NetworkByName(config.bridgeConfig.name).Times(1).Return(mockNetwork, nil)
 	mockNetwork.EXPECT().Delete().Return(log.NewError("error deleting old bridge")).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 
 func prepareInitNoSbsErrorDeletingNewBridge(gomockCtrl *gomock.Controller, config *config) ContainerNetworkManager {
@@ -1098,7 +1091,7 @@ func prepareInitNoSbsErrorDeletingNewBridge(gomockCtrl *gomock.Controller, confi
 	mockLibnetMgr.EXPECT().NetworkByName(bridgeNetworkName).Times(1).Return(mockNetwork, nil)
 	mockNetwork.EXPECT().Delete().Return(log.NewError("error deleting default bridge")).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 
 func prepareInitNoSbsErrorCreatingNewBridge(gomockCtrl *gomock.Controller, config *config) ContainerNetworkManager {
@@ -1113,7 +1106,7 @@ func prepareInitNoSbsErrorCreatingNewBridge(gomockCtrl *gomock.Controller, confi
 	mockNetwork.EXPECT().Delete().Return(nil).Times(1)
 	mockLibnetMgr.EXPECT().NewNetwork(config.netType, bridgeNetworkName, "", gomock.Any()).Return(nil, log.NewError("error creating default bridge")).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 
 func prepareInitNoSbsNoExistingHostNet(gomockCtrl *gomock.Controller, config *config) ContainerNetworkManager {
@@ -1130,7 +1123,7 @@ func prepareInitNoSbsNoExistingHostNet(gomockCtrl *gomock.Controller, config *co
 	mockNetwork.EXPECT().Name().Return(bridgeNetworkName).Times(1)
 	mockLibnetMgr.EXPECT().NewNetwork(config.netType, bridgeNetworkName, "", gomock.Any()).Times(1).Return(mockNetwork, nil)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareInitWithSbs(gomockCtrl *gomock.Controller, config *config) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -1141,7 +1134,7 @@ func prepareInitWithSbs(gomockCtrl *gomock.Controller, config *config) Container
 	mockLibnetMgr.EXPECT().NetworkByName(bridgeNetworkName).Times(1).Return(mockNetwork, nil)
 	mockNetwork.EXPECT().Name().Return(bridgeNetworkName).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 
 func prepareInitWithSbsDefaultBridgeError(gomockCtrl *gomock.Controller, config *config) ContainerNetworkManager {
@@ -1152,7 +1145,7 @@ func prepareInitWithSbsDefaultBridgeError(gomockCtrl *gomock.Controller, config 
 	mockNetwork.EXPECT().Name().Return(hostNetworkName).Times(1)
 	mockLibnetMgr.EXPECT().NetworkByName(bridgeNetworkName).Times(1).Return(nil, log.NewError("default bridge failed"))
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 
 func prepareInitHostNetFail(gomockCtrl *gomock.Controller, config *config) ContainerNetworkManager {
@@ -1160,10 +1153,10 @@ func prepareInitHostNetFail(gomockCtrl *gomock.Controller, config *config) Conta
 	mockLibnetMgr.EXPECT().NetworkByName(hostNetworkName).Times(1).Return(nil, nil)
 	mockLibnetMgr.EXPECT().NewNetwork(libnetworkDriverHost, hostNetworkName, "", gomock.Any()).Return(nil, log.NewErrorf("no host net"))
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareReleaseResourcesNilSettings(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
-	return &libnetworkMgr{config, nil}
+	return &libnetworkMgr{config: config}
 }
 func prepareReleaseResourcesFull(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -1180,14 +1173,14 @@ func prepareReleaseResourcesFull(gomockCtrl *gomock.Controller, config *config, 
 	mockSb.EXPECT().Endpoints().Return([]libnetwork.Endpoint{}).Times(1)
 	mockSb.EXPECT().Delete().Return(nil).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareReleaseResourcesGetSbErr(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
 
 	mockLibnetMgr.EXPECT().SandboxByID(container.NetworkSettings.SandboxID).Return(nil, log.NewError("error getting sandbox")).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 
 func prepareReleaseResourcesSbNil(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
@@ -1195,7 +1188,7 @@ func prepareReleaseResourcesSbNil(gomockCtrl *gomock.Controller, config *config,
 
 	mockLibnetMgr.EXPECT().SandboxByID(container.NetworkSettings.SandboxID).Return(nil, nil).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareReleaseResourcesEpsNil(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -1205,7 +1198,7 @@ func prepareReleaseResourcesEpsNil(gomockCtrl *gomock.Controller, config *config
 
 	mockSb.EXPECT().Endpoints().Return(nil).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareReleaseResourcesMissingEp(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -1217,7 +1210,7 @@ func prepareReleaseResourcesMissingEp(gomockCtrl *gomock.Controller, config *con
 	mockEp.EXPECT().ID().Return("random").Times(1)
 	mockSb.EXPECT().Endpoints().Return([]libnetwork.Endpoint{mockEp}).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareReleaseResourcesEpLeaveSbError(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -1231,7 +1224,7 @@ func prepareReleaseResourcesEpLeaveSbError(gomockCtrl *gomock.Controller, config
 	mockSb.EXPECT().Endpoints().Return([]libnetwork.Endpoint{mockEp}).Times(1)
 	mockEp.EXPECT().Leave(mockSb).Return(log.NewError("error leaving sandbox")).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareReleaseResourcesEpDeleteError(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -1245,7 +1238,7 @@ func prepareReleaseResourcesEpDeleteError(gomockCtrl *gomock.Controller, config 
 	mockEp.EXPECT().Leave(mockSb).Return(nil).Times(1)
 	mockEp.EXPECT().Delete(false).Return(log.NewError("error deleting endpoint")).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }
 func prepareReleaseResourcesSbDeleteError(gomockCtrl *gomock.Controller, config *config, container *types.Container) ContainerNetworkManager {
 	mockLibnetMgr := mocks.NewMockNetworkController(gomockCtrl)
@@ -1262,5 +1255,5 @@ func prepareReleaseResourcesSbDeleteError(gomockCtrl *gomock.Controller, config 
 	mockSb.EXPECT().Endpoints().Return([]libnetwork.Endpoint{}).Times(1)
 	mockSb.EXPECT().Delete().Return(log.NewError("error deleting sandbox")).Times(1)
 
-	return &libnetworkMgr{config, mockLibnetMgr}
+	return &libnetworkMgr{config: config, netController: mockLibnetMgr}
 }

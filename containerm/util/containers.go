@@ -21,6 +21,7 @@ import (
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
+
 	"github.com/google/uuid"
 	"golang.org/x/sys/unix"
 )
@@ -442,12 +443,12 @@ func CalculateParallelLimit(n int, limit int) int {
 
 // IsContainerNetworkBridge returns true if the network mode is bridge
 func IsContainerNetworkBridge(container *types.Container) bool {
-	return container.HostConfig.NetworkMode == types.NetworkModeBridge
+	return container.HostConfig != nil && container.HostConfig.NetworkMode == types.NetworkModeBridge
 }
 
 // IsContainerNetworkHost returns true if the network mode is host
 func IsContainerNetworkHost(container *types.Container) bool {
-	return container.HostConfig.NetworkMode == types.NetworkModeHost
+	return container.HostConfig != nil && container.HostConfig.NetworkMode == types.NetworkModeHost
 }
 
 // CopyContainer creates a new container instance from the provided parameter
