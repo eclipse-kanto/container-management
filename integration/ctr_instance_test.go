@@ -74,105 +74,128 @@ func TestCtrInstanceSuite(t *testing.T) {
 	suite.Run(t, new(ctrInstanceSuite))
 }
 
-func (suite *ctrInstanceSuite) TestStartContainer() {
-	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(false)
-	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
+func (suite *ctrInstanceSuite) TestCtrInstanceOperations() {
+	tests := map[string]struct {
+		ctrStart          bool
+		exec              func(ctrFeatureID string, wsConnection *websocket.Conn)
+		ctrHasToBeRemoved bool
+	}{
+		"test_start_container": {
+			ctrStart: false,
+			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
+				suite.executeWithExpectedSuccess(ctrFeatureID, operationStart, emptyParams)
+				suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusRunning)
+			},
+			ctrHasToBeRemoved: true,
+		},
+		"test_start_container_that_is_already_started": {
+			ctrStart: true,
+			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
+				suite.executeWithExpectedError(ctrFeatureID, operationStart, emptyParams)
+			},
+			ctrHasToBeRemoved: true,
+		},
+		"test_stop_container": {
+			ctrStart: true,
+			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
+				suite.executeWithExpectedSuccess(ctrFeatureID, operationStop, emptyParams)
+				suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusStopped)
+			},
+			ctrHasToBeRemoved: true,
+		},
+		"test_stop_container_that_is_already_stopped": {
+			ctrStart: false,
+			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
+				suite.executeWithExpectedError(ctrFeatureID, operationStop, emptyParams)
+			},
+			ctrHasToBeRemoved: true,
+		},
+		"test_pause_container": {
+			ctrStart: true,
+			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
+				suite.executeWithExpectedSuccess(ctrFeatureID, operationPause, emptyParams)
+				suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusPaused)
+			},
+			ctrHasToBeRemoved: true,
+		},
+		"test_resume_container": {
+			ctrStart: true,
+			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
+				suite.executeWithExpectedSuccess(ctrFeatureID, operationPause, emptyParams)
+				suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusPaused)
+				suite.executeWithExpectedSuccess(ctrFeatureID, operationResume, emptyParams)
+				suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusRunning)
+			},
+			ctrHasToBeRemoved: true,
+		},
+		"test_rename_container": {
+			ctrStart: false,
+			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
+				newCtrName := "new_ctr_name"
+				suite.executeWithExpectedSuccess(ctrFeatureID, operationRename, newCtrName)
+				suite.processNameChange(wsConnection, ctrFeatureID, newCtrName)
+			},
+			ctrHasToBeRemoved: true,
+		},
+		"test_remove_stopped_container": {
+			ctrStart: false,
+			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
+				suite.executeWithExpectedSuccess(ctrFeatureID, operationRemove, false)
+				suite.processRemove(wsConnection, ctrFeatureID)
+			},
+			ctrHasToBeRemoved: false,
+		},
+		"test_remove_started_container_with_force": {
+			ctrStart: true,
+			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
+				suite.executeWithExpectedSuccess(ctrFeatureID, operationRemove, true)
+				suite.processRemove(wsConnection, ctrFeatureID)
+			},
+			ctrHasToBeRemoved: false,
+		},
+		"test_remove_started_container_without_force": {
+			ctrStart: true,
+			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
+				suite.executeWithExpectedError(ctrFeatureID, operationRemove, false)
+			},
+			ctrHasToBeRemoved: true,
+		},
+		"test_stop_container_with_options": {
+			ctrStart: true,
+			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
+				params := map[string]string{"signal": "SIGINT"}
+				suite.executeWithExpectedSuccess(ctrFeatureID, operationStopWithOptions, params)
+				suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusStopped)
+			},
+			ctrHasToBeRemoved: true,
+		},
+		"test_update_container": {
+			ctrStart: false,
+			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
+				restartPolicyKey := "restartPolicy"
+				newRestartPolicy := map[string]interface{}{"type": "ALWAYS"}
+				params := map[string]interface{}{restartPolicyKey: newRestartPolicy}
+				suite.executeWithExpectedSuccess(ctrFeatureID, operationUpdate, params)
+				suite.processUpdate(wsConnection, ctrFeatureID, restartPolicyKey, newRestartPolicy)
+			},
+			ctrHasToBeRemoved: true,
+		},
+	}
 
-	suite.executeWithExpectedSuccess(ctrFeatureID, operationStart, emptyParams)
-	suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusRunning)
-}
+	for testName, testCase := range tests {
+		suite.Run(testName, func() {
+			ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(testCase.ctrStart)
+			defer func() {
+				if testCase.ctrHasToBeRemoved {
+					suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
+				} else {
+					suite.tearDownCtrInstanceTest("", wsConnection)
+				}
+			}()
 
-func (suite *ctrInstanceSuite) TestStartContainerThatIsAlreadyStarted() {
-	ctrFeatureID := suite.createContainer(true)
-	suite.remove(ctrFeatureID)
-
-	suite.executeWithExpectedError(ctrFeatureID, operationStart, emptyParams)
-}
-
-func (suite *ctrInstanceSuite) TestStopContainer() {
-	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(true)
-	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, operationStop, emptyParams)
-	suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusStopped)
-}
-
-func (suite *ctrInstanceSuite) TestStopContainerThatIsAlreadyStopped() {
-	ctrFeatureID := suite.createContainer(false)
-	suite.remove(ctrFeatureID)
-
-	suite.executeWithExpectedError(ctrFeatureID, operationStop, emptyParams)
-}
-
-func (suite *ctrInstanceSuite) TestPauseContainer() {
-	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(true)
-	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, operationPause, emptyParams)
-	suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusPaused)
-}
-
-func (suite *ctrInstanceSuite) TestResumeContainer() {
-	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(true)
-	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, operationPause, emptyParams)
-	suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusPaused)
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, operationResume, emptyParams)
-	suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusRunning)
-}
-
-func (suite *ctrInstanceSuite) TestRenameContainer() {
-	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(false)
-	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
-
-	newCtrName := "new_ctr_name"
-	suite.executeWithExpectedSuccess(ctrFeatureID, operationRename, newCtrName)
-	suite.processNameChange(wsConnection, ctrFeatureID, newCtrName)
-}
-
-func (suite *ctrInstanceSuite) TestRemoveStoppedContainer() {
-	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(false)
-	defer suite.tearDownCtrInstanceTest("", wsConnection)
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, operationRemove, false)
-	suite.processRemove(wsConnection, ctrFeatureID)
-}
-
-func (suite *ctrInstanceSuite) TestRemoveStartedContainerWithForce() {
-	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(true)
-	defer suite.tearDownCtrInstanceTest("", wsConnection)
-
-	suite.executeWithExpectedSuccess(ctrFeatureID, operationRemove, true)
-	suite.processRemove(wsConnection, ctrFeatureID)
-}
-
-func (suite *ctrInstanceSuite) TestRemoveStartedContainerWithoutForce() {
-	ctrFeatureID := suite.createContainer(true)
-	defer suite.remove(ctrFeatureID)
-
-	suite.executeWithExpectedError(ctrFeatureID, operationRemove, false)
-}
-
-func (suite *ctrInstanceSuite) TestStopContainerWithOptions() {
-	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(true)
-	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
-
-	params := map[string]string{"signal": "SIGINT"}
-	suite.executeWithExpectedSuccess(ctrFeatureID, operationStopWithOptions, params)
-	suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusStopped)
-}
-
-func (suite *ctrInstanceSuite) TestUpdateContainer() {
-	ctrFeatureID, wsConnection := suite.setupCtrInstanceTest(false)
-	defer suite.tearDownCtrInstanceTest(ctrFeatureID, wsConnection)
-
-	restartPolicyKey := "restartPolicy"
-	newRestartPolicy := map[string]interface{}{"type": "ALWAYS"}
-	params := map[string]interface{}{restartPolicyKey: newRestartPolicy}
-	suite.executeWithExpectedSuccess(ctrFeatureID, operationUpdate, params)
-	suite.processUpdate(wsConnection, ctrFeatureID, restartPolicyKey, newRestartPolicy)
+			testCase.exec(ctrFeatureID, wsConnection)
+		})
+	}
 }
 
 func (suite *ctrInstanceSuite) createContainer(start bool) string {
@@ -196,8 +219,7 @@ func (suite *ctrInstanceSuite) executeWithExpectedError(ctrFeatureID string, ope
 func (suite *ctrInstanceSuite) processStateChange(wsConnection *websocket.Conn, ctrFeatureID string, expectedStatus string) {
 	err := util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicModified {
-			propertyStatePath := fmt.Sprintf("/features/%s/properties/status/state", ctrFeatureID)
-			if propertyStatePath != event.Path {
+			if event.Path != fmt.Sprintf("/features/%s/properties/status/state", ctrFeatureID) {
 				return true, fmt.Errorf("received event is not expected")
 			}
 
@@ -221,8 +243,7 @@ func (suite *ctrInstanceSuite) processStateChange(wsConnection *websocket.Conn, 
 func (suite *ctrInstanceSuite) processNameChange(wsConnection *websocket.Conn, ctrFeatureID string, expectedName string) {
 	err := util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicModified {
-			propertyNamePath := fmt.Sprintf("/features/%s/properties/status/name", ctrFeatureID)
-			if propertyNamePath != event.Path {
+			if event.Path != fmt.Sprintf("/features/%s/properties/status/name", ctrFeatureID) {
 				return true, fmt.Errorf("received event is not expected")
 			}
 
@@ -242,16 +263,14 @@ func (suite *ctrInstanceSuite) processNameChange(wsConnection *websocket.Conn, c
 
 func (suite *ctrInstanceSuite) processRemove(wsConnection *websocket.Conn, ctrFeatureID string) {
 	err := util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
-		deletedCtrPath := fmt.Sprintf("/features/%s", ctrFeatureID)
-		if deletedCtrPath != event.Path {
-			return true, fmt.Errorf("received event for unexpected container")
-		}
+		if event.Topic.String() == suite.topicDeleted {
+			if event.Path != fmt.Sprintf("/features/%s", ctrFeatureID) {
+				return true, fmt.Errorf("received event for unexpected container")
+			}
 
-		if event.Topic.String() != suite.topicDeleted {
-			return true, fmt.Errorf("unknown message is received")
+			return true, nil
 		}
-
-		return true, nil
+		return true, fmt.Errorf("unknown message is received")
 	})
 	require.NoError(suite.T(), err, "failed to process removing the container feature")
 }
@@ -259,8 +278,7 @@ func (suite *ctrInstanceSuite) processRemove(wsConnection *websocket.Conn, ctrFe
 func (suite *ctrInstanceSuite) processUpdate(wsConnection *websocket.Conn, ctrFeatureID string, expectedKey string, expectedValue map[string]interface{}) {
 	err := util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicModified {
-			statusUpdatePath := fmt.Sprintf("/features/%s/properties/status/config", ctrFeatureID)
-			if statusUpdatePath != event.Path {
+			if event.Path != fmt.Sprintf("/features/%s/properties/status/config", ctrFeatureID) {
 				return true, fmt.Errorf("received event is not expected")
 			}
 
