@@ -6,8 +6,8 @@ replace github.com/docker/docker => github.com/moby/moby v20.10.3-0.202206031730
 
 require (
 	github.com/caarlos0/env/v6 v6.10.1
-	github.com/containerd/cgroups v1.0.3
-	github.com/containerd/containerd v1.6.10
+	github.com/containerd/cgroups v1.0.4
+	github.com/containerd/containerd v1.6.18
 	github.com/containerd/imgcrypt v1.1.7
 	github.com/containerd/typeurl v1.0.2
 	github.com/containers/ocicrypt v1.1.6
@@ -42,7 +42,7 @@ require (
 
 require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/Microsoft/hcsshim v0.9.5 // indirect
+	github.com/Microsoft/hcsshim v0.9.6 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/boltdb/bolt v1.3.1 // indirect
@@ -80,7 +80,7 @@ require (
 	github.com/moby/sys/mountinfo v0.6.0 // indirect
 	github.com/moby/sys/signal v0.6.0 // indirect
 	github.com/opencontainers/selinux v1.10.1 // indirect
-	github.com/pelletier/go-toml v1.9.4 // indirect
+	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
