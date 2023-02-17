@@ -37,6 +37,11 @@ const (
 	operationRemove          = "remove"
 	operationUpdate          = "update"
 	operationStopWithOptions = "stopWithOptions"
+
+	parseError                    = "failed to parse %s"
+	unknownMessageError           = "unknown message is received"
+	messageProcessError           = "failed to process %s the container feature"
+	unexpectedContainerEventError = "received event is not expected"
 )
 
 type ctrInstanceSuite struct {
@@ -77,100 +82,94 @@ func TestCtrInstanceSuite(t *testing.T) {
 func (suite *ctrInstanceSuite) TestCtrInstanceOperations() {
 	tests := map[string]struct {
 		ctrStart          bool
-		exec              func(ctrFeatureID string, wsConnection *websocket.Conn)
 		ctrHasToBeRemoved bool
+		exec              func(ctrFeatureID string, wsConnection *websocket.Conn)
 	}{
 		"test_start_container": {
-			ctrStart: false,
+			ctrHasToBeRemoved: true,
 			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
 				suite.executeWithExpectedSuccess(ctrFeatureID, operationStart, emptyParams)
 				suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusRunning)
 			},
-			ctrHasToBeRemoved: true,
 		},
-		"test_start_container_that_is_already_started": {
-			ctrStart: true,
+		"test_start_container_that_is_already_running": {
+			ctrStart:          true,
+			ctrHasToBeRemoved: true,
 			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
 				suite.executeWithExpectedError(ctrFeatureID, operationStart, emptyParams)
 			},
-			ctrHasToBeRemoved: true,
 		},
 		"test_stop_container": {
-			ctrStart: true,
+			ctrStart:          true,
+			ctrHasToBeRemoved: true,
 			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
 				suite.executeWithExpectedSuccess(ctrFeatureID, operationStop, emptyParams)
 				suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusStopped)
 			},
-			ctrHasToBeRemoved: true,
 		},
-		"test_stop_container_that_is_already_stopped": {
-			ctrStart: false,
+		"test_stop_container_that_is_not_running": {
+			ctrHasToBeRemoved: true,
 			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
 				suite.executeWithExpectedError(ctrFeatureID, operationStop, emptyParams)
 			},
-			ctrHasToBeRemoved: true,
 		},
 		"test_pause_container": {
-			ctrStart: true,
+			ctrStart:          true,
+			ctrHasToBeRemoved: true,
 			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
 				suite.executeWithExpectedSuccess(ctrFeatureID, operationPause, emptyParams)
 				suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusPaused)
 			},
-			ctrHasToBeRemoved: true,
 		},
 		"test_resume_container": {
-			ctrStart: true,
+			ctrStart:          true,
+			ctrHasToBeRemoved: true,
 			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
 				suite.executeWithExpectedSuccess(ctrFeatureID, operationPause, emptyParams)
 				suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusPaused)
 				suite.executeWithExpectedSuccess(ctrFeatureID, operationResume, emptyParams)
 				suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusRunning)
 			},
-			ctrHasToBeRemoved: true,
 		},
 		"test_rename_container": {
-			ctrStart: false,
+			ctrHasToBeRemoved: true,
 			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
 				newCtrName := "new_ctr_name"
 				suite.executeWithExpectedSuccess(ctrFeatureID, operationRename, newCtrName)
 				suite.processNameChange(wsConnection, ctrFeatureID, newCtrName)
 			},
-			ctrHasToBeRemoved: true,
 		},
-		"test_remove_stopped_container": {
-			ctrStart: false,
+		"test_remove_container_that_is_not_running": {
 			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
 				suite.executeWithExpectedSuccess(ctrFeatureID, operationRemove, false)
 				suite.processRemove(wsConnection, ctrFeatureID)
 			},
-			ctrHasToBeRemoved: false,
 		},
-		"test_remove_started_container_with_force": {
+		"test_remove_container_that_is_running_with_force": {
 			ctrStart: true,
 			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
 				suite.executeWithExpectedSuccess(ctrFeatureID, operationRemove, true)
 				suite.processRemove(wsConnection, ctrFeatureID)
 			},
-			ctrHasToBeRemoved: false,
 		},
-		"test_remove_started_container_without_force": {
-			ctrStart: true,
+		"test_remove_container_that_is_running_without_force": {
+			ctrStart:          true,
+			ctrHasToBeRemoved: true,
 			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
 				suite.executeWithExpectedError(ctrFeatureID, operationRemove, false)
 			},
-			ctrHasToBeRemoved: true,
 		},
 		"test_stop_container_with_options": {
-			ctrStart: true,
+			ctrStart:          true,
+			ctrHasToBeRemoved: true,
 			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
 				params := map[string]string{"signal": "SIGINT"}
 				suite.executeWithExpectedSuccess(ctrFeatureID, operationStopWithOptions, params)
 				suite.processStateChange(wsConnection, ctrFeatureID, ctrStatusStopped)
 			},
-			ctrHasToBeRemoved: true,
 		},
 		"test_update_container": {
-			ctrStart: false,
+			ctrHasToBeRemoved: true,
 			exec: func(ctrFeatureID string, wsConnection *websocket.Conn) {
 				restartPolicyKey := "restartPolicy"
 				newRestartPolicy := map[string]interface{}{"type": "ALWAYS"}
@@ -178,7 +177,6 @@ func (suite *ctrInstanceSuite) TestCtrInstanceOperations() {
 				suite.executeWithExpectedSuccess(ctrFeatureID, operationUpdate, params)
 				suite.processUpdate(wsConnection, ctrFeatureID, restartPolicyKey, newRestartPolicy)
 			},
-			ctrHasToBeRemoved: true,
 		},
 	}
 
@@ -220,73 +218,73 @@ func (suite *ctrInstanceSuite) processStateChange(wsConnection *websocket.Conn, 
 	err := util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicModified {
 			if event.Path != fmt.Sprintf("/features/%s/properties/status/state", ctrFeatureID) {
-				return true, fmt.Errorf("received event is not expected")
+				return true, fmt.Errorf(unexpectedContainerEventError)
 			}
 
 			eventValue, err := parseMap(event.Value)
-			require.NoError(suite.T(), err, "failed to parse event value")
+			require.NoError(suite.T(), err, fmt.Sprintf(parseError, "event value"))
 
-			propertyStatus, err := parseString(eventValue["status"])
-			require.NoError(suite.T(), err, "failed to parse property status")
+			actualStatus, err := parseString(eventValue["status"])
+			require.NoError(suite.T(), err, fmt.Sprintf(parseError, "property status"))
 
-			if propertyStatus != expectedStatus {
-				return true, fmt.Errorf("event for an unexpected container status is received")
+			if actualStatus != expectedStatus {
+				return true, fmt.Errorf("expected container status - %s, got container status - %s", expectedStatus, actualStatus)
 			}
 
 			return true, nil
 		}
-		return true, fmt.Errorf("unknown message is received")
+		return true, fmt.Errorf(unknownMessageError)
 	})
-	require.NoError(suite.T(), err, "failed to process updating the state of the container feature")
+	require.NoError(suite.T(), err, fmt.Sprintf(messageProcessError, "updating the state of"))
 }
 
 func (suite *ctrInstanceSuite) processNameChange(wsConnection *websocket.Conn, ctrFeatureID string, expectedName string) {
 	err := util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicModified {
 			if event.Path != fmt.Sprintf("/features/%s/properties/status/name", ctrFeatureID) {
-				return true, fmt.Errorf("received event is not expected")
+				return true, fmt.Errorf(unexpectedContainerEventError)
 			}
 
-			propertyName, err := parseString(event.Value)
-			require.NoError(suite.T(), err, "failed to parse property name")
+			actualName, err := parseString(event.Value)
+			require.NoError(suite.T(), err, fmt.Sprintf(parseError, "property name"))
 
-			if propertyName != expectedName {
-				return true, fmt.Errorf("event for an unexpected container status is received")
+			if actualName != expectedName {
+				return true, fmt.Errorf("expected container name - %s, got container name - %s", expectedName, actualName)
 			}
 
 			return true, nil
 		}
-		return true, fmt.Errorf("unknown message is received")
+		return true, fmt.Errorf(unknownMessageError)
 	})
-	require.NoError(suite.T(), err, "failed to process updating the name of the container feature")
+	require.NoError(suite.T(), err, fmt.Sprintf(messageProcessError, "updating the name of"))
 }
 
 func (suite *ctrInstanceSuite) processRemove(wsConnection *websocket.Conn, ctrFeatureID string) {
 	err := util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicDeleted {
 			if event.Path != fmt.Sprintf("/features/%s", ctrFeatureID) {
-				return true, fmt.Errorf("received event for unexpected container")
+				return true, fmt.Errorf(unexpectedContainerEventError)
 			}
 
 			return true, nil
 		}
-		return true, fmt.Errorf("unknown message is received")
+		return true, fmt.Errorf(unknownMessageError)
 	})
-	require.NoError(suite.T(), err, "failed to process removing the container feature")
+	require.NoError(suite.T(), err, fmt.Sprintf(messageProcessError, "removing"))
 }
 
 func (suite *ctrInstanceSuite) processUpdate(wsConnection *websocket.Conn, ctrFeatureID string, expectedKey string, expectedValue map[string]interface{}) {
 	err := util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicModified {
 			if event.Path != fmt.Sprintf("/features/%s/properties/status/config", ctrFeatureID) {
-				return true, fmt.Errorf("received event is not expected")
+				return true, fmt.Errorf(unexpectedContainerEventError)
 			}
 
 			eventValue, err := parseMap(event.Value)
-			require.NoError(suite.T(), err, "failed to parse event value")
+			require.NoError(suite.T(), err, fmt.Sprintf(parseError, "event value"))
 
 			actualValue, err := parseMap(eventValue[expectedKey])
-			require.NoError(suite.T(), err, fmt.Sprintf("failed to parse value of key \"%s\"", expectedKey))
+			require.NoError(suite.T(), err, fmt.Sprintf(parseError, fmt.Sprintf("value of key \"%s\"", expectedKey)))
 
 			if !reflect.DeepEqual(expectedValue, actualValue) {
 				return true, fmt.Errorf("expected value - %s, got value - %s", expectedValue, actualValue)
@@ -294,7 +292,7 @@ func (suite *ctrInstanceSuite) processUpdate(wsConnection *websocket.Conn, ctrFe
 
 			return true, nil
 		}
-		return true, fmt.Errorf("unknown message is received")
+		return true, fmt.Errorf(unknownMessageError)
 	})
-	require.NoError(suite.T(), err, "failed to process updating the config of the container feature")
+	require.NoError(suite.T(), err, fmt.Sprintf(messageProcessError, "updating the configuration of"))
 }
