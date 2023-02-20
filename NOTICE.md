@@ -60,17 +60,17 @@ boltdb/bolt (1.3.1)
 
 BurntSushi/toml (0.3.1)
 
-containerd/cgroups (1.0.3)
+containerd/cgroups (1.0.4)
 
 * License: Apache License 2.0
 * Project: https://github.com/containerd/cgroups
-* Source:  https://github.com/containerd/cgroups/releases/tag/v1.0.3
+* Source:  https://github.com/containerd/cgroups/releases/tag/v1.0.4
 
-containerd/containerd (1.6.10)
+containerd/containerd (1.6.18)
 
 * License: Apache License 2.0
 * Project: https://github.com/containerd/containerd
-* Source:  https://github.com/containerd/containerd/releases/tag/v1.6.10
+* Source:  https://github.com/containerd/containerd/releases/tag/v1.6.18
 
 containerd/continuity (0.3.0)
 
@@ -107,12 +107,6 @@ containers/ocicrypt (1.1.6)
 * License: Apache License 2.0
 * Project: https://github.com/containers/ocicrypt
 * Source:  https://github.com/containers/ocicrypt/releases/tag/v1.1.6
-
-etcd-io/etcd (3.3.18)
-
-* License: Apache License 2.0
-* Project: https://github.com/etcd-io/etcd
-* Source:  https://github.com/etcd-io/etcd/releases/tag/v3.3.18
 
 deckarep/golang-set (1.8.0)
 
@@ -324,11 +318,11 @@ opencontainers/selinux (1.10.1)
 * Project: https://github.com/opencontainers/selinux
 * Source:  https://github.com/opencontainers/selinux/releases/tag/v1.10.1
 
-github.com/pelletier/go-toml (1.9.4)
+github.com/pelletier/go-toml (1.9.5)
 
 * License: MIT License
 * Project: https://github.com/pelletier/go-toml
-* Source:  https://github.com/pelletier/go-toml/releases/tag/v1.9.4
+* Source:  https://github.com/pelletier/go-toml/releases/tag/v1.9.5
 
 pkg/errors (0.9.1)
 
