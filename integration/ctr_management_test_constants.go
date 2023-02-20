@@ -18,4 +18,8 @@ const (
 	paramImageRef    = "imageRef"
 	paramStart       = "start"
 	paramConfig      = "config"
+	ctrStatusCreated = "CREATED"
+	ctrStatusRunning = "RUNNING"
+	ctrStatusStopped = "STOPPED"
+	ctrStatusPaused  = "PAUSED"
 )
