@@ -1,7 +1,7 @@
 name: create_help
 command:
   binary: kanto-cm
-  args: ["create", "-h"]
+  args: ["create", "--host", "$KANTO_HOST", "-h"]
 expected:
   exitCode: 0
 goldenFile: "create-help.golden"
@@ -9,7 +9,7 @@ goldenFile: "create-help.golden"
 name: create_with_no_parameters
 command:
   binary: kanto-cm
-  args: ["create"]
+  args: ["create", "--host", "$KANTO_HOST"]
 expected:
   exitCode: 1
   err: "Error: requires at least 1 arg(s), only received 0"
@@ -25,7 +25,7 @@ customResult:
   args: ["([A-Za-z0-9]+(-[A-Za-z0-9]+)+)"]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "create_influxdb_container"]
+    args: ["remove", "--host", "$KANTO_HOST", "-n", "create_influxdb_container"]
 ---
 name: create_invalid_container
 command:

@@ -9,7 +9,7 @@ goldenFile: "stop-help.golden"
 name: stop_no_args
 command:
   binary: kanto-cm
-  args: ["stop"]
+  args: ["stop", "--host", "$KANTO_HOST"]
 expected:
   exitCode: 1
   err: "Error: You must provide either an ID or a name for the container via --name (-n)"
@@ -35,10 +35,10 @@ setupCmd:
   - binary: kanto-cm
     args: ["create", "--host", "$KANTO_HOST", "-n", "stop_container_with_state_running", "docker.io/library/influxdb:1.8.4"]
   - binary: kanto-cm
-    args: ["start", "-n", "stop_container_with_state_running"]
+    args: ["start", "--host", "$KANTO_HOST", "-n", "stop_container_with_state_running"]
 command:
   binary: kanto-cm
-  args: ["stop", "-n", "stop_container_with_state_running"]
+  args: ["stop", "-s", "SIGKILL", "-n", "stop_container_with_state_running"]
 expected:
   exitCode: 0
 onExit:
@@ -51,7 +51,7 @@ setupCmd:
     args: ["create", "--host", "$KANTO_HOST", "-n", "stop_container_with_state_created", "docker.io/library/influxdb:1.8.4"]
 command:
   binary: kanto-cm
-  args: ["stop", "-n", "stop_container_with_state_created"]
+  args: ["stop", "--host", "$KANTO_HOST", "-n", "stop_container_with_state_created"]
 expected:
   exitCode: 1
 customResult:
@@ -68,7 +68,7 @@ setupCmd:
   - binary: kanto-cm
     args: ["start", "-n", "stop_container_with_state_stopped"]
   - binary: kanto-cm
-    args: ["stop", "-n", "stop_container_with_state_stopped"]
+    args: ["stop", "-s", "SIGKILL", "-n", "stop_container_with_state_stopped"]
 command:
   binary: kanto-cm
   args: ["stop", "-n", "stop_container_with_state_stopped"]

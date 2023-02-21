@@ -9,7 +9,7 @@ goldenFile: "sysinfo-help.golden"
 name: sysinfo
 command:
   binary: kanto-cm
-  args: ["sysinfo"]
+  args: ["sysinfo", "--host", "$KANTO_HOST",]
 expected:
   exitCode: 0
 customResult:

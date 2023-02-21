@@ -9,7 +9,7 @@ goldenFile: "logs-help.golden"
 name: logs_no_args
 command:
   binary: kanto-cm
-  args: ["logs"]
+  args: ["logs", "--host", "$KANTO_HOST"]
 expected:
   exitCode: 1
   err: "Error: You must provide either an ID or a name for the container via --name (-n)"
@@ -17,7 +17,7 @@ expected:
 name: logs_invalid_id
 command:
   binary: kanto-cm
-  args: ["logs", "invalid"]
+  args: ["logs", "--host", "$KANTO_HOST", "invalid"]
 expected:
   exitCode: 1
   err: "Error: The requested container with ID = invalid was not found."
@@ -25,7 +25,7 @@ expected:
 name: logs_invalid_name
 command:
   binary: kanto-cm
-  args: ["logs", "-n", "invalid"]
+  args: ["logs", "--host", "$KANTO_HOST", "-n", "invalid"]
 expected:
   exitCode: 1
   err: "Error: The requested container with name = invalid was not found. Try using an ID instead."
@@ -36,7 +36,7 @@ setupCmd:
     args: ["create", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_created", "docker.io/library/influxdb:1.8.4"]
 command:
   binary: kanto-cm
-  args: ["logs", "-n", "logs_of_container_with_state_created"]
+  args: ["logs", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_created"]
 expected:
   exitCode: 1
   err: "Error: rpc error: code = Unknown desc = there are no logs for container with status \"Created\""
@@ -49,36 +49,38 @@ setupCmd:
   - binary: kanto-cm
     args: ["create", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_running", "docker.io/library/influxdb:1.8.4"]
   - binary: kanto-cm
-    args: ["start", "-n", "logs_of_container_with_state_running"]
+    args: ["start", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_running"]
   - binary: sleep
     args: ["2"]
 command:
   binary: kanto-cm
-  args: ["logs", "-n", "logs_of_container_with_state_running", "-t", "5"]
+  args: ["logs", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_running", "-t", "5"]
 expected:
   exitCode: 0
 customResult:
   type: LOGS_JSON
   args: ["5"]
 onExit:
+  - binary: kanto-cm
+    args: ["stop", "--host", "$KANTO_HOST", "-s", "SIGKILL", "-n", "logs_of_container_with_state_running"]
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_running", "-f"]
+    args: ["remove", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_running", "-f"]
 ---
 name: logs_of_container_with_state_stopped
 setupCmd:
   - binary: kanto-cm
     args: ["create", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_stopped", "docker.io/library/influxdb:1.8.4"]
   - binary: kanto-cm
-    args: ["start", "-n", "logs_of_container_with_state_stopped"]
+    args: ["start", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_stopped"]
   - binary: kanto-cm
-    args: ["stop", "-n", "logs_of_container_with_state_stopped"]
+    args: ["stop", "--host", "$KANTO_HOST", "-s", "SIGKILL", "-n", "logs_of_container_with_state_stopped"]
 command:
   binary: kanto-cm
-  args: ["logs", "-n", "logs_of_container_with_state_stopped"]
+  args: ["logs", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_stopped"]
 expected:
   exitCode: 0
 customResult:
   type: LOGS_JSON
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_stopped", "-f"]
+    args: ["remove", "--host", "$KANTO_HOST", "-n", "logs_of_container_with_state_stopped", "-f"]

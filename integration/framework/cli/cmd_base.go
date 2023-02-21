@@ -13,7 +13,6 @@
 package framework
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -21,6 +20,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/golden"
@@ -82,7 +82,7 @@ func GetAllTestCasesFromTestdataDir() (map[string][]TestCaseCMD, error) {
 	for _, file := range files {
 		testCase, err := GetTestCaseFromYamlFile(file)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "unable to get test cases from file %s", file)
 		}
 		testCases[file] = testCase
 	}
