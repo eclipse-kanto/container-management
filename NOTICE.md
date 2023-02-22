@@ -396,35 +396,35 @@ golang/crypto (0.0.0-20220315160706-3147a52a75dd)
 * Project: https://github.com/golang/crypto
 * Source:  https://github.com/golang/crypto/tree/3147a52a75dda54ac3a611ef8978640d85188a2a
 
-golang/net (0.0.0-20220722155237-a158d28d115b)
+golang.org/x/net (0.7.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/net
-* Source:  https://github.com/golang/net/tree/a158d28d115bfbcc1583374c5ae12ba6415bb93e
+* Source:  https://github.com/golang/net/releases/tag/v0.7.0
 
-golang/sync (0.0.0-20210220032951-036812b2e83c)
+golang/x/sync (0.0.0-20220722155255-886fb9371eb4)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sync
-* Source:  https://github.com/golang/sync/tree/036812b2e83c0ddf193dd5a34e034151da389d09
+* Source:  https://github.com/golang/sync/tree/886fb9371eb4b47af10bff9c8025a8c9e1554b92
 
-golang/sys (0.0.0-20220722155257-8c9f86f7a55f)
+golang.org/x/sys (0.5.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sys
-* Source:  https://github.com/golang/sys/tree/8c9f86f7a55f5af45a9080f6ed3ac915382d369c
+* Source:  https://github.com/golang/sys/releases/tag/v0.5.0
 
-golang/term (0.0.0-20210927222741-03fcf44c2211)
+golang/x/term (0.5.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/term
-* Source:  https://github.com/golang/term/tree/03fcf44c2211dcd5eb77510b5f7c1fb02d6ded50
+* Source:  https://github.com/golang/term/releases/tag/v0.5.0
 
-golang/text (0.3.7)
+golang/x/text (0.7.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/text
-* Source:  https://github.com/golang/text/releases/tag/v0.3.7
+* Source:  https://github.com/golang/text/releases/tag/v0.7.0
 
 mozilla-services/pkcs7 (0.0.0-20200128120323-432b2356ecb1)
 
