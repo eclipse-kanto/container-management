@@ -17,7 +17,7 @@ expected:
 name: stop_invalid_id
 command:
   binary: kanto-cm
-  args: ["stop", "invalid"]
+  args: ["stop", "--host", "$KANTO_HOST", "invalid"]
 expected:
   exitCode: 1
   err: "Error: The requested container with ID = invalid was not found."
@@ -25,7 +25,7 @@ expected:
 name: stop_invalid_name
 command:
   binary: kanto-cm
-  args: ["stop", "-n", "invalid"]
+  args: ["stop", "--host", "$KANTO_HOST", "-n", "invalid"]
 expected:
   exitCode: 1
   err: "Error: The requested container with name = invalid was not found. Try using an ID instead."
@@ -38,7 +38,7 @@ setupCmd:
     args: ["start", "--host", "$KANTO_HOST", "-n", "stop_container_with_state_running"]
 command:
   binary: kanto-cm
-  args: ["stop", "-s", "SIGKILL", "-n", "stop_container_with_state_running"]
+  args: ["stop", "--host", "$KANTO_HOST", "-s", "SIGKILL", "-n", "stop_container_with_state_running"]
 expected:
   exitCode: 0
 onExit:
@@ -59,7 +59,7 @@ customResult:
   args: ["Error: rpc error: code = Unknown desc = cannot perform stop operation for container: [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}, with state: Created"]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "stop_container_with_state_created", "-f"]
+    args: ["remove", "--host", "$KANTO_HOST", "-n", "stop_container_with_state_created", "-f"]
 ---
 name: stop_container_with_state_stopped
 setupCmd:
@@ -68,10 +68,10 @@ setupCmd:
   - binary: kanto-cm
     args: ["start", "-n", "stop_container_with_state_stopped"]
   - binary: kanto-cm
-    args: ["stop", "-s", "SIGKILL", "-n", "stop_container_with_state_stopped"]
+    args: ["stop", "--host", "$KANTO_HOST", "-s", "SIGKILL", "-n", "stop_container_with_state_stopped"]
 command:
   binary: kanto-cm
-  args: ["stop", "-n", "stop_container_with_state_stopped"]
+  args: ["stop", "--host", "$KANTO_HOST", "-n", "stop_container_with_state_stopped"]
 expected:
   exitCode: 1
 customResult:
@@ -79,4 +79,4 @@ customResult:
   args: ["Error: rpc error: code = Unknown desc = cannot perform stop operation for container: [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}, with state: Stopped"]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "stop_container_with_state_stopped", "-f"]
+    args: ["remove", "--host", "$KANTO_HOST", "-n", "stop_container_with_state_stopped", "-f"]

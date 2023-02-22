@@ -40,6 +40,8 @@ command:
 expected:
   exitCode: 0
 onExit:
+  - binary: kanto-cm
+    args: ["stop", "--host", "$KANTO_HOST", "-s", "SIGKILL", "-n", "start_container_with_state_created"]
   - binary: "kanto-cm"
     args: ["remove", "--host", "$KANTO_HOST", "-n", "start_container_with_state_created", "-f"]
 ---
