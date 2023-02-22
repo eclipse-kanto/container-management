@@ -9,7 +9,7 @@ goldenFile: "start-help.golden"
 name: start_no_args
 command:
   binary: kanto-cm
-  args: ["start"]
+  args: ["start", "--host", "$KANTO_HOST"]
 expected:
   exitCode: 1
   err: "Error: You must provide either an ID or a name for the container via --name (-n)"
@@ -17,7 +17,7 @@ expected:
 name: start_invalid_id
 command:
   binary: kanto-cm
-  args: ["start", "invalid"]
+  args: ["start", "--host", "$KANTO_HOST", "invalid"]
 expected:
   exitCode: 1
   err: "Error: The requested container with ID = invalid was not found."
@@ -25,7 +25,7 @@ expected:
 name: start_invalid_name
 command:
   binary: kanto-cm
-  args: ["start", "-n", "invalid"]
+  args: ["start", "--host", "$KANTO_HOST", "-n", "invalid"]
 expected:
   exitCode: 1
   err: "Error: The requested container with name = invalid was not found. Try using an ID instead."
@@ -36,27 +36,31 @@ setupCmd:
     args: ["create", "--host", "$KANTO_HOST", "-n", "start_container_with_state_created", "docker.io/library/influxdb:1.8.4"]
 command:
   binary: kanto-cm
-  args: ["start", "-n", "start_container_with_state_created"]
+  args: ["start", "--host", "$KANTO_HOST", "-n", "start_container_with_state_created"]
 expected:
   exitCode: 0
 onExit:
+  - binary: kanto-cm
+    args: ["stop", "--host", "$KANTO_HOST", "-s", "SIGKILL", "-n", "start_container_with_state_created"]
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "start_container_with_state_created", "-f"]
+    args: ["remove", "--host", "$KANTO_HOST", "-n", "start_container_with_state_created", "-f"]
 ---
 name: start_container_with_state_running
 setupCmd:
   - binary: kanto-cm
     args: ["create", "--host", "$KANTO_HOST", "-n", "start_container_with_state_running", "docker.io/library/influxdb:1.8.4"]
   - binary: kanto-cm
-    args: ["start", "-n", "start_container_with_state_running"]
+    args: ["start", "--host", "$KANTO_HOST", "-n", "start_container_with_state_running"]
 command:
   binary: kanto-cm
-  args: ["start", "-n", "start_container_with_state_running"]
+  args: ["start", "--host", "$KANTO_HOST", "-n", "start_container_with_state_running"]
 expected:
   exitCode: 1
 customResult:
   type: REGEX
   args: ["Error: the container with ID = [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} is already running - cannot start it again"]
 onExit:
+  - binary: kanto-cm
+    args: ["stop", "--host", "$KANTO_HOST", "-s", "SIGKILL", "-n", "start_container_with_state_running"]
   - binary: "kanto-cm"
-    args: ["remove","--host", "$KANTO_HOST", "-n", "start_container_with_state_running", "-f"]
+    args: ["remove", "--host", "$KANTO_HOST", "--host", "$KANTO_HOST", "-n", "start_container_with_state_running", "-f"]
