@@ -74,25 +74,19 @@ func TestDriverNetworkOptions(t *testing.T) {
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Log(testName)
-			cfgExpected := &libnetconfig.Config{Daemon: libnetconfig.DaemonCfg{
-				DriverCfg: make(map[string]interface{}),
-			},
-			}
+			cfgExpected := &libnetconfig.Config{DriverCfg: make(map[string]interface{})}
 			resultDriverOpts := driverNetworkOptions(testCase.netConfig)
-			cfgActual := &libnetconfig.Config{Daemon: libnetconfig.DaemonCfg{
-				DriverCfg: make(map[string]interface{}),
-			},
-			}
+			cfgActual := &libnetconfig.Config{DriverCfg: make(map[string]interface{})}
 			testutil.AssertEqual(t, len(testCase.expectedDriverOptions), len(resultDriverOpts))
 			testutil.AssertEqual(t, 1, len(resultDriverOpts))
 			testCase.expectedDriverOptions[0](cfgExpected)
 			resultDriverOpts[0](cfgActual)
 
-			testutil.AssertEqual(t, cfgExpected.Daemon.DriverCfg[testCase.netConfig.netType], cfgActual.Daemon.DriverCfg[testCase.netConfig.netType])
+			testutil.AssertEqual(t, cfgExpected.DriverCfg[testCase.netConfig.netType], cfgActual.DriverCfg[testCase.netConfig.netType])
 		})
 	}
-
 }
+
 func TestBuildNetworkControllerOptions(t *testing.T) {
 	tests := map[string]struct {
 		netConfig                 *config
@@ -113,7 +107,6 @@ func TestBuildNetworkControllerOptions(t *testing.T) {
 				},
 			},
 			expectedControllerOptions: []libnetconfig.Option{
-				libnetconfig.OptionExperimental(false),
 				//init directories
 				libnetconfig.OptionDataDir(testNetMetaPath),
 				libnetconfig.OptionExecRoot(testNetExecRoot),
@@ -145,7 +138,6 @@ func TestBuildNetworkControllerOptions(t *testing.T) {
 				},
 			},
 			expectedControllerOptions: []libnetconfig.Option{
-				libnetconfig.OptionExperimental(false),
 				//init directories
 				libnetconfig.OptionDataDir(testNetMetaPath),
 				libnetconfig.OptionExecRoot(testNetExecRoot),
@@ -172,15 +164,9 @@ func TestBuildNetworkControllerOptions(t *testing.T) {
 				testutil.AssertNil(t, testCase.expectedControllerOptions)
 				return
 			}
-			cfgExpected := &libnetconfig.Config{Daemon: libnetconfig.DaemonCfg{
-				DriverCfg: make(map[string]interface{}),
-			},
-			}
+			cfgExpected := &libnetconfig.Config{DriverCfg: make(map[string]interface{})}
 			resultControllerOpts, err := buildNetworkControllerOptions(testCase.netConfig)
-			cfgActual := &libnetconfig.Config{Daemon: libnetconfig.DaemonCfg{
-				DriverCfg: make(map[string]interface{}),
-			},
-			}
+			cfgActual := &libnetconfig.Config{DriverCfg: make(map[string]interface{})}
 			testutil.AssertError(t, testCase.expectedError, err)
 			testutil.AssertEqual(t, len(testCase.expectedControllerOptions), len(resultControllerOpts))
 
@@ -192,14 +178,13 @@ func TestBuildNetworkControllerOptions(t *testing.T) {
 				opt(cfgActual)
 			}
 
-			testutil.AssertEqual(t, cfgExpected.Daemon.Experimental, cfgActual.Daemon.Experimental)
-			testutil.AssertEqual(t, cfgExpected.Daemon.DataDir, cfgActual.Daemon.DataDir)
-			testutil.AssertEqual(t, cfgExpected.Daemon.ExecRoot, cfgActual.Daemon.ExecRoot)
+			testutil.AssertEqual(t, cfgExpected.DataDir, cfgActual.DataDir)
+			testutil.AssertEqual(t, cfgExpected.ExecRoot, cfgActual.ExecRoot)
 			testutil.AssertEqual(t, cfgExpected.ActiveSandboxes, cfgActual.ActiveSandboxes)
-			testutil.AssertEqual(t, cfgExpected.Daemon.DefaultDriver, cfgActual.Daemon.DefaultDriver)
-			testutil.AssertEqual(t, cfgExpected.Daemon.DefaultNetwork, cfgActual.Daemon.DefaultNetwork)
-			testutil.AssertEqual(t, cfgExpected.Daemon.DriverCfg[testCase.netConfig.netType], cfgActual.Daemon.DriverCfg[testCase.netConfig.netType])
-			testutil.AssertEqual(t, cfgExpected.Daemon.NetworkControlPlaneMTU, cfgActual.Daemon.NetworkControlPlaneMTU)
+			testutil.AssertEqual(t, cfgExpected.DefaultDriver, cfgActual.DefaultDriver)
+			testutil.AssertEqual(t, cfgExpected.DefaultNetwork, cfgActual.DefaultNetwork)
+			testutil.AssertEqual(t, cfgExpected.DriverCfg[testCase.netConfig.netType], cfgActual.DriverCfg[testCase.netConfig.netType])
+			testutil.AssertEqual(t, cfgExpected.NetworkControlPlaneMTU, cfgActual.NetworkControlPlaneMTU)
 		})
 	}
 }
@@ -250,5 +235,4 @@ func TestNetMrgOptsToLibnetConfig(t *testing.T) {
 	testutil.AssertEqual(t, expectedCfg.execRoot, resultCfg.execRoot)
 	testutil.AssertEqual(t, expectedCfg.activeSandboxes, resultCfg.activeSandboxes)
 	testutil.AssertEqual(t, expectedCfg.bridgeConfig, resultCfg.bridgeConfig)
-
 }

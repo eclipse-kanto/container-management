@@ -58,8 +58,6 @@ boltdb/bolt (1.3.1)
 * Project: https://github.com/boltdb/bolt
 * Source:  https://github.com/boltdb/bolt/releases/tag/v1.3.1
 
-BurntSushi/toml (0.3.1)
-
 containerd/cgroups (1.0.4)
 
 * License: Apache License 2.0
@@ -114,12 +112,12 @@ deckarep/golang-set (1.8.0)
 * Project: https://github.com/deckarep/golang-set
 * Source:  https://github.com/deckarep/golang-set/releases/tag/v1.8.0
 
-moby/moby (20.10.3-0.20220603173024-38633e797195)
+moby/moby (v23.0.1)
 
 * License: Apache License 2.0
 * Project: https://github.com/moby/moby
-* Source:  https://github.com/moby/moby/tree/38633e797195643580ce5c4af7c5422aad3eb7de
-
+* Source:  https://github.com/moby/moby/releases/tag/v23.0.1
+  
 docker/go-connections (0.4.0)
 
 * License: Apache License 2.0
@@ -276,11 +274,11 @@ moby/locker (1.0.1)
 * Project: https://github.com/moby/locker
 * Source:  https://github.com/moby/locker/releases/tag/v1.0.1
 
-moby/sys/mountinfo (0.6.0)
+moby/sys/mountinfo (0.6.2)
 
 * License: Apache License 2.0
 * Project: https://github.com/moby/sys/mountinfo
-* Source:  https://github.com/moby/sys/tree/mountinfo/v0.6.0
+* Source:  https://github.com/moby/sys/tree/mountinfo/v0.6.2
 
 moby/sys/signal (0.6.0)
 
@@ -318,17 +316,17 @@ opencontainers/selinux (1.10.1)
 * Project: https://github.com/opencontainers/selinux
 * Source:  https://github.com/opencontainers/selinux/releases/tag/v1.10.1
 
-github.com/pelletier/go-toml (1.9.5)
-
-* License: MIT License
-* Project: https://github.com/pelletier/go-toml
-* Source:  https://github.com/pelletier/go-toml/releases/tag/v1.9.5
-
 pkg/errors (0.9.1)
 
 * License: BSD 2-Clause "Simplified" License
 * Project: https://github.com/pkg/errors
 * Source:  https://github.com/pkg/errors/releases/tag/v0.9.1
+
+rootless-containers/rootlesskit (1.1.0)
+
+* License: Apache License 2.0
+* Project: https://github.com/rootless-containers/rootlesskit
+* Source:  https://github.com/rootless-containers/rootlesskit/releases/tag/v1.1.0
 
 shirou/gopsutil (3.22.7)
 
@@ -342,11 +340,11 @@ sean-/seed (0.0.0-20170313163322-e2103e2c3529)
 * Project: https://github.com/sean-/seed
 * Source:  https://github.com/sean-/seed/tree/e2103e2c35297fb7e17febb81e49b312087a2372
 
-sirupsen/logrus (1.8.1)
+sirupsen/logrus (v1.9.0)
 
 * License: MIT License
 * Project: https://github.com/sirupsen/logrus
-* Source:  https://github.com/sirupsen/logrus/releases/tag/v1.8.1
+* Source:  https://github.com/sirupsen/logrus/releases/tag/v1.9.0
 
 spf13/cobra (1.2.1)
 
@@ -378,11 +376,11 @@ tklauser/numcpus (0.4.0)
 * Project: https://github.com/tklauser/numcpus
 * Source:  https://github.com/tklauser/numcpus/releases/tag/v0.4.0
 
-vishvananda/netlink (1.1.1-0.20210330154013-f5de75959ad5)
+vishvananda/netlink (v1.2.1-beta.2)
 
 * License: Apache License 2.0
 * Project: https://github.com/vishvananda/netlink
-* Source:  https://github.com/vishvananda/netlink/tree/f5de75959ad544e80f08d6adaffa7026df3380ef
+* Source:  https://github.com/vishvananda/netlink/tree/v1.2.1-beta.2
 
 vishvananda/netns (0.0.0-20210104183010-2eb08e3e575f)
 
