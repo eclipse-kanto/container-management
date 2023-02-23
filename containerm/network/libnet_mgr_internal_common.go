@@ -53,8 +53,6 @@ func buildNetworkControllerOptions(netConfig *config) ([]libnetconfig.Option, er
 	if netConfig == nil {
 		return opts, nil
 	}
-	//may be set it optional in the future
-	opts = append(opts, libnetconfig.OptionExperimental(false))
 
 	//init directories
 	opts = append(opts, libnetconfig.OptionDataDir(netConfig.metaPath))
