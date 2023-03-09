@@ -442,11 +442,11 @@ grpc/grpc-go (1.50.1)
 * Project: https://github.com/grpc/grpc-go
 * Source:  https://github.com/grpc/grpc-go/releases/tag/v1.50.1
 
-protocolbuffers/protobuf-go (1.28.0)
+protocolbuffers/protobuf-go (1.29.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/protocolbuffers/protobuf-go
-* Source:  https://github.com/protocolbuffers/protobuf-go/releases/tag/v1.28.0
+* Source:  https://github.com/protocolbuffers/protobuf-go/releases/tag/v1.29.0
 
 natefinch/lumberjack (2.0.0)
 
