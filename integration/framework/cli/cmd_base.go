@@ -47,7 +47,7 @@ type TestCaseCMD struct {
 	onExit           *[]icmd.Cmd
 }
 
-// AddCustomResult adds custom result to customResultFns map or adds an error.
+// AddCustomResult adds custom result to customResultFns map or returns an error.
 func AddCustomResult(name string, f func(result icmd.Result, args ...string) assert.BoolOrComparison) error {
 	if _, ok := customResultFns[name]; ok {
 		return fmt.Errorf("function with name %s already exist", name)
