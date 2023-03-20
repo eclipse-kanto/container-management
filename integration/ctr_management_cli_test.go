@@ -15,17 +15,22 @@ package integration
 
 import (
 	"embed"
+	"encoding/json"
+	"errors"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 	"github.com/eclipse-kanto/container-management/containerm/util"
 	. "github.com/eclipse-kanto/container-management/integration/framework/cli"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/assert"
+	"gotest.tools/v3/icmd"
 )
 
 //go:embed testdata
@@ -33,6 +38,10 @@ var testdataFS embed.FS
 
 type cliTestConfiguration struct {
 	KantoHost string `env:"KANTO_HOST" envDefault:"/run/container-management/container-management.sock"`
+}
+
+func init() {
+	AddCustomResult("ASSERT_JSON_CONTAINER", assertJSONContainer)
 }
 
 func TestCtrMgrCLI(t *testing.T) {
@@ -79,4 +88,15 @@ func dumpTestdata() error {
 		}
 	}
 	return nil
+}
+
+func assertJSONContainer(result icmd.Result, args ...string) assert.BoolOrComparison {
+	if result.Stdout() == "" {
+		return errors.New("stdout result is empty")
+	}
+	var container *types.Container
+	if err := json.Unmarshal([]byte(result.Stdout()), &container); err != nil {
+		return err
+	}
+	return true
 }

@@ -1,0 +1,18 @@
+Get detailed information about a given container.
+
+Usage:
+  kanto-cm get <container-id>
+
+Examples:
+get <container-id>
+ get --name <container-name>
+ get -n <container-name>
+
+Flags:
+  -h, --help          help for get
+  -n, --name string   Get the information about a container with a specific name.
+
+Global Flags:
+      --debug         Switch commands log level to DEBUG mode
+      --host string   Specify the address path to the Eclipse Kanto container management (default "/run/container-management/container-management.sock")
+      --timeout int   Specify the connection timeout in seconds to the Eclipse Kanto container management (default 30)
