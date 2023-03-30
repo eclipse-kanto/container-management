@@ -298,11 +298,11 @@ opencontainers/image-spec (1.0.3-0.20220114050600-8b9d41f48198)
 * Project: https://github.com/opencontainers/image-spec
 * Source:  https://github.com/opencontainers/image-spec/tree/8b9d41f48198a7d6d0a5c1a12dc2d1f7f47fc97f
 
-opencontainers/runc (1.1.2)
+opencontainers/runc (1.1.5)
 
 * License: Apache License 2.0
 * Project: https://github.com/opencontainers/runc
-* Source:  https://github.com/opencontainers/runc/releases/tag/v1.1.2
+* Source:  https://github.com/opencontainers/runc/releases/tag/v1.1.5
 
 opencontainers/runtime-spec (1.0.3-0.20210326190908-1c3f411f0417)
 
