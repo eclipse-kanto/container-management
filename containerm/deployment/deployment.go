@@ -40,12 +40,13 @@ func init() {
 }
 
 type deploymentMgr struct {
-	metaPath          string
-	initialDeployPath string
-	ctrMgr            mgr.ContainerManager
-	deploymentLock    sync.RWMutex
-	disposeLock       sync.RWMutex
-	disposed          bool
+	mode           string
+	metaPath       string
+	ctrPath        string
+	ctrMgr         mgr.ContainerManager
+	deploymentLock sync.RWMutex
+	disposeLock    sync.RWMutex
+	disposed       bool
 }
 
 func (d *deploymentMgr) InitialDeploy(ctx context.Context) error {
@@ -69,7 +70,7 @@ func (d *deploymentMgr) InitialDeploy(ctx context.Context) error {
 	}
 
 	var fileInfo os.FileInfo
-	if fileInfo, err = os.Stat(d.initialDeployPath); err != nil {
+	if fileInfo, err = os.Stat(d.ctrPath); err != nil {
 		if os.IsNotExist(err) {
 			log.Debug("the initial containers deploy directory does not exist - will exit deploying")
 			return nil
@@ -78,11 +79,11 @@ func (d *deploymentMgr) InitialDeploy(ctx context.Context) error {
 	}
 
 	if !fileInfo.IsDir() {
-		return log.NewErrorf("the initial containers deploy path = %s is not a directory", d.initialDeployPath)
+		return log.NewErrorf("the initial containers deploy path = %s is not a directory", d.ctrPath)
 	}
 
 	var ctrs []*types.Container
-	err = filepath.WalkDir(d.initialDeployPath, func(path string, entry fs.DirEntry, err error) error {
+	err = filepath.WalkDir(d.ctrPath, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

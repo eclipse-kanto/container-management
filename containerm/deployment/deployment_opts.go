@@ -16,8 +16,9 @@ package deployment
 type Opt func(options *opts) error
 
 type opts struct {
-	metaPath          string
-	initialDeployPath string
+	mode     string
+	metaPath string
+	ctrPath  string
 }
 
 func applyOpts(options *opts, opts ...Opt) error {
@@ -37,10 +38,18 @@ func WithMetaPath(metaPath string) Opt {
 	}
 }
 
-// WithInitialDeployPath sets container initial deployment path.
-func WithInitialDeployPath(initialDeployPath string) Opt {
+// WithCtrPath sets the path to container descriptors
+func WithCtrPath(ctrPath string) Opt {
 	return func(dOpts *opts) error {
-		dOpts.initialDeployPath = initialDeployPath
+		dOpts.ctrPath = ctrPath
+		return nil
+	}
+}
+
+// WithMode sets the mode of deployment service
+func WithMode(mode string) Opt {
+	return func(dOpts *opts) error {
+		dOpts.mode = mode
 		return nil
 	}
 }

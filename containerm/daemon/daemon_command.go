@@ -31,8 +31,10 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.BoolVar(&cfg.Log.Syslog, "log-syslog", cfg.Log.Syslog, "Enable logging in the local syslog (e.g. /dev/log, /var/run/syslog, /var/run/log)")
 
 	// init deployment flags
+	flagSet.BoolVar(&cfg.DeploymentManagerConfig.DeploymentEnable, "deployment-enable", cfg.DeploymentManagerConfig.DeploymentEnable, "Enable the deployment service providing installation/update of containers via the container descriptor files")
+	flagSet.StringVar(&cfg.DeploymentManagerConfig.DeploymentMode, "deployment-mode", cfg.DeploymentManagerConfig.DeploymentMode, "Specify the operation mode of deployment manager service, e.g. if it shall run on its initial run only or on every start of container management")
 	flagSet.StringVar(&cfg.DeploymentManagerConfig.DeploymentMetaPath, "deployment-home-dir", cfg.DeploymentManagerConfig.DeploymentMetaPath, "Specify the root directory of the deployment manager service")
-	flagSet.StringVar(&cfg.DeploymentManagerConfig.DeploymentInitPath, "deployment-init-dir", cfg.DeploymentManagerConfig.DeploymentInitPath, "Specify a directory for initial containers deploy.")
+	flagSet.StringVar(&cfg.DeploymentManagerConfig.DeploymentCtrPath, "deployment-ctr-dir", cfg.DeploymentManagerConfig.DeploymentCtrPath, "Specify a directory with container descriptor files for automated deployment")
 
 	// init container manager flags
 	flagSet.StringVar(&cfg.ManagerConfig.MgrMetaPath, "cm-home-dir", cfg.ManagerConfig.MgrMetaPath, "Specify the root directory of the container manager service")

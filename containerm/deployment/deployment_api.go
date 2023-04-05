@@ -16,6 +16,13 @@ import (
 	"context"
 )
 
+const (
+	// ModeInitialDeploy means that the deployment service will deploy new containers only on initial start of container management
+	ModeInitialDeploy = "init"
+	// ModeUpdate means that the deployment service will deploy new containers and/or update existing containers on each start of container management
+	ModeUpdate = "update"
+)
+
 // Manager represents the container deployment manager abstraction
 type Manager interface {
 

@@ -65,7 +65,9 @@
     }
   },
   "deployment": {
+    "enable": true,
+    "mode": "update",
     "home_dir": "/var/lib/container-management",
-    "init_dir": "/etc/container-management/containers"
+    "ctr_dir": "/etc/container-management/containers"
   }
 }

@@ -17,6 +17,7 @@ import (
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/ctr"
+	"github.com/eclipse-kanto/container-management/containerm/deployment"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/network"
 	"github.com/eclipse-kanto/container-management/containerm/things"
@@ -88,8 +89,10 @@ const (
 	thingsUnsubscribeTimeoutDefault          = 5000
 
 	// default deployment config
-	deploymentMetaPathDefault    = managerMetaPathDefault
-	deploymentInitialPathDefault = "/etc/container-management/containers"
+	deploymentEnableDefault   = true
+	deploymentModeDefault     = deployment.ModeUpdate
+	deploymentMetaPathDefault = managerMetaPathDefault
+	deploymentCtrPathDefault  = "/etc/container-management/containers"
 )
 
 var (
@@ -168,8 +171,10 @@ func getDefaultInstance() *config {
 			},
 		},
 		DeploymentManagerConfig: &deploymentManagerConfig{
+			DeploymentEnable:   deploymentEnableDefault,
+			DeploymentMode:     deploymentModeDefault,
 			DeploymentMetaPath: deploymentMetaPathDefault,
-			DeploymentInitPath: deploymentInitialPathDefault,
+			DeploymentCtrPath:  deploymentCtrPathDefault,
 		},
 	}
 }
