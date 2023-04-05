@@ -23,7 +23,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
-	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/mgr"
+	mocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/mgr"
 	"github.com/eclipse-kanto/container-management/containerm/util"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -50,13 +50,11 @@ func TestInitialDeploy(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		mode     string
 		metaPath string
 		ctrPath  string
 		mockExec func(*mocks.MockContainerManager) error
 	}{
 		"test_initial_deploy_containers_not_a_first_run": {
-			mode: ModeInitialDeploy,
 			metaPath: func() string {
 				path := createTmpMetaPath(t)
 				err := util.MkDir(filepath.Join(path, "deployment"))
@@ -68,7 +66,6 @@ func TestInitialDeploy(t *testing.T) {
 			},
 		},
 		"test_initial_deploy_containers_exist": {
-			mode:     ModeInitialDeploy,
 			metaPath: createTmpMetaPath(t),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				mockMgr.EXPECT().List(testContext).Return([]*types.Container{{}}, nil)
@@ -76,7 +73,6 @@ func TestInitialDeploy(t *testing.T) {
 			},
 		},
 		"test_initial_deploy_containers_list_error": {
-			mode:     ModeInitialDeploy,
 			metaPath: createTmpMetaPath(t),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				err := log.NewError("test error")
@@ -85,16 +81,14 @@ func TestInitialDeploy(t *testing.T) {
 			},
 		},
 		"test_initial_deploy_path_is_file_error": {
-			mode:     ModeInitialDeploy,
 			metaPath: createTmpMetaPath(t),
 			ctrPath:  validCtrJSONPath,
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				mockMgr.EXPECT().List(testContext).Return(nil, nil)
-				return log.NewErrorf("the initial containers deploy path = %s is not a directory", validCtrJSONPath)
+				return log.NewErrorf("the containers deploy path = %s is not a directory", validCtrJSONPath)
 			},
 		},
 		"test_initial_deploy_path_not_exist": {
-			mode:     ModeInitialDeploy,
 			metaPath: createTmpMetaPath(t),
 			ctrPath:  filepath.Join(baseCtrJSONPath, "not/exist"),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
@@ -103,7 +97,6 @@ func TestInitialDeploy(t *testing.T) {
 			},
 		},
 		"test_initial_deploy_path_is_empty": {
-			mode:     ModeInitialDeploy,
 			metaPath: createTmpMetaPath(t),
 			ctrPath:  filepath.Join(baseCtrJSONPath, "empty"),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
@@ -112,7 +105,6 @@ func TestInitialDeploy(t *testing.T) {
 			},
 		},
 		"test_initial_deploy_container_create_error": {
-			mode:     ModeInitialDeploy,
 			metaPath: createTmpMetaPath(t),
 			ctrPath:  filepath.Join(baseCtrJSONPath, "nested"),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
@@ -127,7 +119,6 @@ func TestInitialDeploy(t *testing.T) {
 			},
 		},
 		"test_initial_deploy_container_start_error": {
-			mode:     ModeInitialDeploy,
 			metaPath: createTmpMetaPath(t),
 			ctrPath:  filepath.Join(baseCtrJSONPath, "nested"),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
@@ -146,7 +137,6 @@ func TestInitialDeploy(t *testing.T) {
 			},
 		},
 		"test_initial_deploy_multiple_containers": {
-			mode:     ModeInitialDeploy,
 			metaPath: createTmpMetaPath(t),
 			ctrPath:  baseCtrJSONPath,
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
@@ -192,14 +182,14 @@ func TestInitialDeploy(t *testing.T) {
 			mockMgr := mocks.NewMockContainerManager(mockCtrl)
 
 			deployMgr := &deploymentMgr{
-				mode:     testCase.mode,
+				mode:     ModeInitialDeploy,
 				metaPath: testCase.metaPath,
 				ctrPath:  testCase.ctrPath,
 				ctrMgr:   mockMgr,
 			}
 
 			expectedErr := testCase.mockExec(mockMgr)
-			actualErr := deployMgr.InitialDeploy(testContext)
+			actualErr := deployMgr.Deploy(testContext)
 			testutil.AssertError(t, expectedErr, actualErr)
 			testutil.AssertWithTimeout(t, testWaitGroup, testTimeoutDuration)
 		})

@@ -26,8 +26,8 @@ const (
 // Manager represents the container deployment manager abstraction
 type Manager interface {
 
-	// InitialDeploy initially deploys containers described in configured local path
-	InitialDeploy(ctx context.Context) error
+	// Deploy initially deploys or updates containers described in configured local path
+	Deploy(ctx context.Context) error
 
 	// Dispose stops running deployments
 	Dispose(ctx context.Context) error

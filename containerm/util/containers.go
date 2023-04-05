@@ -497,3 +497,14 @@ func ReadContainer(path string) (*types.Container, error) {
 	}
 	return ctr, nil
 }
+
+// AsNamedMap returns a map of containers where key is the container's name
+func AsNamedMap(containersList []*types.Container) map[string]*types.Container {
+	result := map[string]*types.Container{}
+	for _, container := range containersList {
+		if container != nil {
+			result[container.Name] = container
+		}
+	}
+	return result
+}

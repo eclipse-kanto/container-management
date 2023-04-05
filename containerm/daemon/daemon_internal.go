@@ -30,9 +30,11 @@ func (d *daemon) start() error {
 		return err
 	}
 
-	if err := d.initialDeploy(); err != nil {
-		log.ErrorErr(err, "could not perform initial deploy for Deployment Manager Services")
-		return err
+	if d.config.DeploymentManagerConfig.DeploymentEnable {
+		if err := d.deploy(); err != nil {
+			log.ErrorErr(err, "could not perform initial deploy / update for Deployment Manager Services")
+			return err
+		}
 	}
 
 	if d.config.ThingsConfig.ThingsEnable {
@@ -51,8 +53,10 @@ func (d *daemon) stop() {
 	log.Debug("stopping gRPC server ")
 	d.stopGrpcServers()
 
-	log.Debug("stopping deployment managers local services")
-	d.stopDeploymentManagers()
+	if d.config.DeploymentManagerConfig.DeploymentEnable {
+		log.Debug("stopping deployment managers local services")
+		d.stopDeploymentManagers()
+	}
 
 	log.Debug("stopping management local services")
 	d.stopContainerManagers()
@@ -141,8 +145,8 @@ func (d *daemon) loadContainerManagersStoredInfo() error {
 	return nil
 }
 
-func (d *daemon) initialDeploy() error {
-	log.Debug("will perform initial deploy for deployment managers local services")
+func (d *daemon) deploy() error {
+	log.Debug("will perform initial deploy / update for deployment managers local services")
 	deploymentMgrServices := d.serviceInfoSet.GetAll(registry.DeploymentManagerService)
 	var (
 		instance interface{}
@@ -157,8 +161,8 @@ func (d *daemon) initialDeploy() error {
 		} else {
 			dMgr = instance.(deployment.Manager)
 			ctx := context.Background()
-			if err = dMgr.InitialDeploy(ctx); err != nil {
-				log.ErrorErr(err, "could not perform initial deploy for deployment manager service for service ID = %s", servInfo.Registration.ID)
+			if err = dMgr.Deploy(ctx); err != nil {
+				log.ErrorErr(err, "could not perform initial deploy / update for deployment manager service for service ID = %s", servInfo.Registration.ID)
 				return err
 			}
 		}

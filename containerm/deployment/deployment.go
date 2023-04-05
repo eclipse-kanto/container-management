@@ -49,13 +49,13 @@ type deploymentMgr struct {
 	disposed       bool
 }
 
-func (d *deploymentMgr) InitialDeploy(ctx context.Context) error {
+func (d *deploymentMgr) Deploy(ctx context.Context) error {
 	deploymentMetaPath := filepath.Join(d.metaPath, "deployment")
 	if _, err := os.Stat(deploymentMetaPath); os.IsNotExist(err) {
 		if err = util.MkDir(deploymentMetaPath); err != nil {
 			return err
 		}
-	} else {
+	} else if d.mode == ModeInitialDeploy {
 		log.Debug("not a first run, will skip initial containers deploy")
 		return nil
 	}
@@ -64,7 +64,7 @@ func (d *deploymentMgr) InitialDeploy(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if len(listCtrs) > 0 {
+	if d.mode == ModeInitialDeploy && len(listCtrs) > 0 {
 		log.Debug("there are loaded container resources, will skip initial containers deploy")
 		return nil
 	}
@@ -72,14 +72,14 @@ func (d *deploymentMgr) InitialDeploy(ctx context.Context) error {
 	var fileInfo os.FileInfo
 	if fileInfo, err = os.Stat(d.ctrPath); err != nil {
 		if os.IsNotExist(err) {
-			log.Debug("the initial containers deploy directory does not exist - will exit deploying")
+			log.Debug("the containers deploy directory does not exist - will exit deploying")
 			return nil
 		}
 		return err
 	}
 
 	if !fileInfo.IsDir() {
-		return log.NewErrorf("the initial containers deploy path = %s is not a directory", d.ctrPath)
+		return log.NewErrorf("the containers deploy path = %s is not a directory", d.ctrPath)
 	}
 
 	var ctrs []*types.Container
@@ -101,7 +101,11 @@ func (d *deploymentMgr) InitialDeploy(ctx context.Context) error {
 		return err
 	}
 
-	go d.processInitialDeploy(ctx, ctrs)
+	if d.mode == ModeInitialDeploy {
+		go d.processInitialDeploy(ctx, ctrs)
+	} else {
+		go d.processUpdate(ctx, listCtrs, ctrs)
+	}
 
 	return nil
 }
