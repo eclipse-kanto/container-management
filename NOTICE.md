@@ -112,11 +112,11 @@ deckarep/golang-set (1.8.0)
 * Project: https://github.com/deckarep/golang-set
 * Source:  https://github.com/deckarep/golang-set/releases/tag/v1.8.0
 
-moby/moby (v23.0.1)
+moby/moby (v23.0.3)
 
 * License: Apache License 2.0
 * Project: https://github.com/moby/moby
-* Source:  https://github.com/moby/moby/releases/tag/v23.0.1
+* Source:  https://github.com/moby/moby/releases/tag/v23.0.3
   
 docker/go-connections (0.4.0)
 

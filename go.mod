@@ -2,7 +2,7 @@ module github.com/eclipse-kanto/container-management
 
 go 1.17
 
-replace github.com/docker/docker => github.com/moby/moby v23.0.1+incompatible
+replace github.com/docker/docker => github.com/moby/moby v23.0.3+incompatible
 
 require (
 	github.com/caarlos0/env/v6 v6.10.1
