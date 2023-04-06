@@ -57,7 +57,9 @@ func (d *deploymentMgr) processUpdate(ctx context.Context, existing []*types.Con
 		}
 		d.disposeLock.RUnlock()
 
+		id := desired.ID
 		util.FillDefaults(desired)
+		desired.ID = id
 		current := mapCurrent[desired.Name]
 
 		action := util.DetermineUpdateAction(current, desired)
@@ -102,10 +104,12 @@ func recreateAndStartContainer(ctx context.Context, ctrMgr mgr.ContainerManager,
 		return
 	}
 	log.Debug("successfully created new container with ID = %s, name = %s and image name = %s", ctr.ID, ctr.Name, ctr.Image.Name)
-	stopContainer(ctx, ctrMgr, current)
+	stopped := stopContainer(ctx, ctrMgr, current)
 	if startErr := startContainer(ctx, ctrMgr, ctr); startErr != nil {
 		log.Warn("restoring old container with ID = %s, name = %s and image name = %s", current.ID, current.Name, current.Image.Name)
-		startContainer(ctx, ctrMgr, current)
+		if stopped {
+			startContainer(ctx, ctrMgr, current)
+		}
 		log.Warn("removing not-started new container with ID = %s, name = %s and image name = %s", ctr.ID, ctr.Name, ctr.Image.Name)
 		removeContainer(ctx, ctrMgr, ctr)
 	} else {
@@ -143,10 +147,10 @@ func unpauseContainer(ctx context.Context, ctrMgr mgr.ContainerManager, containe
 	}
 }
 
-func stopContainer(ctx context.Context, ctrMgr mgr.ContainerManager, container *types.Container) {
+func stopContainer(ctx context.Context, ctrMgr mgr.ContainerManager, container *types.Container) bool {
 	if !util.IsContainerRunningOrPaused(container) {
 		log.Debug("container with ID = %s, name = %s and image name = %s is not running, nor paused", container.ID, container.Name, container.Image.Name)
-		return
+		return false
 	}
 	stopOpts := &types.StopOpts{
 		Force:  true,
@@ -154,9 +158,10 @@ func stopContainer(ctx context.Context, ctrMgr mgr.ContainerManager, container *
 	}
 	if stopErr := ctrMgr.Stop(ctx, container.ID, stopOpts); stopErr != nil {
 		log.WarnErr(stopErr, "could not stop container with ID = %s, name = %s and image name = %s", container.ID, container.Name, container.Image.Name)
-	} else {
-		log.Debug("successfully stopped container with ID = %s, name = %s and image name = %s", container.ID, container.Name, container.Image.Name)
+		return false
 	}
+	log.Debug("successfully stopped container with ID = %s, name = %s and image name = %s", container.ID, container.Name, container.Image.Name)
+	return true
 }
 
 func removeContainer(ctx context.Context, ctrMgr mgr.ContainerManager, container *types.Container) {

@@ -23,31 +23,103 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
+	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/matchers"
 	mocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/mgr"
 	"github.com/eclipse-kanto/container-management/containerm/util"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 )
 
-func TestInitialDeploy(t *testing.T) {
-	const (
-		redisImageRef       = "docker.io/library/redis:latest"
-		baseCtrJSONPath     = "../pkg/testutil/config/container"
-		testTimeoutDuration = 5 * time.Second
-	)
+const (
+	testContainerName1  = "redis"
+	testContainerImage1 = "docker.io/library/redis:latest"
+	testContainerName2  = "influxdb"
+	testContainerImage2 = "docker.io/library/influxdb:latest"
+	baseCtrJSONPath     = "../pkg/testutil/config/container"
+	testTimeoutDuration = 5 * time.Second
+)
 
+var (
+	testContainerMatcher = matchers.MatchesContainerImage(testContainerName1, testContainerImage1)
+)
+
+func TestDeployCommon(t *testing.T) {
 	var (
 		validCtrJSONPath = filepath.Join(baseCtrJSONPath, "valid.json")
 
+		testContext = context.Background()
+	)
+
+	tests := map[string]struct {
+		ctrPath  string
+		mockExec func(*mocks.MockContainerManager) error
+	}{
+		"test_deploy_containers_list_error": {
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				err := log.NewError("test error")
+				mockMgr.EXPECT().List(testContext).Return(nil, err).Times(2)
+				return err
+			},
+		},
+		"test_deploy_path_is_file_error": {
+			ctrPath: validCtrJSONPath,
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				mockMgr.EXPECT().List(testContext).Return(nil, nil).Times(2)
+				return log.NewErrorf("the containers deploy path = %s is not a directory", validCtrJSONPath)
+			},
+		},
+		"test_deploy_path_not_exist": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "not/exist"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				mockMgr.EXPECT().List(testContext).Return(nil, nil).Times(2)
+				return nil
+			},
+		},
+		"test_deploy_path_is_empty": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "empty"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				mockMgr.EXPECT().List(testContext).Return(nil, nil).Times(2)
+				return nil
+			},
+		},
+	}
+
+	// execute tests
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			t.Log(testName)
+			metaPath := createTmpMetaPath(t)
+			defer os.Remove(metaPath)
+
+			// set up
+			mockCtrl := gomock.NewController(t)
+			mockCtrl.Finish()
+			defer mockCtrl.Finish()
+
+			mockMgr := mocks.NewMockContainerManager(mockCtrl)
+
+			deployMgr := &deploymentMgr{
+				mode:     ModeInitialDeploy,
+				metaPath: metaPath,
+				ctrPath:  testCase.ctrPath,
+				ctrMgr:   mockMgr,
+			}
+			expectedErr := testCase.mockExec(mockMgr)
+			actualErr := deployMgr.Deploy(testContext)
+			testutil.AssertError(t, expectedErr, actualErr)
+
+			deployMgr.mode = ModeUpdate
+			actualErr = deployMgr.Deploy(testContext)
+			testutil.AssertError(t, expectedErr, actualErr)
+		})
+	}
+}
+
+func TestInitialDeploy(t *testing.T) {
+	var (
 		testContext   = context.Background()
 		testWaitGroup = &sync.WaitGroup{}
 	)
-
-	createTmpMetaPath := func(t *testing.T) string {
-		path, err := os.MkdirTemp("", "container-management-test-")
-		testutil.AssertNil(t, err)
-		return path
-	}
 
 	tests := map[string]struct {
 		metaPath string
@@ -55,12 +127,7 @@ func TestInitialDeploy(t *testing.T) {
 		mockExec func(*mocks.MockContainerManager) error
 	}{
 		"test_initial_deploy_containers_not_a_first_run": {
-			metaPath: func() string {
-				path := createTmpMetaPath(t)
-				err := util.MkDir(filepath.Join(path, "deployment"))
-				testutil.AssertNil(t, err)
-				return path
-			}(),
+			metaPath: createTmpMetaPathNonEmpty(t),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				return nil
 			},
@@ -72,45 +139,13 @@ func TestInitialDeploy(t *testing.T) {
 				return nil
 			},
 		},
-		"test_initial_deploy_containers_list_error": {
-			metaPath: createTmpMetaPath(t),
-			mockExec: func(mockMgr *mocks.MockContainerManager) error {
-				err := log.NewError("test error")
-				mockMgr.EXPECT().List(testContext).Return(nil, err)
-				return err
-			},
-		},
-		"test_initial_deploy_path_is_file_error": {
-			metaPath: createTmpMetaPath(t),
-			ctrPath:  validCtrJSONPath,
-			mockExec: func(mockMgr *mocks.MockContainerManager) error {
-				mockMgr.EXPECT().List(testContext).Return(nil, nil)
-				return log.NewErrorf("the containers deploy path = %s is not a directory", validCtrJSONPath)
-			},
-		},
-		"test_initial_deploy_path_not_exist": {
-			metaPath: createTmpMetaPath(t),
-			ctrPath:  filepath.Join(baseCtrJSONPath, "not/exist"),
-			mockExec: func(mockMgr *mocks.MockContainerManager) error {
-				mockMgr.EXPECT().List(testContext).Return(nil, nil)
-				return nil
-			},
-		},
-		"test_initial_deploy_path_is_empty": {
-			metaPath: createTmpMetaPath(t),
-			ctrPath:  filepath.Join(baseCtrJSONPath, "empty"),
-			mockExec: func(mockMgr *mocks.MockContainerManager) error {
-				mockMgr.EXPECT().List(testContext).Return(nil, nil)
-				return nil
-			},
-		},
 		"test_initial_deploy_container_create_error": {
 			metaPath: createTmpMetaPath(t),
 			ctrPath:  filepath.Join(baseCtrJSONPath, "nested"),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				testWaitGroup.Add(1)
 				mockMgr.EXPECT().List(testContext).Return(nil, nil)
-				testCtr := &types.Container{Image: types.Image{Name: redisImageRef}}
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
 				mockMgr.EXPECT().Create(testContext, testCtr).Do(
 					func(ctx context.Context, container *types.Container) {
 						testWaitGroup.Done()
@@ -125,7 +160,7 @@ func TestInitialDeploy(t *testing.T) {
 				testWaitGroup.Add(1)
 				mockMgr.EXPECT().List(testContext).Return(nil, nil)
 				ctrID := uuid.NewString()
-				testCtr := &types.Container{Image: types.Image{Name: redisImageRef}}
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
 				mockMgr.EXPECT().Create(testContext, testCtr).Do(
 					func(ctx context.Context, container *types.Container) {
 						testCtr.ID = ctrID
@@ -144,7 +179,7 @@ func TestInitialDeploy(t *testing.T) {
 				mockMgr.EXPECT().List(testContext).Return(nil, nil)
 
 				ctrID1 := uuid.NewString()
-				testCtr1 := &types.Container{Image: types.Image{Name: redisImageRef}}
+				testCtr1 := newTestContainer(testContainerName1, testContainerImage1)
 				mockMgr.EXPECT().Create(testContext, testCtr1).Do(
 					func(ctx context.Context, container *types.Container) {
 						testCtr1.ID = ctrID1
@@ -155,7 +190,7 @@ func TestInitialDeploy(t *testing.T) {
 
 				testWaitGroup.Add(1)
 				ctrID2 := uuid.NewString()
-				testCtr2 := &types.Container{Image: types.Image{Name: "docker.io/library/influxdb:latest"}}
+				testCtr2 := newTestContainer(testContainerName2, testContainerImage2)
 				mockMgr.EXPECT().Create(testContext, testCtr2).Do(
 					func(ctx context.Context, container *types.Container) {
 						testCtr2.ID = ctrID2
@@ -196,8 +231,346 @@ func TestInitialDeploy(t *testing.T) {
 	}
 }
 
+func TestUpdate(t *testing.T) {
+	var (
+		testContext   = context.Background()
+		testWaitGroup = &sync.WaitGroup{}
+	)
+
+	tests := map[string]struct {
+		ctrPath  string
+		mockExec func(*mocks.MockContainerManager) error
+	}{
+		"test_update_new_container_no_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				mockMgr.EXPECT().List(testContext).Return(nil, nil)
+				ctrID := uuid.NewString()
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				util.FillDefaults(testCtr)
+				testCtr.ID = ctrID
+				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Return(testCtr, nil).Times(1)
+				mockMgr.EXPECT().Start(testContext, ctrID).Do(func(ctx context.Context, ctrID string) {
+					testWaitGroup.Done()
+				}).Return(nil).Times(1)
+				return nil
+			},
+		},
+		"test_update_new_container_create_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				mockMgr.EXPECT().List(testContext).Return(nil, nil)
+				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Do(func(ctx context.Context, container *types.Container) {
+					testWaitGroup.Done()
+				}).Return(nil, log.NewError("test error")).Times(1)
+				return nil
+			},
+		},
+		"test_update_new_container_start_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				mockMgr.EXPECT().List(testContext).Return(nil, nil)
+				ctrID := uuid.NewString()
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				util.FillDefaults(testCtr)
+				testCtr.ID = ctrID
+				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Return(testCtr, nil).Times(1)
+				mockMgr.EXPECT().Start(testContext, ctrID).Do(func(ctx context.Context, ctrID string) {
+					testWaitGroup.Done()
+				}).Return(log.NewError("test error")).Times(1)
+				return nil
+			},
+		},
+		"test_update_check_running_container_no_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				testCtr.State = &types.State{Running: true}
+				util.FillDefaults(testCtr)
+				mockMgr.EXPECT().List(testContext).Do(func(ctx context.Context) {
+					testWaitGroup.Done()
+				}).Return([]*types.Container{testCtr}, nil)
+				return nil
+			},
+		},
+		"test_update_restart_nonrunning_container_no_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				testCtr.State = &types.State{Running: false, Paused: false}
+				util.FillDefaults(testCtr)
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Start(testContext, testCtr.ID).Do(func(ctx context.Context, ctrID string) {
+					testWaitGroup.Done()
+					testCtr.State.Running = true
+				}).Return(nil).Times(1)
+				return nil
+			},
+		},
+		"test_update_restart_nonrunning_container_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				testCtr.State = &types.State{Running: false, Paused: false}
+				util.FillDefaults(testCtr)
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Start(testContext, testCtr.ID).Do(func(ctx context.Context, ctrID string) {
+					testWaitGroup.Done()
+				}).Return(log.NewError("test error")).Times(1)
+				return nil
+			},
+		},
+		"test_update_restart_paused_container_no_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				testCtr.State = &types.State{Running: false, Paused: true}
+				util.FillDefaults(testCtr)
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Unpause(testContext, testCtr.ID).Do(func(ctx context.Context, ctrID string) {
+					testWaitGroup.Done()
+					testCtr.State.Running = true
+					testCtr.State.Running = false
+				}).Return(nil).Times(1)
+				return nil
+			},
+		},
+		"test_update_restart_paused_container_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				testCtr.State = &types.State{Running: false, Paused: true}
+				util.FillDefaults(testCtr)
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Unpause(testContext, testCtr.ID).Do(func(ctx context.Context, ctrID string) {
+					testWaitGroup.Done()
+				}).Return(log.NewError("test error")).Times(1)
+				return nil
+			},
+		},
+		"test_update_modify_container_restart_policy_no_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				util.FillDefaults(testCtr)
+				testUpdateOpts := &types.UpdateOpts{
+					RestartPolicy: testCtr.HostConfig.RestartPolicy,
+					Resources:     testCtr.HostConfig.Resources,
+				}
+				testCtr.HostConfig.RestartPolicy = &types.RestartPolicy{Type: types.No}
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Update(testContext, testCtr.ID, testUpdateOpts).Do(func(ctx context.Context, ctrID string, updateOpts *types.UpdateOpts) {
+					testWaitGroup.Done()
+					testCtr.HostConfig.RestartPolicy = updateOpts.RestartPolicy
+					testCtr.HostConfig.Resources = updateOpts.Resources
+				}).Return(nil).Times(1)
+				return nil
+			},
+		},
+		"test_update_modify_container_restart_policy_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				util.FillDefaults(testCtr)
+				testUpdateOpts := &types.UpdateOpts{
+					RestartPolicy: testCtr.HostConfig.RestartPolicy,
+					Resources:     testCtr.HostConfig.Resources,
+				}
+				testCtr.HostConfig.RestartPolicy = &types.RestartPolicy{Type: types.No}
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Update(testContext, testCtr.ID, testUpdateOpts).Do(func(ctx context.Context, ctrID string, updateOpts *types.UpdateOpts) {
+					testWaitGroup.Done()
+				}).Return(log.NewError("test error")).Times(1)
+				return nil
+			},
+		},
+		"test_update_existing_running_container_no_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage2)
+				util.FillDefaults(testCtr)
+				testCtr.State = &types.State{Running: true}
+				testStopOpts := &types.StopOpts{Force: true, Signal: "SIGTERM"}
+				oldID := testCtr.ID
+				newContainer := newTestContainer(testContainerName1, testContainerImage1)
+				util.FillDefaults(newContainer)
+				newID := uuid.NewString()
+				newContainer.ID = newID
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Return(newContainer, nil).Times(1)
+				mockMgr.EXPECT().Stop(testContext, oldID, testStopOpts).Return(nil).Times(1)
+				mockMgr.EXPECT().Start(testContext, newID).Return(nil).Times(1)
+				mockMgr.EXPECT().Remove(testContext, oldID, true).Do(func(ctx context.Context, ctrID string, force bool) {
+					testWaitGroup.Done()
+				}).Return(nil).Times(1)
+				return nil
+			},
+		},
+		"test_update_existing_nonrunning_container_no_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage2)
+				util.FillDefaults(testCtr)
+				testCtr.State = &types.State{Running: false}
+				oldID := testCtr.ID
+				newContainer := newTestContainer(testContainerName1, testContainerImage1)
+				util.FillDefaults(newContainer)
+				newID := uuid.NewString()
+				newContainer.ID = newID
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Return(newContainer, nil).Times(1)
+				mockMgr.EXPECT().Start(testContext, newID).Return(nil).Times(1)
+				mockMgr.EXPECT().Remove(testContext, oldID, true).Do(func(ctx context.Context, ctrID string, force bool) {
+					testWaitGroup.Done()
+				}).Return(nil).Times(1)
+				return nil
+			},
+		},
+		"test_update_existing_running_container_create_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage2)
+				util.FillDefaults(testCtr)
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Do(func(ctx context.Context, container *types.Container) {
+					testWaitGroup.Done()
+				}).Return(nil, log.NewError("test error")).Times(1)
+				return nil
+			},
+		},
+		"test_update_existing_running_container_start_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage2)
+				util.FillDefaults(testCtr)
+				testCtr.State = &types.State{Running: true}
+				testStopOpts := &types.StopOpts{Force: true, Signal: "SIGTERM"}
+				oldID := testCtr.ID
+				newContainer := newTestContainer(testContainerName1, testContainerImage1)
+				util.FillDefaults(newContainer)
+				newID := uuid.NewString()
+				newContainer.ID = newID
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Return(newContainer, nil).Times(1)
+				mockMgr.EXPECT().Stop(testContext, oldID, testStopOpts).Return(nil).Times(1)
+				mockMgr.EXPECT().Start(testContext, newID).Return(log.NewError("test error")).Times(1)
+				mockMgr.EXPECT().Start(testContext, oldID).Return(nil).Times(1)
+				mockMgr.EXPECT().Remove(testContext, newID, true).Do(func(ctx context.Context, ctrID string, force bool) {
+					testWaitGroup.Done()
+				}).Return(nil).Times(1)
+				return nil
+			},
+		},
+		"test_update_existing_running_container_stop_start_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage2)
+				util.FillDefaults(testCtr)
+				testCtr.State = &types.State{Running: true}
+				testStopOpts := &types.StopOpts{Force: true, Signal: "SIGTERM"}
+				oldID := testCtr.ID
+				newContainer := newTestContainer(testContainerName1, testContainerImage1)
+				util.FillDefaults(newContainer)
+				newID := uuid.NewString()
+				newContainer.ID = newID
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Return(newContainer, nil).Times(1)
+				mockMgr.EXPECT().Stop(testContext, oldID, testStopOpts).Return(log.NewError("test error")).Times(1)
+				mockMgr.EXPECT().Start(testContext, newID).Return(log.NewError("test error")).Times(1)
+				mockMgr.EXPECT().Remove(testContext, newID, true).Do(func(ctx context.Context, ctrID string, force bool) {
+					testWaitGroup.Done()
+				}).Return(nil).Times(1)
+				return nil
+			},
+		},
+		"test_update_existing_running_container_remove_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage2)
+				util.FillDefaults(testCtr)
+				testCtr.State = &types.State{Running: true}
+				testStopOpts := &types.StopOpts{Force: true, Signal: "SIGTERM"}
+				oldID := testCtr.ID
+				newContainer := newTestContainer(testContainerName1, testContainerImage1)
+				util.FillDefaults(newContainer)
+				newID := uuid.NewString()
+				newContainer.ID = newID
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Return(newContainer, nil).Times(1)
+				mockMgr.EXPECT().Stop(testContext, oldID, testStopOpts).Return(nil).Times(1)
+				mockMgr.EXPECT().Start(testContext, newID).Return(nil).Times(1)
+				mockMgr.EXPECT().Remove(testContext, oldID, true).Do(func(ctx context.Context, ctrID string, force bool) {
+					testWaitGroup.Done()
+				}).Return(log.NewError("test error")).Times(1)
+				return nil
+			},
+		},
+	}
+
+	// execute tests
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			t.Log(testName)
+			metaPath := createTmpMetaPathNonEmpty(t)
+			defer os.Remove(metaPath)
+
+			// set up
+			mockCtrl := gomock.NewController(t)
+			mockCtrl.Finish()
+			defer mockCtrl.Finish()
+
+			mockMgr := mocks.NewMockContainerManager(mockCtrl)
+
+			deployMgr := &deploymentMgr{
+				mode:     ModeUpdate,
+				metaPath: metaPath,
+				ctrPath:  testCase.ctrPath,
+				ctrMgr:   mockMgr,
+			}
+
+			expectedErr := testCase.mockExec(mockMgr)
+			actualErr := deployMgr.Deploy(testContext)
+			testutil.AssertError(t, expectedErr, actualErr)
+			testutil.AssertWithTimeout(t, testWaitGroup, testTimeoutDuration)
+		})
+	}
+}
+
 func TestDispose(t *testing.T) {
 	deployMgr := &deploymentMgr{}
 	err := deployMgr.Dispose(context.Background())
 	testutil.AssertNil(t, err)
+}
+
+func createTmpMetaPath(t *testing.T) string {
+	path, err := os.MkdirTemp("", "container-management-test-")
+	testutil.AssertNil(t, err)
+	return path
+}
+
+func createTmpMetaPathNonEmpty(t *testing.T) string {
+	path := createTmpMetaPath(t)
+	err := util.MkDir(filepath.Join(path, "deployment"))
+	testutil.AssertNil(t, err)
+	return path
+}
+
+func newTestContainer(name, image string) *types.Container {
+	return &types.Container{Name: name, Image: types.Image{Name: image}}
 }

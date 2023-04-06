@@ -1,4 +1,5 @@
 {
+  "container_name": "redis",
   "image": {
     "name": "docker.io/library/redis:latest"
   }
