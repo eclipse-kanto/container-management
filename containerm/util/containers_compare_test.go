@@ -1005,3 +1005,43 @@ func TestIsEqualIOConfig(t *testing.T) {
 		testutil.AssertEqual(t, testCase.expectedResult, res)
 	}
 }
+
+func TestCompareSliceSet(t *testing.T) {
+	testCases := map[string]struct {
+		slice1 interface{}
+		slice2 interface{}
+		match  bool
+	}{
+		"test_equal_same_order": {
+			slice1: []string{"a", "b", "c"},
+			slice2: []string{"a", "b", "c"},
+			match:  true,
+		},
+		"test_equal_mixed_order": {
+			slice1: []string{"a", "b", "c"},
+			slice2: []string{"b", "a", "c"},
+			match:  true,
+		},
+		"test_equal_duplicates": {
+			slice1: []string{"x", "x", "y"},
+			slice2: []string{"y", "x", "x"},
+			match:  true,
+		},
+		"test_equal_duplicates_diff_count": {
+			slice1: []string{"x", "x", "y"},
+			slice2: []string{"y", "y", "x"},
+			match:  true,
+		},
+		"test_unequal": {
+			slice1: []string{"x", "x", "y"},
+			slice2: []string{"x", "y", "z"},
+			match:  false,
+		},
+	}
+
+	for testName, testCase := range testCases {
+		t.Log(testName)
+		testutil.AssertEqual(t, testCase.match, compareSliceSet(testCase.slice1, testCase.slice2))
+		testutil.AssertEqual(t, testCase.match, compareSliceSet(testCase.slice2, testCase.slice1))
+	}
+}

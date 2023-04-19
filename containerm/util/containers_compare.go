@@ -42,7 +42,7 @@ func DetermineUpdateAction(current *types.Container, desired *types.Container) A
 	if !isEqualImage(current.Image, desired.Image) {
 		return ActionRecreate
 	}
-	if !compareSliceObjects(current.Mounts, desired.Mounts) {
+	if !compareSliceSet(current.Mounts, desired.Mounts) {
 		return ActionRecreate
 	}
 	if !isEqualContainerConfig(current.Config, desired.Config) {
@@ -71,11 +71,12 @@ func isEqualContainerConfig(currentContainerCfg *types.ContainerConfiguration, n
 	if newContainerCfg == nil {
 		return false
 	}
+	// Cmd is order-sensitive, that's why compare Cmd contents with reflect.DeepEqual
 	if !(len(currentContainerCfg.Cmd) == 0 && len(newContainerCfg.Cmd) == 0) && !reflect.DeepEqual(currentContainerCfg.Cmd, newContainerCfg.Cmd) {
 		return false
 	}
 
-	return compareSliceObjects(currentContainerCfg.Env, newContainerCfg.Env)
+	return compareSliceSet(currentContainerCfg.Env, newContainerCfg.Env)
 }
 
 func isEqualHostConfig0(currentHostConfig *types.HostConfig, newHostConfig *types.HostConfig) bool {
@@ -91,13 +92,13 @@ func isEqualHostConfig0(currentHostConfig *types.HostConfig, newHostConfig *type
 	if currentHostConfig.NetworkMode != newHostConfig.NetworkMode {
 		return false
 	}
-	if !compareSliceObjects(currentHostConfig.Devices, newHostConfig.Devices) {
+	if !compareSliceSet(currentHostConfig.Devices, newHostConfig.Devices) {
 		return false
 	}
-	if !compareSliceObjects(currentHostConfig.ExtraHosts, newHostConfig.ExtraHosts) {
+	if !compareSliceSet(currentHostConfig.ExtraHosts, newHostConfig.ExtraHosts) {
 		return false
 	}
-	if !compareSliceObjects(currentHostConfig.PortMappings, newHostConfig.PortMappings) {
+	if !compareSliceSet(currentHostConfig.PortMappings, newHostConfig.PortMappings) {
 		return false
 	}
 	if !isEqualLog(currentHostConfig.LogConfig, newHostConfig.LogConfig) {
@@ -179,38 +180,30 @@ func isEqualIOConfig(currentIOConfig *types.IOConfig, newIOConfig *types.IOConfi
 	return currentIOConfig.OpenStdin == newIOConfig.OpenStdin && currentIOConfig.Tty == newIOConfig.Tty
 }
 
-func compareSliceObjects(firstObject interface{}, secondObject interface{}) bool {
-	firstValue := reflect.ValueOf(firstObject)
-	secondValue := reflect.ValueOf(secondObject)
+func compareSliceSet(firstSet interface{}, secondSet interface{}) bool {
+	firstValue := reflect.ValueOf(firstSet)
+	secondValue := reflect.ValueOf(secondSet)
 	if firstValue.Len() != secondValue.Len() {
 		return false
 	}
 	for firstIndex := 0; firstIndex < firstValue.Len(); firstIndex++ {
-		hasSameElement := false
-		firstSliceElement := firstValue.Index(firstIndex)
-		for secondIndex := 0; secondIndex < secondValue.Len(); secondIndex++ {
-			secondSliceElement := secondValue.Index(secondIndex)
-			if firstSliceElement.Interface() == secondSliceElement.Interface() {
-				hasSameElement = true
-			}
-		}
-		if !hasSameElement {
+		if !sliceContains(secondValue, firstValue.Index(firstIndex)) {
 			return false
 		}
 	}
 	for secondIndex := 0; secondIndex < secondValue.Len(); secondIndex++ {
-		hasSameElement := false
-		secondSliceElement := secondValue.Index(secondIndex)
-		for firstIndex := 0; firstIndex < firstValue.Len(); firstIndex++ {
-			firstSliceElement := firstValue.Index(firstIndex)
-
-			if firstSliceElement.Interface() == secondSliceElement.Interface() {
-				hasSameElement = true
-			}
-		}
-		if !hasSameElement {
+		if !sliceContains(firstValue, secondValue.Index(secondIndex)) {
 			return false
 		}
 	}
 	return true
+}
+
+func sliceContains(slice reflect.Value, element reflect.Value) bool {
+	for i := 0; i < slice.Len(); i++ {
+		if slice.Index(i).Interface() == element.Interface() {
+			return true
+		}
+	}
+	return false
 }
