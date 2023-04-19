@@ -40,7 +40,7 @@ func init() {
 }
 
 type deploymentMgr struct {
-	mode           string
+	mode           Mode
 	metaPath       string
 	ctrPath        string
 	ctrMgr         mgr.ContainerManager
@@ -55,7 +55,7 @@ func (d *deploymentMgr) Deploy(ctx context.Context) error {
 		if err = util.MkDir(deploymentMetaPath); err != nil {
 			return err
 		}
-	} else if d.mode == ModeInitialDeploy {
+	} else if d.mode == InitialDeployMode {
 		log.Debug("not a first run, will skip initial containers deploy")
 		return nil
 	}
@@ -64,7 +64,7 @@ func (d *deploymentMgr) Deploy(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if d.mode == ModeInitialDeploy && len(listCtrs) > 0 {
+	if d.mode == InitialDeployMode && len(listCtrs) > 0 {
 		log.Debug("there are loaded container resources, will skip initial containers deploy")
 		return nil
 	}
@@ -101,7 +101,7 @@ func (d *deploymentMgr) Deploy(ctx context.Context) error {
 		return err
 	}
 
-	if d.mode == ModeInitialDeploy {
+	if d.mode == InitialDeployMode {
 		go d.processInitialDeploy(ctx, ctrs)
 	} else {
 		go d.processUpdate(ctx, listCtrs, ctrs)

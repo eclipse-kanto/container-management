@@ -90,7 +90,7 @@ const (
 
 	// default deployment config
 	deploymentEnableDefault   = true
-	deploymentModeDefault     = deployment.ModeUpdate
+	deploymentModeDefault     = string(deployment.UpdateMode)
 	deploymentMetaPathDefault = managerMetaPathDefault
 	deploymentCtrPathDefault  = "/etc/container-management/containers"
 )

@@ -33,7 +33,7 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 	return newDeploymentMgr(options.mode, options.metaPath, options.ctrPath, mgrService.(mgr.ContainerManager))
 }
 
-func newDeploymentMgr(mode, metaPath, ctrPath string, ctrMgr mgr.ContainerManager) (Manager, error) {
+func newDeploymentMgr(mode Mode, metaPath, ctrPath string, ctrMgr mgr.ContainerManager) (Manager, error) {
 	if err := util.MkDir(metaPath); err != nil {
 		return nil, err
 	}

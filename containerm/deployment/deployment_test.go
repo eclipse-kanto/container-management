@@ -99,7 +99,7 @@ func TestDeployCommon(t *testing.T) {
 			mockMgr := mocks.NewMockContainerManager(mockCtrl)
 
 			deployMgr := &deploymentMgr{
-				mode:     ModeInitialDeploy,
+				mode:     InitialDeployMode,
 				metaPath: metaPath,
 				ctrPath:  testCase.ctrPath,
 				ctrMgr:   mockMgr,
@@ -108,7 +108,7 @@ func TestDeployCommon(t *testing.T) {
 			actualErr := deployMgr.Deploy(testContext)
 			testutil.AssertError(t, expectedErr, actualErr)
 
-			deployMgr.mode = ModeUpdate
+			deployMgr.mode = UpdateMode
 			actualErr = deployMgr.Deploy(testContext)
 			testutil.AssertError(t, expectedErr, actualErr)
 		})
@@ -217,7 +217,7 @@ func TestInitialDeploy(t *testing.T) {
 			mockMgr := mocks.NewMockContainerManager(mockCtrl)
 
 			deployMgr := &deploymentMgr{
-				mode:     ModeInitialDeploy,
+				mode:     InitialDeployMode,
 				metaPath: testCase.metaPath,
 				ctrPath:  testCase.ctrPath,
 				ctrMgr:   mockMgr,
@@ -538,7 +538,7 @@ func TestUpdate(t *testing.T) {
 			mockMgr := mocks.NewMockContainerManager(mockCtrl)
 
 			deployMgr := &deploymentMgr{
-				mode:     ModeUpdate,
+				mode:     UpdateMode,
 				metaPath: metaPath,
 				ctrPath:  testCase.ctrPath,
 				ctrMgr:   mockMgr,
