@@ -1,6 +1,6 @@
 module github.com/eclipse-kanto/container-management
 
-go 1.17
+go 1.19
 
 replace github.com/docker/docker => github.com/moby/moby v23.0.3+incompatible
 
@@ -11,7 +11,7 @@ require (
 	github.com/containerd/imgcrypt v1.1.7
 	github.com/containerd/typeurl v1.0.2
 	github.com/containers/ocicrypt v1.1.6
-	github.com/docker/docker v20.10.17+incompatible
+	github.com/docker/docker v20.10.24+incompatible
 	github.com/eclipse-kanto/kanto/integration/util v0.0.0-20230103144956-911e45a2bf55
 	github.com/eclipse/ditto-clients-golang v0.0.0-20220225085802-cf3b306280d3
 	github.com/eclipse/paho.mqtt.golang v1.4.1
