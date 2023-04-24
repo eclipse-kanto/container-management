@@ -63,8 +63,10 @@ type containerRuntimeConfig struct {
 
 // deployment manager config
 type deploymentManagerConfig struct {
+	DeploymentEnable   bool   `json:"enable,omitempty"`
+	DeploymentMode     string `json:"mode,omitempty"`
 	DeploymentMetaPath string `json:"home_dir,omitempty"`
-	DeploymentInitPath string `json:"init_dir,omitempty"`
+	DeploymentCtrPath  string `json:"ctr_dir,omitempty"`
 }
 
 func (cfg *containerRuntimeConfig) UnmarshalJSON(data []byte) error {

@@ -54,7 +54,11 @@ func (d *daemon) init() {
 	}
 
 	//init deployment manager service
-	initService(ctx, d, registrationsMap, registry.DeploymentManagerService)
+	if daemonConfig.DeploymentManagerConfig.DeploymentEnable {
+		initService(ctx, d, registrationsMap, registry.DeploymentManagerService)
+	} else {
+		log.Info("Deployment Manager is disabled - no Deployment Manager Services will be registered. If you would like to enable Deployment support, please, reconfigure deployment-enable to true")
+	}
 
 	//init grpc services
 	initService(ctx, d, registrationsMap, registry.GRPCService)

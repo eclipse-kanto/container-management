@@ -389,12 +389,20 @@ func TestSetCommandFlags(t *testing.T) {
 			flag:         "things-conn-client-key",
 			expectedType: reflect.String.String(),
 		},
+		"test_flags_deployment-enable": {
+			flag:         "deployment-enable",
+			expectedType: reflect.Bool.String(),
+		},
+		"test_flags_deployment-mode": {
+			flag:         "deployment-mode",
+			expectedType: reflect.String.String(),
+		},
 		"test_flags_deployment-home-dir": {
 			flag:         "deployment-home-dir",
 			expectedType: reflect.String.String(),
 		},
-		"test_flags_deployment-init-dir": {
-			flag:         "deployment-init-dir",
+		"test_flags_deployment-ctr-dir": {
+			flag:         "deployment-ctr-dir",
 			expectedType: reflect.String.String(),
 		},
 	}

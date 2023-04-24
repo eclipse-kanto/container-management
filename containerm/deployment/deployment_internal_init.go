@@ -30,17 +30,18 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 	}
 
 	//initialize the deployment manager local service
-	return newDeploymentMgr(options.metaPath, options.initialDeployPath, mgrService.(mgr.ContainerManager))
+	return newDeploymentMgr(options.mode, options.metaPath, options.ctrPath, mgrService.(mgr.ContainerManager))
 }
 
-func newDeploymentMgr(metaPath, initialDeployPath string, ctrMgr mgr.ContainerManager) (Manager, error) {
+func newDeploymentMgr(mode Mode, metaPath, ctrPath string, ctrMgr mgr.ContainerManager) (Manager, error) {
 	if err := util.MkDir(metaPath); err != nil {
 		return nil, err
 	}
 
 	return &deploymentMgr{
-		metaPath:          metaPath,
-		initialDeployPath: initialDeployPath,
-		ctrMgr:            ctrMgr,
+		mode:     mode,
+		metaPath: metaPath,
+		ctrPath:  ctrPath,
+		ctrMgr:   ctrMgr,
 	}, nil
 }

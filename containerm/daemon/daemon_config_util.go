@@ -116,8 +116,9 @@ func extractThingsOptions(daemonConfig *config) []things.ContainerThingsManagerO
 
 func extractDeploymentMgrOptions(daemonConfig *config) []deployment.Opt {
 	return []deployment.Opt{
+		deployment.WithMode(daemonConfig.DeploymentManagerConfig.DeploymentMode),
 		deployment.WithMetaPath(daemonConfig.DeploymentManagerConfig.DeploymentMetaPath),
-		deployment.WithInitialDeployPath(daemonConfig.DeploymentManagerConfig.DeploymentInitPath),
+		deployment.WithCtrPath(daemonConfig.DeploymentManagerConfig.DeploymentCtrPath),
 	}
 }
 
@@ -303,8 +304,10 @@ func dumpThingsClient(configInstance *config) {
 
 func dumpDeploymentManager(configInstance *config) {
 	if configInstance.DeploymentManagerConfig != nil {
+		log.Debug("[daemon_cfg][deployment-enable] : %v", configInstance.DeploymentManagerConfig.DeploymentEnable)
+		log.Debug("[daemon_cfg][deployment-mode] : %s", configInstance.DeploymentManagerConfig.DeploymentMode)
 		log.Debug("[daemon_cfg][deployment-home-dir] : %s", configInstance.DeploymentManagerConfig.DeploymentMetaPath)
-		log.Debug("[daemon_cfg][deployment-init-dir] : %s", configInstance.DeploymentManagerConfig.DeploymentInitPath)
+		log.Debug("[daemon_cfg][deployment-ctr-dir] : %s", configInstance.DeploymentManagerConfig.DeploymentCtrPath)
 	}
 }
 

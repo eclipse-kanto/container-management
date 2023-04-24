@@ -809,3 +809,25 @@ func TestReadContainer(t *testing.T) {
 		})
 	}
 }
+
+func TestAsNamedMap(t *testing.T) {
+	t.Run("TestAsNamedMap", func(t *testing.T) {
+		container := []*types.Container{
+			{
+				DomainName: "testDomainName1",
+				Name:       "testName1",
+			},
+			{
+				DomainName: "testDomainName2",
+				Name:       "testName2",
+			},
+		}
+		res := AsNamedMap(container)
+
+		testutil.AssertEqual(t, "testDomainName1", res["testName1"].DomainName)
+		testutil.AssertEqual(t, "testName1", res["testName1"].Name)
+		testutil.AssertEqual(t, "testDomainName2", res["testName2"].DomainName)
+		testutil.AssertEqual(t, "testName2", res["testName2"].Name)
+		testutil.AssertEqual(t, "", res["testName2"].HostName)
+	})
+}

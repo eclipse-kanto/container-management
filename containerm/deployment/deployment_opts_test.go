@@ -19,8 +19,9 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 )
 
+const testMode = InitialDeployMode
 const testMetaPath = "testMetaPath"
-const testInitialDeployPath = "testInitialDeployPath"
+const testCtrPath = "testCtrPath"
 
 func TestApplyDeploymentOpts(t *testing.T) {
 	tests := map[string]struct {
@@ -29,8 +30,9 @@ func TestApplyDeploymentOpts(t *testing.T) {
 	}{
 		"test_apply_without_error": {
 			testOpts: []Opt{
+				WithMode(string(testMode)),
 				WithMetaPath(testMetaPath),
-				WithInitialDeployPath(testInitialDeployPath),
+				WithCtrPath(testCtrPath),
 			},
 		},
 		"test_apply_with_error": {
@@ -57,6 +59,12 @@ func TestDeploymentOpts(t *testing.T) {
 		testOpt      Opt
 		expectedOpts *opts
 	}{
+		"test_deployment_mode": {
+			testOpt: WithMode(string(testMode)),
+			expectedOpts: &opts{
+				mode: testMode,
+			},
+		},
 		"test_deployment_meta_path": {
 			testOpt: WithMetaPath(testMetaPath),
 			expectedOpts: &opts{
@@ -64,9 +72,9 @@ func TestDeploymentOpts(t *testing.T) {
 			},
 		},
 		"test_deployment_initial_deploy_path": {
-			testOpt: WithInitialDeployPath(testInitialDeployPath),
+			testOpt: WithCtrPath(testCtrPath),
 			expectedOpts: &opts{
-				initialDeployPath: testInitialDeployPath,
+				ctrPath: testCtrPath,
 			},
 		},
 	}

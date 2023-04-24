@@ -12,12 +12,15 @@
 
 package deployment
 
+import "github.com/eclipse-kanto/container-management/containerm/log"
+
 // Opt provides deployment manager options
 type Opt func(options *opts) error
 
 type opts struct {
-	metaPath          string
-	initialDeployPath string
+	mode     Mode
+	metaPath string
+	ctrPath  string
 }
 
 func applyOpts(options *opts, opts ...Opt) error {
@@ -37,10 +40,30 @@ func WithMetaPath(metaPath string) Opt {
 	}
 }
 
-// WithInitialDeployPath sets container initial deployment path.
-func WithInitialDeployPath(initialDeployPath string) Opt {
+// WithCtrPath sets the path to container descriptors
+func WithCtrPath(ctrPath string) Opt {
 	return func(dOpts *opts) error {
-		dOpts.initialDeployPath = initialDeployPath
+		dOpts.ctrPath = ctrPath
 		return nil
 	}
+}
+
+// WithMode sets the mode of deployment service
+func WithMode(mode string) Opt {
+	return func(dOpts *opts) error {
+		dOpts.mode = toDeploymentMode(mode)
+		return nil
+	}
+}
+
+func toDeploymentMode(mode string) Mode {
+	switch mode {
+	case string(InitialDeployMode):
+		return InitialDeployMode
+	case string(UpdateMode):
+		return UpdateMode
+	}
+	defValue := UpdateMode
+	log.Warn("Invalid value '%s' for deployment mode option, switching to default mode %s", mode, defValue)
+	return defValue
 }

@@ -16,11 +16,21 @@ import (
 	"context"
 )
 
+// Mode indicates available deployment modes
+type Mode string
+
+const (
+	// InitialDeployMode means that the deployment service will deploy new containers only on initial start of container management
+	InitialDeployMode Mode = "init"
+	// UpdateMode means that the deployment service will deploy new containers and/or update existing containers on each start of container management
+	UpdateMode Mode = "update"
+)
+
 // Manager represents the container deployment manager abstraction
 type Manager interface {
 
-	// InitialDeploy initially deploys containers described in configured local path
-	InitialDeploy(ctx context.Context) error
+	// Deploy initially deploys or updates containers described in configured local path
+	Deploy(ctx context.Context) error
 
 	// Dispose stops running deployments
 	Dispose(ctx context.Context) error
