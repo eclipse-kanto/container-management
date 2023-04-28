@@ -15,6 +15,8 @@ package ctr
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/containers"
 	ctrdoci "github.com/containerd/containerd/oci"
@@ -23,7 +25,6 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"
-	"path/filepath"
 )
 
 const rootFSPathDefault = "rootfs"
@@ -90,7 +91,7 @@ func WithSpecOpts(container *types.Container, image containerd.Image, execRoot s
 		env = container.Config.Env
 	}
 
-	return containerd.WithNewSpec(
+	specOpts := []ctrdoci.SpecOpts{
 		ctrdoci.WithImageConfigArgs(image, args),
 		WithCommonOptions(container),
 		ctrdoci.WithEnv(env),
@@ -101,5 +102,11 @@ func WithSpecOpts(container *types.Container, image containerd.Image, execRoot s
 		WithResources(container),
 		WithCgroupsPath(container),
 		ctrdoci.WithRootFSPath(rootFSPathDefault),
-	)
+	}
+
+	if container.HostConfig.Privileged {
+		specOpts = append(specOpts, ctrdoci.WithPrivileged)
+	}
+
+	return containerd.WithNewSpec(specOpts...)
 }
