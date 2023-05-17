@@ -72,6 +72,7 @@ func (d *deploymentMgr) processUpdate(ctx context.Context, existing []*types.Con
 			recreateAndStartContainer(ctx, d.ctrMgr, current, desired)
 		case util.ActionUpdate:
 			updateContainer(ctx, d.ctrMgr, current, desired)
+			ensureContainerRunning(ctx, d.ctrMgr, current)
 		}
 	}
 	log.Debug("finished containers update")
