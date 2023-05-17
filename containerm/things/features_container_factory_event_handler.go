@@ -34,8 +34,8 @@ func (ctrFactory *containerFactoryFeature) handleContainerEvents(ctx context.Con
 						ctrFactory.handleEventCreated(ctrEvent)
 						ctrFactory.handleStateChangedEvent(ctrEvent)
 					case types.EventActionContainersRemoved:
-						ctrFactory.handleEventRemoved(ctrEvent)
 						ctrFactory.handleStateChangedEvent(ctrEvent)
+						ctrFactory.handleEventRemoved(ctrEvent)
 					case types.EventActionContainersRenamed:
 						ctrFactory.handleRenameEvent(ctrEvent)
 					case types.EventActionContainersUpdated:

@@ -214,8 +214,8 @@ func mockContainerEventExpectedCreated(t *testing.T, testWg *sync.WaitGroup) err
 
 func mockContainerEventExpectedRemoved(t *testing.T, testWg *sync.WaitGroup) error {
 	testWg.Add(3)
-	mockThing.EXPECT().RemoveFeature(testContainerFeatureID).Times(1).Return(nil).Do(func(id interface{}) { testWg.Done() })
 	mockThing.EXPECT().SetFeatureProperty(testContainerFeatureID, containerFeaturePropertyStatus+"/state", fromAPIContainerState(&types.State{Status: types.Dead})).Do(func(featureId, propertyId, value interface{}) { testWg.Done() })
+	mockThing.EXPECT().RemoveFeature(testContainerFeatureID).Times(1).Return(nil).Do(func(id interface{}) { testWg.Done() })
 	mockContainerStorage.EXPECT().DeleteContainerInfo(testContainer.ID).Do(func(ctrId interface{}) { testWg.Done() })
 	return nil
 }
