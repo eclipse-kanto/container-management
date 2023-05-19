@@ -361,6 +361,7 @@ func TestUpdate(t *testing.T) {
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				testWaitGroup.Add(1)
 				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				testCtr.State = &types.State{Running: true}
 				util.FillDefaults(testCtr)
 				testUpdateOpts := &types.UpdateOpts{
 					RestartPolicy: testCtr.HostConfig.RestartPolicy,
@@ -376,11 +377,60 @@ func TestUpdate(t *testing.T) {
 				return nil
 			},
 		},
+		"test_update_modify_nonrunning_container_restart_policy_no_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				testCtr.State = &types.State{}
+				util.FillDefaults(testCtr)
+				testUpdateOpts := &types.UpdateOpts{
+					RestartPolicy: testCtr.HostConfig.RestartPolicy,
+					Resources:     testCtr.HostConfig.Resources,
+				}
+				testCtr.HostConfig.RestartPolicy = &types.RestartPolicy{Type: types.No}
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Update(testContext, testCtr.ID, testUpdateOpts).Do(func(ctx context.Context, ctrID string, updateOpts *types.UpdateOpts) {
+					testCtr.HostConfig.RestartPolicy = updateOpts.RestartPolicy
+					testCtr.HostConfig.Resources = updateOpts.Resources
+				}).Return(nil).Times(1)
+				mockMgr.EXPECT().Start(testContext, testCtr.ID).Do(func(ctx context.Context, ctrID string) {
+					testWaitGroup.Done()
+					testCtr.State.Running = true
+				}).Return(nil).Times(1)
+				return nil
+			},
+		},
+		"test_update_modify_paused_container_restart_policy_no_error": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				testWaitGroup.Add(1)
+				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				testCtr.State = &types.State{Paused: true}
+				util.FillDefaults(testCtr)
+				testUpdateOpts := &types.UpdateOpts{
+					RestartPolicy: testCtr.HostConfig.RestartPolicy,
+					Resources:     testCtr.HostConfig.Resources,
+				}
+				testCtr.HostConfig.RestartPolicy = &types.RestartPolicy{Type: types.No}
+				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
+				mockMgr.EXPECT().Update(testContext, testCtr.ID, testUpdateOpts).Do(func(ctx context.Context, ctrID string, updateOpts *types.UpdateOpts) {
+					testCtr.HostConfig.RestartPolicy = updateOpts.RestartPolicy
+					testCtr.HostConfig.Resources = updateOpts.Resources
+				}).Return(nil).Times(1)
+				mockMgr.EXPECT().Unpause(testContext, testCtr.ID).Do(func(ctx context.Context, ctrID string) {
+					testWaitGroup.Done()
+					testCtr.State.Running = true
+				}).Return(nil).Times(1)
+				return nil
+			},
+		},
 		"test_update_modify_container_restart_policy_error": {
 			ctrPath: filepath.Join(baseCtrJSONPath, "nested"),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
 				testWaitGroup.Add(1)
 				testCtr := newTestContainer(testContainerName1, testContainerImage1)
+				testCtr.State = &types.State{Running: true}
 				util.FillDefaults(testCtr)
 				testUpdateOpts := &types.UpdateOpts{
 					RestartPolicy: testCtr.HostConfig.RestartPolicy,
