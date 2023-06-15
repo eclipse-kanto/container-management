@@ -156,4 +156,29 @@ func setupDeprecatedCommandFlags(flagSet *pflag.FlagSet) {
 	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.RootCA, "things-conn-root-ca", cfg.ThingsConfig.ThingsConnectionConfig.Transport.RootCA, "Specify the PEM encoded CA certificates file")
 	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert, "things-conn-client-cert", cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert, "Specify the PEM encoded certificate file to authenticate to the MQTT server/broker")
 	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey, "things-conn-client-key", cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey, "Specify the PEM encoded unencrypted private key file to authenticate to the MQTT server/broker")
+
+	// init update agent
+	flagSet.BoolVar(&cfg.UpdateAgentConfig.UpdateAgentEnable, "ua-enable", cfg.UpdateAgentConfig.UpdateAgentEnable, "Enable the update agent for containers")
+	flagSet.StringVar(&cfg.UpdateAgentConfig.DomainName, "ua-domain", cfg.UpdateAgentConfig.DomainName, "Specify the domain name for the containers update agent")
+	flagSet.StringSliceVar(&cfg.UpdateAgentConfig.SystemContainers, "ua-system-containers", cfg.UpdateAgentConfig.SystemContainers, "Specify the list of system containers which shall be skipped during update process by the update agent")
+	flagSet.BoolVar(&cfg.UpdateAgentConfig.VerboseInventory, "ua-verbose-inventory", cfg.UpdateAgentConfig.VerboseInventory, "Enables verbose reporting of current containers by the update agent")
+
+	flagSet.StringVar(&cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.BrokerURL, "ua-conn-broker", cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.BrokerURL, "Specify the MQTT broker URL to connect to")
+	flagSet.Int64Var(&cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.KeepAlive, "ua-conn-keep-alive", cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.KeepAlive, "Specify the keep alive duration for the MQTT requests in milliseconds")
+	flagSet.Int64Var(&cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.DisconnectTimeout, "ua-conn-disconnect-timeout", cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.DisconnectTimeout, "Specify the disconnection timeout for the MQTT connection in milliseconds")
+	flagSet.StringVar(&cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.ClientUsername, "ua-conn-client-username", cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.ClientUsername, "Specify the MQTT client username to authenticate with")
+	flagSet.StringVar(&cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.ClientPassword, "ua-conn-client-password", cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.ClientPassword, "Specify the MQTT client password to authenticate with")
+	flagSet.Int64Var(&cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.ConnectTimeout, "ua-conn-connect-timeout", cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.ConnectTimeout, "Specify the connect timeout for the MQTT in milliseconds")
+	flagSet.Int64Var(&cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.AcknowledgeTimeout, "ua-conn-ack-timeout", cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.AcknowledgeTimeout, "Specify the acknowledgement timeout for the MQTT requests in milliseconds")
+	flagSet.Int64Var(&cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.SubscribeTimeout, "ua-conn-sub-timeout", cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.SubscribeTimeout, "Specify the subscribe timeout for the MQTT requests in milliseconds")
+	flagSet.Int64Var(&cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.UnsubscribeTimeout, "ua-conn-unsub-timeout", cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.UnsubscribeTimeout, "Specify the unsubscribe timeout for the MQTT requests in milliseconds")
+
+	// init tls support
+	if cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.Transport == nil {
+		cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.Transport = &tlsConfig{}
+	}
+	flagSet.StringVar(&cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.Transport.RootCA, "ua-conn-root-ca", cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.Transport.RootCA, "Specify the PEM encoded CA certificates file")
+	flagSet.StringVar(&cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.Transport.ClientCert, "ua-conn-client-cert", cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.Transport.ClientCert, "Specify the PEM encoded certificate file to authenticate to the MQTT server/broker")
+	flagSet.StringVar(&cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.Transport.ClientKey, "ua-conn-client-key", cfg.UpdateAgentConfig.UpdateAgentConnectionConfig.Transport.ClientKey, "Specify the PEM encoded unencrypted private key file to authenticate to the MQTT server/broker")
+
 }
