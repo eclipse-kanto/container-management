@@ -71,7 +71,7 @@ func (o *operation) Identify() error {
 		o.ctx = context.Background()
 	}
 	// TODO compare current vs. desired containers and identify actions
-	return errors.New("Not implemented yet!")
+	return errors.New("Not implemented yet")
 }
 
 // Execute executes each COMMAND (download, update, activate, etc) phase, triggered per baseline or for all the identified actions
