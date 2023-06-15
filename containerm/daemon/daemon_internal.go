@@ -20,6 +20,8 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/mgr"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
 	"github.com/eclipse-kanto/container-management/containerm/things"
+
+	"github.com/eclipse-kanto/update-manager/api"
 )
 
 func (d *daemon) start() error {
@@ -44,6 +46,16 @@ func (d *daemon) start() error {
 		}
 	}
 
+	if d.config.UpdateAgentConfig.UpdateAgentEnable {
+		log.Debug("Containers Update Agent is enabled.")
+		err := d.startUpdateAgent()
+		if err != nil {
+			log.ErrorErr(err, "could not start the Containers Update Agent")
+		}
+	} else {
+		log.Debug("Containers Update Agent is not enabled.")
+	}
+
 	return d.startGrpcServers()
 
 }
@@ -60,6 +72,11 @@ func (d *daemon) stop() {
 
 	log.Debug("stopping management local services")
 	d.stopContainerManagers()
+
+	if d.config.UpdateAgentConfig.UpdateAgentEnable {
+		log.Debug("stopping Containers Update Agent")
+		d.stopUpdateAgent()
+	}
 
 	if d.config.ThingsConfig.ThingsEnable {
 		log.Debug("stopping Things Container Manager service")
@@ -212,6 +229,40 @@ func (d *daemon) stopThingsManagers() {
 			instance.(things.ContainerThingsManager).Disconnect()
 			log.Debug("successfully stopped Things Container Manager service with service ID = %s ", servInfo.Registration.ID)
 		}
+	}
+}
+
+func (d *daemon) startUpdateAgent() error {
+	log.Debug("starting Update Agent services ")
+	instance, err := d.serviceInfoSet.Get(registry.UpdateAgentService)
+	if err != nil {
+		log.ErrorErr(err, "could not get Update Agent service instance")
+		return err
+	}
+
+	log.Debug("will try to start Update Agent service...")
+	err = instance.(api.UpdateAgent).Start(context.Background())
+
+	if err != nil {
+		log.ErrorErr(err, "could not start Update Agent service")
+		return err
+	}
+	log.Info("successfully started Update Agent service")
+	return nil
+}
+
+func (d *daemon) stopUpdateAgent() {
+	log.Debug("will stop Update Agent service")
+	instance, err := d.serviceInfoSet.Get(registry.UpdateAgentService)
+	if err != nil {
+		log.ErrorErr(err, "could not get Update Agent service instance")
+		return
+	}
+	err = instance.(api.UpdateAgent).Stop()
+	if err != nil {
+		log.ErrorErr(err, "could not stop gracefully Update Agent service instance")
+	} else {
+		log.Info("successfully stopped Update Agent service")
 	}
 }
 

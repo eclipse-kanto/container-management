@@ -28,6 +28,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/network"
 	"github.com/eclipse-kanto/container-management/containerm/server"
 	"github.com/eclipse-kanto/container-management/containerm/things"
+	"github.com/eclipse-kanto/container-management/containerm/updateagent"
 	"github.com/spf13/pflag"
 )
 
@@ -143,6 +144,30 @@ func extractThingsOptions(daemonConfig *config) []things.ContainerThingsManagerO
 		thingsOpts = append(thingsOpts, things.WithTLSConfig(lcc.Transport.RootCA, lcc.Transport.ClientCert, lcc.Transport.ClientKey))
 	}
 	return thingsOpts
+}
+
+func extractUpdateAgentOptions(daemonConfig *config) []updateagent.ContainersUpdateAgentOpt {
+	updateAgentOpts := []updateagent.ContainersUpdateAgentOpt{}
+	updateAgentOpts = append(updateAgentOpts,
+		updateagent.WithDomainName(daemonConfig.UpdateAgentConfig.DomainName),
+		updateagent.WithSystemContainers(daemonConfig.UpdateAgentConfig.SystemContainers),
+		updateagent.WithVerboseInventory(daemonConfig.UpdateAgentConfig.VerboseInventory),
+
+		updateagent.WithConnectionBroker(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.BrokerURL),
+		updateagent.WithConnectionKeepAlive(time.Duration(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.KeepAlive)*time.Millisecond),
+		updateagent.WithConnectionDisconnectTimeout(time.Duration(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.DisconnectTimeout)*time.Millisecond),
+		updateagent.WithConnectionClientUsername(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.ClientUsername),
+		updateagent.WithConnectionClientPassword(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.ClientPassword),
+		updateagent.WithConnectionConnectTimeout(time.Duration(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.ConnectTimeout)*time.Millisecond),
+		updateagent.WithConnectionAcknowledgeTimeout(time.Duration(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.AcknowledgeTimeout)*time.Millisecond),
+		updateagent.WithConnectionSubscribeTimeout(time.Duration(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.SubscribeTimeout)*time.Millisecond),
+		updateagent.WithConnectionUnsubscribeTimeout(time.Duration(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.UnsubscribeTimeout)*time.Millisecond),
+	)
+	transport := daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.Transport
+	if transport != nil {
+		updateAgentOpts = append(updateAgentOpts, updateagent.WithTLSConfig(transport.RootCA, transport.ClientCert, transport.ClientKey))
+	}
+	return updateAgentOpts
 }
 
 func extractDeploymentMgrOptions(daemonConfig *config) []deployment.Opt {

@@ -35,6 +35,8 @@ type config struct {
 
 	ThingsConfig *thingsConfig `json:"things,omitempty"`
 
+	UpdateAgentConfig *updateAgentConfig `json:"updateagent,omitempty"`
+
 	LocalConnection *localConnectionConfig `json:"connection,omitempty"`
 }
 
@@ -149,6 +151,14 @@ type thingsConfig struct {
 	ThingsMetaPath         string                  `json:"home_dir,omitempty"`
 	Features               []string                `json:"features,omitempty"`
 	ThingsConnectionConfig *thingsConnectionConfig `json:"connection,omitempty"`
+}
+
+// things client configuration
+type updateAgentConfig struct {
+	UpdateAgentEnable           bool                  `json:"enable,omitempty"`
+	DomainName                  string                `json:"domain,omitempty"`
+	SystemContainers            []string              `json:"system_containers,omitempty"`
+	VerboseInventory            bool                  `json:"verbose_inventory,omitempty"`
 }
 
 // local connection config
