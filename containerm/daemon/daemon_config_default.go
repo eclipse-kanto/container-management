@@ -93,6 +93,11 @@ const (
 	deploymentModeDefault     = string(deployment.UpdateMode)
 	deploymentMetaPathDefault = managerMetaPathDefault
 	deploymentCtrPathDefault  = "/etc/container-management/containers"
+
+	// default update agent config
+	updateAgentEnableDefault           = false
+	updateAgentDomainDefault           = "containers"
+	updateAgentVerboseInventoryDefault = false
 )
 
 var (
@@ -158,7 +163,7 @@ func getDefaultInstance() *config {
 			ThingsEnable:   thingsEnableDefault,
 			ThingsMetaPath: thingsMetaPathDefault,
 			Features:       thingsServiceFeaturesDefault,
-			ThingsConnectionConfig: &thingsConnectionConfig{
+			ThingsConnectionConfig: &mqttConnectionConfig{
 				BrokerURL:          thingsConnectionBrokerURLDefault,
 				KeepAlive:          thingsConnectionKeepAliveDefault,
 				DisconnectTimeout:  thingsConnectionDisconnectTimeoutDefault,
@@ -175,6 +180,24 @@ func getDefaultInstance() *config {
 			DeploymentMode:     deploymentModeDefault,
 			DeploymentMetaPath: deploymentMetaPathDefault,
 			DeploymentCtrPath:  deploymentCtrPathDefault,
+		},
+		UpdateAgentConfig: &updateAgentConfig{
+			UpdateAgentEnable: updateAgentEnableDefault,
+			DomainName:        updateAgentDomainDefault,
+			SystemContainers:  []string{}, // no system containers by defaults
+			VerboseInventory:  updateAgentVerboseInventoryDefault,
+			UpdateAgentConnectionConfig: &mqttConnectionConfig{
+				// use default values as for the things connection
+				BrokerURL:          thingsConnectionBrokerURLDefault,
+				KeepAlive:          thingsConnectionKeepAliveDefault,
+				DisconnectTimeout:  thingsConnectionDisconnectTimeoutDefault,
+				ClientUsername:     thingsConnectionClientUsername,
+				ClientPassword:     thingsConnectionClientPassword,
+				ConnectTimeout:     thingsConnectTimeoutTimeoutDefault,
+				AcknowledgeTimeout: thingsAcknowledgeTimeoutDefault,
+				SubscribeTimeout:   thingsSubscribeTimeoutDefault,
+				UnsubscribeTimeout: thingsUnsubscribeTimeoutDefault,
+			},
 		},
 	}
 }

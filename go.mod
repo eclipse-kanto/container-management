@@ -4,6 +4,8 @@ go 1.19
 
 replace github.com/docker/docker => github.com/moby/moby v23.0.3+incompatible
 
+replace github.com/eclipse-kanto/update-manager => github.com/SoftwareDefinedVehicle/kanto-update-manager-fork v0.0.0-20230615081018-07b98f6b8e9e
+
 require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/containerd/cgroups v1.0.4
@@ -13,6 +15,7 @@ require (
 	github.com/containers/ocicrypt v1.1.6
 	github.com/docker/docker v20.10.24+incompatible
 	github.com/eclipse-kanto/kanto/integration/util v0.0.0-20230103144956-911e45a2bf55
+	github.com/eclipse-kanto/update-manager v0.0.0-00010101000000-000000000000
 	github.com/eclipse/ditto-clients-golang v0.0.0-20220225085802-cf3b306280d3
 	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/gogo/protobuf v1.3.2

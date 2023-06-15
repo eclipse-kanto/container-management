@@ -34,6 +34,8 @@ type config struct {
 	GrpcServerConfig *grpcServerConfig `json:"grpc_server,omitempty"`
 
 	ThingsConfig *thingsConfig `json:"things,omitempty"`
+
+	UpdateAgentConfig *updateAgentConfig `json:"updateagent,omitempty"`
 }
 
 // container mgr config
@@ -143,14 +145,23 @@ type grpcServerConfig struct {
 
 // things client configuration
 type thingsConfig struct {
-	ThingsEnable           bool                    `json:"enable,omitempty"`
-	ThingsMetaPath         string                  `json:"home_dir,omitempty"`
-	Features               []string                `json:"features,omitempty"`
-	ThingsConnectionConfig *thingsConnectionConfig `json:"connection,omitempty"`
+	ThingsEnable           bool                  `json:"enable,omitempty"`
+	ThingsMetaPath         string                `json:"home_dir,omitempty"`
+	Features               []string              `json:"features,omitempty"`
+	ThingsConnectionConfig *mqttConnectionConfig `json:"connection,omitempty"`
 }
 
-// things service connection config
-type thingsConnectionConfig struct {
+// things client configuration
+type updateAgentConfig struct {
+	UpdateAgentEnable           bool                  `json:"enable,omitempty"`
+	DomainName                  string                `json:"domain,omitempty"`
+	SystemContainers            []string              `json:"system_containers,omitempty"`
+	VerboseInventory            bool                  `json:"verbose_inventory,omitempty"`
+	UpdateAgentConnectionConfig *mqttConnectionConfig `json:"connection,omitempty"`
+}
+
+// things / update agent service mqtt connection config
+type mqttConnectionConfig struct {
 	BrokerURL          string     `json:"broker_url,omitempty"`
 	KeepAlive          int64      `json:"keep_alive,omitempty"`
 	DisconnectTimeout  int64      `json:"disconnect_timeout,omitempty"`

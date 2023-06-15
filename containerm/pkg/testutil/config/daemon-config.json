@@ -69,5 +69,22 @@
     "mode": "update",
     "home_dir": "/var/lib/container-management",
     "ctr_dir": "/etc/container-management/containers"
+  },
+  "updateagent": {
+    "enable": false,
+    "domain": "containers",
+    "system_containers": [],
+    "verbose_inventory": false,
+    "connection": {
+      "broker_url": "tcp://localhost:1883",
+      "keep_alive": 20000,
+      "disconnect_timeout": 250,
+      "client_username": "",
+      "client_password": "",
+      "connect_timeout": 30000,
+      "acknowledge_timeout": 15000,
+      "subscribe_timeout": 15000,
+      "unsubscribe_timeout": 5000
+    }
   }
 }

@@ -60,6 +60,13 @@ func (d *daemon) init() {
 		log.Info("Deployment Manager is disabled - no Deployment Manager Services will be registered. If you would like to enable Deployment support, please, reconfigure deployment-enable to true")
 	}
 
+	//init update agent manager service
+	if daemonConfig.UpdateAgentConfig.UpdateAgentEnable {
+		initService(ctx, d, registrationsMap, registry.UpdateAgentService)
+	} else {
+		log.Info("Containers Update Agent is disabled - no Update Agent Services will be registered. If you would like to enable Update Agent support, please, reconfigure ua-enable to true")
+	}
+
 	//init grpc services
 	initService(ctx, d, registrationsMap, registry.GRPCService)
 
@@ -92,6 +99,8 @@ func initService(ctx context.Context, d *daemon, registrationsMap map[registry.T
 		case registry.DeploymentManagerService:
 			config = extractDeploymentMgrOptions(d.config)
 			break
+		case registry.UpdateAgentService:
+			config = extractUpdateAgentOptions(d.config)
 		default:
 			config = nil
 		}
