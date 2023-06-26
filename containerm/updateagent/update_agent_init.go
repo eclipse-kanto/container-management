@@ -28,7 +28,7 @@ func newUpdateAgent(mgr mgr.ContainerManager, eventsMgr events.ContainerEventsMa
 	domainName string,
 	systemContainers []string,
 	verboseInventory bool,
-	brokerURL string,
+	broker string,
 	keepAlive time.Duration,
 	disconnectTimeout time.Duration,
 	clientUsername string,
@@ -40,11 +40,11 @@ func newUpdateAgent(mgr mgr.ContainerManager, eventsMgr events.ContainerEventsMa
 	tlsConfig *tlsConfig) (api.UpdateAgent, error) {
 
 	mqttClient := mqtt.NewUpdateAgentClient(domainName, &mqtt.ConnectionConfig{
-		BrokerURL:          brokerURL,
+		Broker:             broker,
 		KeepAlive:          keepAlive.Milliseconds(),
 		DisconnectTimeout:  disconnectTimeout.Milliseconds(),
-		ClientUsername:     clientUsername,
-		ClientPassword:     clientPassword,
+		Username:           clientUsername,
+		Password:           clientPassword,
 		ConnectTimeout:     connectTimeout.Milliseconds(),
 		AcknowledgeTimeout: acknowledgeTimeout.Milliseconds(),
 		SubscribeTimeout:   subscribeTimeout.Milliseconds(),

@@ -4,7 +4,7 @@ go 1.19
 
 replace github.com/docker/docker => github.com/moby/moby v23.0.3+incompatible
 
-replace github.com/eclipse-kanto/update-manager => github.com/SoftwareDefinedVehicle/kanto-update-manager-fork v0.0.0-20230615081018-07b98f6b8e9e
+replace github.com/eclipse-kanto/update-manager => github.com/SoftwareDefinedVehicle/kanto-update-manager-fork v0.0.0-20230626133425-d048831fa3bf
 
 require (
 	github.com/caarlos0/env/v6 v6.10.1
