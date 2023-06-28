@@ -34,6 +34,8 @@ type config struct {
 	GrpcServerConfig *grpcServerConfig `json:"grpc_server,omitempty"`
 
 	ThingsConfig *thingsConfig `json:"things,omitempty"`
+
+	LocalConnection *localConnectionConfig `json:"connection,omitempty"`
 }
 
 // container mgr config
@@ -149,6 +151,21 @@ type thingsConfig struct {
 	ThingsConnectionConfig *thingsConnectionConfig `json:"connection,omitempty"`
 }
 
+// local connection config
+type localConnectionConfig struct {
+	BrokerURL          string     `json:"broker_url,omitempty"`
+	KeepAlive          string     `json:"keep_alive,omitempty"`
+	DisconnectTimeout  string     `json:"disconnect_timeout,omitempty"`
+	ClientUsername     string     `json:"client_username,omitempty"`
+	ClientPassword     string     `json:"client_password,omitempty"`
+	ConnectTimeout     string     `json:"connect_timeout,omitempty"`
+	AcknowledgeTimeout string     `json:"acknowledge_timeout,omitempty"`
+	SubscribeTimeout   string     `json:"subscribe_timeout,omitempty"`
+	UnsubscribeTimeout string     `json:"unsubscribe_timeout,omitempty"`
+	Transport          *tlsConfig `json:"transport,omitempty"`
+}
+
+// TODO Remove in M5
 // things service connection config
 type thingsConnectionConfig struct {
 	BrokerURL          string     `json:"broker_url,omitempty"`

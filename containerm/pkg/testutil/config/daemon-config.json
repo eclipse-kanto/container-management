@@ -69,5 +69,16 @@
     "mode": "update",
     "home_dir": "/var/lib/container-management",
     "ctr_dir": "/etc/container-management/containers"
+  },
+  "connection": {
+    "broker_url": "tcp://localhost:1883",
+    "keep_alive": "20s",
+    "disconnect_timeout": "250ms",
+    "client_username": "",
+    "client_password": "",
+    "connect_timeout": "30s",
+    "acknowledge_timeout": "15s",
+    "subscribe_timeout": "15s",
+    "unsubscribe_timeout": "5s"
   }
 }
