@@ -405,6 +405,54 @@ func TestSetCommandFlags(t *testing.T) {
 			flag:         "deployment-ctr-dir",
 			expectedType: reflect.String.String(),
 		},
+		"test_flags-conn-broker": {
+			flag:         "conn-broker-url",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags-conn-keep-alive": {
+			flag:         "conn-keep-alive",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags-conn-disconnect-timeout": {
+			flag:         "conn-disconnect-timeout",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags-conn-client-username": {
+			flag:         "conn-client-username",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags-conn-client-password": {
+			flag:         "conn-client-password",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags-conn-connect-timeout": {
+			flag:         "conn-connect-timeout",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags-conn-ack-timeout": {
+			flag:         "conn-ack-timeout",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags-conn-sub-timeout": {
+			flag:         "conn-sub-timeout",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags-conn-unsub-timeout": {
+			flag:         "conn-unsub-timeout",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags-conn-root-ca": {
+			flag:         "conn-root-ca",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags-conn-client-cert": {
+			flag:         "conn-client-cert",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags-conn-client-key": {
+			flag:         "conn-client-key",
+			expectedType: reflect.String.String(),
+		},
 	}
 
 	for testName, testCase := range tests {
@@ -499,7 +547,7 @@ func TestParseRegistryConfigs(t *testing.T) {
 			t.Errorf("tls config client key not parsed correctly")
 		}
 		if tlsCfg.Transport.RootCA != "/my/secure/path/ca.crt" {
-			t.Errorf("tls config client roor ca not parsed correctly")
+			t.Errorf("tls config client root ca not parsed correctly")
 		}
 		if tlsCfg.Credentials != nil {
 			t.Errorf("tls config credentials must be nil after parsing")
@@ -511,7 +559,7 @@ func TestParseRegistryConfigs(t *testing.T) {
 			t.Errorf("basic auth config missing after parse")
 		}
 		if basicAuthTLS.IsInsecure {
-			t.Errorf("basic auth with tls isInsecure not parsed correclty")
+			t.Errorf("basic auth with tls isInsecure not parsed correctly")
 		}
 		if basicAuthTLS.Transport.ClientCert != "/my/secure/path/client.cert" {
 			t.Errorf("basic auth with tls config client cert not parsed correctly")
@@ -520,7 +568,7 @@ func TestParseRegistryConfigs(t *testing.T) {
 			t.Errorf("basic auth with tls config client key not parsed correctly")
 		}
 		if basicAuthTLS.Transport.RootCA != "/my/secure/path/ca.crt" {
-			t.Errorf("basic auth with tls config client roor ca not parsed correctly")
+			t.Errorf("basic auth with tls config client root ca not parsed correctly")
 		}
 		if basicAuthTLS.Credentials.UserID != "my-username" {
 			t.Errorf("basic auth with tls config username not parsed correctly")

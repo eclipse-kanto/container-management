@@ -75,18 +75,20 @@ const (
 	grpcServerNetworkProtocolDefault = "unix"
 	grpcServerAddressPathDefault     = "/run/container-management/container-management.sock"
 
-	// default things connection config
-	thingsEnableDefault                      = true
-	thingsMetaPathDefault                    = managerMetaPathDefault
-	thingsConnectionBrokerURLDefault         = "tcp://localhost:1883"
-	thingsConnectionKeepAliveDefault         = 20000
-	thingsConnectionDisconnectTimeoutDefault = 250
-	thingsConnectionClientUsername           = ""
-	thingsConnectionClientPassword           = ""
-	thingsConnectTimeoutTimeoutDefault       = 30000
-	thingsAcknowledgeTimeoutDefault          = 15000
-	thingsSubscribeTimeoutDefault            = 15000
-	thingsUnsubscribeTimeoutDefault          = 5000
+	// default things config
+	thingsEnableDefault   = true
+	thingsMetaPathDefault = managerMetaPathDefault
+
+	// default local connection config
+	connectionBrokerURLDefault         = "tcp://localhost:1883"
+	connectionKeepAliveDefault         = "20s"
+	connectionDisconnectTimeoutDefault = "250ms"
+	connectionClientUsername           = ""
+	connectionClientPassword           = ""
+	connectTimeoutTimeoutDefault       = "30s"
+	acknowledgeTimeoutDefault          = "15s"
+	subscribeTimeoutDefault            = "15s"
+	unsubscribeTimeoutDefault          = "5s"
 
 	// default deployment config
 	deploymentEnableDefault   = true
@@ -159,15 +161,15 @@ func getDefaultInstance() *config {
 			ThingsMetaPath: thingsMetaPathDefault,
 			Features:       thingsServiceFeaturesDefault,
 			ThingsConnectionConfig: &thingsConnectionConfig{
-				BrokerURL:          thingsConnectionBrokerURLDefault,
-				KeepAlive:          thingsConnectionKeepAliveDefault,
-				DisconnectTimeout:  thingsConnectionDisconnectTimeoutDefault,
-				ClientUsername:     thingsConnectionClientUsername,
-				ClientPassword:     thingsConnectionClientPassword,
-				ConnectTimeout:     thingsConnectTimeoutTimeoutDefault,
-				AcknowledgeTimeout: thingsAcknowledgeTimeoutDefault,
-				SubscribeTimeout:   thingsSubscribeTimeoutDefault,
-				UnsubscribeTimeout: thingsUnsubscribeTimeoutDefault,
+				BrokerURL:          connectionBrokerURLDefault,
+				KeepAlive:          20000,
+				DisconnectTimeout:  250,
+				ClientUsername:     connectionClientUsername,
+				ClientPassword:     connectionClientPassword,
+				ConnectTimeout:     30000,
+				AcknowledgeTimeout: 15000,
+				SubscribeTimeout:   15000,
+				UnsubscribeTimeout: 5000,
 			},
 		},
 		DeploymentManagerConfig: &deploymentManagerConfig{
@@ -175,6 +177,17 @@ func getDefaultInstance() *config {
 			DeploymentMode:     deploymentModeDefault,
 			DeploymentMetaPath: deploymentMetaPathDefault,
 			DeploymentCtrPath:  deploymentCtrPathDefault,
+		},
+		LocalConnection: &localConnectionConfig{
+			BrokerURL:          connectionBrokerURLDefault,
+			KeepAlive:          connectionKeepAliveDefault,
+			DisconnectTimeout:  connectionDisconnectTimeoutDefault,
+			ClientUsername:     connectionClientUsername,
+			ClientPassword:     connectionClientPassword,
+			ConnectTimeout:     connectTimeoutTimeoutDefault,
+			AcknowledgeTimeout: acknowledgeTimeoutDefault,
+			SubscribeTimeout:   subscribeTimeoutDefault,
+			UnsubscribeTimeout: unsubscribeTimeoutDefault,
 		},
 	}
 }

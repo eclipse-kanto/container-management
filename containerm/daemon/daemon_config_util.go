@@ -14,8 +14,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
@@ -94,22 +96,51 @@ func extractGrpcOptions(daemonConfig *config) []server.GrpcServerOpt {
 
 func extractThingsOptions(daemonConfig *config) []things.ContainerThingsManagerOpt {
 	thingsOpts := []things.ContainerThingsManagerOpt{}
+	// TODO Remove in M5
+	lcc := daemonConfig.LocalConnection
+	dtcc := getDefaultInstance().ThingsConfig.ThingsConnectionConfig
+	dtcc.Transport = &tlsConfig{}
+	if !reflect.DeepEqual(daemonConfig.ThingsConfig.ThingsConnectionConfig, dtcc) {
+		fmt.Println("DEPRECATED: Things connection settings are now deprecated and will be removed in future release. Use the global connection settings instead!")
+		log.Warn("DEPRECATED: Things connection settings are now deprecated and will be removed in future release. Use the global connection settings instead!")
+		lcc = &localConnectionConfig{
+			BrokerURL:          daemonConfig.ThingsConfig.ThingsConnectionConfig.BrokerURL,
+			KeepAlive:          fmt.Sprintf("%dms", daemonConfig.ThingsConfig.ThingsConnectionConfig.KeepAlive),
+			DisconnectTimeout:  fmt.Sprintf("%dms", daemonConfig.ThingsConfig.ThingsConnectionConfig.DisconnectTimeout),
+			ClientUsername:     daemonConfig.ThingsConfig.ThingsConnectionConfig.ClientUsername,
+			ClientPassword:     daemonConfig.ThingsConfig.ThingsConnectionConfig.ClientPassword,
+			ConnectTimeout:     fmt.Sprintf("%dms", daemonConfig.ThingsConfig.ThingsConnectionConfig.ConnectTimeout),
+			AcknowledgeTimeout: fmt.Sprintf("%dms", daemonConfig.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout),
+			SubscribeTimeout:   fmt.Sprintf("%dms", daemonConfig.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout),
+			UnsubscribeTimeout: fmt.Sprintf("%dms", daemonConfig.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout),
+			Transport:          daemonConfig.ThingsConfig.ThingsConnectionConfig.Transport,
+		}
+	}
+
+	parseDuration := func(duration, defaultDuration string) time.Duration {
+		d, err := time.ParseDuration(duration)
+		if err != nil {
+			log.Warn("Invalid Duration string: %s", duration)
+			d, _ = time.ParseDuration(defaultDuration)
+		}
+		return d
+	}
+
 	thingsOpts = append(thingsOpts,
 		things.WithMetaPath(daemonConfig.ThingsConfig.ThingsMetaPath),
 		things.WithFeatures(daemonConfig.ThingsConfig.Features),
-		things.WithConnectionBroker(daemonConfig.ThingsConfig.ThingsConnectionConfig.BrokerURL),
-		things.WithConnectionKeepAlive(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.KeepAlive)*time.Millisecond),
-		things.WithConnectionDisconnectTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.DisconnectTimeout)*time.Millisecond),
-		things.WithConnectionClientUsername(daemonConfig.ThingsConfig.ThingsConnectionConfig.ClientUsername),
-		things.WithConnectionClientPassword(daemonConfig.ThingsConfig.ThingsConnectionConfig.ClientPassword),
-		things.WithConnectionConnectTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.ConnectTimeout)*time.Millisecond),
-		things.WithConnectionAcknowledgeTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout)*time.Millisecond),
-		things.WithConnectionSubscribeTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout)*time.Millisecond),
-		things.WithConnectionUnsubscribeTimeout(time.Duration(daemonConfig.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout)*time.Millisecond),
+		things.WithConnectionBroker(lcc.BrokerURL),
+		things.WithConnectionKeepAlive(parseDuration(lcc.KeepAlive, lcc.KeepAlive)),
+		things.WithConnectionDisconnectTimeout(parseDuration(lcc.DisconnectTimeout, lcc.DisconnectTimeout)),
+		things.WithConnectionClientUsername(lcc.ClientUsername),
+		things.WithConnectionClientPassword(lcc.ClientPassword),
+		things.WithConnectionConnectTimeout(parseDuration(lcc.ConnectTimeout, lcc.ConnectTimeout)),
+		things.WithConnectionAcknowledgeTimeout(parseDuration(lcc.AcknowledgeTimeout, lcc.AcknowledgeTimeout)),
+		things.WithConnectionSubscribeTimeout(parseDuration(lcc.SubscribeTimeout, lcc.SubscribeTimeout)),
+		things.WithConnectionUnsubscribeTimeout(parseDuration(lcc.UnsubscribeTimeout, lcc.UnsubscribeTimeout)),
 	)
-	transport := daemonConfig.ThingsConfig.ThingsConnectionConfig.Transport
-	if transport != nil {
-		thingsOpts = append(thingsOpts, things.WithTLSConfig(transport.RootCA, transport.ClientCert, transport.ClientKey))
+	if lcc.Transport != nil {
+		thingsOpts = append(thingsOpts, things.WithTLSConfig(lcc.Transport.RootCA, lcc.Transport.ClientCert, lcc.Transport.ClientKey))
 	}
 	return thingsOpts
 }
@@ -127,7 +158,6 @@ func initLogger(daemonConfig *config) {
 }
 
 func loadLocalConfig(filePath string, localConfig *config) error {
-
 	fi, fierr := os.Stat(filePath)
 	if fierr != nil {
 		if os.IsNotExist(fierr) {
@@ -190,6 +220,9 @@ func dumpConfiguration(configInstance *config) {
 
 	// dump deployment manager config
 	dumpDeploymentManager(configInstance)
+
+	// dump local connection config
+	dumpLocalConnection(configInstance)
 }
 
 func dumpDebug(configInstance *config) {
@@ -308,6 +341,23 @@ func dumpDeploymentManager(configInstance *config) {
 		log.Debug("[daemon_cfg][deployment-mode] : %s", configInstance.DeploymentManagerConfig.DeploymentMode)
 		log.Debug("[daemon_cfg][deployment-home-dir] : %s", configInstance.DeploymentManagerConfig.DeploymentMetaPath)
 		log.Debug("[daemon_cfg][deployment-ctr-dir] : %s", configInstance.DeploymentManagerConfig.DeploymentCtrPath)
+	}
+}
+
+func dumpLocalConnection(configInstance *config) {
+	if configInstance.LocalConnection != nil {
+		log.Debug("[daemon_cfg][conn-broker-url] : %s", configInstance.LocalConnection.BrokerURL)
+		log.Debug("[daemon_cfg][conn-keep-alive] : %d", configInstance.LocalConnection.KeepAlive)
+		log.Debug("[daemon_cfg][conn-disconnect-timeout] : %d", configInstance.LocalConnection.DisconnectTimeout)
+		log.Debug("[daemon_cfg][conn-connect-timeout] : %d", configInstance.LocalConnection.ConnectTimeout)
+		log.Debug("[daemon_cfg][conn-ack-timeout] : %d", configInstance.LocalConnection.AcknowledgeTimeout)
+		log.Debug("[daemon_cfg][conn-sub-timeout] : %d", configInstance.LocalConnection.SubscribeTimeout)
+		log.Debug("[daemon_cfg][conn-unsub-timeout] : %d", configInstance.LocalConnection.UnsubscribeTimeout)
+		if configInstance.LocalConnection.Transport != nil {
+			log.Debug("[daemon_cfg][things-conn-root-ca] : %s", configInstance.LocalConnection.Transport.RootCA)
+			log.Debug("[daemon_cfg][things-conn-client-cert] : %s", configInstance.LocalConnection.Transport.ClientCert)
+			log.Debug("[daemon_cfg][things-conn-client-key] : %s", configInstance.LocalConnection.Transport.ClientKey)
+		}
 	}
 }
 
