@@ -75,8 +75,7 @@
     "domain": "containers",
     "system_containers": [],
     "verbose_inventory": false
-  }
-}
+  },
   "connection": {
     "broker_url": "tcp://localhost:1883",
     "keep_alive": "20s",

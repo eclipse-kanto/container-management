@@ -453,6 +453,22 @@ func TestSetCommandFlags(t *testing.T) {
 			flag:         "conn-client-key",
 			expectedType: reflect.String.String(),
 		},
+		"test_flags-ua-enable": {
+			flag:         "ua-enable",
+			expectedType: reflect.Bool.String(),
+		},
+		"test_flags-ua-domain": {
+			flag:         "ua-domain",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags-ua-system-containers": {
+			flag:         "ua-system-containers",
+			expectedType: "stringSlice",
+		},
+		"test_flags-ua-verbose-inventory": {
+			flag:         "ua-verbose-inventory",
+			expectedType: reflect.Bool.String(),
+		},
 	}
 
 	for testName, testCase := range tests {

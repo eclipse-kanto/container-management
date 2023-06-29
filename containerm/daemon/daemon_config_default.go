@@ -189,7 +189,6 @@ func getDefaultInstance() *config {
 			SystemContainers:  []string{}, // no system containers by defaults
 			VerboseInventory:  updateAgentVerboseInventoryDefault,
 		},
-
 		LocalConnection: &localConnectionConfig{
 			BrokerURL:          connectionBrokerURLDefault,
 			KeepAlive:          connectionKeepAliveDefault,

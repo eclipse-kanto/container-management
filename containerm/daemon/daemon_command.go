@@ -112,12 +112,6 @@ func setupCommandFlags(cmd *cobra.Command) {
 
 	//TODO remove in M5
 	setupDeprecatedCommandFlags(flagSet)
-
-	// init update agent
-	flagSet.BoolVar(&cfg.UpdateAgentConfig.UpdateAgentEnable, "ua-enable", cfg.UpdateAgentConfig.UpdateAgentEnable, "Enable the update agent for containers")
-	flagSet.StringVar(&cfg.UpdateAgentConfig.DomainName, "ua-domain", cfg.UpdateAgentConfig.DomainName, "Specify the domain name for the containers update agent")
-	flagSet.StringSliceVar(&cfg.UpdateAgentConfig.SystemContainers, "ua-system-containers", cfg.UpdateAgentConfig.SystemContainers, "Specify the list of system containers which shall be skipped during update process by the update agent")
-	flagSet.BoolVar(&cfg.UpdateAgentConfig.VerboseInventory, "ua-verbose-inventory", cfg.UpdateAgentConfig.VerboseInventory, "Enables verbose reporting of current containers by the update agent")
 }
 
 func setupDeprecatedCommandFlags(flagSet *pflag.FlagSet) {
@@ -135,7 +129,7 @@ func setupDeprecatedCommandFlags(flagSet *pflag.FlagSet) {
 	if cfg.ThingsConfig.ThingsConnectionConfig.Transport == nil {
 		cfg.ThingsConfig.ThingsConnectionConfig.Transport = &tlsConfig{}
 	}
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.RootCA, "things-conn-root-ca", cfg.ThingsConfig.ThingsConnectionConfig.Transport.RootCA, "Specify the PEM encoded CA certificates file")
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert, "things-conn-client-cert", cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert, "Specify the PEM encoded certificate file to authenticate to the MQTT server/broker")
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey, "things-conn-client-key", cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey, "Specify the PEM encoded unencrypted private key file to authenticate to the MQTT server/broker")
+	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.RootCA, "things-conn-root-ca", cfg.ThingsConfig.ThingsConnectionConfig.Transport.RootCA, "DEPRECATED Specify the PEM encoded CA certificates file")
+	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert, "things-conn-client-cert", cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert, "DEPRECATED Specify the PEM encoded certificate file to authenticate to the MQTT server/broker")
+	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey, "things-conn-client-key", cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey, "DEPRECATED Specify the PEM encoded unencrypted private key file to authenticate to the MQTT server/broker")
 }
