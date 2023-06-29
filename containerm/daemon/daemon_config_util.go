@@ -118,15 +118,6 @@ func extractThingsOptions(daemonConfig *config) []things.ContainerThingsManagerO
 		}
 	}
 
-	parseDuration := func(duration, defaultDuration string) time.Duration {
-		d, err := time.ParseDuration(duration)
-		if err != nil {
-			log.Warn("Invalid Duration string: %s", duration)
-			d, _ = time.ParseDuration(defaultDuration)
-		}
-		return d
-	}
-
 	thingsOpts = append(thingsOpts,
 		things.WithMetaPath(daemonConfig.ThingsConfig.ThingsMetaPath),
 		things.WithFeatures(daemonConfig.ThingsConfig.Features),
@@ -153,17 +144,17 @@ func extractUpdateAgentOptions(daemonConfig *config) []updateagent.ContainersUpd
 		updateagent.WithSystemContainers(daemonConfig.UpdateAgentConfig.SystemContainers),
 		updateagent.WithVerboseInventory(daemonConfig.UpdateAgentConfig.VerboseInventory),
 
-		updateagent.WithConnectionBroker(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.BrokerURL),
-		updateagent.WithConnectionKeepAlive(time.Duration(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.KeepAlive)*time.Millisecond),
-		updateagent.WithConnectionDisconnectTimeout(time.Duration(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.DisconnectTimeout)*time.Millisecond),
-		updateagent.WithConnectionClientUsername(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.ClientUsername),
-		updateagent.WithConnectionClientPassword(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.ClientPassword),
-		updateagent.WithConnectionConnectTimeout(time.Duration(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.ConnectTimeout)*time.Millisecond),
-		updateagent.WithConnectionAcknowledgeTimeout(time.Duration(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.AcknowledgeTimeout)*time.Millisecond),
-		updateagent.WithConnectionSubscribeTimeout(time.Duration(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.SubscribeTimeout)*time.Millisecond),
-		updateagent.WithConnectionUnsubscribeTimeout(time.Duration(daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.UnsubscribeTimeout)*time.Millisecond),
+		updateagent.WithConnectionBroker(daemonConfig.LocalConnection.BrokerURL),
+		updateagent.WithConnectionKeepAlive(parseDuration(daemonConfig.LocalConnection.KeepAlive, connectionKeepAliveDefault)),
+		updateagent.WithConnectionDisconnectTimeout(parseDuration(daemonConfig.LocalConnection.DisconnectTimeout, connectionDisconnectTimeoutDefault)),
+		updateagent.WithConnectionClientUsername(daemonConfig.LocalConnection.ClientUsername),
+		updateagent.WithConnectionClientPassword(daemonConfig.LocalConnection.ClientPassword),
+		updateagent.WithConnectionConnectTimeout(parseDuration(daemonConfig.LocalConnection.ConnectTimeout, connectTimeoutTimeoutDefault)),
+		updateagent.WithConnectionAcknowledgeTimeout(parseDuration(daemonConfig.LocalConnection.AcknowledgeTimeout, acknowledgeTimeoutDefault)),
+		updateagent.WithConnectionSubscribeTimeout(parseDuration(daemonConfig.LocalConnection.SubscribeTimeout, subscribeTimeoutDefault)),
+		updateagent.WithConnectionUnsubscribeTimeout(parseDuration(daemonConfig.LocalConnection.UnsubscribeTimeout, unsubscribeTimeoutDefault)),
 	)
-	transport := daemonConfig.UpdateAgentConfig.UpdateAgentConnectionConfig.Transport
+	transport := daemonConfig.LocalConnection.Transport
 	if transport != nil {
 		updateAgentOpts = append(updateAgentOpts, updateagent.WithTLSConfig(transport.RootCA, transport.ClientCert, transport.ClientKey))
 	}
@@ -242,6 +233,9 @@ func dumpConfiguration(configInstance *config) {
 
 	// dump things client config
 	dumpThingsClient(configInstance)
+
+	// dump update agent config
+	dumpUpdateAgent(configInstance)
 
 	// dump deployment manager config
 	dumpDeploymentManager(configInstance)
@@ -360,6 +354,17 @@ func dumpThingsClient(configInstance *config) {
 	}
 }
 
+func dumpUpdateAgent(configInstance *config) {
+	if configInstance.UpdateAgentConfig != nil {
+		log.Debug("[daemon_cfg][ua-enable] : %v", configInstance.UpdateAgentConfig.UpdateAgentEnable)
+		if configInstance.UpdateAgentConfig.UpdateAgentEnable {
+			log.Debug("[daemon_cfg][ua-domain] : %s", configInstance.UpdateAgentConfig.DomainName)
+			log.Debug("[daemon_cfg][ua-system-containers] : %s", configInstance.UpdateAgentConfig.SystemContainers)
+			log.Debug("[daemon_cfg][ua-verbose-inventory] : %v", configInstance.UpdateAgentConfig.VerboseInventory)
+		}
+	}
+}
+
 func dumpDeploymentManager(configInstance *config) {
 	if configInstance.DeploymentManagerConfig != nil {
 		log.Debug("[daemon_cfg][deployment-enable] : %v", configInstance.DeploymentManagerConfig.DeploymentEnable)
@@ -452,4 +457,13 @@ func applyInsecureRegistryConfig(registriesConfig map[string]*ctr.RegistryConfig
 		log.Debug("[daemon_cfg] successfully parsed configuration for insecure registry with host %s", insecReg)
 	}
 	return res
+}
+
+func parseDuration(duration, defaultDuration string) time.Duration {
+	d, err := time.ParseDuration(duration)
+	if err != nil {
+		log.Warn("Invalid Duration string: %s", duration)
+		d, _ = time.ParseDuration(defaultDuration)
+	}
+	return d
 }

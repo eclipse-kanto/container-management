@@ -188,18 +188,6 @@ func getDefaultInstance() *config {
 			DomainName:        updateAgentDomainDefault,
 			SystemContainers:  []string{}, // no system containers by defaults
 			VerboseInventory:  updateAgentVerboseInventoryDefault,
-			UpdateAgentConnectionConfig: &mqttConnectionConfig{
-				// use default values as for the things connection
-				BrokerURL:          thingsConnectionBrokerURLDefault,
-				KeepAlive:          thingsConnectionKeepAliveDefault,
-				DisconnectTimeout:  thingsConnectionDisconnectTimeoutDefault,
-				ClientUsername:     thingsConnectionClientUsername,
-				ClientPassword:     thingsConnectionClientPassword,
-				ConnectTimeout:     thingsConnectTimeoutTimeoutDefault,
-				AcknowledgeTimeout: thingsAcknowledgeTimeoutDefault,
-				SubscribeTimeout:   thingsSubscribeTimeoutDefault,
-				UnsubscribeTimeout: thingsUnsubscribeTimeoutDefault,
-			},
 		},
 
 		LocalConnection: &localConnectionConfig{
