@@ -14,18 +14,22 @@ package updateagent
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
+	ctrtypes "github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
+	"github.com/eclipse-kanto/container-management/containerm/util"
 
 	"github.com/eclipse-kanto/update-manager/api/types"
 )
 
 type containerAction struct {
-	// TODO add current / desired container + actionType
+	desired *ctrtypes.Container
+	current *ctrtypes.Container
+
 	feedbackAction *types.Action
+	actionType     util.ActionType
 }
 
 type baselineAction struct {
@@ -38,7 +42,7 @@ type operation struct {
 	ctx           context.Context
 	updateManager *containersUpdateManager
 	activityID    string
-	desiredState  *types.DesiredState
+	desiredState  *internalDesiredState
 
 	allActions      *baselineAction
 	baselineActions map[string]*baselineAction
@@ -52,9 +56,9 @@ type UpdateOperation interface {
 	Feedback(status types.StatusType, message string, baseline string)
 }
 
-type createUpdateOperation func(*containersUpdateManager, string, *types.DesiredState) UpdateOperation
+type createUpdateOperation func(*containersUpdateManager, string, *internalDesiredState) UpdateOperation
 
-func newOperation(updMgr *containersUpdateManager, activityID string, desiredState *types.DesiredState) UpdateOperation {
+func newOperation(updMgr *containersUpdateManager, activityID string, desiredState *internalDesiredState) UpdateOperation {
 	return &operation{
 		updateManager: updMgr,
 		activityID:    activityID,
@@ -72,8 +76,111 @@ func (o *operation) Identify() error {
 	if o.ctx == nil {
 		o.ctx = context.Background()
 	}
-	// TODO compare current vs. desired containers and identify actions
-	return errors.New("Not implemented yet")
+	currentContainers, err := o.updateManager.mgr.List(o.ctx)
+	if err != nil {
+		log.ErrorErr(err, "could not list all existing containers")
+		return err
+	}
+	currentContainersMap := util.AsNamedMap(currentContainers)
+
+	allActions := []*containerAction{}
+	log.Debug("checking desired vs current containers")
+	for _, desired := range o.desiredState.containers {
+		id := desired.Name
+		if o.isSystemContainer(id) {
+			log.Warn("[%s] System container cannot be updated with desired state.", id)
+			continue
+		}
+		current := currentContainersMap[id]
+		if current != nil {
+			delete(currentContainersMap, id)
+		}
+		allActions = append(allActions, o.newContainerAction(current, desired))
+	}
+
+	destroyActions := o.newDestroyActions(currentContainersMap)
+	allActions = append(allActions, destroyActions...)
+
+	// identify baseline actions, e.g. actions that are grouped together as a baseline
+	baselineActions := make(map[string]*baselineAction)
+	baselineRemoveContainers := o.updateManager.domainName + ":remove-components"
+	baselineActions[baselineRemoveContainers] = &baselineAction{
+		baseline: baselineRemoveContainers,
+		status:   types.StatusIdentified,
+		actions:  destroyActions,
+	}
+	for baseline, containers := range o.desiredState.baselines {
+		baselineActions[baseline] = &baselineAction{
+			baseline: baseline,
+			status:   types.StatusIdentified,
+			actions:  filterActions(allActions, containers),
+		}
+	}
+	o.allActions = &baselineAction{
+		baseline: "",
+		status:   types.StatusIdentified,
+		actions:  allActions,
+	}
+	o.baselineActions = baselineActions
+
+	return nil
+}
+
+func (o *operation) newContainerAction(current *ctrtypes.Container, desired *ctrtypes.Container) *containerAction {
+	actionType := util.DetermineUpdateAction(current, desired)
+	message := util.GetActionMessage(actionType)
+
+	log.Debug("[%s] %s", desired.Name, message)
+	return &containerAction{
+		desired: desired,
+		current: current,
+		feedbackAction: &types.Action{
+			Component: &types.Component{
+				ID:      o.updateManager.domainName + ":" + desired.Name,
+				Version: o.desiredState.findComponent(desired.Name).Version,
+			},
+			Status:  types.ActionStatusIdentified,
+			Message: message,
+		},
+		actionType: actionType,
+	}
+}
+
+func (o *operation) newDestroyActions(toBeRemoved map[string]*ctrtypes.Container) []*containerAction {
+	destroyActions := []*containerAction{}
+	message := util.GetActionMessage(util.ActionDestroy)
+	for id, current := range toBeRemoved {
+		if o.isSystemContainer(id) {
+			continue
+		}
+		log.Debug("[%s] %s", current.Name, message)
+		destroyActions = append(destroyActions, &containerAction{
+			desired: nil,
+			current: current,
+			feedbackAction: &types.Action{
+				Component: &types.Component{
+					ID:      o.updateManager.domainName + ":" + current.Name,
+					Version: findContainerVersion(current.Image.Name),
+				},
+				Status:  types.ActionStatusIdentified,
+				Message: message,
+			},
+			actionType: util.ActionDestroy,
+		})
+	}
+	return destroyActions
+}
+
+func filterActions(actions []*containerAction, containers []*ctrtypes.Container) []*containerAction {
+	result := []*containerAction{}
+	for _, container := range containers {
+		for _, action := range actions {
+			if action.desired == container {
+				result = append(result, action)
+			}
+		}
+	}
+	return result
 }
 
 // Execute executes each COMMAND (download, update, activate, etc) phase, triggered per baseline or for all the identified actions
@@ -164,7 +271,24 @@ func (o *operation) download(baseline string) {
 		log.Debug("downloading for baseline %s - done", baseline)
 	}()
 
-	// TODO implement download
+	actions := baselineAction.actions
+	for _, action := range actions {
+		if lastAction != nil {
+			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusDownloading, lastAction, types.ActionStatusDownloadSuccess, lastActionMessage)
+		}
+		lastAction = action
+		if action.actionType == util.ActionCreate || action.actionType == util.ActionRecreate {
+			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusDownloading, action, types.ActionStatusDownloading, action.feedbackAction.Message)
+			log.Debug("new container %s to be created...", action.feedbackAction.Component.ID)
+			if err := o.createContainer(action.desired); err != nil {
+				lastActionErr = err
+				return
+			}
+			lastActionMessage = "New container created."
+		} else {
+			lastAction = nil
+		}
+	}
 }
 
 // ActionRecreate, ActionDestroy: stops the current container instance.
@@ -189,7 +313,32 @@ func (o *operation) update(baseline string) {
 		log.Debug("updating for baseline %s - done.", baseline)
 	}()
 
-	// TODO implement update
+	actions := baselineAction.actions
+	for _, action := range actions {
+		if lastAction != nil {
+			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusUpdating, lastAction, types.ActionStatusUpdateSuccess, lastActionMessage)
+		}
+
+		log.Debug("container %s to be updated...", action.feedbackAction.Component.ID)
+		lastAction = action
+		if action.actionType == util.ActionRecreate || action.actionType == util.ActionDestroy {
+			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusUpdating, action, types.ActionStatusUpdating, action.feedbackAction.Message)
+			if err := o.stopContainer(action.current); err != nil {
+				lastActionErr = err
+				return
+			}
+			lastActionMessage = "Old container instance is stopped."
+		} else if action.actionType == util.ActionUpdate {
+			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusUpdating, action, types.ActionStatusUpdating, action.feedbackAction.Message)
+			if err := o.updateContainer(action.current, action.desired); err != nil {
+				lastActionErr = err
+				return
+			}
+			lastActionMessage = "Container instance is updated with new configuration."
+		} else {
+			lastActionMessage = action.feedbackAction.Message
+		}
+	}
 }
 
 // ActionCreate, ActionRecreate: starts the newly created container instance (from DOWNLOAD phase).
@@ -214,7 +363,36 @@ func (o *operation) activate(baseline string) {
 		log.Debug("activating for baseline %s - done...", baseline)
 	}()
 
-	// TODO implement activate
+	actions := baselineAction.actions
+	for _, action := range actions {
+		if lastAction != nil {
+			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusActivating, lastAction, types.ActionStatusActivationSuccess, lastActionMessage)
+		}
+
+		log.Debug("container %s to be activated...", action.feedbackAction.Component.ID)
+		lastAction = action
+		if action.actionType == util.ActionCheck || action.actionType == util.ActionUpdate {
+			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusActivating, action, types.ActionStatusActivating, action.feedbackAction.Message)
+			if err := o.ensureRunningContainer(action.current); err != nil {
+				lastActionErr = err
+				return
+			}
+			if action.actionType == util.ActionCheck {
+				lastActionMessage = "Existing container instance is running."
+			} else {
+				lastActionMessage = action.feedbackAction.Message
+			}
+		} else if action.actionType == util.ActionCreate || action.actionType == util.ActionRecreate {
+			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusActivating, action, types.ActionStatusActivating, action.feedbackAction.Message)
+			if err := o.startContainer(action.desired); err != nil {
+				lastActionErr = err
+				return
+			}
+			lastActionMessage = "New container instance is started."
+		} else {
+			lastAction = nil
+		}
+	}
 }
 
 // ActionCreate: removes the newly created container instance (from DOWNLOAD phase)
@@ -240,7 +418,47 @@ func (o *operation) rollback(baseline string) {
 		log.Debug("rollback for baseline %s - done.", baseline)
 	}()
 
-	// TODO implement rollback
+	actions := baselineAction.actions
+	for _, action := range actions {
+		if lastAction != nil {
+			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusRollback, lastAction, types.ActionStatusUpdateFailure, lastActionMessage)
+		}
+		log.Debug("container %s to be rolled back...", action.feedbackAction.Component.ID)
+		lastAction = action
+		if action.actionType == util.ActionUpdate {
+			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusRollback, action, types.ActionStatusUpdating, action.feedbackAction.Message)
+			if err := o.updateContainer(action.current, action.current); err != nil {
+				lastActionMessage = err.Error()
+				failure = true
+				continue
+			}
+			if err := o.ensureRunningContainer(action.current); err != nil {
+				lastActionMessage = err.Error()
+				failure = true
+				continue
+			}
+			lastActionMessage = "Update unsuccessful, but rollback succeeded - container configuration restored from older instance."
+		} else if action.actionType == util.ActionCreate || action.actionType == util.ActionRecreate {
+			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusRollback, action, types.ActionStatusUpdating, action.feedbackAction.Message)
+			if err := o.removeContainer(action.desired); err != nil {
+				lastActionMessage = err.Error()
+				failure = true
+				continue
+			}
+			if action.current != nil {
+				if err := o.startContainer(action.current); err != nil {
+					lastActionMessage = err.Error()
+					failure = true
+					continue
+				}
+				lastActionMessage = "Update unsuccessful, but rollback succeeded - new container instance destroyed, old container instance restored."
+			} else {
+				lastActionMessage = "Update unsuccessful, but rollback succeeded - new container instance destroyed."
+			}
+		} else {
+			lastAction = nil
+		}
+	}
 }
 
 // ActionRecreate, ActionDestroy: removes the old existing container instance.
@@ -249,7 +467,7 @@ func (o *operation) cleanup(baseline string) {
 	if baselineAction == nil {
 		return
 	}
-
+	actions := baselineAction.actions
 	if baseline == "*" || baseline == "" {
 		for b := range o.baselineActions {
 			delete(o.baselineActions, b)
@@ -258,11 +476,36 @@ func (o *operation) cleanup(baseline string) {
 		delete(o.baselineActions, baseline)
 	}
 	log.Debug("cleanup for baseline %s - starting...", baseline)
-
-	// TODO implement cleanup
-
+	for _, action := range actions {
+		if action.actionType == util.ActionRecreate || action.actionType == util.ActionDestroy {
+			log.Debug("container %s to be cleanup...", action.feedbackAction.Component.ID)
+			err := o.removeContainer(action.current)
+			if action.actionType == util.ActionDestroy {
+				if err != nil {
+					action.feedbackAction.Status = types.ActionStatusRemovalFailure
+					action.feedbackAction.Message = err.Error()
+				} else {
+					action.feedbackAction.Status = types.ActionStatusRemovalSuccess
+					action.feedbackAction.Message = "Old container instance is removed."
+				}
+			}
+		}
+	}
 	o.Feedback(types.BaselineStatusCleanupSuccess, "", baseline)
 	log.Debug("cleanup for baseline %s - done...", baseline)
+}
+
+func (o *operation) isSystemContainer(containerID string) bool {
+	systemContainers := o.desiredState.systemContainers
+	if systemContainers == nil {
+		systemContainers = o.updateManager.systemContainers
+	}
+	for _, systemContainerID := range systemContainers {
+		if systemContainerID == containerID {
+			return true
+		}
+	}
+	return false
 }
 
 // Feedback sends desired state feedback responses, baseline parameter is optional
@@ -309,4 +552,93 @@ func asStatusString(what []types.StatusType) string {
 		sb.WriteString(string(status))
 	}
 	return sb.String()
+}
+
+func (o *operation) createContainer(desired *ctrtypes.Container) error {
+	log.Debug("container [%s] does not exist - will create a new one", desired.Name)
+	_, err := o.updateManager.mgr.Create(o.ctx, desired)
+	if err != nil {
+		log.Error("could not create container [%s]", desired.Name)
+		return err
+	}
+	log.Debug("successfully created container [%s]", desired.Name)
+	return nil
+}
+
+func (o *operation) startContainer(container *ctrtypes.Container) error {
+	if err := o.updateManager.mgr.Start(o.ctx, container.ID); err != nil {
+		log.Error("could not start container [%s]", container.Name)
+		return err
+	}
+	log.Debug("successfully started container [%s]", container.Name)
+	return nil
+}
+
+func (o *operation) unpauseContainer(container *ctrtypes.Container) error {
+	if err := o.updateManager.mgr.Unpause(o.ctx, container.ID); err != nil {
+		log.Error("could not unpause container [%s]", container.Name)
+		return err
+	}
+	log.Debug("successfully unpaused container [%s]", container.Name)
+	return nil
+}
+
+func (o *operation) updateContainer(current *ctrtypes.Container, desired *ctrtypes.Container) error {
+	log.Debug("there is an already existing container [%s] - will be updated with newer configuration", desired.Name)
+	updateOpts := &ctrtypes.UpdateOpts{
+		RestartPolicy: desired.HostConfig.RestartPolicy,
+		Resources:     desired.HostConfig.Resources,
+	}
+	if err := o.updateManager.mgr.Update(o.ctx, current.ID, updateOpts); err != nil {
+		log.Error("could not update configuration for container [%s]: %v", desired.Name, err)
+		return err
+	}
+	log.Debug("successfully updated container [%s]", desired.Name)
+	return nil
+}
+
+func (o *operation) ensureRunningContainer(current *ctrtypes.Container) error {
+	container, err := o.updateManager.mgr.Get(o.ctx, current.ID)
+	if err != nil {
+		log.Debug("cannot get current state for container [%s] : %v", current.Name, err)
+		return err
+	}
+	if container.State.Running {
+		log.Debug("container [%s] is RUNNING - nothing to do more", current.Name)
+		return nil
+	}
+	if container.State.Paused {
+		log.Debug("container [%s] is PAUSED - will try to unpause it", current.Name)
+		return o.unpauseContainer(container)
+	}
+	log.Debug("container [%s] is not RUNNING - will try to start it", current.Name)
+	return o.startContainer(container)
+}
+
+func (o *operation) removeContainer(container *ctrtypes.Container) error {
+	log.Debug("container [%s] is not desired - will be removed", container.Name)
+	if err := o.updateManager.mgr.Remove(o.ctx, container.ID, true); err != nil {
+		log.Error("could not remove undesired container [%s]: %v", container.Name, err)
+		return err
+	}
+	log.Debug("successfully removed container [%s]", container.Name)
+	return nil
+}
+
+func (o *operation) stopContainer(container *ctrtypes.Container) error {
+	if !util.IsContainerRunningOrPaused(container) {
+		log.Debug("container [%s] is not RUNNING, nor PAUSED - nothing to do more", container.Name)
+		return nil
+	}
+	stopOpts := &ctrtypes.StopOpts{
+		Force:  true,
+		Signal: "SIGTERM",
+	}
+	log.Debug("container [%s] will be updated - will stop current instance", container.Name)
+	if err := o.updateManager.mgr.Stop(o.ctx, container.ID, stopOpts); err != nil {
+		log.Error("could not stop outdated container [%s]: %v", container.Name, err)
+		return err
+	}
+	log.Debug("successfully stopped outdated container [%s]", container.Name)
+	return nil
 }
