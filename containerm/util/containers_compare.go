@@ -13,6 +13,7 @@
 package util
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
@@ -58,6 +59,23 @@ func DetermineUpdateAction(current *types.Container, desired *types.Container) A
 		return ActionUpdate
 	}
 	return ActionCheck
+}
+
+// GetActionMessage returns a text message describing the given action type
+func GetActionMessage(actionType ActionType) string {
+	switch actionType {
+	case ActionCheck:
+		return "No changes detected, existing container will be check only if it is running."
+	case ActionCreate:
+		return "New container will be created and started."
+	case ActionRecreate:
+		return "Existing container will be destroyed and replaced by a new one."
+	case ActionUpdate:
+		return "Existing container will be updated with new configuration."
+	case ActionDestroy:
+		return "Existing container will be destroyed, no longer needed."
+	}
+	return "Unknown action type: " + fmt.Sprint(actionType)
 }
 
 func isEqualImage(currentImage types.Image, newImage types.Image) bool {

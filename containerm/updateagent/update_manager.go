@@ -59,16 +59,22 @@ func (updMgr *containersUpdateManager) Apply(ctx context.Context, activityID str
 
 	log.Debug("processing desired state - start")
 	// create operation instance
-	updMgr.operation = updMgr.createUpdateOperation(updMgr, activityID, desiredState)
+	internalDesiredState, err := toInternalDesiredState(desiredState, updMgr.domainName)
+	if err != nil {
+		log.ErrorErr(err, "could not parse desired state components as container configurations")
+		updMgr.eventCallback.HandleDesiredStateFeedbackEvent(updMgr.Name(), activityID, "", types.StatusIdentificationFailed, err.Error(), []*types.Action{})
+		return
+	}
+	updMgr.operation = updMgr.createUpdateOperation(updMgr, activityID, internalDesiredState)
 
 	// identification phase
 	updMgr.operation.Feedback(types.StatusIdentifying, "", "")
 	if err := updMgr.operation.Identify(); err != nil {
 		updMgr.operation.Feedback(types.StatusIdentificationFailed, err.Error(), "")
+		log.ErrorErr(err, "processing desired state - identification phase failed")
 		return
 	}
 	updMgr.operation.Feedback(types.StatusIdentified, "", "")
-
 	log.Debug("processing desired state - identification phase completed, waiting for commands...")
 }
 
