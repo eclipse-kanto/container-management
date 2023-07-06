@@ -166,11 +166,11 @@ golang/mock (1.6.0)
 * Project: https://github.com/golang/mock
 * Source:  https://github.com/golang/mock/releases/tag/v1.6.0
 
-golang/protobuf (1.5.2)
+golang/protobuf (1.5.3)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/protobuf
-* Source:  https://github.com/golang/protobuf/releases/tag/v1.5.2
+* Source:  https://github.com/golang/protobuf/releases/tag/v1.5.3
 
 google/btree (1.0.1)
 
@@ -394,23 +394,23 @@ golang/crypto (0.0.0-20220315160706-3147a52a75dd)
 * Project: https://github.com/golang/crypto
 * Source:  https://github.com/golang/crypto/tree/3147a52a75dda54ac3a611ef8978640d85188a2a
 
-golang.org/x/net (0.7.0)
+golang.org/x/net (0.9.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/net
-* Source:  https://github.com/golang/net/releases/tag/v0.7.0
+* Source:  https://github.com/golang/net/releases/tag/v0.9.0
 
-golang/x/sync (0.0.0-20220722155255-886fb9371eb4)
+golang/x/sync (0.1.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sync
-* Source:  https://github.com/golang/sync/tree/886fb9371eb4b47af10bff9c8025a8c9e1554b92
+* Source:  https://github.com/golang/sync/releases/tag/v0.1.0
 
-golang.org/x/sys (0.5.0)
+golang.org/x/sys (0.7.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sys
-* Source:  https://github.com/golang/sys/releases/tag/v0.5.0
+* Source:  https://github.com/golang/sys/releases/tag/v0.7.0
 
 golang/x/term (0.5.0)
 
@@ -418,11 +418,11 @@ golang/x/term (0.5.0)
 * Project: https://github.com/golang/term
 * Source:  https://github.com/golang/term/releases/tag/v0.5.0
 
-golang/x/text (0.7.0)
+golang/x/text (0.9.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/text
-* Source:  https://github.com/golang/text/releases/tag/v0.7.0
+* Source:  https://github.com/golang/text/releases/tag/v0.9.0
 
 mozilla-services/pkcs7 (0.0.0-20200128120323-432b2356ecb1)
 
@@ -430,17 +430,17 @@ mozilla-services/pkcs7 (0.0.0-20200128120323-432b2356ecb1)
 * Project: https://github.com/mozilla-services
 * Source:  https://github.com/mozilla-services/pkcs7/tree/432b2356ecb18209c1cec25680b8a23632794f21
 
-googleapis/go-genproto (0.0.0-20220502173005-c8bf987b8c21)
+googleapis/go-genproto (0.0.0-20230410155749-daa745c078e1)
 
 * License: Apache License 2.0
 * Project: https://github.com/googleapis/go-genproto
-* Source:  https://github.com/googleapis/go-genproto/tree/c8bf987b8c21778beffccfd5a923546432c2d250
+* Source:  https://github.com/googleapis/go-genproto/tree/daa745c078e18def54ea6b63235554b59c97f01d
 
-grpc/grpc-go (1.50.1)
+grpc/grpc-go (1.56.1)
 
 * License: Apache License 2.0
 * Project: https://github.com/grpc/grpc-go
-* Source:  https://github.com/grpc/grpc-go/releases/tag/v1.50.1
+* Source:  https://github.com/grpc/grpc-go/releases/tag/v1.56.1
 
 protocolbuffers/protobuf-go (1.30.0)
 
