@@ -40,16 +40,14 @@ func (d *daemon) start() error {
 	}
 
 	if d.config.ThingsConfig.ThingsEnable {
-		err := d.startThingsManagers()
-		if err != nil {
+		if err := d.startThingsManagers(); err != nil {
 			log.ErrorErr(err, "could not start the Things Container Manager Services")
 		}
 	}
 
 	if d.config.UpdateAgentConfig.UpdateAgentEnable {
 		log.Debug("Containers Update Agent is enabled.")
-		err := d.startUpdateAgents()
-		if err != nil {
+		if err := d.startUpdateAgents(); err != nil {
 			log.ErrorErr(err, "could not start the Containers Update Agent Services")
 		}
 	} else {
@@ -57,7 +55,6 @@ func (d *daemon) start() error {
 	}
 
 	return d.startGrpcServers()
-
 }
 
 func (d *daemon) stop() {
