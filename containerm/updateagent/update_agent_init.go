@@ -27,7 +27,7 @@ import (
 func newUpdateAgent(mgr mgr.ContainerManager, eventsMgr events.ContainerEventsManager,
 	domainName string,
 	systemContainers []string,
-	verboseInventory bool,
+	verboseInventoryReport bool,
 	broker string,
 	keepAlive time.Duration,
 	disconnectTimeout time.Duration,
@@ -51,16 +51,16 @@ func newUpdateAgent(mgr mgr.ContainerManager, eventsMgr events.ContainerEventsMa
 		UnsubscribeTimeout: unsubscribeTimeout.Milliseconds(),
 	})
 
-	return agent.NewUpdateAgent(mqttClient, newUpdateManager(mgr, eventsMgr, domainName, systemContainers, verboseInventory)), nil
+	return agent.NewUpdateAgent(mqttClient, newUpdateManager(mgr, eventsMgr, domainName, systemContainers, verboseInventoryReport)), nil
 }
 
 // newUpdateManager instantiates a new update manager instance
 func newUpdateManager(mgr mgr.ContainerManager, eventsMgr events.ContainerEventsManager,
-	domainName string, systemContainers []string, verboseContainers bool) api.UpdateManager {
+	domainName string, systemContainers []string, verboseInventoryReport bool) api.UpdateManager {
 	return &containersUpdateManager{
-		domainName:        domainName,
-		systemContainers:  systemContainers,
-		verboseContainers: verboseContainers,
+		domainName:             domainName,
+		systemContainers:       systemContainers,
+		verboseInventoryReport: verboseInventoryReport,
 
 		mgr:                   mgr,
 		eventsMgr:             eventsMgr,
@@ -86,7 +86,7 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 	return newUpdateAgent(mgrService.(mgr.ContainerManager), eventsMgr.(events.ContainerEventsManager),
 		uaOpts.domainName,
 		uaOpts.systemContainers,
-		uaOpts.verboseInventory,
+		uaOpts.verboseInventoryReport,
 		uaOpts.broker,
 		uaOpts.keepAlive,
 		uaOpts.disconnectTimeout,

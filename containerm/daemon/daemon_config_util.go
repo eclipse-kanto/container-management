@@ -142,7 +142,7 @@ func extractUpdateAgentOptions(daemonConfig *config) []updateagent.ContainersUpd
 	updateAgentOpts = append(updateAgentOpts,
 		updateagent.WithDomainName(daemonConfig.UpdateAgentConfig.DomainName),
 		updateagent.WithSystemContainers(daemonConfig.UpdateAgentConfig.SystemContainers),
-		updateagent.WithVerboseInventory(daemonConfig.UpdateAgentConfig.VerboseInventory),
+		updateagent.WithVerboseInventoryReport(daemonConfig.UpdateAgentConfig.VerboseInventoryReport),
 
 		updateagent.WithConnectionBroker(daemonConfig.LocalConnection.BrokerURL),
 		updateagent.WithConnectionKeepAlive(parseDuration(daemonConfig.LocalConnection.KeepAlive, connectionKeepAliveDefault)),
@@ -360,7 +360,7 @@ func dumpUpdateAgent(configInstance *config) {
 		if configInstance.UpdateAgentConfig.UpdateAgentEnable {
 			log.Debug("[daemon_cfg][ua-domain] : %s", configInstance.UpdateAgentConfig.DomainName)
 			log.Debug("[daemon_cfg][ua-system-containers] : %s", configInstance.UpdateAgentConfig.SystemContainers)
-			log.Debug("[daemon_cfg][ua-verbose-inventory] : %v", configInstance.UpdateAgentConfig.VerboseInventory)
+			log.Debug("[daemon_cfg][ua-verbose-inventory-report] : %v", configInstance.UpdateAgentConfig.VerboseInventoryReport)
 		}
 	}
 }

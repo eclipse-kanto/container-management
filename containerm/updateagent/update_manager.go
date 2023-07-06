@@ -31,9 +31,9 @@ const (
 )
 
 type containersUpdateManager struct {
-	domainName        string
-	systemContainers  []string
-	verboseContainers bool
+	domainName             string
+	systemContainers       []string
+	verboseInventoryReport bool
 
 	mgr       mgr.ContainerManager
 	eventsMgr events.ContainerEventsManager
@@ -143,7 +143,7 @@ func (updMgr *containersUpdateManager) getCurrentContainers() []*types.SoftwareN
 		log.ErrorErr(err, "could not list all existing containers")
 		return nil
 	}
-	// TODO implement function fromContainers(containers, updMgr.verboseContainers)
+	// TODO implement function fromContainers(containers, updMgr.verboseInventoryReport)
 	return nil
 }
 

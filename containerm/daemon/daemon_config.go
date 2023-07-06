@@ -155,10 +155,10 @@ type thingsConfig struct {
 
 // things client configuration
 type updateAgentConfig struct {
-	UpdateAgentEnable bool     `json:"enable,omitempty"`
-	DomainName        string   `json:"domain,omitempty"`
-	SystemContainers  []string `json:"system_containers,omitempty"`
-	VerboseInventory  bool     `json:"verbose_inventory,omitempty"`
+	UpdateAgentEnable      bool     `json:"enable,omitempty"`
+	DomainName             string   `json:"domain,omitempty"`
+	SystemContainers       []string `json:"system_containers,omitempty"`
+	VerboseInventoryReport bool     `json:"verbose_inventory_report,omitempty"`
 }
 
 // local connection config

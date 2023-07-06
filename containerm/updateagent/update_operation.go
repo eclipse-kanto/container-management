@@ -50,13 +50,13 @@ type UpdateOperation interface {
 	Feedback(status types.StatusType, message string, baseline string)
 }
 
-type createUpdateOperation func(*containersUpdateManager, string, interface{}) UpdateOperation
+type createUpdateOperation func(*containersUpdateManager, string, *types.DesiredState) UpdateOperation
 
-func newOperation(updMgr *containersUpdateManager, activityID string, desiredState interface{}) UpdateOperation {
+func newOperation(updMgr *containersUpdateManager, activityID string, desiredState *types.DesiredState) UpdateOperation {
 	return &operation{
 		updateManager: updMgr,
 		activityID:    activityID,
-		desiredState:  desiredState.(*types.DesiredState),
+		desiredState:  desiredState,
 	}
 }
 
@@ -246,7 +246,7 @@ func (o *operation) cleanup(baseline string) {
 	log.Debug("cleanup for baseline %s - done...", baseline)
 }
 
-// Feeback sends desired state feedback responses, baseline parameter is optional
+// Feedback sends desired state feedback responses, baseline parameter is optional
 func (o *operation) Feedback(status types.StatusType, message string, baseline string) {
 	o.updateManager.eventCallback.HandleDesiredStateFeedbackEvent(o.updateManager.domainName, o.activityID, baseline, status, message, o.toFeedbackActions())
 }

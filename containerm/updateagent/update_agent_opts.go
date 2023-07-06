@@ -20,19 +20,19 @@ import (
 type ContainersUpdateAgentOpt func(updateAgentOptions *updateAgentOpts) error
 
 type updateAgentOpts struct {
-	domainName         string
-	systemContainers   []string
-	verboseInventory   bool
-	broker             string
-	keepAlive          time.Duration
-	disconnectTimeout  time.Duration
-	clientUsername     string
-	clientPassword     string
-	connectTimeout     time.Duration
-	acknowledgeTimeout time.Duration
-	subscribeTimeout   time.Duration
-	unsubscribeTimeout time.Duration
-	tlsConfig          *tlsConfig
+	domainName             string
+	systemContainers       []string
+	verboseInventoryReport bool
+	broker                 string
+	keepAlive              time.Duration
+	disconnectTimeout      time.Duration
+	clientUsername         string
+	clientPassword         string
+	connectTimeout         time.Duration
+	acknowledgeTimeout     time.Duration
+	subscribeTimeout       time.Duration
+	unsubscribeTimeout     time.Duration
+	tlsConfig              *tlsConfig
 }
 
 // tls-secured communication config
@@ -67,10 +67,10 @@ func WithSystemContainers(systemContainers []string) ContainersUpdateAgentOpt {
 	}
 }
 
-// WithVerboseInventory enables / disables verbose inventory reporting of current containers
-func WithVerboseInventory(verboseInventory bool) ContainersUpdateAgentOpt {
+// WithVerboseInventoryReport enables / disables verbose inventory reporting of current containers
+func WithVerboseInventoryReport(verboseInventoryReport bool) ContainersUpdateAgentOpt {
 	return func(updateAgentOptions *updateAgentOpts) error {
-		updateAgentOptions.verboseInventory = verboseInventory
+		updateAgentOptions.verboseInventoryReport = verboseInventoryReport
 		return nil
 	}
 }

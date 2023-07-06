@@ -97,9 +97,9 @@ const (
 	deploymentCtrPathDefault  = "/etc/container-management/containers"
 
 	// default update agent config
-	updateAgentEnableDefault           = false
-	updateAgentDomainDefault           = "containers"
-	updateAgentVerboseInventoryDefault = false
+	updateAgentEnableDefault                 = false
+	updateAgentDomainDefault                 = "containers"
+	updateAgentVerboseInventoryReportDefault = false
 )
 
 var (
@@ -184,10 +184,10 @@ func getDefaultInstance() *config {
 			DeploymentCtrPath:  deploymentCtrPathDefault,
 		},
 		UpdateAgentConfig: &updateAgentConfig{
-			UpdateAgentEnable: updateAgentEnableDefault,
-			DomainName:        updateAgentDomainDefault,
-			SystemContainers:  []string{}, // no system containers by defaults
-			VerboseInventory:  updateAgentVerboseInventoryDefault,
+			UpdateAgentEnable:      updateAgentEnableDefault,
+			DomainName:             updateAgentDomainDefault,
+			SystemContainers:       []string{}, // no system containers by defaults
+			VerboseInventoryReport: updateAgentVerboseInventoryReportDefault,
 		},
 		LocalConnection: &localConnectionConfig{
 			BrokerURL:          connectionBrokerURLDefault,
