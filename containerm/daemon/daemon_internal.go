@@ -48,9 +48,9 @@ func (d *daemon) start() error {
 
 	if d.config.UpdateAgentConfig.UpdateAgentEnable {
 		log.Debug("Containers Update Agent is enabled.")
-		err := d.startUpdateAgent()
+		err := d.startUpdateAgents()
 		if err != nil {
-			log.ErrorErr(err, "could not start the Containers Update Agent")
+			log.ErrorErr(err, "could not start the Containers Update Agent Services")
 		}
 	} else {
 		log.Debug("Containers Update Agent is not enabled.")
@@ -74,8 +74,8 @@ func (d *daemon) stop() {
 	d.stopContainerManagers()
 
 	if d.config.UpdateAgentConfig.UpdateAgentEnable {
-		log.Debug("stopping Containers Update Agent")
-		d.stopUpdateAgent()
+		log.Debug("stopping Containers Update Agents services")
+		d.stopUpdateAgents()
 	}
 
 	if d.config.ThingsConfig.ThingsEnable {
@@ -232,37 +232,46 @@ func (d *daemon) stopThingsManagers() {
 	}
 }
 
-func (d *daemon) startUpdateAgent() error {
+func (d *daemon) startUpdateAgents() error {
 	log.Debug("starting Update Agent services ")
-	instance, err := d.serviceInfoSet.Get(registry.UpdateAgentService)
-	if err != nil {
-		log.ErrorErr(err, "could not get Update Agent service instance")
-		return err
-	}
+	updateAgentInfos := d.serviceInfoSet.GetAll(registry.UpdateAgentService)
+	var instance interface{}
+	var err error
 
-	log.Debug("will try to start Update Agent service...")
-	err = instance.(api.UpdateAgent).Start(context.Background())
-
-	if err != nil {
-		log.ErrorErr(err, "could not start Update Agent service")
-		return err
+	log.Debug("there are %d Update Agent services to be started", len(updateAgentInfos))
+	for _, updateAgentInfo := range updateAgentInfos {
+		log.Debug("will try to start Update Agent service instance with service ID = %s", updateAgentInfo.Registration.ID)
+		instance, err = updateAgentInfo.Instance()
+		if err != nil {
+			log.ErrorErr(err, "could not get Update Agent service instance with service ID = %s", updateAgentInfo.Registration.ID)
+		} else {
+			err = instance.(api.UpdateAgent).Start(context.Background())
+			if err != nil {
+				log.ErrorErr(err, "could not start Update Agent service instance with service ID = %s", updateAgentInfo.Registration.ID)
+			} else {
+				log.Debug("successfully started Update Agent service instance with service ID = %s ", updateAgentInfo.Registration.ID)
+			}
+		}
 	}
-	log.Info("successfully started Update Agent service")
-	return nil
+	return err
 }
 
-func (d *daemon) stopUpdateAgent() {
-	log.Debug("will stop Update Agent service")
-	instance, err := d.serviceInfoSet.Get(registry.UpdateAgentService)
-	if err != nil {
-		log.ErrorErr(err, "could not get Update Agent service instance")
-		return
-	}
-	err = instance.(api.UpdateAgent).Stop()
-	if err != nil {
-		log.ErrorErr(err, "could not stop gracefully Update Agent service instance")
-	} else {
-		log.Info("successfully stopped Update Agent service")
+func (d *daemon) stopUpdateAgents() {
+	log.Debug("will stop Update Agent services")
+	updateAgentInfos := d.serviceInfoSet.GetAll(registry.UpdateAgentService)
+
+	for _, updateAgentInfo := range updateAgentInfos {
+		instance, err := updateAgentInfo.Instance()
+		if err != nil {
+			log.ErrorErr(err, "could not get Update Agent service instance with service ID = %s", updateAgentInfo.Registration.ID)
+		} else {
+			err = instance.(api.UpdateAgent).Stop()
+			if err != nil {
+				log.ErrorErr(err, "could not stop gracefully Update Agent service instance with service ID = %s", updateAgentInfo.Registration.ID)
+			} else {
+				log.Debug("successfully stopped Update Agent service with service ID = %s ", updateAgentInfo.Registration.ID)
+			}
+		}
 	}
 }
 
