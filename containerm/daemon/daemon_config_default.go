@@ -95,6 +95,11 @@ const (
 	deploymentModeDefault     = string(deployment.UpdateMode)
 	deploymentMetaPathDefault = managerMetaPathDefault
 	deploymentCtrPathDefault  = "/etc/container-management/containers"
+
+	// default update agent config
+	updateAgentEnableDefault                 = false
+	updateAgentDomainDefault                 = "containers"
+	updateAgentVerboseInventoryReportDefault = false
 )
 
 var (
@@ -177,6 +182,12 @@ func getDefaultInstance() *config {
 			DeploymentMode:     deploymentModeDefault,
 			DeploymentMetaPath: deploymentMetaPathDefault,
 			DeploymentCtrPath:  deploymentCtrPathDefault,
+		},
+		UpdateAgentConfig: &updateAgentConfig{
+			UpdateAgentEnable:      updateAgentEnableDefault,
+			DomainName:             updateAgentDomainDefault,
+			SystemContainers:       []string{}, // no system containers by defaults
+			VerboseInventoryReport: updateAgentVerboseInventoryReportDefault,
 		},
 		LocalConnection: &localConnectionConfig{
 			BrokerURL:          connectionBrokerURLDefault,

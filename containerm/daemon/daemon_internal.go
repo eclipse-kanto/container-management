@@ -20,6 +20,8 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/mgr"
 	"github.com/eclipse-kanto/container-management/containerm/registry"
 	"github.com/eclipse-kanto/container-management/containerm/things"
+
+	"github.com/eclipse-kanto/update-manager/api"
 )
 
 func (d *daemon) start() error {
@@ -38,14 +40,21 @@ func (d *daemon) start() error {
 	}
 
 	if d.config.ThingsConfig.ThingsEnable {
-		err := d.startThingsManagers()
-		if err != nil {
+		if err := d.startThingsManagers(); err != nil {
 			log.ErrorErr(err, "could not start the Things Container Manager Services")
 		}
 	}
 
-	return d.startGrpcServers()
+	if d.config.UpdateAgentConfig.UpdateAgentEnable {
+		log.Debug("Containers Update Agent is enabled.")
+		if err := d.startUpdateAgents(); err != nil {
+			log.ErrorErr(err, "could not start the Containers Update Agent Services")
+		}
+	} else {
+		log.Debug("Containers Update Agent is not enabled.")
+	}
 
+	return d.startGrpcServers()
 }
 
 func (d *daemon) stop() {
@@ -60,6 +69,11 @@ func (d *daemon) stop() {
 
 	log.Debug("stopping management local services")
 	d.stopContainerManagers()
+
+	if d.config.UpdateAgentConfig.UpdateAgentEnable {
+		log.Debug("stopping Containers Update Agents services")
+		d.stopUpdateAgents()
+	}
 
 	if d.config.ThingsConfig.ThingsEnable {
 		log.Debug("stopping Things Container Manager service")
@@ -211,6 +225,49 @@ func (d *daemon) stopThingsManagers() {
 		} else {
 			instance.(things.ContainerThingsManager).Disconnect()
 			log.Debug("successfully stopped Things Container Manager service with service ID = %s ", servInfo.Registration.ID)
+		}
+	}
+}
+
+func (d *daemon) startUpdateAgents() error {
+	log.Debug("starting Update Agent services ")
+	updateAgentInfos := d.serviceInfoSet.GetAll(registry.UpdateAgentService)
+	var instance interface{}
+	var err error
+
+	log.Debug("there are %d Update Agent services to be started", len(updateAgentInfos))
+	for _, updateAgentInfo := range updateAgentInfos {
+		log.Debug("will try to start Update Agent service instance with service ID = %s", updateAgentInfo.Registration.ID)
+		instance, err = updateAgentInfo.Instance()
+		if err != nil {
+			log.ErrorErr(err, "could not get Update Agent service instance with service ID = %s", updateAgentInfo.Registration.ID)
+		} else {
+			err = instance.(api.UpdateAgent).Start(context.Background())
+			if err != nil {
+				log.ErrorErr(err, "could not start Update Agent service instance with service ID = %s", updateAgentInfo.Registration.ID)
+			} else {
+				log.Debug("successfully started Update Agent service instance with service ID = %s ", updateAgentInfo.Registration.ID)
+			}
+		}
+	}
+	return err
+}
+
+func (d *daemon) stopUpdateAgents() {
+	log.Debug("will stop Update Agent services")
+	updateAgentInfos := d.serviceInfoSet.GetAll(registry.UpdateAgentService)
+
+	for _, updateAgentInfo := range updateAgentInfos {
+		instance, err := updateAgentInfo.Instance()
+		if err != nil {
+			log.ErrorErr(err, "could not get Update Agent service instance with service ID = %s", updateAgentInfo.Registration.ID)
+		} else {
+			err = instance.(api.UpdateAgent).Stop()
+			if err != nil {
+				log.ErrorErr(err, "could not stop gracefully Update Agent service instance with service ID = %s", updateAgentInfo.Registration.ID)
+			} else {
+				log.Debug("successfully stopped Update Agent service with service ID = %s ", updateAgentInfo.Registration.ID)
+			}
 		}
 	}
 }

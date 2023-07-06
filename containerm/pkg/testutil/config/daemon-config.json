@@ -70,6 +70,12 @@
     "home_dir": "/var/lib/container-management",
     "ctr_dir": "/etc/container-management/containers"
   },
+  "update_agent": {
+    "enable": false,
+    "domain": "containers",
+    "system_containers": [],
+    "verbose_inventory": false
+  },
   "connection": {
     "broker_url": "tcp://localhost:1883",
     "keep_alive": "20s",

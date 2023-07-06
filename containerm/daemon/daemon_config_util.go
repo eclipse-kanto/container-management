@@ -28,6 +28,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/network"
 	"github.com/eclipse-kanto/container-management/containerm/server"
 	"github.com/eclipse-kanto/container-management/containerm/things"
+	"github.com/eclipse-kanto/container-management/containerm/updateagent"
 	"github.com/spf13/pflag"
 )
 
@@ -117,15 +118,6 @@ func extractThingsOptions(daemonConfig *config) []things.ContainerThingsManagerO
 		}
 	}
 
-	parseDuration := func(duration, defaultDuration string) time.Duration {
-		d, err := time.ParseDuration(duration)
-		if err != nil {
-			log.Warn("Invalid Duration string: %s", duration)
-			d, _ = time.ParseDuration(defaultDuration)
-		}
-		return d
-	}
-
 	thingsOpts = append(thingsOpts,
 		things.WithMetaPath(daemonConfig.ThingsConfig.ThingsMetaPath),
 		things.WithFeatures(daemonConfig.ThingsConfig.Features),
@@ -143,6 +135,30 @@ func extractThingsOptions(daemonConfig *config) []things.ContainerThingsManagerO
 		thingsOpts = append(thingsOpts, things.WithTLSConfig(lcc.Transport.RootCA, lcc.Transport.ClientCert, lcc.Transport.ClientKey))
 	}
 	return thingsOpts
+}
+
+func extractUpdateAgentOptions(daemonConfig *config) []updateagent.ContainersUpdateAgentOpt {
+	updateAgentOpts := []updateagent.ContainersUpdateAgentOpt{}
+	updateAgentOpts = append(updateAgentOpts,
+		updateagent.WithDomainName(daemonConfig.UpdateAgentConfig.DomainName),
+		updateagent.WithSystemContainers(daemonConfig.UpdateAgentConfig.SystemContainers),
+		updateagent.WithVerboseInventoryReport(daemonConfig.UpdateAgentConfig.VerboseInventoryReport),
+
+		updateagent.WithConnectionBroker(daemonConfig.LocalConnection.BrokerURL),
+		updateagent.WithConnectionKeepAlive(parseDuration(daemonConfig.LocalConnection.KeepAlive, connectionKeepAliveDefault)),
+		updateagent.WithConnectionDisconnectTimeout(parseDuration(daemonConfig.LocalConnection.DisconnectTimeout, connectionDisconnectTimeoutDefault)),
+		updateagent.WithConnectionClientUsername(daemonConfig.LocalConnection.ClientUsername),
+		updateagent.WithConnectionClientPassword(daemonConfig.LocalConnection.ClientPassword),
+		updateagent.WithConnectionConnectTimeout(parseDuration(daemonConfig.LocalConnection.ConnectTimeout, connectTimeoutTimeoutDefault)),
+		updateagent.WithConnectionAcknowledgeTimeout(parseDuration(daemonConfig.LocalConnection.AcknowledgeTimeout, acknowledgeTimeoutDefault)),
+		updateagent.WithConnectionSubscribeTimeout(parseDuration(daemonConfig.LocalConnection.SubscribeTimeout, subscribeTimeoutDefault)),
+		updateagent.WithConnectionUnsubscribeTimeout(parseDuration(daemonConfig.LocalConnection.UnsubscribeTimeout, unsubscribeTimeoutDefault)),
+	)
+	transport := daemonConfig.LocalConnection.Transport
+	if transport != nil {
+		updateAgentOpts = append(updateAgentOpts, updateagent.WithTLSConfig(transport.RootCA, transport.ClientCert, transport.ClientKey))
+	}
+	return updateAgentOpts
 }
 
 func extractDeploymentMgrOptions(daemonConfig *config) []deployment.Opt {
@@ -217,6 +233,9 @@ func dumpConfiguration(configInstance *config) {
 
 	// dump things client config
 	dumpThingsClient(configInstance)
+
+	// dump update agent config
+	dumpUpdateAgent(configInstance)
 
 	// dump deployment manager config
 	dumpDeploymentManager(configInstance)
@@ -335,6 +354,17 @@ func dumpThingsClient(configInstance *config) {
 	}
 }
 
+func dumpUpdateAgent(configInstance *config) {
+	if configInstance.UpdateAgentConfig != nil {
+		log.Debug("[daemon_cfg][ua-enable] : %v", configInstance.UpdateAgentConfig.UpdateAgentEnable)
+		if configInstance.UpdateAgentConfig.UpdateAgentEnable {
+			log.Debug("[daemon_cfg][ua-domain] : %s", configInstance.UpdateAgentConfig.DomainName)
+			log.Debug("[daemon_cfg][ua-system-containers] : %s", configInstance.UpdateAgentConfig.SystemContainers)
+			log.Debug("[daemon_cfg][ua-verbose-inventory-report] : %v", configInstance.UpdateAgentConfig.VerboseInventoryReport)
+		}
+	}
+}
+
 func dumpDeploymentManager(configInstance *config) {
 	if configInstance.DeploymentManagerConfig != nil {
 		log.Debug("[daemon_cfg][deployment-enable] : %v", configInstance.DeploymentManagerConfig.DeploymentEnable)
@@ -427,4 +457,13 @@ func applyInsecureRegistryConfig(registriesConfig map[string]*ctr.RegistryConfig
 		log.Debug("[daemon_cfg] successfully parsed configuration for insecure registry with host %s", insecReg)
 	}
 	return res
+}
+
+func parseDuration(duration, defaultDuration string) time.Duration {
+	d, err := time.ParseDuration(duration)
+	if err != nil {
+		log.Warn("Invalid Duration string: %s", duration)
+		d, _ = time.ParseDuration(defaultDuration)
+	}
+	return d
 }
