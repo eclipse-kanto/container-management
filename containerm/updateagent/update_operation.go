@@ -15,6 +15,8 @@ package updateagent
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/eclipse-kanto/container-management/containerm/log"
 
@@ -96,23 +98,55 @@ func (o *operation) Execute(command types.CommandType, baseline string) {
 	}
 }
 
-func (o *operation) baselineAction(baseline string) *baselineAction {
+var baselineValidation = map[types.CommandType]struct {
+	expectedBaselineStatus []types.StatusType
+	baselineFailureStatus  types.StatusType
+}{
+	types.CommandDownload: {
+		expectedBaselineStatus: []types.StatusType{types.StatusIdentified},
+		baselineFailureStatus:  types.BaselineStatusDownloadFailure,
+	},
+	types.CommandUpdate: {
+		expectedBaselineStatus: []types.StatusType{types.BaselineStatusDownloadSuccess},
+		baselineFailureStatus:  types.BaselineStatusUpdateFailure,
+	},
+	types.CommandActivate: {
+		expectedBaselineStatus: []types.StatusType{types.BaselineStatusUpdateSuccess},
+		baselineFailureStatus:  types.BaselineStatusActivationFailure,
+	},
+	types.CommandRollback: {
+		expectedBaselineStatus: []types.StatusType{types.BaselineStatusActivationFailure, types.BaselineStatusActivationSuccess},
+		baselineFailureStatus:  types.BaselineStatusRollbackFailure,
+	},
+	types.CommandCleanup: {
+		baselineFailureStatus: types.BaselineStatusCleanup,
+	},
+}
+
+func (o *operation) getBaselineActionForCommand(baseline string, command types.CommandType) *baselineAction {
+	var baselineAction *baselineAction
 	if baseline == "*" || baseline == "" {
 		o.allActions.baseline = baseline
-		return o.allActions
+		baselineAction = o.allActions
+	} else {
+		baselineAction = o.baselineActions[baseline]
 	}
-	return o.baselineActions[baseline]
+	validation := baselineValidation[command]
+	if baselineAction == nil {
+		o.Feedback(validation.baselineFailureStatus, "Unknown baseline "+baseline, baseline)
+		return nil
+	}
+	if len(validation.expectedBaselineStatus) > 0 && !hasStatus(validation.expectedBaselineStatus, baselineAction.status) {
+		o.Feedback(validation.baselineFailureStatus, fmt.Sprintf("%s is possible only after status %s is reported", command, asStatusString(validation.expectedBaselineStatus)), baseline)
+		return nil
+	}
+	return baselineAction
 }
 
 // ActionCreate and ActionRecreate: create new container instance, this will download the container image.
 func (o *operation) download(baseline string) {
-	baselineAction := o.baselineAction(baseline)
+	baselineAction := o.getBaselineActionForCommand(baseline, types.CommandDownload)
 	if baselineAction == nil {
-		o.Feedback(types.BaselineStatusDownloadFailure, "Unknown baseline "+baseline, baseline)
-		return
-	}
-	if baselineAction.status != types.StatusIdentified {
-		o.Feedback(types.BaselineStatusDownloadFailure, "DOWNLOAD possible only after successful IDENTIFICATION phase", baseline)
 		return
 	}
 
@@ -136,13 +170,8 @@ func (o *operation) download(baseline string) {
 // ActionRecreate, ActionDestroy: stops the current container instance.
 // ActionUpdate: update the running container configuration.
 func (o *operation) update(baseline string) {
-	baselineAction := o.baselineAction(baseline)
+	baselineAction := o.getBaselineActionForCommand(baseline, types.CommandUpdate)
 	if baselineAction == nil {
-		o.Feedback(types.BaselineStatusUpdateFailure, "Unknown baseline "+baseline, baseline)
-		return
-	}
-	if baselineAction.status != types.BaselineStatusDownloadSuccess {
-		o.Feedback(types.BaselineStatusUpdateFailure, "UPDATE possible only after successful DOWNLOAD phase", baseline)
 		return
 	}
 
@@ -166,13 +195,8 @@ func (o *operation) update(baseline string) {
 // ActionCreate, ActionRecreate: starts the newly created container instance (from DOWNLOAD phase).
 // ActionUpdate, ActionCheck: ensure the existing container is running (call start/unpause container).
 func (o *operation) activate(baseline string) {
-	baselineAction := o.baselineAction(baseline)
+	baselineAction := o.getBaselineActionForCommand(baseline, types.CommandActivate)
 	if baselineAction == nil {
-		o.Feedback(types.BaselineStatusActivationFailure, "Unknown baseline "+baseline, baseline)
-		return
-	}
-	if baselineAction.status != types.BaselineStatusUpdateSuccess {
-		o.Feedback(types.BaselineStatusActivationFailure, "ACTIVATE possible only after successful UPDATE phase", baseline)
 		return
 	}
 
@@ -197,13 +221,8 @@ func (o *operation) activate(baseline string) {
 // ActionRecreate: removes the newly created container instance (from DOWNLOAD phase) and restarts the old existing container instance.
 // ActionUpdate: restores the old configuration to the existing container and ensures it is started.
 func (o *operation) rollback(baseline string) {
-	baselineAction := o.baselineAction(baseline)
+	baselineAction := o.getBaselineActionForCommand(baseline, types.CommandRollback)
 	if baselineAction == nil {
-		o.Feedback(types.BaselineStatusRollbackFailure, "Unknown baseline "+baseline, baseline)
-		return
-	}
-	if baselineAction.status != types.BaselineStatusActivationFailure && baselineAction.status != types.BaselineStatusActivationSuccess {
-		o.Feedback(types.BaselineStatusRollbackFailure, "ROLLBACK possible only after ACTIVATION phase", baseline)
 		return
 	}
 
@@ -226,11 +245,11 @@ func (o *operation) rollback(baseline string) {
 
 // ActionRecreate, ActionDestroy: removes the old existing container instance.
 func (o *operation) cleanup(baseline string) {
-	baselineAction := o.baselineAction(baseline)
+	baselineAction := o.getBaselineActionForCommand(baseline, types.CommandUpdate)
 	if baselineAction == nil {
-		o.Feedback(types.BaselineStatusCleanupFailure, "Unknown baseline "+baseline, baseline)
 		return
 	}
+
 	if baseline == "*" || baseline == "" {
 		for b := range o.baselineActions {
 			delete(o.baselineActions, b)
@@ -270,4 +289,24 @@ func (o *operation) toFeedbackActions() []*types.Action {
 		result[i] = action.feedbackAction
 	}
 	return result
+}
+
+func hasStatus(where []types.StatusType, what types.StatusType) bool {
+	for _, status := range where {
+		if status == what {
+			return true
+		}
+	}
+	return false
+}
+
+func asStatusString(what []types.StatusType) string {
+	var sb strings.Builder
+	for _, status := range what {
+		if sb.Len() > 0 {
+			sb.WriteRune('|')
+		}
+		sb.WriteString(string(status))
+	}
+	return sb.String()
 }
