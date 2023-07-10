@@ -22,11 +22,7 @@ import (
 )
 
 // ParseDeviceMappings converts string representations of container's device mappings to structured DeviceMapping instances.
-// Format: <host_device>:<container_device>[:propagation_mode].
-// Both path on host and in container must be set.
-// The string representation may contain optional cgroups permissions configuration.
-// Possible cgroup permissions options are “r” (read), “w” (write), “m” (mknod) and all combinations of the three are possible. If not set, “rwm” is default device configuration.
-// Example: /dev/ttyACM0:/dev/ttyUSB0[:rwm].
+// The string representation format for a device mapping is defined with ParseDeviceMapping function.
 func ParseDeviceMappings(devices []string) ([]types.DeviceMapping, error) {
 	var devs []types.DeviceMapping
 	for _, devPair := range devices {
@@ -73,9 +69,7 @@ func ParseDeviceMapping(device string) (*types.DeviceMapping, error) {
 }
 
 // ParseMountPoints converts string representations of container's mounts to structured MountPoint instances.
-// Format: source:destination[:propagation_mode].
-// If the propagation mode parameter is omitted, rprivate will be set by default.
-// Available propagation modes are: rprivate, private, rshared, shared, rslave, slave.
+// The string representation format for a mount point is defined with ParseMountPoint function.
 func ParseMountPoints(mps []string) ([]types.MountPoint, error) {
 	var mountPoints []types.MountPoint
 	for _, mp := range mps {
@@ -111,11 +105,7 @@ func ParseMountPoint(mp string) (*types.MountPoint, error) {
 }
 
 // ParsePortMappings converts string representations of container's port mappings to structured PortMapping instances.
-// Format: [<host-ip>:]<host-port>:<container-port>[-<range>][/<proto>].
-// Most common use-case: 80:80
-// Mapping the container’s 80 port to a host port in the 5000-6000 range: 5000-6000:80/udp
-// Specifying port protocol (default is tcp): 80:80/udp
-// By default the port mapping will set on all network interfaces, but this is also manageable: 0.0.0.0:80-100:80/udp
+// The string representation format for a port mapping is defined with ParsePortMapping function.
 func ParsePortMappings(mappings []string) ([]types.PortMapping, error) {
 	var portMappings []types.PortMapping
 	for _, mapping := range mappings {
@@ -129,7 +119,7 @@ func ParsePortMappings(mappings []string) ([]types.PortMapping, error) {
 }
 
 // ParsePortMapping converts a single string representation of container's port mapping to a structured PortMapping instance.
-// Format: [<host-ip>:]<host-port>:<container-port>[-<range>][/<proto>].
+// Format: [<host-ip>:]<host-port>[-<range>]:<container-port>[/<proto>].
 // Most common use-case: 80:80
 // Mapping the container’s 80 port to a host port in the 5000-6000 range: 5000-6000:80/udp
 // Specifying port protocol (default is tcp): 80:80/udp
@@ -144,6 +134,7 @@ func ParsePortMapping(mapping string) (*types.PortMapping, error) {
 		hostPortEnd   int64
 	)
 
+	mapping0 := mapping
 	mappingWithProto := strings.Split(strings.TrimSpace(mapping), "/")
 	mapping = mappingWithProto[0]
 	if len(mappingWithProto) == 2 {
@@ -157,27 +148,27 @@ func ParsePortMapping(mapping string) (*types.PortMapping, error) {
 		hostIP = addressAndPorts[0]
 		validIP := net.ParseIP(hostIP)
 		if validIP == nil {
-			return nil, log.NewErrorf("Incorrect host ip port mapping configuration %s", mapping)
+			return nil, log.NewErrorf("Incorrect host ip port mapping configuration %s", mapping0)
 		}
 	} else if len(addressAndPorts) != 2 { // len==2: host address not specified, e.g. 80:80
-		return nil, log.NewErrorf("Incorrect port mapping configuration %s", mapping)
+		return nil, log.NewErrorf("Incorrect port mapping configuration %s", mapping0)
 	}
 	hostPortWithRange := strings.Split(strings.TrimSpace(addressAndPorts[hostPortIdx]), "-")
 	if len(hostPortWithRange) == 2 {
 		hostPortEnd, err = strconv.ParseInt(hostPortWithRange[1], 10, 32)
 		if err != nil {
-			return nil, log.NewErrorf("Incorrect host range port mapping configuration %s", mapping)
+			return nil, log.NewErrorf("Incorrect host range port mapping configuration %s", mapping0)
 		}
 		hostPort, err = strconv.ParseInt(hostPortWithRange[0], 10, 32)
 	} else {
 		hostPort, err = strconv.ParseInt(addressAndPorts[hostPortIdx], 10, 32)
 	}
 	if err != nil {
-		return nil, log.NewErrorf("Incorrect host port mapping configuration %s", mapping)
+		return nil, log.NewErrorf("Incorrect host port mapping configuration %s", mapping0)
 	}
 	containerPort, err = strconv.ParseInt(addressAndPorts[hostPortIdx+1], 10, 32)
 	if err != nil {
-		return nil, log.NewErrorf("Incorrect container port mapping configuration %s", mapping)
+		return nil, log.NewErrorf("Incorrect container port mapping configuration %s", mapping0)
 	}
 	return &types.PortMapping{
 		Proto:         protocol,
