@@ -465,8 +465,8 @@ func TestSetCommandFlags(t *testing.T) {
 			flag:         "ua-system-containers",
 			expectedType: "stringSlice",
 		},
-		"test_flags-ua-verbose-inventory": {
-			flag:         "ua-verbose-inventory",
+		"test_flags-ua-verbose-inventory-report": {
+			flag:         "ua-verbose-inventory-report",
 			expectedType: reflect.Bool.String(),
 		},
 	}
