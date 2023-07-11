@@ -44,6 +44,7 @@ type HostConfig struct {
 	RestartPolicy *RestartPolicy    `json:"restart_policy"`
 	Runtime       Runtime           `json:"runtime"`
 	ExtraHosts    []string          `json:"extra_hosts"`
+	ExtraCaps     []string          `json:"extra_capabilities"`
 	PortMappings  []PortMapping     `json:"port_mappings"`
 	LogConfig     *LogConfiguration `json:"log_config"`
 	Resources     *Resources        `json:"resources"`

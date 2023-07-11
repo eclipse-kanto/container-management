@@ -135,7 +135,9 @@ func execTestsRun(t *testing.T, cliTest cliCommandTest) {
 func setCmdFlags(flagValues map[string]string, cmd *cobra.Command) error {
 	if flagValues != nil {
 		for flagKey, flagValue := range flagValues {
-			err := cmd.Flag(flagKey).Value.Set(flagValue)
+			flag := cmd.Flag(flagKey)
+			val := flag.Value
+			err := val.Set(flagValue)
 			if err != nil {
 				return err
 			}

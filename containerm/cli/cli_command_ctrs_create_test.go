@@ -35,6 +35,7 @@ const (
 	createCmdFlagRestartPolicyTimeout  = "rp-to"
 	createCmdFlagNetwork               = "network"
 	createCmdFlagExtraHosts            = "hosts"
+	createCmdFlagExtraCaps             = "cap-add"
 	createCmdFlagDevices               = "devices"
 	createCmdFlagMountPoints           = "mp"
 	createCmdFlagPorts                 = "ports"
@@ -58,21 +59,8 @@ const (
 var (
 	// test input args
 	createCmdArgs = []string{createContainerImageName}
-)
 
-// Tests --------------------
-func TestCreateCmdInit(t *testing.T) {
-	createCliTest := &createCommandTest{}
-	createCliTest.init()
-
-	execTestInit(t, createCliTest)
-}
-
-func TestCreateCmdSetupFlags(t *testing.T) {
-	createCliTest := &createCommandTest{}
-	createCliTest.init()
-
-	expectedCfg := createConfig{
+	expectedCfg = createConfig{
 		name:        "",
 		terminal:    true,
 		interactive: true,
@@ -101,7 +89,8 @@ func TestCreateCmdSetupFlags(t *testing.T) {
 		decKeys:       []string{"key_filepath:password"},
 		decRecipients: []string{"pkcs7:cert_filepath"},
 	}
-	flagsToApply := map[string]string{
+
+	flagsToApply = map[string]string{
 		createCmdFlagName:                  expectedCfg.name,
 		createCmdFlagTerminal:              strconv.FormatBool(expectedCfg.terminal),
 		createCmdFlagInteractive:           strconv.FormatBool(expectedCfg.interactive),
@@ -126,6 +115,31 @@ func TestCreateCmdSetupFlags(t *testing.T) {
 		createCmdFlagKeys:                  strings.Join(expectedCfg.decKeys, ","),
 		createCmdFlagDecRecipients:         strings.Join(expectedCfg.decRecipients, ","),
 	}
+)
+
+// Tests --------------------
+func TestCreateCmdInit(t *testing.T) {
+	createCliTest := &createCommandTest{}
+	createCliTest.init()
+
+	execTestInit(t, createCliTest)
+}
+
+func TestCreateCmdSetupFlagsPrivileged(t *testing.T) {
+	createCliTest := &createCommandTest{}
+	createCliTest.init()
+
+	execTestSetupFlags(t, createCliTest, flagsToApply, expectedCfg)
+}
+
+func TestCreateCmdSetupFlagsCapabilities(t *testing.T) {
+	createCliTest := &createCommandTest{}
+	createCliTest.init()
+
+	expectedCfg.privileged = false
+	expectedCfg.extraCaps = append(expectedCfg.extraCaps, "CAP_NET_ADMIN")
+	flagsToApply[createCmdFlagPrivileged] = strconv.FormatBool(expectedCfg.privileged)
+	flagsToApply[createCmdFlagExtraCaps] = strings.Join(expectedCfg.extraCaps, ",")
 
 	execTestSetupFlags(t, createCliTest, flagsToApply, expectedCfg)
 }
@@ -164,6 +178,7 @@ func (createTc *createCommandTest) commandConfigDefault() interface{} {
 		},
 		network:          string(types.NetworkModeBridge),
 		extraHosts:       nil,
+		extraCaps:        nil,
 		devices:          nil,
 		mountPoints:      nil,
 		ports:            nil,
@@ -438,6 +453,14 @@ func (createTc *createCommandTest) generateRunExecutionConfigs() map[string]test
 					},
 					mockExecution: createTc.mockExecCreateWithExtraHostsIncorrectConfig,
 				},*/
+		// Test extra capabilities
+		"test_create_extra_capabilities": {
+			args: createCmdArgs,
+			flags: map[string]string{
+				createCmdFlagExtraCaps: "CAP_NET_ADMIN",
+			},
+			mockExecution: createTc.mockExecCreateWithExtraCaps,
+		},
 		// Test privileged
 		"test_create_privileged": {
 			args: createCmdArgs,
@@ -909,6 +932,21 @@ func (createTc *createCommandTest) mockExecCreateWithExtraHostsIncorrectConfig(a
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
 	return log.NewError("Incorrect hosts configuration")
 }
+
+func (createTc *createCommandTest) mockExecCreateWithExtraCaps(args []string) error {
+	container := initExpectedCtr(&types.Container{
+		Image: types.Image{
+			Name: args[0],
+		},
+		HostConfig: &types.HostConfig{
+			ExtraCaps: []string{"CAP_NET_ADMIN"},
+		},
+	})
+
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
+	return nil
+}
+
 func (createTc *createCommandTest) mockExecCreateWithPrivileged(args []string) error {
 	container := initExpectedCtr(&types.Container{
 		Image: types.Image{
@@ -1035,6 +1073,7 @@ func initExpectedCtr(ctr *types.Container) *types.Container {
 		ctr.HostConfig = &types.HostConfig{
 			Privileged:  false,
 			ExtraHosts:  nil,
+			ExtraCaps: nil,
 			NetworkMode: types.NetworkModeBridge,
 		}
 	} else if ctr.HostConfig.NetworkMode == "" {

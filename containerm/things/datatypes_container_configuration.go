@@ -12,7 +12,9 @@
 
 package things
 
-import "github.com/eclipse-kanto/container-management/containerm/containers/types"
+import (
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
+)
 
 type configuration struct {
 	DomainName  string                   `json:"domainName,omitempty"`
@@ -26,6 +28,7 @@ type configuration struct {
 	Privileged    bool           `json:"privileged,omitempty"`
 	RestartPolicy *restartPolicy `json:"restartPolicy,omitempty"`
 	ExtraHosts    []string       `json:"extraHosts,omitempty"`
+	ExtraCaps     []string       `json:"extraCapabilities,omitempty"`
 	PortMappings  []*portMapping `json:"portMappings,omitempty"`
 	NetworkMode   networkMode    `json:"networkMode,omitempty"`
 	// IO Config
@@ -44,6 +47,9 @@ func fromAPIContainerConfig(ctr *types.Container) *configuration {
 		cfg.Privileged = ctr.HostConfig.Privileged
 		if ctr.HostConfig.RestartPolicy != nil {
 			cfg.RestartPolicy = fromAPIRestartPolicy(ctr.HostConfig.RestartPolicy)
+		}
+		if ctr.HostConfig.Privileged == false && ctr.HostConfig.ExtraCaps != nil && len(ctr.HostConfig.ExtraCaps) > 0 {
+			cfg.ExtraCaps = ctr.HostConfig.ExtraCaps
 		}
 		if ctr.HostConfig.ExtraHosts != nil && len(ctr.HostConfig.ExtraHosts) > 0 {
 			cfg.ExtraHosts = ctr.HostConfig.ExtraHosts
@@ -115,6 +121,9 @@ func toAPIContainerConfig(cfg *configuration) *types.Container {
 	}
 	if cfg.ExtraHosts != nil && len(cfg.ExtraHosts) > 0 {
 		ctr.HostConfig.ExtraHosts = cfg.ExtraHosts
+	}
+	if cfg.Privileged == false && cfg.ExtraCaps != nil && len(cfg.ExtraCaps) > 0 {
+		ctr.HostConfig.ExtraCaps = cfg.ExtraCaps
 	}
 	if cfg.Devices != nil && len(cfg.Devices) > 0 {
 		ctr.HostConfig.Devices = []types.DeviceMapping{}

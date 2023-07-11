@@ -65,9 +65,11 @@ var (
 	envVar               = []string{env}
 	cmdVar               = []string{cmd}
 	hostConfigExtraHosts = []string{"ctrhost:host_ip"}
+	hostConfigExtraCaps	 = []string{"CAP_NET_ADMIN"}
 	internalHostConfig   = &types.HostConfig{
 		Privileged:  hostConfigPrivileged,
 		ExtraHosts:  hostConfigExtraHosts,
+		ExtraCaps:   hostConfigExtraCaps,
 		NetworkMode: hostConfigNetType,
 		PortMappings: []types.PortMapping{{
 			ContainerPort: hostConfigContainerPort,
@@ -151,6 +153,11 @@ func TestFromAPIContainerConfig(t *testing.T) {
 	t.Run("test_from_api_container_config_restart_policy", func(t *testing.T) {
 		testutil.AssertEqual(t, ctr.HostConfig.RestartPolicy, toAPIRestartPolicy(ctrParsed.RestartPolicy))
 	})
+	t.Run("test_from_api_container_config_extra_caps_len", func(t *testing.T) {
+		ctr.HostConfig.Privileged = false
+		ctrParsed = fromAPIContainerConfig(ctr)
+		testutil.AssertEqual(t, ctr.HostConfig.ExtraCaps, ctrParsed.ExtraCaps)
+	})
 	t.Run("test_from_api_container_config_extra_hosts_len", func(t *testing.T) {
 		testutil.AssertEqual(t, ctr.HostConfig.ExtraHosts, ctrParsed.ExtraHosts)
 	})
@@ -209,6 +216,7 @@ var (
 			RpType:        onFailure,
 		},
 		NetworkMode:  host,
+		ExtraCaps: hostConfigExtraCaps,
 		ExtraHosts:   hostConfigExtraHosts,
 		PortMappings: []*portMapping{{}},
 		OpenStdin:    internalIOConfig.OpenStdin,
@@ -247,6 +255,11 @@ func TestToAPIContainerConfig(t *testing.T) {
 	})
 	t.Run("test_to_api_container_config_restart_policy", func(t *testing.T) {
 		testutil.AssertEqual(t, testContainerConfig.RestartPolicy, fromAPIRestartPolicy(ctrParsed.HostConfig.RestartPolicy))
+	})
+	t.Run("test_to_api_container_config_extra_caps", func(t *testing.T) {
+		testContainerConfig.Privileged = false
+		ctrParsed = toAPIContainerConfig(testContainerConfig)
+		testutil.AssertEqual(t, testContainerConfig.ExtraCaps, ctrParsed.HostConfig.ExtraCaps)
 	})
 	t.Run("test_to_api_container_config_extra_hosts", func(t *testing.T) {
 		testutil.AssertEqual(t, testContainerConfig.ExtraHosts, ctrParsed.HostConfig.ExtraHosts)

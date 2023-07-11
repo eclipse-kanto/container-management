@@ -47,6 +47,7 @@ type createConfig struct {
 	privileged  bool
 	network     string
 	extraHosts  []string
+	extraCaps   []string
 	devices     []string
 	mountPoints []string
 	ports       []string
@@ -92,6 +93,10 @@ func (cc *createCmd) run(args []string) error {
 		return log.NewError("cannot create the container as privileged and with specified devices at the same time - choose one of the options")
 	}
 
+	if cc.config.privileged && cc.config.extraCaps != nil {
+		return log.NewError("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options")
+	}
+
 	ctrToCreate := &types.Container{
 		Name: cc.config.name,
 		Image: types.Image{
@@ -100,6 +105,7 @@ func (cc *createCmd) run(args []string) error {
 		HostConfig: &types.HostConfig{
 			Privileged:  cc.config.privileged,
 			ExtraHosts:  cc.config.extraHosts,
+			ExtraCaps:   cc.config.extraCaps,
 			NetworkMode: types.NetworkMode(cc.config.network),
 		},
 		IOConfig: &types.IOConfig{
@@ -306,4 +312,6 @@ func (cc *createCmd) setupFlags() {
 		"If set to -1, the container can use unlimited swap, up to the amount available on the host.")
 	flagSet.StringSliceVar(&cc.config.decKeys, "dec-keys", nil, "Sets a list of private keys filenames (GPG private key ring, JWE and PKCS7 private key). Each entry can include an optional password separated by a colon after the filename.")
 	flagSet.StringSliceVar(&cc.config.decRecipients, "dec-recipients", nil, "Sets a recipients certificates list of the image (used only for PKCS7 and must be an x509)")
+	//init extra capabilities
+	flagSet.StringSliceVar(&cc.config.extraCaps, "cap-add", nil, "Add capabilities to the container")
 }

@@ -179,7 +179,7 @@ func TestDetermineUpdateAction(t *testing.T) {
 			},
 			expectedResult: ActionRecreate,
 		},
-		"test_hostconfig0_equal": {
+		"test_hostconfig0_equal_privileged": {
 			current: &types.Container{
 				HostConfig: &types.HostConfig{
 					Privileged: true,
@@ -192,7 +192,7 @@ func TestDetermineUpdateAction(t *testing.T) {
 			},
 			expectedResult: ActionCheck,
 		},
-		"test_hostconfig0_not_equal": {
+		"test_hostconfig0_not_equal_privileged": {
 			current: &types.Container{
 				HostConfig: &types.HostConfig{
 					Privileged: true,
@@ -201,6 +201,32 @@ func TestDetermineUpdateAction(t *testing.T) {
 			desired: &types.Container{
 				HostConfig: &types.HostConfig{
 					Privileged: false,
+				},
+			},
+			expectedResult: ActionRecreate,
+		},
+		"test_hostconfig0_equal_capabilities": {
+			current: &types.Container{
+				HostConfig: &types.HostConfig{
+					ExtraCaps: []string{"CAP_NET_ADMIN"},
+				},
+			},
+			desired: &types.Container{
+				HostConfig: &types.HostConfig{
+					ExtraCaps: []string{"CAP_NET_ADMIN"},
+				},
+			},
+			expectedResult: ActionCheck,
+		},
+		"test_hostconfig0_not_equal_capabilities": {
+			current: &types.Container{
+				HostConfig: &types.HostConfig{
+					ExtraCaps: []string{"test"},
+				},
+			},
+			desired: &types.Container{
+				HostConfig: &types.HostConfig{
+					ExtraCaps: []string{"CAP_NET_ADMIN"},
 				},
 			},
 			expectedResult: ActionRecreate,
@@ -436,6 +462,24 @@ func TestIsEqualHostConfig0(t *testing.T) {
 				Devices: []types.DeviceMapping{
 					{PathOnHost: "notEqual", PathInContainer: "testPathInContainer", CgroupPermissions: "rwm"},
 				},
+			},
+			expectedResult: false,
+		},
+		"test_extracaps_equal": {
+			current: &types.HostConfig{
+				ExtraCaps: []string{"testExtraCaps", "testExtraCaps2"},
+			},
+			desired: &types.HostConfig{
+				ExtraCaps: []string{"testExtraCaps", "testExtraCaps2"},
+			},
+			expectedResult: true,
+		},
+		"test_extracaps_not_equal": {
+			current: &types.HostConfig{
+				ExtraHosts: []string{"testExtraCaps", "testExtraCaps2"},
+			},
+			desired: &types.HostConfig{
+				ExtraHosts: []string{"testExtraCaps", "testExtraCapsNotEqual"},
 			},
 			expectedResult: false,
 		},
