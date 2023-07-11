@@ -217,7 +217,7 @@ func ToInternalHostConfig(grpcHostConfig *apitypescontainers.HostConfig) *intern
 		RestartPolicy: ToInternalRestartPolicy(grpcHostConfig.RestartPolicy),
 		Runtime:       internaltypes.Runtime(grpcHostConfig.Runtime),
 		ExtraHosts:    grpcHostConfig.ExtraHosts,
-		ExtraCaps: 	   grpcHostConfig.ExtraCapabilities,
+		ExtraCaps:     grpcHostConfig.ExtraCapabilities,
 		PortMappings:  ToInternalPortMappings(grpcHostConfig.PortMappings),
 		LogConfig:     ToInternalLogConfig(grpcHostConfig.LogConfig),
 		Resources:     ToInternalResources(grpcHostConfig.Resources),

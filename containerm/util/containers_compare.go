@@ -116,7 +116,7 @@ func isEqualHostConfig0(currentHostConfig *types.HostConfig, newHostConfig *type
 	if !compareSliceSet(currentHostConfig.ExtraHosts, newHostConfig.ExtraHosts) {
 		return false
 	}
-	if !compareSliceSet(currentHostConfig.ExtraCaps, newHostConfig.ExtraCaps){
+	if !compareSliceSet(currentHostConfig.ExtraCaps, newHostConfig.ExtraCaps) {
 		return false
 	}
 	if !compareSliceSet(currentHostConfig.PortMappings, newHostConfig.PortMappings) {

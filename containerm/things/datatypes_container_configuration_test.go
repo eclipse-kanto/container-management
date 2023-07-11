@@ -65,7 +65,7 @@ var (
 	envVar               = []string{env}
 	cmdVar               = []string{cmd}
 	hostConfigExtraHosts = []string{"ctrhost:host_ip"}
-	hostConfigExtraCaps	 = []string{"CAP_NET_ADMIN"}
+	hostConfigExtraCaps  = []string{"CAP_NET_ADMIN"}
 	internalHostConfig   = &types.HostConfig{
 		Privileged:  hostConfigPrivileged,
 		ExtraHosts:  hostConfigExtraHosts,
@@ -216,7 +216,7 @@ var (
 			RpType:        onFailure,
 		},
 		NetworkMode:  host,
-		ExtraCaps: hostConfigExtraCaps,
+		ExtraCaps:    hostConfigExtraCaps,
 		ExtraHosts:   hostConfigExtraHosts,
 		PortMappings: []*portMapping{{}},
 		OpenStdin:    internalIOConfig.OpenStdin,

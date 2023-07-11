@@ -1073,7 +1073,7 @@ func initExpectedCtr(ctr *types.Container) *types.Container {
 		ctr.HostConfig = &types.HostConfig{
 			Privileged:  false,
 			ExtraHosts:  nil,
-			ExtraCaps: nil,
+			ExtraCaps:   nil,
 			NetworkMode: types.NetworkModeBridge,
 		}
 	} else if ctr.HostConfig.NetworkMode == "" {

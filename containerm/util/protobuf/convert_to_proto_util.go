@@ -240,16 +240,16 @@ func ToProtoHostConfig(internalHostConfig *internaltypes.HostConfig) *apitypesco
 	}
 
 	return &apitypescontainers.HostConfig{
-		Devices:       devices,
-		NetworkMode:   string(internalHostConfig.NetworkMode),
-		Privileged:    internalHostConfig.Privileged,
-		RestartPolicy: ToProtoRestartPolicy(internalHostConfig.RestartPolicy),
-		Runtime:       string(internalHostConfig.Runtime),
-		ExtraHosts:    internalHostConfig.ExtraHosts,
+		Devices:           devices,
+		NetworkMode:       string(internalHostConfig.NetworkMode),
+		Privileged:        internalHostConfig.Privileged,
+		RestartPolicy:     ToProtoRestartPolicy(internalHostConfig.RestartPolicy),
+		Runtime:           string(internalHostConfig.Runtime),
+		ExtraHosts:        internalHostConfig.ExtraHosts,
 		ExtraCapabilities: internalHostConfig.ExtraCaps,
-		PortMappings:  ToProtoPortMappings(internalHostConfig.PortMappings),
-		LogConfig:     ToProtoLogConfig(internalHostConfig.LogConfig),
-		Resources:     ToProtoResource(internalHostConfig.Resources),
+		PortMappings:      ToProtoPortMappings(internalHostConfig.PortMappings),
+		LogConfig:         ToProtoLogConfig(internalHostConfig.LogConfig),
+		Resources:         ToProtoResource(internalHostConfig.Resources),
 	}
 }
 

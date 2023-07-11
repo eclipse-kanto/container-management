@@ -117,11 +117,11 @@ var (
 	}
 
 	hostConfigExtraHosts = []string{"ctrhost:host_ip"}
-	hostConfigExtraCaps = []string{"CAP_NET_ADMIN"}
+	hostConfigExtraCaps  = []string{"CAP_NET_ADMIN"}
 	internalHostConfig   = &internaltypes.HostConfig{
 		Privileged:  hostConfigPrivileged,
 		ExtraHosts:  hostConfigExtraHosts,
-		ExtraCaps: 	 hostConfigExtraCaps,
+		ExtraCaps:   hostConfigExtraCaps,
 		NetworkMode: hostConfigNetType,
 		PortMappings: []internaltypes.PortMapping{{
 			ContainerPort: hostConfigContainerPort,
