@@ -558,7 +558,7 @@ func (o *operation) createContainer(desired *ctrtypes.Container) error {
 	log.Debug("container [%s] does not exist - will create a new one", desired.Name)
 	_, err := o.updateManager.mgr.Create(o.ctx, desired)
 	if err != nil {
-		log.Error("could not create container [%s]", desired.Name)
+		log.ErrorErr(err, "could not create container [%s]", desired.Name)
 		return err
 	}
 	log.Debug("successfully created container [%s]", desired.Name)
@@ -567,7 +567,7 @@ func (o *operation) createContainer(desired *ctrtypes.Container) error {
 
 func (o *operation) startContainer(container *ctrtypes.Container) error {
 	if err := o.updateManager.mgr.Start(o.ctx, container.ID); err != nil {
-		log.Error("could not start container [%s]", container.Name)
+		log.ErrorErr(err, "could not start container [%s]", container.Name)
 		return err
 	}
 	log.Debug("successfully started container [%s]", container.Name)
@@ -576,7 +576,7 @@ func (o *operation) startContainer(container *ctrtypes.Container) error {
 
 func (o *operation) unpauseContainer(container *ctrtypes.Container) error {
 	if err := o.updateManager.mgr.Unpause(o.ctx, container.ID); err != nil {
-		log.Error("could not unpause container [%s]", container.Name)
+		log.ErrorErr(err, "could not unpause container [%s]", container.Name)
 		return err
 	}
 	log.Debug("successfully unpaused container [%s]", container.Name)
@@ -590,7 +590,7 @@ func (o *operation) updateContainer(current *ctrtypes.Container, desired *ctrtyp
 		Resources:     desired.HostConfig.Resources,
 	}
 	if err := o.updateManager.mgr.Update(o.ctx, current.ID, updateOpts); err != nil {
-		log.Error("could not update configuration for container [%s]: %v", desired.Name, err)
+		log.ErrorErr(err, "could not update configuration for container [%s]", desired.Name)
 		return err
 	}
 	log.Debug("successfully updated container [%s]", desired.Name)
@@ -600,7 +600,7 @@ func (o *operation) updateContainer(current *ctrtypes.Container, desired *ctrtyp
 func (o *operation) ensureRunningContainer(current *ctrtypes.Container) error {
 	container, err := o.updateManager.mgr.Get(o.ctx, current.ID)
 	if err != nil {
-		log.Debug("cannot get current state for container [%s] : %v", current.Name, err)
+		log.DebugErr(err, "cannot get current state for container [%s]", current.Name)
 		return err
 	}
 	if container.State.Running {
@@ -618,7 +618,7 @@ func (o *operation) ensureRunningContainer(current *ctrtypes.Container) error {
 func (o *operation) removeContainer(container *ctrtypes.Container) error {
 	log.Debug("container [%s] is not desired - will be removed", container.Name)
 	if err := o.updateManager.mgr.Remove(o.ctx, container.ID, true); err != nil {
-		log.Error("could not remove undesired container [%s]: %v", container.Name, err)
+		log.ErrorErr(err, "could not remove undesired container [%s]", container.Name)
 		return err
 	}
 	log.Debug("successfully removed container [%s]", container.Name)
@@ -636,7 +636,7 @@ func (o *operation) stopContainer(container *ctrtypes.Container) error {
 	}
 	log.Debug("container [%s] will be updated - will stop current instance", container.Name)
 	if err := o.updateManager.mgr.Stop(o.ctx, container.ID, stopOpts); err != nil {
-		log.Error("could not stop outdated container [%s]: %v", container.Name, err)
+		log.ErrorErr(err, "could not stop outdated container [%s]", container.Name)
 		return err
 	}
 	log.Debug("successfully stopped outdated container [%s]", container.Name)
