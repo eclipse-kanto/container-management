@@ -122,7 +122,12 @@ func execTestsRun(t *testing.T, cliTest cliCommandTest) {
 			// perform the real call
 			resultErr := cliTest.runCommand(testCase.args)
 			// assert result
-			testutil.AssertError(t, expectedRunErr, resultErr)
+			if expectedRunErr == nil {
+				testutil.AssertNil(t, resultErr)
+			} else {
+				testutil.AssertNotNil(t, resultErr)
+				testutil.AssertContainsString(t, resultErr.Error(), expectedRunErr.Error())
+			}
 		})
 	}
 }

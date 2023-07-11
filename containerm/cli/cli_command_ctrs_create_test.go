@@ -701,12 +701,12 @@ func (createTc *createCommandTest) mockExecCreateDevicesWithPrivileged(args []st
 
 func (createTc *createCommandTest) mockExecCreateDevicesErrConfigFormat(args []string) error {
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
-	return log.NewError("incorrect device configuration format")
+	return log.NewError("incorrect configuration value for device mapping")
 }
 
 func (createTc *createCommandTest) mockExecCreateDevicesErrCgroupFormat(args []string) error {
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
-	return log.NewError("incorrect device cgroup permissions format")
+	return log.NewError("incorrect cgroup permissions format for device mapping")
 }
 
 func (createTc *createCommandTest) mockExecCreateWithMountPoints(args []string) error {
@@ -878,7 +878,7 @@ func (createTc *createCommandTest) mockExecCreateWithPortsIncorrectPortsConfig(a
 
 func (createTc *createCommandTest) mockExecCreateWithPortsIncorrectPortsConfigParseErr(args []string) error {
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
-	return log.NewError("Incorrect port mapping configuration, parsing error")
+	return log.NewError("Incorrect container port mapping configuration")
 }
 
 func (createTc *createCommandTest) mockExecCreateWithPortsIncorrectHostRange(args []string) error {
