@@ -185,52 +185,52 @@ func filterActions(actions []*containerAction, containers []*ctrtypes.Container)
 
 // Execute executes each COMMAND (download, update, activate, etc) phase, triggered per baseline or for all the identified actions
 func (o *operation) Execute(command types.CommandType, baseline string) {
-	switch command {
-	case types.CommandDownload:
-		o.download(baseline)
-	case types.CommandUpdate:
-		o.update(baseline)
-	case types.CommandActivate:
-		o.activate(baseline)
-	case types.CommandRollback:
-		o.rollback(baseline)
-	case types.CommandCleanup:
-		o.cleanup(baseline)
-		if len(o.baselineActions) == 0 {
-			o.updateManager.operation = nil
-			o.Feedback(types.StatusCompleted, "", "")
-		}
-	default:
-		log.Warn("Ignoring unknown command %", command)
+	commandHandler, baselineAction := o.getBaselineCommandHandler(baseline, command)
+	if baselineAction == nil {
+		return
 	}
+	commandHandler(o, baselineAction)
 }
 
-var baselineValidation = map[types.CommandType]struct {
+type baselineCommandHandler func(*operation, *baselineAction)
+
+var baselineCommandHandlers = map[types.CommandType]struct {
 	expectedBaselineStatus []types.StatusType
 	baselineFailureStatus  types.StatusType
+	commandHandler         baselineCommandHandler
 }{
 	types.CommandDownload: {
 		expectedBaselineStatus: []types.StatusType{types.StatusIdentified},
 		baselineFailureStatus:  types.BaselineStatusDownloadFailure,
+		commandHandler:         download,
 	},
 	types.CommandUpdate: {
 		expectedBaselineStatus: []types.StatusType{types.BaselineStatusDownloadSuccess},
 		baselineFailureStatus:  types.BaselineStatusUpdateFailure,
+		commandHandler:         update,
 	},
 	types.CommandActivate: {
 		expectedBaselineStatus: []types.StatusType{types.BaselineStatusUpdateSuccess},
 		baselineFailureStatus:  types.BaselineStatusActivationFailure,
+		commandHandler:         activate,
 	},
 	types.CommandRollback: {
 		expectedBaselineStatus: []types.StatusType{types.BaselineStatusActivationFailure, types.BaselineStatusActivationSuccess},
 		baselineFailureStatus:  types.BaselineStatusRollbackFailure,
+		commandHandler:         rollback,
 	},
 	types.CommandCleanup: {
 		baselineFailureStatus: types.BaselineStatusCleanup,
+		commandHandler:        cleanup,
 	},
 }
 
-func (o *operation) getBaselineActionForCommand(baseline string, command types.CommandType) *baselineAction {
+func (o *operation) getBaselineCommandHandler(baseline string, command types.CommandType) (baselineCommandHandler, *baselineAction) {
+	handler, ok := baselineCommandHandlers[command]
+	if !ok {
+		log.Warn("Ignoring unknown command %", command)
+		return nil, nil
+	}
 	var baselineAction *baselineAction
 	if baseline == "*" || baseline == "" {
 		o.allActions.baseline = baseline
@@ -238,37 +238,31 @@ func (o *operation) getBaselineActionForCommand(baseline string, command types.C
 	} else {
 		baselineAction = o.baselineActions[baseline]
 	}
-	validation := baselineValidation[command]
 	if baselineAction == nil {
-		o.Feedback(validation.baselineFailureStatus, "Unknown baseline "+baseline, baseline)
-		return nil
+		o.Feedback(handler.baselineFailureStatus, "Unknown baseline "+baseline, baseline)
+		return nil, nil
 	}
-	if len(validation.expectedBaselineStatus) > 0 && !hasStatus(validation.expectedBaselineStatus, baselineAction.status) {
-		o.Feedback(validation.baselineFailureStatus, fmt.Sprintf("%s is possible only after status %s is reported", command, asStatusString(validation.expectedBaselineStatus)), baseline)
-		return nil
+	if len(handler.expectedBaselineStatus) > 0 && !hasStatus(handler.expectedBaselineStatus, baselineAction.status) {
+		o.Feedback(handler.baselineFailureStatus, fmt.Sprintf("%s is possible only after status %s is reported", command, asStatusString(handler.expectedBaselineStatus)), baseline)
+		return nil, nil
 	}
-	return baselineAction
+	return handler.commandHandler, baselineAction
 }
 
 // ActionCreate and ActionRecreate: create new container instance, this will download the container image.
-func (o *operation) download(baseline string) {
-	baselineAction := o.getBaselineActionForCommand(baseline, types.CommandDownload)
-	if baselineAction == nil {
-		return
-	}
-
+func download(o *operation, baselineAction *baselineAction) {
 	var lastAction *containerAction
 	var lastActionErr error
 	lastActionMessage := ""
 
-	log.Debug("downloading for baseline %s - starting...", baseline)
+	log.Debug("downloading for baseline %s - starting...", baselineAction.baseline)
 	defer func() {
 		if lastActionErr == nil {
 			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusDownloadSuccess, lastAction, types.ActionStatusDownloadSuccess, lastActionMessage)
 		} else {
 			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusDownloadFailure, lastAction, types.ActionStatusDownloadFailure, lastActionErr.Error())
 		}
-		log.Debug("downloading for baseline %s - done", baseline)
+		log.Debug("downloading for baseline %s - done", baselineAction.baseline)
 	}()
 
 	actions := baselineAction.actions
@@ -293,24 +287,19 @@ func (o *operation) download(baseline string) {
 
 // ActionRecreate, ActionDestroy: stops the current container instance.
 // ActionUpdate: update the running container configuration.
-func (o *operation) update(baseline string) {
-	baselineAction := o.getBaselineActionForCommand(baseline, types.CommandUpdate)
-	if baselineAction == nil {
-		return
-	}
-
+func update(o *operation, baselineAction *baselineAction) {
 	var lastAction *containerAction
 	var lastActionErr error
 	lastActionMessage := ""
 
-	log.Debug("updating for baseline %s - starting...", baseline)
+	log.Debug("updating for baseline %s - starting...", baselineAction.baseline)
 	defer func() {
 		if lastActionErr == nil {
 			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusUpdateSuccess, lastAction, types.ActionStatusUpdateSuccess, lastActionMessage)
 		} else {
 			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusUpdateFailure, lastAction, types.ActionStatusUpdateFailure, lastActionErr.Error())
 		}
-		log.Debug("updating for baseline %s - done.", baseline)
+		log.Debug("updating for baseline %s - done.", baselineAction.baseline)
 	}()
 
 	actions := baselineAction.actions
@@ -343,24 +332,19 @@ func (o *operation) update(baseline string) {
 
 // ActionCreate, ActionRecreate: starts the newly created container instance (from DOWNLOAD phase).
 // ActionUpdate, ActionCheck: ensure the existing container is running (call start/unpause container).
-func (o *operation) activate(baseline string) {
-	baselineAction := o.getBaselineActionForCommand(baseline, types.CommandActivate)
-	if baselineAction == nil {
-		return
-	}
-
+func activate(o *operation, baselineAction *baselineAction) {
 	var lastAction *containerAction
 	var lastActionErr error
 	lastActionMessage := ""
 
-	log.Debug("activating for baseline %s - starting...", baseline)
+	log.Debug("activating for baseline %s - starting...", baselineAction.baseline)
 	defer func() {
 		if lastActionErr == nil {
 			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusActivationSuccess, lastAction, types.ActionStatusActivationSuccess, lastActionMessage)
 		} else {
 			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusActivationFailure, lastAction, types.ActionStatusActivationFailure, lastActionErr.Error())
 		}
-		log.Debug("activating for baseline %s - done...", baseline)
+		log.Debug("activating for baseline %s - done...", baselineAction.baseline)
 	}()
 
 	actions := baselineAction.actions
@@ -398,24 +382,19 @@ func (o *operation) activate(baseline string) {
 // ActionCreate: removes the newly created container instance (from DOWNLOAD phase)
 // ActionRecreate: removes the newly created container instance (from DOWNLOAD phase) and restarts the old existing container instance.
 // ActionUpdate: restores the old configuration to the existing container and ensures it is started.
-func (o *operation) rollback(baseline string) {
-	baselineAction := o.getBaselineActionForCommand(baseline, types.CommandRollback)
-	if baselineAction == nil {
-		return
-	}
-
+func rollback(o *operation, baselineAction *baselineAction) {
 	var failure bool
 	var lastAction *containerAction
 	var lastActionMessage string
 
-	log.Debug("rollback for baseline %s - starting...", baseline)
+	log.Debug("rollback for baseline %s - starting...", baselineAction.baseline)
 	defer func() {
 		if !failure {
 			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusRollbackSuccess, lastAction, types.ActionStatusUpdateFailure, lastActionMessage)
 		} else {
 			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusRollbackFailure, lastAction, types.ActionStatusUpdateFailure, lastActionMessage)
 		}
-		log.Debug("rollback for baseline %s - done.", baseline)
+		log.Debug("rollback for baseline %s - done.", baselineAction.baseline)
 	}()
 
 	actions := baselineAction.actions
@@ -462,11 +441,8 @@ func (o *operation) rollback(baseline string) {
 }
 
 // ActionRecreate, ActionDestroy: removes the old existing container instance.
-func (o *operation) cleanup(baseline string) {
-	baselineAction := o.getBaselineActionForCommand(baseline, types.CommandUpdate)
-	if baselineAction == nil {
-		return
-	}
+func cleanup(o *operation, baselineAction *baselineAction) {
+	baseline := baselineAction.baseline
 	actions := baselineAction.actions
 	if baseline == "*" || baseline == "" {
 		for b := range o.baselineActions {
