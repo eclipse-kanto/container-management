@@ -59,8 +59,21 @@ const (
 var (
 	// test input args
 	createCmdArgs = []string{createContainerImageName}
+)
 
-	expectedCfg = createConfig{
+// Tests --------------------
+func TestCreateCmdInit(t *testing.T) {
+	createCliTest := &createCommandTest{}
+	createCliTest.init()
+
+	execTestInit(t, createCliTest)
+}
+
+func TestCreateCmdSetupFlags(t *testing.T) {
+	createCliTest := &createCommandTest{}
+	createCliTest.init()
+
+	expectedCfg := createConfig{
 		name:        "",
 		terminal:    true,
 		interactive: true,
@@ -72,6 +85,7 @@ var (
 		},
 		network:          string(types.NetworkModeHost),
 		extraHosts:       []string{"ctrhost:host_ip"},
+		extraCaps: 		  []string{"CAP_NET_ADMIN"},
 		devices:          []string{"/dev/ttyACM0:/dev/ttyACM1:rwm"},
 		mountPoints:      []string{"/proc:/proc:rprivate"},
 		ports:            []string{"192.168.1.100:80-100:80/udp"},
@@ -90,7 +104,7 @@ var (
 		decRecipients: []string{"pkcs7:cert_filepath"},
 	}
 
-	flagsToApply = map[string]string{
+	flagsToApply := map[string]string{
 		createCmdFlagName:                  expectedCfg.name,
 		createCmdFlagTerminal:              strconv.FormatBool(expectedCfg.terminal),
 		createCmdFlagInteractive:           strconv.FormatBool(expectedCfg.interactive),
@@ -100,6 +114,7 @@ var (
 		createCmdFlagRestartPolicyTimeout:  strconv.FormatInt(expectedCfg.restartPolicy.timeout, 10),
 		createCmdFlagNetwork:               expectedCfg.network,
 		createCmdFlagExtraHosts:            strings.Join(expectedCfg.extraHosts, ","),
+		createCmdFlagExtraCaps:				strings.Join(expectedCfg.extraCaps, ","),
 		createCmdFlagDevices:               strings.Join(expectedCfg.devices, ","),
 		createCmdFlagMountPoints:           strings.Join(expectedCfg.mountPoints, ","),
 		createCmdFlagPorts:                 strings.Join(expectedCfg.ports, ","),
@@ -115,31 +130,6 @@ var (
 		createCmdFlagKeys:                  strings.Join(expectedCfg.decKeys, ","),
 		createCmdFlagDecRecipients:         strings.Join(expectedCfg.decRecipients, ","),
 	}
-)
-
-// Tests --------------------
-func TestCreateCmdInit(t *testing.T) {
-	createCliTest := &createCommandTest{}
-	createCliTest.init()
-
-	execTestInit(t, createCliTest)
-}
-
-func TestCreateCmdSetupFlagsPrivileged(t *testing.T) {
-	createCliTest := &createCommandTest{}
-	createCliTest.init()
-
-	execTestSetupFlags(t, createCliTest, flagsToApply, expectedCfg)
-}
-
-func TestCreateCmdSetupFlagsCapabilities(t *testing.T) {
-	createCliTest := &createCommandTest{}
-	createCliTest.init()
-
-	expectedCfg.privileged = false
-	expectedCfg.extraCaps = append(expectedCfg.extraCaps, "CAP_NET_ADMIN")
-	flagsToApply[createCmdFlagPrivileged] = strconv.FormatBool(expectedCfg.privileged)
-	flagsToApply[createCmdFlagExtraCaps] = strings.Join(expectedCfg.extraCaps, ",")
 
 	execTestSetupFlags(t, createCliTest, flagsToApply, expectedCfg)
 }

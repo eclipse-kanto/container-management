@@ -319,6 +319,32 @@ func TestNegativeContainerValidations(t *testing.T) {
 			},
 			expectedErr: log.NewError("cannot use the host_ip reserved key or any of its modifications when in host network mode"),
 		},
+		"test_validate_host_config_privileged_with_device": {
+			ctr: &types.Container{
+				Image: types.Image{Name: "image"},
+				HostConfig: &types.HostConfig{
+					NetworkMode: types.NetworkModeBridge,
+					Privileged: true,
+					Devices: []types.DeviceMapping{{
+						PathOnHost:        hostConfigDeviceHost,
+						PathInContainer:   hostConfigDeviceContainer,
+						CgroupPermissions: hostConfigDevicePerm,
+					}},
+				},
+			},
+			expectedErr: log.NewErrorf("cannot create the container as privileged and with specified devices at the same time - choose one of the options"),
+		},
+		"test_validate_host_config_privileged_with_extra_capabilities": {
+			ctr: &types.Container{
+				Image: types.Image{Name: "image"},
+				HostConfig: &types.HostConfig{
+					NetworkMode: types.NetworkModeBridge,
+					Privileged: true,
+					ExtraCaps: []string{"CAP_NET_ADMIN"},
+				},
+			},
+			expectedErr: log.NewErrorf("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options"),
+		},
 		"test_validate_host_config_host_mode_unsupported": {
 			ctr: &types.Container{
 				Image: types.Image{Name: "image"},

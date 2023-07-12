@@ -78,10 +78,20 @@ func ValidateName(name string) error {
 	return nil
 }
 
+func ValidateCapabilities(hostConfig *types.HostConfig) error {
+	if hostConfig.Privileged && hostConfig.Devices != nil {
+		return log.NewError("cannot create the container as privileged and with specified devices at the same time - choose one of the options")
+	}
+	if hostConfig.Privileged && hostConfig.ExtraCaps != nil {
+		return log.NewError("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options")
+	}
+	return nil
+}
+
 // ValidateHostConfig validates the container host configuration
 func ValidateHostConfig(hostConfig *types.HostConfig) error {
-	if hostConfig.Privileged && len(hostConfig.Devices) > 0 {
-		return log.NewError("cannot have a privileged container with specified devices")
+	if err := ValidateCapabilities(hostConfig); err != nil {
+		return err
 	}
 	if err := ValidateNetworking(hostConfig); err != nil {
 		return err

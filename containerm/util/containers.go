@@ -188,7 +188,6 @@ func FillDefaults(container *types.Container) bool {
 		container.HostConfig = &types.HostConfig{
 			NetworkMode: types.NetworkModeBridge,
 			Privileged:  false,
-			ExtraCaps:   nil,
 		}
 		changesMade = true
 	}

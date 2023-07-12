@@ -48,7 +48,7 @@ func fromAPIContainerConfig(ctr *types.Container) *configuration {
 		if ctr.HostConfig.RestartPolicy != nil {
 			cfg.RestartPolicy = fromAPIRestartPolicy(ctr.HostConfig.RestartPolicy)
 		}
-		if ctr.HostConfig.Privileged == false && ctr.HostConfig.ExtraCaps != nil && len(ctr.HostConfig.ExtraCaps) > 0 {
+		if !ctr.HostConfig.Privileged && ctr.HostConfig.ExtraCaps != nil && len(ctr.HostConfig.ExtraCaps) > 0 {
 			cfg.ExtraCaps = ctr.HostConfig.ExtraCaps
 		}
 		if ctr.HostConfig.ExtraHosts != nil && len(ctr.HostConfig.ExtraHosts) > 0 {
@@ -122,7 +122,7 @@ func toAPIContainerConfig(cfg *configuration) *types.Container {
 	if cfg.ExtraHosts != nil && len(cfg.ExtraHosts) > 0 {
 		ctr.HostConfig.ExtraHosts = cfg.ExtraHosts
 	}
-	if cfg.Privileged == false && cfg.ExtraCaps != nil && len(cfg.ExtraCaps) > 0 {
+	if !cfg.Privileged && cfg.ExtraCaps != nil && len(cfg.ExtraCaps) > 0 {
 		ctr.HostConfig.ExtraCaps = cfg.ExtraCaps
 	}
 	if cfg.Devices != nil && len(cfg.Devices) > 0 {
