@@ -324,7 +324,7 @@ func TestNegativeContainerValidations(t *testing.T) {
 				Image: types.Image{Name: "image"},
 				HostConfig: &types.HostConfig{
 					NetworkMode: types.NetworkModeBridge,
-					Privileged: true,
+					Privileged:  true,
 					Devices: []types.DeviceMapping{{
 						PathOnHost:        hostConfigDeviceHost,
 						PathInContainer:   hostConfigDeviceContainer,
@@ -339,8 +339,8 @@ func TestNegativeContainerValidations(t *testing.T) {
 				Image: types.Image{Name: "image"},
 				HostConfig: &types.HostConfig{
 					NetworkMode: types.NetworkModeBridge,
-					Privileged: true,
-					ExtraCaps: []string{"CAP_NET_ADMIN"},
+					Privileged:  true,
+					ExtraCaps:   []string{"CAP_NET_ADMIN"},
 				},
 			},
 			expectedErr: log.NewErrorf("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options"),
