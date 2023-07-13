@@ -26,7 +26,7 @@ const (
 	defaultRestartPolicyType                = ctrtypes.UnlessStopped
 	defaultRestartPolicyMaximumRetryCount   = 0
 	defaultRestartPolicyMaximumRetryTimeout = 0
-	defaultHostConfigNetrowkMode            = ctrtypes.NetworkModeBridge
+	defaultHostConfigNetworkMode            = ctrtypes.NetworkModeBridge
 	defaultLogConfigDriverConfigType        = ctrtypes.LogConfigDriverJSONFile
 	defaultLogConfigMaxSize                 = "100M"
 	defaultLogConfigModeConfigMode          = ctrtypes.LogModeBlocking
@@ -115,7 +115,7 @@ func hostConfigParameters(hostConfig *ctrtypes.HostConfig, verbose bool) []*type
 	for _, portMapping := range hostConfig.PortMappings {
 		appendParameter(&kvPair, keyPort, util.PortMappingToString(&portMapping))
 	}
-	if verbose || (len(hostConfig.NetworkMode) > 0 && hostConfig.NetworkMode != defaultHostConfigNetrowkMode) {
+	if (verbose || hostConfig.NetworkMode != defaultHostConfigNetworkMode) && len(hostConfig.NetworkMode) > 0 {
 		appendParameter(&kvPair, keyNetwork, string(hostConfig.NetworkMode))
 	}
 	for _, host := range hostConfig.ExtraHosts {
@@ -123,26 +123,29 @@ func hostConfigParameters(hostConfig *ctrtypes.HostConfig, verbose bool) []*type
 	}
 	if hostConfig.LogConfig != nil {
 		if hostConfig.LogConfig.DriverConfig != nil {
-			if verbose || (len(hostConfig.LogConfig.DriverConfig.Type) != 0 && hostConfig.LogConfig.DriverConfig.Type != defaultLogConfigDriverConfigType) {
-				appendParameter(&kvPair, keyLogDriver, string(hostConfig.LogConfig.DriverConfig.Type))
+			logDriverConfig := hostConfig.LogConfig.DriverConfig
+			fileLogging := logDriverConfig.Type == ctrtypes.LogConfigDriverJSONFile
+			if verbose || (len(logDriverConfig.Type) != 0 && logDriverConfig.Type != defaultLogConfigDriverConfigType) {
+				appendParameter(&kvPair, keyLogDriver, string(logDriverConfig.Type))
 			}
-			if verbose || hostConfig.LogConfig.DriverConfig.MaxFiles != defaultLogConfigMaxFiles {
-				appendParameter(&kvPair, keyLogMaxFiles, strconv.FormatInt(int64(hostConfig.LogConfig.DriverConfig.MaxFiles), 10))
+			if fileLogging && (verbose || logDriverConfig.MaxFiles != defaultLogConfigMaxFiles) {
+				appendParameter(&kvPair, keyLogMaxFiles, strconv.FormatInt(int64(logDriverConfig.MaxFiles), 10))
 			}
-
-			if verbose || (len(hostConfig.LogConfig.DriverConfig.MaxSize) > 0 && hostConfig.LogConfig.DriverConfig.MaxSize != defaultLogConfigMaxSize) {
-				appendParameter(&kvPair, keyLogMaxSize, hostConfig.LogConfig.DriverConfig.MaxSize)
+			if fileLogging && (verbose || (len(logDriverConfig.MaxSize) > 0 && logDriverConfig.MaxSize != defaultLogConfigMaxSize)) {
+				appendParameter(&kvPair, keyLogMaxSize, logDriverConfig.MaxSize)
 			}
-			if verbose || len(hostConfig.LogConfig.DriverConfig.RootDir) > 0 {
-				appendParameter(&kvPair, keyLogPath, hostConfig.LogConfig.DriverConfig.RootDir)
+			if fileLogging && len(logDriverConfig.RootDir) > 0 {
+				appendParameter(&kvPair, keyLogPath, logDriverConfig.RootDir)
 			}
 		}
 		if hostConfig.LogConfig.ModeConfig != nil {
-			if verbose || (len(hostConfig.LogConfig.ModeConfig.Mode) > 0 && hostConfig.LogConfig.ModeConfig.Mode != defaultLogConfigModeConfigMode) {
-				appendParameter(&kvPair, keyLogMode, string(hostConfig.LogConfig.ModeConfig.Mode))
+			logModeConfig := hostConfig.LogConfig.ModeConfig
+			bufferedLogging := logModeConfig.Mode == ctrtypes.LogModeNonBlocking
+			if verbose || (len(logModeConfig.Mode) > 0 && logModeConfig.Mode != defaultLogConfigModeConfigMode) {
+				appendParameter(&kvPair, keyLogMode, string(logModeConfig.Mode))
 			}
-			if verbose || (len(hostConfig.LogConfig.ModeConfig.MaxBufferSize) > 0 && hostConfig.LogConfig.ModeConfig.MaxBufferSize != defaultLogConfigModeConfigMaxBufferSize) {
-				appendParameter(&kvPair, keyLogMaxBufferSize, hostConfig.LogConfig.ModeConfig.MaxBufferSize)
+			if bufferedLogging && (verbose || (len(logModeConfig.MaxBufferSize) > 0 && logModeConfig.MaxBufferSize != defaultLogConfigModeConfigMaxBufferSize)) {
+				appendParameter(&kvPair, keyLogMaxBufferSize, logModeConfig.MaxBufferSize)
 			}
 		}
 	}
