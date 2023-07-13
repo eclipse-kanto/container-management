@@ -62,15 +62,15 @@ var (
 		Source:          mountSrc,
 		PropagationMode: mountPropagationMode,
 	}}
-	envVar               = []string{env}
-	cmdVar               = []string{cmd}
-	hostConfigExtraHosts = []string{"ctrhost:host_ip"}
-	hostConfigExtraCaps  = []string{"CAP_NET_ADMIN"}
-	internalHostConfig   = &types.HostConfig{
-		Privileged:  hostConfigPrivileged,
-		ExtraHosts:  hostConfigExtraHosts,
-		ExtraCaps:   hostConfigExtraCaps,
-		NetworkMode: hostConfigNetType,
+	envVar                      = []string{env}
+	cmdVar                      = []string{cmd}
+	hostConfigExtraHosts        = []string{"ctrhost:host_ip"}
+	hostConfigExtraCapabilities = []string{"CAP_NET_ADMIN"}
+	internalHostConfig          = &types.HostConfig{
+		Privileged:        hostConfigPrivileged,
+		ExtraHosts:        hostConfigExtraHosts,
+		ExtraCapabilities: hostConfigExtraCapabilities,
+		NetworkMode:       hostConfigNetType,
 		PortMappings: []types.PortMapping{{
 			ContainerPort: hostConfigContainerPort,
 			HostPort:      hostConfigHostPort,
@@ -156,7 +156,7 @@ func TestFromAPIContainerConfig(t *testing.T) {
 	t.Run("test_from_api_container_config_extra_caps", func(t *testing.T) {
 		ctr.HostConfig.Privileged = false
 		ctrParsed = fromAPIContainerConfig(ctr)
-		testutil.AssertEqual(t, ctr.HostConfig.ExtraCaps, ctrParsed.ExtraCaps)
+		testutil.AssertEqual(t, ctr.HostConfig.ExtraCapabilities, ctrParsed.ExtraCapabilities)
 	})
 	t.Run("test_from_api_container_config_extra_hosts", func(t *testing.T) {
 		testutil.AssertEqual(t, ctr.HostConfig.ExtraHosts, ctrParsed.ExtraHosts)
@@ -215,12 +215,12 @@ var (
 			RetryTimeout:  hostConfigRestartPolicyTimeout.Seconds(),
 			RpType:        onFailure,
 		},
-		NetworkMode:  host,
-		ExtraCaps:    hostConfigExtraCaps,
-		ExtraHosts:   hostConfigExtraHosts,
-		PortMappings: []*portMapping{{}},
-		OpenStdin:    internalIOConfig.OpenStdin,
-		Tty:          internalIOConfig.Tty,
+		NetworkMode:       host,
+		ExtraCapabilities: hostConfigExtraCapabilities,
+		ExtraHosts:        hostConfigExtraHosts,
+		PortMappings:      []*portMapping{{}},
+		OpenStdin:         internalIOConfig.OpenStdin,
+		Tty:               internalIOConfig.Tty,
 		Log: &logConfiguration{
 			Type:          testLogDriverType,
 			MaxFiles:      testLogMaxFiles,
@@ -259,8 +259,8 @@ func TestToAPIContainerConfig(t *testing.T) {
 	t.Run("test_to_api_container_config_extra_caps", func(t *testing.T) {
 		copyTestContainerConfig := *testContainerConfig
 		copyTestContainerConfig.Privileged = false
-		ctrParsedExtraCaps := toAPIContainerConfig(&copyTestContainerConfig)
-		testutil.AssertEqual(t, copyTestContainerConfig.ExtraCaps, ctrParsedExtraCaps.HostConfig.ExtraCaps)
+		ctrParsedExtraCapabilities := toAPIContainerConfig(&copyTestContainerConfig)
+		testutil.AssertEqual(t, copyTestContainerConfig.ExtraCapabilities, ctrParsedExtraCapabilities.HostConfig.ExtraCapabilities)
 	})
 	t.Run("test_to_api_container_config_extra_hosts", func(t *testing.T) {
 		testutil.AssertEqual(t, testContainerConfig.ExtraHosts, ctrParsed.HostConfig.ExtraHosts)

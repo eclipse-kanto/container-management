@@ -246,7 +246,7 @@ func ToProtoHostConfig(internalHostConfig *internaltypes.HostConfig) *apitypesco
 		RestartPolicy:     ToProtoRestartPolicy(internalHostConfig.RestartPolicy),
 		Runtime:           string(internalHostConfig.Runtime),
 		ExtraHosts:        internalHostConfig.ExtraHosts,
-		ExtraCapabilities: internalHostConfig.ExtraCaps,
+		ExtraCapabilities: internalHostConfig.ExtraCapabilities,
 		PortMappings:      ToProtoPortMappings(internalHostConfig.PortMappings),
 		LogConfig:         ToProtoLogConfig(internalHostConfig.LogConfig),
 		Resources:         ToProtoResource(internalHostConfig.Resources),

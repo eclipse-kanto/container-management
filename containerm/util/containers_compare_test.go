@@ -208,12 +208,12 @@ func TestDetermineUpdateAction(t *testing.T) {
 		"test_hostconfig0_equal_capabilities": {
 			current: &types.Container{
 				HostConfig: &types.HostConfig{
-					ExtraCaps: []string{"CAP_NET_ADMIN"},
+					ExtraCapabilities: []string{"CAP_NET_ADMIN"},
 				},
 			},
 			desired: &types.Container{
 				HostConfig: &types.HostConfig{
-					ExtraCaps: []string{"CAP_NET_ADMIN"},
+					ExtraCapabilities: []string{"CAP_NET_ADMIN"},
 				},
 			},
 			expectedResult: ActionCheck,
@@ -221,12 +221,12 @@ func TestDetermineUpdateAction(t *testing.T) {
 		"test_hostconfig0_not_equal_capabilities": {
 			current: &types.Container{
 				HostConfig: &types.HostConfig{
-					ExtraCaps: []string{"test"},
+					ExtraCapabilities: []string{"test"},
 				},
 			},
 			desired: &types.Container{
 				HostConfig: &types.HostConfig{
-					ExtraCaps: []string{"CAP_NET_ADMIN"},
+					ExtraCapabilities: []string{"CAP_NET_ADMIN"},
 				},
 			},
 			expectedResult: ActionRecreate,
@@ -465,21 +465,21 @@ func TestIsEqualHostConfig0(t *testing.T) {
 			},
 			expectedResult: false,
 		},
-		"test_extracaps_equal": {
+		"test_extracapabilities_equal": {
 			current: &types.HostConfig{
-				ExtraCaps: []string{"testExtraCaps", "testExtraCaps2"},
+				ExtraCapabilities: []string{"testExtraCapabilities", "testExtraCapabilities2"},
 			},
 			desired: &types.HostConfig{
-				ExtraCaps: []string{"testExtraCaps", "testExtraCaps2"},
+				ExtraCapabilities: []string{"testExtraCapabilities", "testExtraCapabilities2"},
 			},
 			expectedResult: true,
 		},
-		"test_extracaps_not_equal": {
+		"test_extracapabilities_not_equal": {
 			current: &types.HostConfig{
-				ExtraHosts: []string{"testExtraCaps", "testExtraCaps2"},
+				ExtraHosts: []string{"testExtraCapabilities", "testExtraCapabilities2"},
 			},
 			desired: &types.HostConfig{
-				ExtraHosts: []string{"testExtraCaps", "testExtraCapsNotEqual"},
+				ExtraHosts: []string{"testExtraCapabilities", "testExtraCapabilitiesNotEqual"},
 			},
 			expectedResult: false,
 		},

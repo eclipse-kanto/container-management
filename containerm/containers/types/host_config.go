@@ -38,14 +38,14 @@ const (
 
 // HostConfig defines the resources, behavior, etc. that the host must manage on the container
 type HostConfig struct {
-	Devices       []DeviceMapping   `json:"devices"`
-	NetworkMode   NetworkMode       `json:"network_mode"`
-	Privileged    bool              `json:"privileged"`
-	RestartPolicy *RestartPolicy    `json:"restart_policy"`
-	Runtime       Runtime           `json:"runtime"`
-	ExtraHosts    []string          `json:"extra_hosts"`
-	ExtraCaps     []string          `json:"extra_capabilities"`
-	PortMappings  []PortMapping     `json:"port_mappings"`
-	LogConfig     *LogConfiguration `json:"log_config"`
-	Resources     *Resources        `json:"resources"`
+	Devices           []DeviceMapping   `json:"devices"`
+	NetworkMode       NetworkMode       `json:"network_mode"`
+	Privileged        bool              `json:"privileged"`
+	RestartPolicy     *RestartPolicy    `json:"restart_policy"`
+	Runtime           Runtime           `json:"runtime"`
+	ExtraHosts        []string          `json:"extra_hosts"`
+	ExtraCapabilities []string          `json:"extra_capabilities"`
+	PortMappings      []PortMapping     `json:"port_mappings"`
+	LogConfig         *LogConfiguration `json:"log_config"`
+	Resources         *Resources        `json:"resources"`
 }

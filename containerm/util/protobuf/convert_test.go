@@ -116,13 +116,13 @@ var (
 		Cmd: configArg,
 	}
 
-	hostConfigExtraHosts = []string{"ctrhost:host_ip"}
-	hostConfigExtraCaps  = []string{"CAP_NET_ADMIN"}
-	internalHostConfig   = &internaltypes.HostConfig{
-		Privileged:  hostConfigPrivileged,
-		ExtraHosts:  hostConfigExtraHosts,
-		ExtraCaps:   hostConfigExtraCaps,
-		NetworkMode: hostConfigNetType,
+	hostConfigExtraHosts        = []string{"ctrhost:host_ip"}
+	hostConfigExtraCapabilities = []string{"CAP_NET_ADMIN"}
+	internalHostConfig          = &internaltypes.HostConfig{
+		Privileged:        hostConfigPrivileged,
+		ExtraHosts:        hostConfigExtraHosts,
+		ExtraCapabilities: hostConfigExtraCapabilities,
+		NetworkMode:       hostConfigNetType,
 		PortMappings: []internaltypes.PortMapping{{
 			ContainerPort: hostConfigContainerPort,
 			HostPort:      hostConfigHostPort,

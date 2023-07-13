@@ -211,16 +211,16 @@ func ToInternalHostConfig(grpcHostConfig *apitypescontainers.HostConfig) *intern
 	}
 
 	return &internaltypes.HostConfig{
-		Devices:       devices,
-		NetworkMode:   internaltypes.NetworkMode(grpcHostConfig.NetworkMode),
-		Privileged:    grpcHostConfig.Privileged,
-		RestartPolicy: ToInternalRestartPolicy(grpcHostConfig.RestartPolicy),
-		Runtime:       internaltypes.Runtime(grpcHostConfig.Runtime),
-		ExtraHosts:    grpcHostConfig.ExtraHosts,
-		ExtraCaps:     grpcHostConfig.ExtraCapabilities,
-		PortMappings:  ToInternalPortMappings(grpcHostConfig.PortMappings),
-		LogConfig:     ToInternalLogConfig(grpcHostConfig.LogConfig),
-		Resources:     ToInternalResources(grpcHostConfig.Resources),
+		Devices:           devices,
+		NetworkMode:       internaltypes.NetworkMode(grpcHostConfig.NetworkMode),
+		Privileged:        grpcHostConfig.Privileged,
+		RestartPolicy:     ToInternalRestartPolicy(grpcHostConfig.RestartPolicy),
+		Runtime:           internaltypes.Runtime(grpcHostConfig.Runtime),
+		ExtraHosts:        grpcHostConfig.ExtraHosts,
+		ExtraCapabilities: grpcHostConfig.ExtraCapabilities,
+		PortMappings:      ToInternalPortMappings(grpcHostConfig.PortMappings),
+		LogConfig:         ToInternalLogConfig(grpcHostConfig.LogConfig),
+		Resources:         ToInternalResources(grpcHostConfig.Resources),
 	}
 }
 

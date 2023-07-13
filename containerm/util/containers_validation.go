@@ -83,7 +83,7 @@ func ValidateCapabilities(hostConfig *types.HostConfig) error {
 	if hostConfig.Privileged && hostConfig.Devices != nil {
 		return log.NewError("cannot create the container as privileged and with specified devices at the same time - choose one of the options")
 	}
-	if hostConfig.Privileged && hostConfig.ExtraCaps != nil {
+	if hostConfig.Privileged && hostConfig.ExtraCapabilities != nil {
 		return log.NewError("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options")
 	}
 	return nil

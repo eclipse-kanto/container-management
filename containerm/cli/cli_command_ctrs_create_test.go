@@ -35,7 +35,7 @@ const (
 	createCmdFlagRestartPolicyTimeout  = "rp-to"
 	createCmdFlagNetwork               = "network"
 	createCmdFlagExtraHosts            = "hosts"
-	createCmdFlagExtraCaps             = "cap-add"
+	createCmdFlagExtraCapabilities     = "cap-add"
 	createCmdFlagDevices               = "devices"
 	createCmdFlagMountPoints           = "mp"
 	createCmdFlagPorts                 = "ports"
@@ -83,18 +83,18 @@ func TestCreateCmdSetupFlags(t *testing.T) {
 			timeout:       10,
 			maxRetryCount: 3,
 		},
-		network:          string(types.NetworkModeHost),
-		extraHosts:       []string{"ctrhost:host_ip"},
-		extraCaps:        []string{"CAP_NET_ADMIN"},
-		devices:          []string{"/dev/ttyACM0:/dev/ttyACM1:rwm"},
-		mountPoints:      []string{"/proc:/proc:rprivate"},
-		ports:            []string{"192.168.1.100:80-100:80/udp"},
-		logDriver:        string(types.LogConfigDriverNone),
-		logMaxFiles:      5,
-		logMaxSize:       "200M",
-		logRootDirPath:   "/",
-		logMode:          string(types.LogModeNonBlocking),
-		logMaxBufferSize: "2M",
+		network:           string(types.NetworkModeHost),
+		extraHosts:        []string{"ctrhost:host_ip"},
+		extraCapabilities: []string{"CAP_NET_ADMIN"},
+		devices:           []string{"/dev/ttyACM0:/dev/ttyACM1:rwm"},
+		mountPoints:       []string{"/proc:/proc:rprivate"},
+		ports:             []string{"192.168.1.100:80-100:80/udp"},
+		logDriver:         string(types.LogConfigDriverNone),
+		logMaxFiles:       5,
+		logMaxSize:        "200M",
+		logRootDirPath:    "/",
+		logMode:           string(types.LogModeNonBlocking),
+		logMaxBufferSize:  "2M",
 		resources: resources{
 			memory:            "500M",
 			memoryReservation: "300M",
@@ -114,7 +114,7 @@ func TestCreateCmdSetupFlags(t *testing.T) {
 		createCmdFlagRestartPolicyTimeout:  strconv.FormatInt(expectedCfg.restartPolicy.timeout, 10),
 		createCmdFlagNetwork:               expectedCfg.network,
 		createCmdFlagExtraHosts:            strings.Join(expectedCfg.extraHosts, ","),
-		createCmdFlagExtraCaps:             strings.Join(expectedCfg.extraCaps, ","),
+		createCmdFlagExtraCapabilities:     strings.Join(expectedCfg.extraCapabilities, ","),
 		createCmdFlagDevices:               strings.Join(expectedCfg.devices, ","),
 		createCmdFlagMountPoints:           strings.Join(expectedCfg.mountPoints, ","),
 		createCmdFlagPorts:                 strings.Join(expectedCfg.ports, ","),
@@ -166,18 +166,18 @@ func (createTc *createCommandTest) commandConfigDefault() interface{} {
 			timeout:       30,
 			maxRetryCount: 1,
 		},
-		network:          string(types.NetworkModeBridge),
-		extraHosts:       nil,
-		extraCaps:        nil,
-		devices:          nil,
-		mountPoints:      nil,
-		ports:            nil,
-		logDriver:        string(types.LogConfigDriverJSONFile),
-		logMaxFiles:      2,
-		logMaxSize:       "100M",
-		logRootDirPath:   "",
-		logMode:          string(types.LogModeBlocking),
-		logMaxBufferSize: "1M",
+		network:           string(types.NetworkModeBridge),
+		extraHosts:        nil,
+		extraCapabilities: nil,
+		devices:           nil,
+		mountPoints:       nil,
+		ports:             nil,
+		logDriver:         string(types.LogConfigDriverJSONFile),
+		logMaxFiles:       2,
+		logMaxSize:        "100M",
+		logRootDirPath:    "",
+		logMode:           string(types.LogModeBlocking),
+		logMaxBufferSize:  "1M",
 		resources: resources{
 			memory:            "",
 			memoryReservation: "",
@@ -447,9 +447,9 @@ func (createTc *createCommandTest) generateRunExecutionConfigs() map[string]test
 		"test_create_extra_capabilities": {
 			args: createCmdArgs,
 			flags: map[string]string{
-				createCmdFlagExtraCaps: "CAP_NET_ADMIN",
+				createCmdFlagExtraCapabilities: "CAP_NET_ADMIN",
 			},
-			mockExecution: createTc.mockExecCreateWithExtraCaps,
+			mockExecution: createTc.mockExecCreateWithExtraCapabilities,
 		},
 		// Test privileged
 		"test_create_privileged": {
@@ -923,13 +923,13 @@ func (createTc *createCommandTest) mockExecCreateWithExtraHostsIncorrectConfig(a
 	return log.NewError("Incorrect hosts configuration")
 }
 
-func (createTc *createCommandTest) mockExecCreateWithExtraCaps(args []string) error {
+func (createTc *createCommandTest) mockExecCreateWithExtraCapabilities(args []string) error {
 	container := initExpectedCtr(&types.Container{
 		Image: types.Image{
 			Name: args[0],
 		},
 		HostConfig: &types.HostConfig{
-			ExtraCaps: []string{"CAP_NET_ADMIN"},
+			ExtraCapabilities: []string{"CAP_NET_ADMIN"},
 		},
 	})
 
@@ -1061,10 +1061,10 @@ func initExpectedCtr(ctr *types.Container) *types.Container {
 	//merge default and provided
 	if ctr.HostConfig == nil {
 		ctr.HostConfig = &types.HostConfig{
-			Privileged:  false,
-			ExtraHosts:  nil,
-			ExtraCaps:   nil,
-			NetworkMode: types.NetworkModeBridge,
+			Privileged:        false,
+			ExtraHosts:        nil,
+			ExtraCapabilities: nil,
+			NetworkMode:       types.NetworkModeBridge,
 		}
 	} else if ctr.HostConfig.NetworkMode == "" {
 		ctr.HostConfig.NetworkMode = types.NetworkModeBridge
