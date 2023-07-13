@@ -144,13 +144,12 @@ func (updMgr *containersUpdateManager) asSoftwareNode() *types.SoftwareNode {
 }
 
 func (updMgr *containersUpdateManager) getCurrentContainers() []*types.SoftwareNode {
-	_, err := updMgr.mgr.List(context.Background())
+	containers, err := updMgr.mgr.List(context.Background())
 	if err != nil {
 		log.ErrorErr(err, "could not list all existing containers")
 		return nil
 	}
-	// TODO implement function fromContainers(containers, updMgr.verboseInventoryReport)
-	return nil
+	return fromContainers(containers, updMgr.verboseInventoryReport)
 }
 
 // Dispose releases all resources used by this instance

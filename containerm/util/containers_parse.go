@@ -178,3 +178,57 @@ func ParsePortMapping(mapping string) (*types.PortMapping, error) {
 		HostPortEnd:   uint16(hostPortEnd),
 	}, nil
 }
+
+// DeviceMappingToString returns the string representation of the given device mapping.
+// The string representation format for a device mapping is defined with ParseDeviceMapping function.
+func DeviceMappingToString(deviceMapping *types.DeviceMapping) string {
+	var device strings.Builder
+	if len(deviceMapping.PathOnHost) > 0 {
+		device.WriteString(deviceMapping.PathOnHost)
+	}
+	if len(deviceMapping.PathInContainer) > 0 {
+		if device.Len() > 0 {
+			device.WriteRune(':')
+		}
+		device.WriteString(deviceMapping.PathInContainer)
+	}
+	if len(deviceMapping.CgroupPermissions) > 0 {
+		if device.Len() > 0 {
+			device.WriteRune(':')
+		}
+		device.WriteString(deviceMapping.CgroupPermissions)
+	}
+	return device.String()
+}
+
+// MountPointToString returns the string representation of the given mount point.
+// The string representation format for a mount point is defined with ParseMountPoint function.
+func MountPointToString(mountPoint *types.MountPoint) string {
+	return mountPoint.Source + ":" + mountPoint.Destination + ":" + mountPoint.PropagationMode
+}
+
+// PortMappingToString returns the string representation of the given port mapping.
+// The string representation format for a port mapping is defined with ParsePortMapping function.
+func PortMappingToString(portMapping *types.PortMapping) string {
+	var ports strings.Builder
+	if len(portMapping.HostIP) > 0 && portMapping.HostIP != "0.0.0.0" { //ex. 1.2.3.4:80:80
+		ports.WriteString(portMapping.HostIP)
+		ports.WriteRune(':')
+	}
+	if portMapping.HostPort != 0 && portMapping.HostPortEnd != 0 && portMapping.HostPort != portMapping.HostPortEnd { //ex. 5000-6000:80
+		ports.WriteString(strconv.FormatUint(uint64(portMapping.HostPort), 10))
+		ports.WriteRune('-')
+		ports.WriteString(strconv.FormatUint(uint64(portMapping.HostPortEnd), 10))
+	} else if portMapping.HostPort != 0 && (portMapping.HostPort == portMapping.HostPortEnd || portMapping.HostPortEnd == 0) { //ex. 80:80
+		ports.WriteString(strconv.FormatUint(uint64(portMapping.HostPort), 10))
+	}
+	if portMapping.ContainerPort != 0 {
+		ports.WriteRune(':')
+		ports.WriteString(strconv.FormatUint(uint64(portMapping.ContainerPort), 10))
+	}
+	if len(portMapping.Proto) > 0 { //ex. 80:80/tcp
+		ports.WriteRune('/')
+		ports.WriteString(portMapping.Proto)
+	}
+	return ports.String()
+}
