@@ -215,12 +215,12 @@ func PortMappingToString(portMapping *types.PortMapping) string {
 		ports.WriteString(portMapping.HostIP)
 		ports.WriteRune(':')
 	}
-	if portMapping.HostPort != 0 && portMapping.HostPortEnd != 0 && portMapping.HostPort != portMapping.HostPortEnd { //ex. 5000-6000:80
+	if portMapping.HostPort != 0 {
 		ports.WriteString(strconv.FormatUint(uint64(portMapping.HostPort), 10))
-		ports.WriteRune('-')
-		ports.WriteString(strconv.FormatUint(uint64(portMapping.HostPortEnd), 10))
-	} else if portMapping.HostPort != 0 && (portMapping.HostPort == portMapping.HostPortEnd || portMapping.HostPortEnd == 0) { //ex. 80:80
-		ports.WriteString(strconv.FormatUint(uint64(portMapping.HostPort), 10))
+		if portMapping.HostPortEnd != 0 && portMapping.HostPort != portMapping.HostPortEnd { //ex. 5000-6000:80
+			ports.WriteRune('-')
+			ports.WriteString(strconv.FormatUint(uint64(portMapping.HostPortEnd), 10))
+		}
 	}
 	if portMapping.ContainerPort != 0 {
 		ports.WriteRune(':')
