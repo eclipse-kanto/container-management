@@ -150,13 +150,13 @@ func hostConfigParameters(hostConfig *ctrtypes.HostConfig, verbose bool) []*type
 		}
 	}
 	if hostConfig.Resources != nil {
-		if verbose || len(hostConfig.Resources.Memory) > 0 {
+		if len(hostConfig.Resources.Memory) > 0 {
 			appendParameter(&kvPair, keyMemory, hostConfig.Resources.Memory)
 		}
-		if verbose || len(hostConfig.Resources.MemoryReservation) > 0 {
+		if len(hostConfig.Resources.MemoryReservation) > 0 {
 			appendParameter(&kvPair, keyMemoryReservation, hostConfig.Resources.MemoryReservation)
 		}
-		if verbose || len(hostConfig.Resources.MemorySwap) > 0 {
+		if len(hostConfig.Resources.MemorySwap) > 0 {
 			appendParameter(&kvPair, keyMemorySwap, hostConfig.Resources.MemorySwap)
 		}
 	}

@@ -13,7 +13,6 @@
 package updateagent
 
 import (
-	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -24,6 +23,20 @@ import (
 
 	"github.com/eclipse-kanto/update-manager/api/types"
 )
+
+type testExpectedParams struct {
+	nonVerboseParams []*types.KeyValuePair
+	verboseParams    []*types.KeyValuePair
+}
+
+var verboseNonPrivilegedKV = &types.KeyValuePair{
+	Key:   keyPrivileged,
+	Value: "false",
+}
+
+var verboseNonPrivilegedKVs = []*types.KeyValuePair{
+	verboseNonPrivilegedKV,
+}
 
 func TestFromContainers(t *testing.T) {
 	container := createTestContainer("test-container-0")
@@ -39,57 +52,220 @@ func TestFromContainers(t *testing.T) {
 		testutil.AssertEqual(t, "v1.2.3", node.Version)
 		testutil.AssertEqual(t, types.SoftwareTypeContainer, node.Type)
 		// TODO make assert parameters better
-		assertParameter(t, node.Parameters, keyDomainName, testContainers[i].DomainName, false)
-		assertParameter(t, node.Parameters, keyHostName, testContainers[i].HostName, false)
-		assertParameter(t, node.Parameters, keyRestartCount, strconv.Itoa(testContainers[i].RestartCount), false)
-		assertParameter(t, node.Parameters, keyCreated, testContainers[i].Created, false)
-		assertParameter(t, node.Parameters, keyManuallyStopped, strconv.FormatBool(testContainers[i].ManuallyStopped), false)
-		assertParameter(t, node.Parameters, keyStartedSuccessfullyBefore, strconv.FormatBool(testContainers[i].StartedSuccessfullyBefore), false)
+		assertParameter(t, node.Parameters, keyDomainName, testContainers[i].DomainName)
+		assertParameter(t, node.Parameters, keyHostName, testContainers[i].HostName)
+		assertParameter(t, node.Parameters, keyRestartCount, strconv.Itoa(testContainers[i].RestartCount))
+		assertParameter(t, node.Parameters, keyCreated, testContainers[i].Created)
+		assertParameter(t, node.Parameters, keyManuallyStopped, strconv.FormatBool(testContainers[i].ManuallyStopped))
+		assertParameter(t, node.Parameters, keyStartedSuccessfullyBefore, strconv.FormatBool(testContainers[i].StartedSuccessfullyBefore))
 	}
 }
 
-func TestHostConfigParametersPrivileged(t *testing.T) {
-	for _, verbose := range []bool{true, false} {
-		for _, privileged := range []bool{true, false} {
-			t.Run(fmt.Sprintf("test_host_config_params_privileged_%v_verbose_%v", privileged, verbose), func(t *testing.T) {
-				hostConfig := &ctrtypes.HostConfig{Privileged: privileged}
-				params := hostConfigParameters(hostConfig, verbose)
-				lenExpected := 0
-				if verbose || privileged {
-					lenExpected++
-					assertParameter(t, params, keyPrivileged, strconv.FormatBool(privileged), false)
-				}
-				testutil.AssertEqual(t, lenExpected, len(params))
-			})
-		}
-	}
-}
+func TestHostConfigParameters(t *testing.T) {
+	testCases := map[string]struct {
+		hostConfig     ctrtypes.HostConfig
+		expectedParams testExpectedParams
+	}{
+		"test_host_config_params_privileged": {
+			hostConfig: ctrtypes.HostConfig{Privileged: true},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyPrivileged, Value: "true"},
+				},
+			},
+		},
+		"test_host_config_params_non_privileged": {
+			hostConfig: ctrtypes.HostConfig{Privileged: false},
+			expectedParams: testExpectedParams{
+				verboseParams: verboseNonPrivilegedKVs,
+			},
+		},
 
-func TestHostConfigParametersRestartPolicy(t *testing.T) {
-	testPolicies := []*ctrtypes.RestartPolicy{
-		{Type: ctrtypes.No},
-		{Type: ctrtypes.Always},
-		{Type: ctrtypes.OnFailure, MaximumRetryCount: 5, RetryTimeout: 3 * time.Minute},
-		{Type: ctrtypes.UnlessStopped},
+		"test_host_config_params_restart_policy_no": {
+			hostConfig: ctrtypes.HostConfig{RestartPolicy: &ctrtypes.RestartPolicy{Type: ctrtypes.No}},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyRestartPolicy, Value: "no"},
+				},
+				verboseParams: []*types.KeyValuePair{
+					verboseNonPrivilegedKV,
+					{Key: keyRestartMaxRetries, Value: "0"},
+					{Key: keyRestartTimeout, Value: "0s"},
+				},
+			},
+		},
+		"test_host_config_params_restart_policy_always": {
+			hostConfig: ctrtypes.HostConfig{RestartPolicy: &ctrtypes.RestartPolicy{Type: ctrtypes.Always}},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyRestartPolicy, Value: "always"},
+				},
+				verboseParams: []*types.KeyValuePair{
+					verboseNonPrivilegedKV,
+					{Key: keyRestartMaxRetries, Value: "0"},
+					{Key: keyRestartTimeout, Value: "0s"},
+				},
+			},
+		},
+		"test_host_config_params_restart_policy_on_failure": {
+			hostConfig: ctrtypes.HostConfig{RestartPolicy: &ctrtypes.RestartPolicy{Type: ctrtypes.OnFailure, MaximumRetryCount: 5, RetryTimeout: 3 * time.Minute}},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyRestartPolicy, Value: "on-failure"},
+					{Key: keyRestartMaxRetries, Value: "5"},
+					{Key: keyRestartTimeout, Value: "3m0s"},
+				},
+				verboseParams: verboseNonPrivilegedKVs,
+			},
+		},
+		"test_host_config_params_restart_policy_unless_stopped": {
+			hostConfig: ctrtypes.HostConfig{RestartPolicy: &ctrtypes.RestartPolicy{Type: ctrtypes.UnlessStopped}},
+			expectedParams: testExpectedParams{
+				verboseParams: []*types.KeyValuePair{
+					verboseNonPrivilegedKV,
+					{Key: keyRestartPolicy, Value: "unless-stopped"},
+					{Key: keyRestartMaxRetries, Value: "0"},
+					{Key: keyRestartTimeout, Value: "0s"},
+				},
+			},
+		},
+
+		"test_host_config_params_network_mode_bridge": {
+			hostConfig: ctrtypes.HostConfig{NetworkMode: ctrtypes.NetworkModeBridge},
+			expectedParams: testExpectedParams{
+				verboseParams: []*types.KeyValuePair{
+					verboseNonPrivilegedKV,
+					{Key: keyNetwork, Value: "bridge"},
+				},
+			},
+		},
+		"test_host_config_params_network_mode_host": {
+			hostConfig: ctrtypes.HostConfig{NetworkMode: ctrtypes.NetworkModeHost},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyNetwork, Value: "host"},
+				},
+				verboseParams: verboseNonPrivilegedKVs,
+			},
+		},
+
+		"test_host_config_params_log_driver_none": {
+			hostConfig: ctrtypes.HostConfig{LogConfig: &ctrtypes.LogConfiguration{
+				DriverConfig: &ctrtypes.LogDriverConfiguration{Type: ctrtypes.LogConfigDriverNone},
+			}},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyLogDriver, Value: "none"},
+				},
+				verboseParams: verboseNonPrivilegedKVs,
+			},
+		},
+		"test_host_config_params_log_driver_json_with_custom_max_files_and_size": {
+			hostConfig: ctrtypes.HostConfig{LogConfig: &ctrtypes.LogConfiguration{
+				DriverConfig: &ctrtypes.LogDriverConfiguration{Type: ctrtypes.LogConfigDriverJSONFile, MaxFiles: 6, MaxSize: "100K"},
+			}},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyLogMaxFiles, Value: "6"},
+					{Key: keyLogMaxSize, Value: "100K"},
+				},
+				verboseParams: []*types.KeyValuePair{
+					verboseNonPrivilegedKV,
+					{Key: keyLogDriver, Value: "json-file"},
+				},
+			},
+		},
+		"test_host_config_params_log_driver_json_with_custom_log_path": {
+			hostConfig: ctrtypes.HostConfig{LogConfig: &ctrtypes.LogConfiguration{
+				DriverConfig: &ctrtypes.LogDriverConfiguration{Type: ctrtypes.LogConfigDriverJSONFile, MaxFiles: 2, MaxSize: "100M", RootDir: "/tmp/logs"},
+			}},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyLogPath, Value: "/tmp/logs"},
+				},
+				verboseParams: []*types.KeyValuePair{
+					verboseNonPrivilegedKV,
+					{Key: keyLogDriver, Value: "json-file"},
+					{Key: keyLogMaxFiles, Value: "2"},
+					{Key: keyLogMaxSize, Value: "100M"},
+				},
+			},
+		},
+
+		"test_host_config_params_log_mode_blocking": {
+			hostConfig: ctrtypes.HostConfig{LogConfig: &ctrtypes.LogConfiguration{
+				ModeConfig: &ctrtypes.LogModeConfiguration{Mode: ctrtypes.LogModeBlocking},
+			}},
+			expectedParams: testExpectedParams{
+				verboseParams: []*types.KeyValuePair{
+					verboseNonPrivilegedKV,
+					{Key: keyLogMode, Value: "blocking"},
+				},
+			},
+		},
+		"test_host_config_params_log_mode_non_blocking_with_custom_max_buffer_size": {
+			hostConfig: ctrtypes.HostConfig{LogConfig: &ctrtypes.LogConfiguration{
+				ModeConfig: &ctrtypes.LogModeConfiguration{Mode: ctrtypes.LogModeNonBlocking, MaxBufferSize: "100K"},
+			}},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyLogMode, Value: "non-blocking"},
+					{Key: keyLogMaxBufferSize, Value: "100K"},
+				},
+				verboseParams: verboseNonPrivilegedKVs,
+			},
+		},
+		"test_host_config_params_log_mode_non_blocking_with_default_max_buffer_size": {
+			hostConfig: ctrtypes.HostConfig{LogConfig: &ctrtypes.LogConfiguration{
+				ModeConfig: &ctrtypes.LogModeConfiguration{Mode: ctrtypes.LogModeNonBlocking, MaxBufferSize: "1M"},
+			}},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyLogMode, Value: "non-blocking"},
+				},
+				verboseParams: []*types.KeyValuePair{
+					verboseNonPrivilegedKV,
+					{Key: keyLogMaxBufferSize, Value: "1M"},
+				},
+			},
+		},
+
+		"test_host_config_params_resources_with_memory_reservation_swap": {
+			hostConfig: ctrtypes.HostConfig{Resources: &ctrtypes.Resources{Memory: "200m", MemoryReservation: "100m", MemorySwap: "50m"}},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyMemory, Value: "200m"},
+					{Key: keyMemoryReservation, Value: "100m"},
+					{Key: keyMemorySwap, Value: "50m"},
+				},
+				verboseParams: verboseNonPrivilegedKVs,
+			},
+		},
+		"test_host_config_params_resources_with_memory_and_reservation_only": {
+			hostConfig: ctrtypes.HostConfig{Resources: &ctrtypes.Resources{Memory: "300m", MemoryReservation: "300m"}},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyMemory, Value: "300m"},
+					{Key: keyMemoryReservation, Value: "300m"},
+				},
+				verboseParams: verboseNonPrivilegedKVs,
+			},
+		},
+		"test_host_config_params_resources_with_memory_and_swap_only": {
+			hostConfig: ctrtypes.HostConfig{Resources: &ctrtypes.Resources{Memory: "1g", MemorySwap: "150m"}},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyMemory, Value: "1g"},
+					{Key: keyMemorySwap, Value: "150m"},
+				},
+				verboseParams: verboseNonPrivilegedKVs,
+			},
+		},
 	}
 	for _, verbose := range []bool{true, false} {
-		for _, policy := range testPolicies {
-			t.Run(fmt.Sprintf("test_host_config_params_restart_policy_%v_verbose_%v", policy.Type, verbose), func(t *testing.T) {
-				hostConfig := &ctrtypes.HostConfig{RestartPolicy: policy, Privileged: true}
-				params := hostConfigParameters(hostConfig, verbose)
-				lenExpected := 1 // +1 for privileged flag
-
-				if verbose || policy.Type != ctrtypes.UnlessStopped { // unless-stopped is the default restart policy type
-					lenExpected++
-					assertParameter(t, params, keyRestartPolicy, string(policy.Type), false)
-				}
-				if verbose || policy.Type == ctrtypes.OnFailure {
-					lenExpected++
-					assertParameter(t, params, keyRestartMaxRetries, strconv.Itoa(hostConfig.RestartPolicy.MaximumRetryCount), false)
-					lenExpected++
-					assertParameter(t, params, keyRestartTimeout, hostConfig.RestartPolicy.RetryTimeout.String(), false)
-				}
-				testutil.AssertEqual(t, lenExpected, len(params))
+		for testName, testCase := range testCases {
+			t.Run(fullTestName(testName, verbose), func(t *testing.T) {
+				assertParameters(t, testCase.expectedParams, hostConfigParameters(&testCase.hostConfig, verbose), verbose)
 			})
 		}
 	}
@@ -107,7 +283,7 @@ func TestHostConfigParametersDevices(t *testing.T) {
 	hostConfig.Devices = testDeviceMappings
 	params := hostConfigParameters(hostConfig, false)
 	for _, testDevice := range testDevices {
-		assertParameter(t, params, keyDevice, testDevice, true)
+		assertMultipleParameter(t, params, keyDevice, testDevice)
 	}
 	testutil.AssertEqual(t, len(testDeviceMappings), len(params))
 }
@@ -125,26 +301,9 @@ func TestHostConfigParametersPortMappings(t *testing.T) {
 	hostConfig.PortMappings = testPortMappings
 	params := hostConfigParameters(hostConfig, false)
 	for _, testPort := range testPorts {
-		assertParameter(t, params, keyPort, testPort, true)
+		assertMultipleParameter(t, params, keyPort, testPort)
 	}
 	testutil.AssertEqual(t, len(testPortMappings), len(params))
-}
-
-func TestHostConfigParametersNetwork(t *testing.T) {
-	for _, verbose := range []bool{true, false} {
-		for _, network := range []ctrtypes.NetworkMode{ctrtypes.NetworkModeBridge, ctrtypes.NetworkModeHost} {
-			t.Run(fmt.Sprintf("test_host_config_params_network_%v_verbose_%v", network, verbose), func(t *testing.T) {
-				hostConfig := &ctrtypes.HostConfig{NetworkMode: network, Privileged: true}
-				params := hostConfigParameters(hostConfig, verbose)
-				lenExpected := 1 // +1 for privileged flag
-				if verbose || network != ctrtypes.NetworkModeBridge {
-					lenExpected++
-					assertParameter(t, params, keyNetwork, string(network), false)
-				}
-				testutil.AssertEqual(t, lenExpected, len(params))
-			})
-		}
-	}
 }
 
 func TestHostConfigParametersExtraHosts(t *testing.T) {
@@ -153,106 +312,9 @@ func TestHostConfigParametersExtraHosts(t *testing.T) {
 	}
 	params := hostConfigParameters(hostConfig, false)
 	for _, host := range hostConfig.ExtraHosts {
-		assertParameter(t, params, keyHost, host, true)
+		assertMultipleParameter(t, params, keyHost, host)
 	}
 	testutil.AssertEqual(t, len(hostConfig.ExtraHosts), len(params))
-}
-
-func TestHostConfigParametersLogDriverConfig(t *testing.T) {
-	testLogDriverConfigs := []*ctrtypes.LogDriverConfiguration{
-		{Type: ctrtypes.LogConfigDriverNone},
-		{Type: ctrtypes.LogConfigDriverJSONFile, MaxFiles: 6, MaxSize: "100K"},
-		{Type: ctrtypes.LogConfigDriverJSONFile, MaxFiles: 2, MaxSize: "100M", RootDir: "/tmp/logs"},
-	}
-	for _, verbose := range []bool{true, false} {
-		for _, logDriverConfig := range testLogDriverConfigs {
-			t.Run(fmt.Sprintf("test_host_config_params_log_driver_config_%v_verbose_%v", logDriverConfig.Type, verbose), func(t *testing.T) {
-				hostConfig := &ctrtypes.HostConfig{LogConfig: &ctrtypes.LogConfiguration{DriverConfig: logDriverConfig}, Privileged: true}
-				params := hostConfigParameters(hostConfig, verbose)
-				lenExpected := 1 // +1 for privileged flag
-
-				if verbose || logDriverConfig.Type != ctrtypes.LogConfigDriverJSONFile { // json-file is the default log driver type
-					lenExpected++
-					assertParameter(t, params, keyLogDriver, string(logDriverConfig.Type), false)
-				}
-				if logDriverConfig.Type == ctrtypes.LogConfigDriverJSONFile {
-					if verbose || logDriverConfig.MaxFiles != 2 { // 2 is the default value for max files
-						lenExpected++
-						assertParameter(t, params, keyLogMaxFiles, strconv.Itoa(logDriverConfig.MaxFiles), false)
-					}
-					if verbose || logDriverConfig.MaxSize != "100M" { // 100M is the default value for max size
-						lenExpected++
-						assertParameter(t, params, keyLogMaxSize, logDriverConfig.MaxSize, false)
-					}
-					if logDriverConfig.RootDir != "" {
-						lenExpected++
-						assertParameter(t, params, keyLogPath, logDriverConfig.RootDir, false)
-					}
-				}
-				testutil.AssertEqual(t, lenExpected, len(params))
-			})
-		}
-	}
-}
-
-func TestHostConfigParametersLogModeConfig(t *testing.T) {
-	testLogModeConfigs := []*ctrtypes.LogModeConfiguration{
-		{Mode: ctrtypes.LogModeBlocking},
-		{Mode: ctrtypes.LogModeNonBlocking, MaxBufferSize: "100K"},
-		{Mode: ctrtypes.LogModeNonBlocking, MaxBufferSize: "1M"},
-	}
-	for _, verbose := range []bool{true, false} {
-		for _, logModeConfig := range testLogModeConfigs {
-			t.Run(fmt.Sprintf("test_host_config_params_log_mode_config_%v_verbose_%v", logModeConfig.Mode, verbose), func(t *testing.T) {
-				hostConfig := &ctrtypes.HostConfig{LogConfig: &ctrtypes.LogConfiguration{ModeConfig: logModeConfig}, Privileged: true}
-				params := hostConfigParameters(hostConfig, verbose)
-				lenExpected := 1 // +1 for privileged flag
-
-				if verbose || logModeConfig.Mode != ctrtypes.LogModeBlocking { // blocking mode is the default log driver mode
-					lenExpected++
-					assertParameter(t, params, keyLogMode, string(logModeConfig.Mode), false)
-				}
-				if logModeConfig.Mode == ctrtypes.LogModeNonBlocking {
-					if verbose || logModeConfig.MaxBufferSize != "1M" { // 1M is the default value for max buffer size
-						lenExpected++
-						assertParameter(t, params, keyLogMaxBufferSize, logModeConfig.MaxBufferSize, false)
-					}
-				}
-				testutil.AssertEqual(t, lenExpected, len(params))
-			})
-		}
-	}
-}
-
-func TestHostConfigParametersResources(t *testing.T) {
-	testResources := []*ctrtypes.Resources{
-		{Memory: "200m", MemoryReservation: "100m", MemorySwap: "50m"},
-		{Memory: "300m", MemoryReservation: "300m"},
-		{Memory: "1g", MemorySwap: "500m"},
-	}
-	for _, verbose := range []bool{true, false} {
-		for _, resource := range testResources {
-			t.Run(fmt.Sprintf("test_host_config_params_resources_memory_%v_verbose_%v", resource.Memory, verbose), func(t *testing.T) {
-				hostConfig := &ctrtypes.HostConfig{Resources: resource, Privileged: true}
-				params := hostConfigParameters(hostConfig, verbose)
-				lenExpected := 1 // +1 for privileged flag
-
-				if verbose || resource.Memory != "" {
-					lenExpected++
-					assertParameter(t, params, keyMemory, resource.Memory, false)
-				}
-				if verbose || resource.MemoryReservation != "" {
-					lenExpected++
-					assertParameter(t, params, keyMemoryReservation, resource.MemoryReservation, false)
-				}
-				if verbose || resource.MemorySwap != "" {
-					lenExpected++
-					assertParameter(t, params, keyMemorySwap, resource.MemorySwap, false)
-				}
-				testutil.AssertEqual(t, lenExpected, len(params))
-			})
-		}
-	}
 }
 
 func TestMountPointParameters(t *testing.T) {
@@ -265,55 +327,181 @@ func TestMountPointParameters(t *testing.T) {
 	testutil.AssertNil(t, err)
 	params := mountPointParameters(testMountPoints)
 	for _, testMount := range testMounts {
-		assertParameter(t, params, keyMount, testMount, true)
+		assertMultipleParameter(t, params, keyMount, testMount)
 	}
 	testutil.AssertEqual(t, len(testMounts), len(params))
 }
 
 func TestContainerConfigParameters(t *testing.T) {
-	for _, args := range [][]string{nil, {}, {"arg1, arg2, arg3"}} {
-		for _, envs := range [][]string{nil, {}, {"ENV_X=VAL_A", "ENV_Y=VAL_B", "ENV_C="}} {
-			t.Run(fmt.Sprintf("test_container_config_parameters_cmd_%v_env_%v", args, envs), func(t *testing.T) {
-				params := containerConfigParameters(&ctrtypes.ContainerConfiguration{Env: envs, Cmd: args})
-				for _, cmd := range args {
-					assertParameter(t, params, keyCmd, cmd, true)
-				}
-				for _, env := range envs {
-					assertParameter(t, params, keyEnv, env, true)
-				}
-				testutil.AssertEqual(t, len(args)+len(envs), len(params))
-			})
-		}
+	testCases := map[string]struct {
+		args           []string
+		envs           []string
+		expectedParams []*types.KeyValuePair
+	}{
+		"test_container_config_parameters_nil_args_and_nil_envs": {},
+		"test_container_config_parameters_nil_args_and_empty_envs": {
+			envs: []string{},
+		},
+		"test_container_config_parameters_nil_args_and_some_envs": {
+			args: []string{},
+			envs: []string{"ENV_X=VAL_A", "ENV_Y=VAL_B", "ENV_C="},
+			expectedParams: []*types.KeyValuePair{
+				{Key: keyEnv, Value: "ENV_X=VAL_A"},
+				{Key: keyEnv, Value: "ENV_Y=VAL_B"},
+				{Key: keyEnv, Value: "ENV_C="},
+			},
+		},
+		"test_container_config_parameters_empty_args_and_nil_envs": {
+			args: []string{},
+		},
+		"test_container_config_parameters_empty_args_and_empty_envs": {
+			args: []string{},
+			envs: []string{},
+		},
+		"test_container_config_parameters_empty_args_and_some_envs": {
+			args: []string{},
+			envs: []string{"ENV_X=VAL_A", "ENV_Y=VAL_B", "ENV_C="},
+			expectedParams: []*types.KeyValuePair{
+				{Key: keyEnv, Value: "ENV_X=VAL_A"},
+				{Key: keyEnv, Value: "ENV_Y=VAL_B"},
+				{Key: keyEnv, Value: "ENV_C="},
+			},
+		},
+		"test_container_config_parameters_some_args_and_nil_envs": {
+			args: []string{"arg1", "arg2", "arg3"},
+			expectedParams: []*types.KeyValuePair{
+				{Key: keyCmd, Value: "arg1"},
+				{Key: keyCmd, Value: "arg2"},
+				{Key: keyCmd, Value: "arg3"},
+			},
+		},
+		"test_container_config_parameters_some_args_and_empty_envs": {
+			args: []string{"arg1", "arg2", "arg3"},
+			envs: []string{},
+			expectedParams: []*types.KeyValuePair{
+				{Key: keyCmd, Value: "arg1"},
+				{Key: keyCmd, Value: "arg2"},
+				{Key: keyCmd, Value: "arg3"},
+			},
+		},
+		"test_container_config_parameters_some_args_and_some_envs": {
+			args: []string{"arg1", "arg2", "arg3"},
+			envs: []string{"ENV_X=VAL_A", "ENV_Y=VAL_B", "ENV_C="},
+			expectedParams: []*types.KeyValuePair{
+				{Key: keyCmd, Value: "arg1"},
+				{Key: keyCmd, Value: "arg2"},
+				{Key: keyCmd, Value: "arg3"},
+				{Key: keyEnv, Value: "ENV_X=VAL_A"},
+				{Key: keyEnv, Value: "ENV_Y=VAL_B"},
+				{Key: keyEnv, Value: "ENV_C="},
+			},
+		},
+	}
+	for testName, testCase := range testCases {
+		t.Run(testName, func(t *testing.T) {
+			params := containerConfigParameters(&ctrtypes.ContainerConfiguration{Env: testCase.envs, Cmd: testCase.args})
+			for _, kv := range testCase.expectedParams {
+				assertMultipleParameter(t, params, kv.Key, kv.Value)
+			}
+			testutil.AssertEqual(t, len(testCase.expectedParams), len(params))
+		})
 	}
 }
 
 func TestStateParameters(t *testing.T) {
+	commonVerboseExpectedParams := []*types.KeyValuePair{
+		{Key: keyFinishedAt, Value: ""},
+		{Key: keyExitCode, Value: "0"},
+	}
 	testCases := map[string]struct {
-		testSetup func(*ctrtypes.Container)
+		testSetup      func(*ctrtypes.Container)
+		expectedParams testExpectedParams
 	}{
 		"test_state_params_container_creating": {
 			testSetup: func(c *ctrtypes.Container) { c.State.Status = ctrtypes.Creating },
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyStatus, Value: "Creating"},
+				},
+				verboseParams: commonVerboseExpectedParams,
+			},
 		},
 		"test_state_params_container_created": {
 			testSetup: func(c *ctrtypes.Container) { util.SetContainerStatusCreated(c) },
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyStatus, Value: "Created"},
+				},
+				verboseParams: commonVerboseExpectedParams,
+			},
 		},
 		"test_state_params_container_running": {
 			testSetup: func(c *ctrtypes.Container) { util.SetContainerStatusRunning(c, 1234) },
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyStatus, Value: "Running"},
+				},
+				verboseParams: commonVerboseExpectedParams,
+			},
 		},
 		"test_state_params_container_stopped_normally": {
-			testSetup: func(c *ctrtypes.Container) { util.SetContainerStatusStopped(c, 0, "") },
+			testSetup: func(c *ctrtypes.Container) {
+				util.SetContainerStatusStopped(c, 0, "")
+				c.State.FinishedAt = "2023-01-01T15:04:05.999999999Z07:00"
+			},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyStatus, Value: "Stopped"},
+					{Key: keyFinishedAt, Value: "2023-01-01T15:04:05.999999999Z07:00"},
+				},
+				verboseParams: []*types.KeyValuePair{
+					{Key: keyExitCode, Value: "0"},
+				},
+			},
 		},
 		"test_state_params_container_stopped_error": {
-			testSetup: func(c *ctrtypes.Container) { util.SetContainerStatusStopped(c, -1, "stopped with error") },
+			testSetup: func(c *ctrtypes.Container) {
+				util.SetContainerStatusStopped(c, -1, "stopped with error")
+				c.State.FinishedAt = "2023-01-11T15:04:05.999999999Z07:00"
+			},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyStatus, Value: "Stopped"},
+					{Key: keyFinishedAt, Value: "2023-01-11T15:04:05.999999999Z07:00"},
+					{Key: keyExitCode, Value: "-1"},
+				},
+			},
 		},
 		"test_state_params_container_paused": {
 			testSetup: func(c *ctrtypes.Container) { util.SetContainerStatusPaused(c) },
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyStatus, Value: "Paused"},
+				},
+				verboseParams: commonVerboseExpectedParams,
+			},
 		},
 		"test_state_params_container_exited": {
-			testSetup: func(c *ctrtypes.Container) { util.SetContainerStatusExited(c, 1234, "unexpected exit", false) },
+			testSetup: func(c *ctrtypes.Container) {
+				util.SetContainerStatusExited(c, 1234, "unexpected exit", false)
+				c.State.FinishedAt = "2023-01-13T15:04:05.999999999Z07:00"
+			},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyStatus, Value: "Exited"},
+					{Key: keyFinishedAt, Value: "2023-01-13T15:04:05.999999999Z07:00"},
+					{Key: keyExitCode, Value: "1234"},
+				},
+			},
 		},
 		"test_state_params_container_dead": {
 			testSetup: func(c *ctrtypes.Container) { util.SetContainerStatusDead(c) },
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyStatus, Value: "Dead"},
+				},
+				verboseParams: commonVerboseExpectedParams,
+			},
 		},
 		"test_state_params_container_unknown": {
 			testSetup: func(c *ctrtypes.Container) {
@@ -321,51 +509,78 @@ func TestStateParameters(t *testing.T) {
 				c.State.FinishedAt = "2023-01-02T15:04:05.999999999Z07:00"
 				c.State.ExitCode = 999
 			},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyStatus, Value: "Unknown"},
+					{Key: keyFinishedAt, Value: "2023-01-02T15:04:05.999999999Z07:00"},
+					{Key: keyExitCode, Value: "999"},
+				},
+			},
 		},
 	}
-
 	for _, verbose := range []bool{true, false} {
 		for testName, testCase := range testCases {
-			t.Run(testName+"_verbose_"+strconv.FormatBool(verbose), func(t *testing.T) {
+			t.Run(fullTestName(testName, verbose), func(t *testing.T) {
 				testContainer := createTestContainer("test-container")
 				testContainer.State = &ctrtypes.State{}
 				testCase.testSetup(testContainer)
-				expStatus := testContainer.State.Status
-				params := stateParameters(testContainer.State, verbose)
-				lenExpected := 1
-				assertParameter(t, params, keyStatus, expStatus.String(), false)
-				if verbose || (testContainer.State.FinishedAt != "" && expStatus != ctrtypes.Running) {
-					lenExpected++
-					assertParameter(t, params, keyFinishedAt, testContainer.State.FinishedAt, false)
-				}
-				if verbose || (testContainer.State.ExitCode != 0 && expStatus != ctrtypes.Running) {
-					lenExpected++
-					assertParameter(t, params, keyExitCode, strconv.Itoa(int(testContainer.State.ExitCode)), false)
-				}
-				testutil.AssertEqual(t, lenExpected, len(params))
+				assertParameters(t, testCase.expectedParams, stateParameters(testContainer.State, verbose), verbose)
 			})
 		}
 	}
 }
 
 func TestIOConfigParameters(t *testing.T) {
+	testCases := map[string]struct {
+		ioConfig       *ctrtypes.IOConfig
+		expectedParams testExpectedParams
+	}{
+		"test_io_config_params_no_tty_no_openstdin": {
+			ioConfig: &ctrtypes.IOConfig{},
+			expectedParams: testExpectedParams{
+				verboseParams: []*types.KeyValuePair{
+					{Key: keyTerminal, Value: "false"},
+					{Key: keyInteractive, Value: "false"},
+				},
+			},
+		},
+		"test_io_config_params_no_tty_with_openstdin": {
+			ioConfig: &ctrtypes.IOConfig{OpenStdin: true},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyInteractive, Value: "true"},
+				},
+				verboseParams: []*types.KeyValuePair{
+					{Key: keyTerminal, Value: "false"},
+				},
+			},
+		},
+		"test_io_config_params_with_tty_no_openstdin": {
+			ioConfig: &ctrtypes.IOConfig{Tty: true},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyTerminal, Value: "true"},
+				},
+				verboseParams: []*types.KeyValuePair{
+					{Key: keyInteractive, Value: "false"},
+				},
+			},
+		},
+		"test_io_config_params_with_tty_with_openstdin": {
+			ioConfig: &ctrtypes.IOConfig{Tty: true, OpenStdin: true},
+			expectedParams: testExpectedParams{
+				nonVerboseParams: []*types.KeyValuePair{
+					{Key: keyTerminal, Value: "true"},
+					{Key: keyInteractive, Value: "true"},
+				},
+			},
+		},
+	}
 	for _, verbose := range []bool{true, false} {
-		for _, tty := range []bool{true, false} {
-			for _, openStdin := range []bool{true, false} {
-				t.Run(fmt.Sprintf("test_io_config_params_tty=%v_openstdin=%v_verbose=%v", tty, openStdin, verbose), func(t *testing.T) {
-					params := ioConfigParameters(&ctrtypes.IOConfig{Tty: tty, OpenStdin: openStdin}, verbose)
-					lenExpected := 0
-					if tty || verbose {
-						lenExpected++
-						assertParameter(t, params, keyTerminal, strconv.FormatBool(tty), false)
-					}
-					if openStdin || verbose {
-						lenExpected++
-						assertParameter(t, params, keyInteractive, strconv.FormatBool(openStdin), false)
-					}
-					testutil.AssertEqual(t, lenExpected, len(params))
-				})
-			}
+		for testName, testCase := range testCases {
+			t.Run(fullTestName(testName, verbose), func(t *testing.T) {
+				assertParameters(t, testCase.expectedParams, ioConfigParameters(testCase.ioConfig, verbose), verbose)
+			})
 		}
 	}
 }
@@ -383,19 +598,44 @@ func createTestContainer(name string) *ctrtypes.Container {
 	return container
 }
 
-func assertParameter(t *testing.T, params []*types.KeyValuePair, key string, value string, multiple bool) {
+func assertParameters(t *testing.T, expectedParams testExpectedParams, actualParams []*types.KeyValuePair, verbose bool) {
+	expected := expectedParams.nonVerboseParams
+	if verbose {
+		expected = append(expected, expectedParams.verboseParams...)
+	}
+	testutil.AssertEqual(t, len(expected), len(actualParams))
+	for _, param := range expected {
+		assertParameter(t, actualParams, param.Key, param.Value)
+	}
+}
+
+func assertParameter(t *testing.T, params []*types.KeyValuePair, key string, value string) {
 	for _, kv := range params {
 		if kv.Key == key {
-			if value == kv.Value {
-				return
-			}
-			if !multiple {
+			if value != kv.Value {
 				t.Errorf("param '%s' has wrong value: expected %s , got %s", key, value, kv.Value)
 				t.Fail()
-				return
 			}
+			return
 		}
 	}
 	t.Errorf("expected param '%s' with value %s not present as key-value pair", key, value)
 	t.Fail()
+}
+
+func assertMultipleParameter(t *testing.T, params []*types.KeyValuePair, key string, value string) {
+	for _, kv := range params {
+		if kv.Key == key && kv.Value == value {
+			return
+		}
+	}
+	t.Errorf("expected param '%s' with value %s not present as key-value pair", key, value)
+	t.Fail()
+}
+
+func fullTestName(testName string, verbose bool) string {
+	if !verbose {
+		return testName
+	}
+	return testName + "_verbose"
 }
