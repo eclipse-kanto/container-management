@@ -68,6 +68,10 @@ func TestParseDeviceMappings(t *testing.T) {
 			testutil.AssertNil(t, err)
 			testutil.AssertEqual(t, testCase.expectedDevice, res)
 
+			res, err = ParseDeviceMapping(DeviceMappingToString(res))
+			testutil.AssertNil(t, err)
+			testutil.AssertEqual(t, testCase.expectedDevice, res)
+
 			inputStrings[index] = testCase.inputString
 			expectedDevices[index] = *res
 			index++
@@ -201,6 +205,10 @@ func TestParseMountPoints(t *testing.T) {
 			testutil.AssertNil(t, err)
 			testutil.AssertEqual(t, testCase.expectedMount, res)
 
+			res, err = ParseMountPoint(MountPointToString(res))
+			testutil.AssertNil(t, err)
+			testutil.AssertEqual(t, testCase.expectedMount, res)
+
 			inputStrings[index] = testCase.inputString
 			expectedMounts[index] = *res
 			index++
@@ -294,6 +302,10 @@ func TestParsePortMappings(t *testing.T) {
 			t.Log(testCase.inputString)
 
 			res, err := ParsePortMapping(testCase.inputString)
+			testutil.AssertNil(t, err)
+			testutil.AssertEqual(t, testCase.expectedPort, res)
+
+			res, err = ParsePortMapping(PortMappingToString(res))
 			testutil.AssertNil(t, err)
 			testutil.AssertEqual(t, testCase.expectedPort, res)
 
