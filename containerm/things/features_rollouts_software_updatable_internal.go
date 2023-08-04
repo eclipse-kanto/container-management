@@ -30,9 +30,9 @@ import (
 // SoftwareUpdatable feature information
 const (
 	SoftwareUpdatableFeatureID           = "SoftwareUpdatable"
-	softwareUpdatableDefinitionNamespace = "org.eclipse.hawkbit.swupdatable"
-	softwareUpdatableDefinitionName      = "SoftwareUpdatable"
-	softwareUpdatableDefinitionVersion   = "2.0.0"
+	SoftwareUpdatableDefinitionNamespace = "org.eclipse.hawkbit.swupdatable"
+	SoftwareUpdatableDefinitionName      = "SoftwareUpdatable"
+	SoftwareUpdatableDefinitionVersion   = "2.0.0"
 	softwareUpdatablePropertyNameStatus  = "status"
 
 	softwareUpdatablePropertySoftwareModuleType    = softwareUpdatablePropertyNameStatus + "/softwareModuleType"
@@ -56,7 +56,7 @@ const (
 
 func (su *softwareUpdatable) createFeature() model.Feature {
 	feature := client.NewFeature(SoftwareUpdatableFeatureID,
-		client.WithFeatureDefinition(client.NewDefinitionID(softwareUpdatableDefinitionNamespace, softwareUpdatableDefinitionName, softwareUpdatableDefinitionVersion)),
+		client.WithFeatureDefinition(client.NewDefinitionID(SoftwareUpdatableDefinitionNamespace, SoftwareUpdatableDefinitionName, SoftwareUpdatableDefinitionVersion)),
 		client.WithFeatureProperty(softwareUpdatablePropertyNameStatus, su.status),
 		client.WithFeatureOperationsHandler(su.operationsHandler))
 	return feature

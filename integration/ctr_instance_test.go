@@ -217,7 +217,7 @@ func (suite *ctrInstanceSuite) executeWithExpectedError(ctrFeatureID string, ope
 func (suite *ctrInstanceSuite) processStateChange(wsConnection *websocket.Conn, ctrFeatureID string, expectedStatus string) {
 	err := util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicModified {
-			if event.Path != fmt.Sprintf("/features/%s/properties/status/state", ctrFeatureID) {
+			if event.Path != suite.constructStatusPath(ctrFeatureID, "state") {
 				return true, fmt.Errorf(unexpectedContainerEventError)
 			}
 
@@ -241,7 +241,7 @@ func (suite *ctrInstanceSuite) processStateChange(wsConnection *websocket.Conn, 
 func (suite *ctrInstanceSuite) processNameChange(wsConnection *websocket.Conn, ctrFeatureID string, expectedName string) {
 	err := util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicModified {
-			if event.Path != fmt.Sprintf("/features/%s/properties/status/name", ctrFeatureID) {
+			if event.Path != suite.constructStatusPath(ctrFeatureID, "name") {
 				return true, fmt.Errorf(unexpectedContainerEventError)
 			}
 
@@ -276,7 +276,7 @@ func (suite *ctrInstanceSuite) processRemove(wsConnection *websocket.Conn, ctrFe
 func (suite *ctrInstanceSuite) processUpdate(wsConnection *websocket.Conn, ctrFeatureID string, expectedKey string, expectedValue map[string]interface{}) {
 	err := util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicModified {
-			if event.Path != fmt.Sprintf("/features/%s/properties/status/config", ctrFeatureID) {
+			if event.Path != suite.constructStatusPath(ctrFeatureID, "config") {
 				return true, fmt.Errorf(unexpectedContainerEventError)
 			}
 

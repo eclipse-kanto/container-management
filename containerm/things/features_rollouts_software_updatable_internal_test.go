@@ -65,7 +65,7 @@ func TestCreateSUPFeature(t *testing.T) {
 	testSUFeature = testSoftwareUpdatable.(*softwareUpdatable).createFeature()
 	testutil.AssertEqual(t, SoftwareUpdatableFeatureID, testSUFeature.GetID())
 	testutil.AssertEqual(t, 1, len(testSUFeature.GetDefinition()))
-	testutil.AssertEqual(t, client.NewDefinitionID(softwareUpdatableDefinitionNamespace, softwareUpdatableDefinitionName, softwareUpdatableDefinitionVersion).String(), testSUFeature.GetDefinition()[0].String())
+	testutil.AssertEqual(t, client.NewDefinitionID(SoftwareUpdatableDefinitionNamespace, SoftwareUpdatableDefinitionName, SoftwareUpdatableDefinitionVersion).String(), testSUFeature.GetDefinition()[0].String())
 	testutil.AssertEqual(t, 1, len(testSUFeature.GetProperties()))
 	testutil.AssertNotNil(t, testSUFeature.GetProperties()[softwareUpdatablePropertyNameStatus])
 	testutil.AssertEqual(t, reflect.TypeOf(&features.SoftwareUpdatableStatus{}), reflect.TypeOf(testSUFeature.GetProperties()[softwareUpdatablePropertyNameStatus]))

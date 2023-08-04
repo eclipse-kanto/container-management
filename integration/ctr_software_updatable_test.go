@@ -23,39 +23,44 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"testing"
-
 	"os"
 	"strings"
+	"testing"
 
+	"github.com/eclipse-kanto/container-management/containerm/things"
 	"github.com/eclipse-kanto/container-management/rollouts/api/datatypes"
+	"github.com/eclipse-kanto/container-management/things/client"
+
 	"github.com/eclipse-kanto/kanto/integration/util"
 	"github.com/eclipse/ditto-clients-golang/protocol"
 	"github.com/google/uuid"
-
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
 type softwareUpdatableSuite struct {
 	ctrManagementSuite
-	swUpdatableFeatureURL string
+	suFeatureURL string
+	suFilter     string
 }
 
 const (
-	suFeatureID   = "SoftwareUpdatable"
-	actionInstall = "install"
-	paramCorID    = "correlationId"
-	paramForced   = "forced"
-	validJSONUrl  = "https://raw.githubusercontent.com/eclipse-kanto/container-management/main/containerm/pkg/testutil/config/container/valid.json"
+	actionInstall     = "install"
+	paramCorID        = "correlationId"
+	paramForced       = "forced"
+	validContainerURL = "https://raw.githubusercontent.com/eclipse-kanto/container-management/main/containerm/pkg/testutil/config/container/valid.json"
 )
 
 func (suite *softwareUpdatableSuite) SetupSuite() {
 	suite.SetupCtrManagementSuite()
 
-	suite.swUpdatableFeatureURL = util.GetFeatureURL(suite.ctrThingURL, suFeatureID)
+	suite.suFeatureURL = util.GetFeatureURL(suite.ctrThingURL, things.SoftwareUpdatableFeatureID).String()
+	suite.suFilter = fmt.Sprintf("like(resource:path,'/features/%s*')", things.SoftwareUpdatableFeatureID)
 
-	suite.assertCtrFeatureDefinition(suite.swUpdatableFeatureURL, "[\"org.eclipse.hawkbit.swupdatable:SoftwareUpdatable:2.0.0\"]")
+	def := client.NewDefinitionID(things.SoftwareUpdatableDefinitionNamespace,
+		things.SoftwareUpdatableDefinitionName,
+		things.SoftwareUpdatableDefinitionVersion)
+	suite.assertCtrFeatureDefinition(suite.suFeatureURL, fmt.Sprintf("[\"%s\"]", def))
 }
 
 func (suite *softwareUpdatableSuite) TearDownSuite() {
@@ -70,12 +75,10 @@ func (suite *softwareUpdatableSuite) installContainer(params map[string]interfac
 	wsConnection := suite.createWSConnection()
 	defer suite.closeUnsubscribe(wsConnection)
 
-	filter := fmt.Sprintf("like(resource:path,'/features/%s*')", suFeatureID)
-
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, filter)
+	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, suite.suFilter)
 	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
 
-	_, err = util.ExecuteOperation(suite.Cfg, suite.swUpdatableFeatureURL, actionInstall, params)
+	_, err = util.ExecuteOperation(suite.Cfg, suite.suFeatureURL, actionInstall, params)
 	suite.closeOnError(wsConnection, err, "failed to execute software updatable install for containers with params %v", params)
 
 	var (
@@ -93,8 +96,8 @@ func (suite *softwareUpdatableSuite) installContainer(params map[string]interfac
 			eventValue, err = parseMap(event.Value)
 			require.NoError(suite.T(), err, "failed to parse event value")
 
-			if event.Path != fmt.Sprintf("/features/%s/properties/status/lastOperation", suFeatureID) {
-				if event.Path == fmt.Sprintf("/features/%s/properties/status/installedDependencies", suFeatureID) {
+			if event.Path != suite.constructStatusPath(things.SoftwareUpdatableFeatureID, "lastOperation") {
+				if event.Path == suite.constructStatusPath(things.SoftwareUpdatableFeatureID, "installedDependencies") {
 					for _, element := range eventValue {
 						dockerValue, err := parseMap(element)
 						require.NoError(suite.T(), err, "failed to parse docker value")
@@ -168,12 +171,10 @@ func (suite *softwareUpdatableSuite) removeContainer(params map[string]interface
 	wsConnection := suite.createWSConnection()
 	defer suite.closeUnsubscribe(wsConnection)
 
-	filter := fmt.Sprintf("like(resource:path,'/features/%s*')", suFeatureID)
-
-	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, filter)
+	err := util.SubscribeForWSMessages(suite.Cfg, wsConnection, util.StartSendEvents, suite.suFilter)
 	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
 
-	_, err = util.ExecuteOperation(suite.Cfg, suite.swUpdatableFeatureURL, "remove", params)
+	_, err = util.ExecuteOperation(suite.Cfg, suite.suFeatureURL, "remove", params)
 	suite.closeOnError(wsConnection, err, "failed to execute software updatable install for containers with params %v", params)
 
 	var (
@@ -187,7 +188,7 @@ func (suite *softwareUpdatableSuite) removeContainer(params map[string]interface
 	err = util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		var err error
 		if event.Topic.String() == suite.topicModified {
-			if event.Path == fmt.Sprintf("/features/%s/properties/status/lastOperation", suFeatureID) {
+			if event.Path == suite.constructStatusPath(things.SoftwareUpdatableFeatureID, "lastOperation") {
 				eventValue, err = parseMap(event.Value)
 				require.NoError(suite.T(), err, "failed to parse event value")
 
@@ -212,13 +213,13 @@ func (suite *softwareUpdatableSuite) removeContainer(params map[string]interface
 					return true, fmt.Errorf("container status is not expected")
 				}
 				return true, nil
-			} else if event.Path == fmt.Sprintf("/features/%s/properties/status/installedDependencies", suFeatureID) {
+			} else if event.Path == suite.constructStatusPath(things.SoftwareUpdatableFeatureID, "installedDependencies") {
 				if isRemoving {
 					isInstalledDeps = true
 					return false, nil
 				}
 				return true, nil
-			} else if event.Path == fmt.Sprintf("/features/%s/properties/status/lastFailedOperation", suFeatureID) {
+			} else if event.Path == suite.constructStatusPath(things.SoftwareUpdatableFeatureID, "lastFailedOperation") {
 				eventValue, err = parseMap(event.Value)
 				require.NoError(suite.T(), err, "failed to parse event value")
 
@@ -241,8 +242,7 @@ func (suite *softwareUpdatableSuite) TestSoftwareInstallRemove() {
 	ctrID, err := suite.installContainer(suite.createParameters(false))
 	require.NoError(suite.T(), err, "failed to process installing the container")
 
-	err = suite.removeContainer(createRemoveParams(ctrID))
-	require.NoError(suite.T(), err, "failed to process removing the container")
+	require.NoError(suite.T(), suite.removeContainer(createRemoveParams(ctrID)), "failed to process removing the container")
 }
 
 func (suite *softwareUpdatableSuite) TestSoftwareInstallWithInvalidParameters() {
@@ -250,7 +250,7 @@ func (suite *softwareUpdatableSuite) TestSoftwareInstallWithInvalidParameters() 
 	defer suite.closeUnsubscribe(wsConnection)
 
 	params := make(map[string]interface{})
-	_, err := util.ExecuteOperation(suite.Cfg, suite.swUpdatableFeatureURL, actionInstall, params)
+	_, err := util.ExecuteOperation(suite.Cfg, suite.suFeatureURL, actionInstall, params)
 	if err != nil {
 		wsConnection.Close()
 	}
@@ -265,22 +265,18 @@ func (suite *softwareUpdatableSuite) TestSoftwareInstallWithWrongChecksum() {
 
 func (suite *softwareUpdatableSuite) TestSoftwareRemoveNonExistingContainer() {
 	ctrID := "NonExistingContainer"
-	err := suite.removeContainer(createRemoveParams(ctrID))
-	require.ErrorContains(suite.T(), err, "container with ID = "+ctrID+" does not exist")
+	require.ErrorContains(suite.T(), suite.removeContainer(createRemoveParams(ctrID)), "container with ID = "+ctrID+" does not exist")
 }
 
 func (suite *softwareUpdatableSuite) createParameters(wrongChecksum bool) map[string]interface{} {
-	src, err := download(validJSONUrl)
-	require.NoError(suite.T(), err, "unable to download file from url "+validJSONUrl)
-	splitStr := strings.Split(validJSONUrl, "/")
+	src, err := download(validContainerURL)
+	require.NoError(suite.T(), err, "unable to download file from url "+validContainerURL)
+	splitStr := strings.Split(validContainerURL, "/")
 	filePath := "/tmp/" + splitStr[len(splitStr)-1]
-	err = os.WriteFile(filePath, src, 7777)
-	require.NoError(suite.T(), err, "unable to write file with path "+filePath)
+	require.NoError(suite.T(), os.WriteFile(filePath, src, 7777), "unable to write file with path "+filePath)
 
-	params := createInstallParams(filePath, src, wrongChecksum)
-	err = os.Remove(filePath)
-	require.NoError(suite.T(), err, "unable to remove file with path "+filePath)
-	return params
+	defer require.NoError(suite.T(), os.Remove(filePath), "unable to remove file with path "+filePath)
+	return createInstallParams(filePath, src, wrongChecksum)
 }
 
 func createInstallParams(filePath string, src []byte, wrongChecksum bool) map[string]interface{} {
@@ -304,8 +300,8 @@ func createInstallParams(filePath string, src []byte, wrongChecksum bool) map[st
 		{
 			Download: map[datatypes.Protocol]*datatypes.Links{
 				datatypes.HTTPS: {
-					URL:    validJSONUrl,
-					MD5URL: validJSONUrl,
+					URL:    validContainerURL,
+					MD5URL: validContainerURL,
 				},
 			},
 			Checksums: map[datatypes.Hash]string{
@@ -358,8 +354,7 @@ func getCtrImageStructure(filePath string) (fs.FileInfo, CtrImageStruct, error) 
 	if err != nil {
 		return fileStat, ctrImage, err
 	}
-	err = json.Unmarshal(bytes, &ctrImage)
-	return fileStat, ctrImage, err
+	return fileStat, ctrImage, json.Unmarshal(bytes, &ctrImage)
 }
 
 func download(url string) ([]byte, error) {
