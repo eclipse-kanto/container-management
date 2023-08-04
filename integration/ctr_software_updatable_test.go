@@ -54,7 +54,7 @@ const (
 func (suite *softwareUpdatableSuite) SetupSuite() {
 	suite.SetupCtrManagementSuite()
 
-	suite.suFeatureURL = util.GetFeatureURL(suite.ctrThingURL, things.SoftwareUpdatableFeatureID).String()
+	suite.suFeatureURL = util.GetFeatureURL(suite.ctrThingURL, things.SoftwareUpdatableFeatureID)
 	suite.suFilter = fmt.Sprintf("like(resource:path,'/features/%s*')", things.SoftwareUpdatableFeatureID)
 
 	def := client.NewDefinitionID(things.SoftwareUpdatableDefinitionNamespace,
