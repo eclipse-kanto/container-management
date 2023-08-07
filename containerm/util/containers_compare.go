@@ -133,6 +133,9 @@ func isEqualHostConfig1(currentHostConfig *types.HostConfig, newHostConfig *type
 	if currentHostConfig == nil {
 		return newHostConfig == nil
 	}
+	if newHostConfig == nil {
+		return false
+	}
 	if !isEqualResources(currentHostConfig.Resources, newHostConfig.Resources) {
 		return false
 	}

@@ -313,5 +313,5 @@ func (cc *createCmd) setupFlags() {
 	flagSet.StringSliceVar(&cc.config.decKeys, "dec-keys", nil, "Sets a list of private keys filenames (GPG private key ring, JWE and PKCS7 private key). Each entry can include an optional password separated by a colon after the filename.")
 	flagSet.StringSliceVar(&cc.config.decRecipients, "dec-recipients", nil, "Sets a recipients certificates list of the image (used only for PKCS7 and must be an x509)")
 	//init extra capabilities
-	flagSet.StringSliceVar(&cc.config.extraCapabilities, "cap-add", nil, "Add capabilities to the container")
+	flagSet.StringSliceVar(&cc.config.extraCapabilities, "cap-add", nil, "Add Linux capabilities to the container")
 }
