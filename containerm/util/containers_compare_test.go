@@ -20,24 +20,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupContainerImage(name string) *types.Container {
+func createContainerWithImage(name string) *types.Container {
 	return &types.Container{Image: types.Image{Name: name}}
 }
 
-func setupContainerMounts(source string) *types.Container {
+func createContainerWithMounts(source string) *types.Container {
 	return &types.Container{Mounts: []types.MountPoint{{Destination: "testDestination1", Source: "testSource1", PropagationMode: "private"},
 		{Destination: "testDestination1", Source: source, PropagationMode: "private"}}}
 }
 
-func setupContainerConfig(cmd []string) *types.Container {
+func createContainerWithConfig(cmd []string) *types.Container {
 	return &types.Container{Config: &types.ContainerConfiguration{Env: []string{"testEnv"}, Cmd: cmd}}
 }
 
-func setupContainerIOConfig(openstdin bool) *types.Container {
+func createContainerWithIOConfig(openstdin bool) *types.Container {
 	return &types.Container{IOConfig: &types.IOConfig{AttachStderr: true, AttachStdin: true, AttachStdout: true, OpenStdin: openstdin, StdinOnce: true, Tty: true}}
 }
 
-func setupContainerHostConfig(hostConfig *types.HostConfig) *types.Container {
+func createContainerWithHostConfig(hostConfig *types.HostConfig) *types.Container {
 	return &types.Container{HostConfig: hostConfig}
 }
 
@@ -68,48 +68,48 @@ func TestDetermineUpdateAction(t *testing.T) {
 			expectedResult: ActionCreate,
 		},
 		"test_image_name_equal": {
-			current:        setupContainerImage("name1"),
-			desired:        setupContainerImage("name1"),
+			current:        createContainerWithImage("name1"),
+			desired:        createContainerWithImage("name1"),
 			expectedResult: ActionCheck,
 		},
 		"test_image_name_not_equal": {
-			current:        setupContainerImage("name1"),
-			desired:        setupContainerImage("name2"),
+			current:        createContainerWithImage("name1"),
+			desired:        createContainerWithImage("name2"),
 			expectedResult: ActionRecreate,
 		},
 		"test_mounts_equal": {
-			current:        setupContainerMounts("testSource1"),
-			desired:        setupContainerMounts("testSource1"),
+			current:        createContainerWithMounts("testSource1"),
+			desired:        createContainerWithMounts("testSource1"),
 			expectedResult: ActionCheck,
 		},
 		"test_mounts_not_equal": {
-			current:        setupContainerMounts("testSource1"),
-			desired:        setupContainerMounts("notequal"),
+			current:        createContainerWithMounts("testSource1"),
+			desired:        createContainerWithMounts("notequal"),
 			expectedResult: ActionRecreate,
 		},
 		"test_container_config_equal": {
-			current:        setupContainerConfig([]string{"testCmd"}),
-			desired:        setupContainerConfig([]string{"testCmd"}),
+			current:        createContainerWithConfig([]string{"testCmd"}),
+			desired:        createContainerWithConfig([]string{"testCmd"}),
 			expectedResult: ActionCheck,
 		},
 		"test_container_config_cmd_empty_and_nil_not_equal": {
-			current:        setupContainerConfig([]string{}),
-			desired:        setupContainerConfig(nil),
+			current:        createContainerWithConfig([]string{}),
+			desired:        createContainerWithConfig(nil),
 			expectedResult: ActionCheck,
 		},
 		"test_container_config_cmd_elements_empty_not_equal": {
-			current:        setupContainerConfig([]string{""}),
-			desired:        setupContainerConfig([]string{""}),
+			current:        createContainerWithConfig([]string{""}),
+			desired:        createContainerWithConfig([]string{""}),
 			expectedResult: ActionCheck,
 		},
 		"test_container_config_cmd_elements_nil_not_equal": {
-			current:        setupContainerConfig(nil),
-			desired:        setupContainerConfig(nil),
+			current:        createContainerWithConfig(nil),
+			desired:        createContainerWithConfig(nil),
 			expectedResult: ActionCheck,
 		},
 		"test_container_config_cmd_one_empty_element_and_one_not_empty_not_equal": {
-			current:        setupContainerConfig([]string{"testCmd"}),
-			desired:        setupContainerConfig(nil),
+			current:        createContainerWithConfig([]string{"testCmd"}),
+			desired:        createContainerWithConfig(nil),
 			expectedResult: ActionRecreate,
 		},
 		"test_container_config_not_equal": {
@@ -122,37 +122,37 @@ func TestDetermineUpdateAction(t *testing.T) {
 			expectedResult: ActionRecreate,
 		},
 		"test_ioconfig_equal": {
-			current:        setupContainerIOConfig(true),
-			desired:        setupContainerIOConfig(true),
+			current:        createContainerWithIOConfig(true),
+			desired:        createContainerWithIOConfig(true),
 			expectedResult: ActionCheck,
 		},
 		"test_ioconfig_not_equal": {
-			current:        setupContainerIOConfig(false),
-			desired:        setupContainerIOConfig(true),
+			current:        createContainerWithIOConfig(false),
+			desired:        createContainerWithIOConfig(true),
 			expectedResult: ActionRecreate,
 		},
 		"test_hostconfig0_equal_privileged": {
-			current:        setupContainerHostConfig(&types.HostConfig{Privileged: true}),
-			desired:        setupContainerHostConfig(&types.HostConfig{Privileged: true}),
+			current:        createContainerWithHostConfig(&types.HostConfig{Privileged: true}),
+			desired:        createContainerWithHostConfig(&types.HostConfig{Privileged: true}),
 			expectedResult: ActionCheck,
 		},
 		"test_hostconfig0_not_equal_privileged": {
-			current:        setupContainerHostConfig(&types.HostConfig{Privileged: true}),
-			desired:        setupContainerHostConfig(&types.HostConfig{Privileged: false}),
+			current:        createContainerWithHostConfig(&types.HostConfig{Privileged: true}),
+			desired:        createContainerWithHostConfig(&types.HostConfig{Privileged: false}),
 			expectedResult: ActionRecreate,
 		},
 		"test_hostconfig0_equal_capabilities": {
-			current:        setupContainerHostConfig(&types.HostConfig{ExtraCapabilities: []string{"CAP_NET_ADMIN"}}),
-			desired:        setupContainerHostConfig(&types.HostConfig{ExtraCapabilities: []string{"CAP_NET_ADMIN"}}),
+			current:        createContainerWithHostConfig(&types.HostConfig{ExtraCapabilities: []string{"CAP_NET_ADMIN"}}),
+			desired:        createContainerWithHostConfig(&types.HostConfig{ExtraCapabilities: []string{"CAP_NET_ADMIN"}}),
 			expectedResult: ActionCheck,
 		},
 		"test_hostconfig0_not_equal_capabilities": {
-			current:        setupContainerHostConfig(&types.HostConfig{ExtraCapabilities: []string{"test"}}),
-			desired:        setupContainerHostConfig(&types.HostConfig{ExtraCapabilities: []string{"CAP_NET_ADMIN"}}),
+			current:        createContainerWithHostConfig(&types.HostConfig{ExtraCapabilities: []string{"test"}}),
+			desired:        createContainerWithHostConfig(&types.HostConfig{ExtraCapabilities: []string{"CAP_NET_ADMIN"}}),
 			expectedResult: ActionRecreate,
 		},
 		"test_hostconfig1_equal": {
-			current: setupContainerHostConfig(&types.HostConfig{
+			current: createContainerWithHostConfig(&types.HostConfig{
 				RestartPolicy: &types.RestartPolicy{
 					MaximumRetryCount: 0, RetryTimeout: 0, Type: "always",
 				},
@@ -160,7 +160,7 @@ func TestDetermineUpdateAction(t *testing.T) {
 					Memory: "4m", MemoryReservation: "3m", MemorySwap: "-1",
 				},
 			}),
-			desired: setupContainerHostConfig(&types.HostConfig{
+			desired: createContainerWithHostConfig(&types.HostConfig{
 				RestartPolicy: &types.RestartPolicy{
 					MaximumRetryCount: 0, RetryTimeout: 0, Type: "always",
 				},
@@ -171,7 +171,7 @@ func TestDetermineUpdateAction(t *testing.T) {
 			expectedResult: ActionCheck,
 		},
 		"test_hostconfig1_not_equal": {
-			current: setupContainerHostConfig(&types.HostConfig{
+			current: createContainerWithHostConfig(&types.HostConfig{
 				RestartPolicy: &types.RestartPolicy{
 					MaximumRetryCount: 0, RetryTimeout: 0, Type: "always",
 				},
@@ -179,7 +179,7 @@ func TestDetermineUpdateAction(t *testing.T) {
 					Memory: "4m", MemoryReservation: "3m", MemorySwap: "-1",
 				},
 			}),
-			desired: setupContainerHostConfig(&types.HostConfig{
+			desired: createContainerWithHostConfig(&types.HostConfig{
 				RestartPolicy: &types.RestartPolicy{
 					MaximumRetryCount: 0, RetryTimeout: 0, Type: "always",
 				},
@@ -219,7 +219,7 @@ func TestIsEqualImage(t *testing.T) {
 }
 
 func TestIsEqualContainerConfig(t *testing.T) {
-	defaultContainerConf := &types.ContainerConfiguration{Env: []string{"testEnv"}, Cmd: []string{"testCmd"}}
+	defaultContainerConfig := &types.ContainerConfiguration{Env: []string{"testEnv"}, Cmd: []string{"testCmd"}}
 	testCases := map[string]struct {
 		current        *types.ContainerConfiguration
 		desired        *types.ContainerConfiguration
@@ -235,12 +235,12 @@ func TestIsEqualContainerConfig(t *testing.T) {
 			current: &types.ContainerConfiguration{},
 		},
 		"test_current_desired_equal": {
-			current:        defaultContainerConf,
-			desired:        defaultContainerConf,
+			current:        defaultContainerConfig,
+			desired:        defaultContainerConfig,
 			expectedResult: true,
 		},
 		"test_env_not_equal": {
-			current: defaultContainerConf,
+			current: defaultContainerConfig,
 			desired: &types.ContainerConfiguration{Env: []string{"testNotEqual"}, Cmd: []string{"testCmd"}},
 		},
 		"test_env_equal_ordering_not_equal": {
@@ -249,7 +249,7 @@ func TestIsEqualContainerConfig(t *testing.T) {
 			expectedResult: true,
 		},
 		"test_cmd_not_equal": {
-			current: defaultContainerConf,
+			current: defaultContainerConfig,
 			desired: &types.ContainerConfiguration{Env: []string{"testEnv"}, Cmd: []string{"testNotEqual"}},
 		},
 		"test_cmd_equal_ordering_not_equal": {
@@ -441,7 +441,7 @@ func TestIsEqualResources(t *testing.T) {
 }
 
 func TestIsEqualRestartPolicy(t *testing.T) {
-	defaultResPolicy := &types.RestartPolicy{
+	defaultRestartPolicy := &types.RestartPolicy{
 		MaximumRetryCount: 0,
 		RetryTimeout:      0,
 		Type:              "always",
@@ -461,12 +461,12 @@ func TestIsEqualRestartPolicy(t *testing.T) {
 			current: &types.RestartPolicy{},
 		},
 		"test_restartpolicy_equal": {
-			current:        defaultResPolicy,
-			desired:        defaultResPolicy,
+			current:        defaultRestartPolicy,
+			desired:        defaultRestartPolicy,
 			expectedResult: true,
 		},
 		"test_restartpolicy_not_equal": {
-			current: defaultResPolicy,
+			current: defaultRestartPolicy,
 			desired: &types.RestartPolicy{
 				RetryTimeout: 5,
 				Type:         "always",
@@ -482,13 +482,13 @@ func TestIsEqualRestartPolicy(t *testing.T) {
 }
 
 func TestIsEqualLog(t *testing.T) {
-	defaultDriverConf := &types.LogDriverConfiguration{
+	defaultDriverConfig := &types.LogDriverConfiguration{
 		Type:     "json-file",
 		MaxFiles: 1,
 		MaxSize:  "100M",
 		RootDir:  "testRootDir",
 	}
-	defaultModeConf := &types.LogModeConfiguration{
+	defaultModeConfig := &types.LogModeConfiguration{
 		Mode:          "non-blocking",
 		MaxBufferSize: "1m",
 	}
@@ -539,18 +539,18 @@ func TestIsEqualLog(t *testing.T) {
 		},
 		"test_current_driverconfig_not_nil_desired_driverconfig_not_nil_equal": {
 			current: &types.LogConfiguration{
-				DriverConfig: defaultDriverConf,
+				DriverConfig: defaultDriverConfig,
 				ModeConfig:   &types.LogModeConfiguration{},
 			},
 			desired: &types.LogConfiguration{
-				DriverConfig: defaultDriverConf,
+				DriverConfig: defaultDriverConfig,
 				ModeConfig:   &types.LogModeConfiguration{},
 			},
 			expectedResult: true,
 		},
 		"test_current_driverconfig_not_nil_desired_driverconfig_not_nil_not_equal": {
 			current: &types.LogConfiguration{
-				DriverConfig: defaultDriverConf,
+				DriverConfig: defaultDriverConfig,
 				ModeConfig:   &types.LogModeConfiguration{},
 			},
 			desired: &types.LogConfiguration{
@@ -594,18 +594,18 @@ func TestIsEqualLog(t *testing.T) {
 		"test_current_modeconfig_not_nil_desired_modeconfig_not_nil_equal": {
 			current: &types.LogConfiguration{
 				DriverConfig: &types.LogDriverConfiguration{},
-				ModeConfig:   defaultModeConf,
+				ModeConfig:   defaultModeConfig,
 			},
 			desired: &types.LogConfiguration{
 				DriverConfig: &types.LogDriverConfiguration{},
-				ModeConfig:   defaultModeConf,
+				ModeConfig:   defaultModeConfig,
 			},
 			expectedResult: true,
 		},
 		"test_current_modeconfig_not_nil_desired_modeconfig_not_nil_not_equal": {
 			current: &types.LogConfiguration{
 				DriverConfig: &types.LogDriverConfiguration{},
-				ModeConfig:   defaultModeConf,
+				ModeConfig:   defaultModeConfig,
 			},
 			desired: &types.LogConfiguration{
 				DriverConfig: &types.LogDriverConfiguration{},
@@ -625,7 +625,7 @@ func TestIsEqualLog(t *testing.T) {
 }
 
 func TestIsEqualIOConfig(t *testing.T) {
-	setIOConf := func(attachStderr, openstdin, tty bool) *types.IOConfig {
+	setIOConfig := func(attachStderr, openstdin, tty bool) *types.IOConfig {
 		return &types.IOConfig{AttachStderr: attachStderr, OpenStdin: openstdin, Tty: tty}
 	}
 	testCases := map[string]struct {
@@ -643,22 +643,22 @@ func TestIsEqualIOConfig(t *testing.T) {
 			current: &types.IOConfig{},
 		},
 		"test_IOConfig_equal": {
-			current:        setIOConf(true, true, true),
-			desired:        setIOConf(true, true, true),
+			current:        setIOConfig(true, true, true),
+			desired:        setIOConfig(true, true, true),
 			expectedResult: true,
 		},
 		"test_IOConfig_equal_AttachStderr_not_equal": {
-			current:        setIOConf(false, true, true),
-			desired:        setIOConf(true, true, true),
+			current:        setIOConfig(false, true, true),
+			desired:        setIOConfig(true, true, true),
 			expectedResult: true,
 		},
 		"test_IOConfig_not_equal": {
-			current: setIOConf(false, false, false),
-			desired: setIOConf(true, true, true),
+			current: setIOConfig(false, false, false),
+			desired: setIOConfig(true, true, true),
 		},
 		"test_IOConfig_openstdin_not_equal": {
-			current: setIOConf(false, false, false),
-			desired: setIOConf(true, true, false),
+			current: setIOConfig(false, false, false),
+			desired: setIOConfig(true, true, false),
 		},
 	}
 
