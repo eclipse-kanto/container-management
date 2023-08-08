@@ -155,8 +155,7 @@ func TestFromAPIContainerConfig(t *testing.T) {
 	})
 	t.Run("test_from_api_container_config_extra_caps", func(t *testing.T) {
 		ctr.HostConfig.Privileged = false
-		ctrParsed = fromAPIContainerConfig(ctr)
-		testutil.AssertEqual(t, ctr.HostConfig.ExtraCapabilities, ctrParsed.ExtraCapabilities)
+		testutil.AssertEqual(t, ctr.HostConfig.ExtraCapabilities, fromAPIContainerConfig(ctr).ExtraCapabilities)
 	})
 	t.Run("test_from_api_container_config_extra_hosts", func(t *testing.T) {
 		testutil.AssertEqual(t, ctr.HostConfig.ExtraHosts, ctrParsed.ExtraHosts)
