@@ -175,7 +175,7 @@ func (suite *softwareUpdatableSuite) removeContainer(params map[string]interface
 	require.NoError(suite.T(), err, "failed to subscribe for the %s messages", util.StartSendEvents)
 
 	_, err = util.ExecuteOperation(suite.Cfg, suite.suFeatureURL, "remove", params)
-	suite.closeOnError(wsConnection, err, "failed to execute software updatable install for containers with params %v", params)
+	suite.closeOnError(wsConnection, err, "failed to execute software updatable remove for containers with params %v", params)
 
 	var (
 		eventValue      map[string]interface{}
@@ -255,7 +255,6 @@ func (suite *softwareUpdatableSuite) TestSoftwareInstallWithInvalidParameters() 
 		wsConnection.Close()
 	}
 	require.Errorf(suite.T(), err, "failed to execute software updatable install for containers with params %v", params)
-
 }
 
 func (suite *softwareUpdatableSuite) TestSoftwareInstallWithWrongChecksum() {
@@ -271,19 +270,15 @@ func (suite *softwareUpdatableSuite) TestSoftwareRemoveNonExistingContainer() {
 func (suite *softwareUpdatableSuite) createParameters(wrongChecksum bool) map[string]interface{} {
 	src, err := download(validContainerURL)
 	require.NoError(suite.T(), err, "unable to download file from url "+validContainerURL)
-	splitStr := strings.Split(validContainerURL, "/")
-	filePath := "/tmp/" + splitStr[len(splitStr)-1]
-	require.NoError(suite.T(), os.WriteFile(filePath, src, 7777), "unable to write file with path "+filePath)
-
+	filePath := "valid.json"
+	require.NoError(suite.T(), os.WriteFile(filePath, src, 0755), "unable to write file with path "+filePath)
+	fileInfo, ctrStruct, err := getCtrImageStructure(filePath)
+	require.NoError(suite.T(), err, "unable to create container image struct")
 	defer require.NoError(suite.T(), os.Remove(filePath), "unable to remove file with path "+filePath)
-	return createInstallParams(filePath, src, wrongChecksum)
+	return createInstallParams(fileInfo, ctrStruct, src, wrongChecksum)
 }
 
-func createInstallParams(filePath string, src []byte, wrongChecksum bool) map[string]interface{} {
-	fileInfo, ctrStruct, err := getCtrImageStructure(filePath)
-	if err != nil {
-		return make(map[string]interface{})
-	}
+func createInstallParams(fileInfo fs.FileInfo, ctrStruct CtrImageStruct, src []byte, wrongChecksum bool) map[string]interface{} {
 	splitStr := strings.Split(ctrStruct.Image.Name, "/")
 	swModuleStr := strings.Split(splitStr[len(splitStr)-1], ":")
 
@@ -325,7 +320,7 @@ func createRemoveParams(ctrID string) map[string]interface{} {
 		paramForced: true,
 		paramCorID:  uuid.NewString(),
 		"software": []*datatypes.DependencyDescription{
-			&datatypes.DependencyDescription{
+			{
 				Name: ctrID,
 			},
 		},
@@ -361,6 +356,9 @@ func download(url string) ([]byte, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, err
+	}
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("http status code is not in the 2xx range: %v", response.StatusCode)
 	}
 	defer response.Body.Close()
 	return io.ReadAll(response.Body)
