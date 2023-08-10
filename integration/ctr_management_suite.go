@@ -104,8 +104,7 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 			if ctrFeatureID == "" {
 				return true, fmt.Errorf("event for creating the container feature is not received")
 			}
-			propertyStatePath := fmt.Sprintf("/features/%s/properties/status/state", ctrFeatureID)
-			if propertyStatePath != event.Path {
+			if suite.constructStatusPath(ctrFeatureID, "state") != event.Path {
 				return true, fmt.Errorf("received event is not expected")
 			}
 			eventValue, err = parseMap(event.Value)
@@ -253,4 +252,8 @@ func (suite *ctrManagementSuite) closeUnsubscribe(wsConnection *websocket.Conn) 
 		util.UnsubscribeFromWSMessages(suite.Cfg, wsConnection, util.StopSendEvents)
 		wsConnection.Close()
 	}
+}
+
+func (suite *ctrManagementSuite) constructStatusPath(featureID, property string) string {
+	return fmt.Sprintf("/features/%s/properties/status/%s", featureID, property)
 }
