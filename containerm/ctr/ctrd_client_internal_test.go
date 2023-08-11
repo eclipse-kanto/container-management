@@ -16,6 +16,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"os"
+	"sync"
+	"syscall"
+	"testing"
+	"time"
+
 	"github.com/containerd/containerd"
 	eventstypes "github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/cio"
@@ -41,11 +47,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
-	"os"
-	"sync"
-	"syscall"
-	"testing"
-	"time"
 )
 
 func TestClientInternalGenerateNewContainerOpts(t *testing.T) {
@@ -68,7 +69,7 @@ func TestClientInternalGenerateNewContainerOpts(t *testing.T) {
 	}{
 		"test_no_error": {
 			mockExec: func(imageMock *mocksContainerd.MockImage, spiMock *mocksCtrd.MockcontainerdSpi, decrytpMgrMock *mocksCtrd.MockcontainerDecryptMgr) ([]containerd.NewContainerOpts, error) {
-				spiMock.EXPECT().GetSnapshotID(container.ID)
+				spiMock.EXPECT().GetSnapshotID(container.ID).Return(snapshotID)
 				dc := &config.DecryptConfig{}
 				decrytpMgrMock.EXPECT().GetDecryptConfig(container.Image.DecryptConfig).Return(dc, nil)
 				res := WithSnapshotOpts(snapshotID, containerd.DefaultSnapshotter) // what these With* return must be tested for each dedicated static func

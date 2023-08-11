@@ -898,7 +898,7 @@ func mockExecLogsNoErrors(args testLogsArgs) error {
 			},
 		},
 	}
-	mockContainerManager.EXPECT().Get(context.TODO(), args.request.Id).Times(1).Return(protobuf.ToInternalContainer(pbCtr), nil)
+	mockContainerManager.EXPECT().Get(context.Background(), args.request.Id).Times(1).Return(protobuf.ToInternalContainer(pbCtr), nil)
 	return nil
 }
 
@@ -910,6 +910,6 @@ func mockExecLogsNoHostConfig(args testLogsArgs) error {
 		Image: &pbcontainerstypes.Image{Name: containerImageID},
 	}
 
-	mockContainerManager.EXPECT().Get(context.TODO(), args.request.Id).Times(1).Return(protobuf.ToInternalContainer(pbCtr), nil)
+	mockContainerManager.EXPECT().Get(context.Background(), args.request.Id).Times(1).Return(protobuf.ToInternalContainer(pbCtr), nil)
 	return err
 }

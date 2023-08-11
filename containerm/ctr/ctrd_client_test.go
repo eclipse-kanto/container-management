@@ -14,6 +14,7 @@ package ctr
 
 import (
 	"context"
+
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/containers"
@@ -30,6 +31,10 @@ import (
 	statsV1 "github.com/containerd/cgroups/stats/v1"
 	containerdtypes "github.com/containerd/containerd/api/types"
 
+	"reflect"
+	"testing"
+	"time"
+
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
@@ -41,9 +46,6 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 	"github.com/golang/mock/gomock"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"reflect"
-	"testing"
-	"time"
 )
 
 var testContainerID = "test-container-id"
@@ -878,7 +880,7 @@ func TestRestoreContainer(t *testing.T) {
 				mockSpi.EXPECT().LoadTask(gomock.Any(), mockContainer, gomock.Any()).Return(mockTask, nil)
 				mockContainer.EXPECT().ID().Return(testCtr.ID)
 				resChan := make(<-chan containerd.ExitStatus)
-				mockTask.EXPECT().Wait(context.TODO()).Return(resChan, nil)
+				mockTask.EXPECT().Wait(ctx).Return(resChan, nil)
 				return nil
 			},
 		},
