@@ -16,6 +16,22 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"os"
+	"sync"
+	"syscall"
+	"testing"
+	"time"
+
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
+	"github.com/eclipse-kanto/container-management/containerm/log"
+	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
+	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/matchers"
+	mocksContainerd "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/containerd"
+	mocksCtrd "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
+	mocksIo "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/io"
+	mocksLogger "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/logger"
+	"github.com/eclipse-kanto/container-management/containerm/util"
+
 	"github.com/containerd/containerd"
 	eventstypes "github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/cio"
@@ -28,24 +44,10 @@ import (
 	"github.com/containerd/imgcrypt/images/encryption"
 	"github.com/containerd/typeurl"
 	"github.com/containers/ocicrypt/config"
-	"github.com/eclipse-kanto/container-management/containerm/containers/types"
-	"github.com/eclipse-kanto/container-management/containerm/log"
-	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
-	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/matchers"
-	mocksContainerd "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/containerd"
-	mocksCtrd "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
-	mocksIo "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/io"
-	mocksLogger "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/logger"
-	"github.com/eclipse-kanto/container-management/containerm/util"
 	protoTypes "github.com/gogo/protobuf/types"
 	"github.com/golang/mock/gomock"
 	"github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
-	"os"
-	"sync"
-	"syscall"
-	"testing"
-	"time"
 )
 
 func TestClientInternalGenerateNewContainerOpts(t *testing.T) {
@@ -68,7 +70,7 @@ func TestClientInternalGenerateNewContainerOpts(t *testing.T) {
 	}{
 		"test_no_error": {
 			mockExec: func(imageMock *mocksContainerd.MockImage, spiMock *mocksCtrd.MockcontainerdSpi, decrytpMgrMock *mocksCtrd.MockcontainerDecryptMgr) ([]containerd.NewContainerOpts, error) {
-				spiMock.EXPECT().GetSnapshotID(container.ID)
+				spiMock.EXPECT().GetSnapshotID(container.ID).Return(snapshotID)
 				dc := &config.DecryptConfig{}
 				decrytpMgrMock.EXPECT().GetDecryptConfig(container.Image.DecryptConfig).Return(dc, nil)
 				res := WithSnapshotOpts(snapshotID, containerd.DefaultSnapshotter) // what these With* return must be tested for each dedicated static func

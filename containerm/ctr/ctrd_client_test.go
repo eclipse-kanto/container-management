@@ -14,7 +14,23 @@ package ctr
 
 import (
 	"context"
+	"reflect"
+	"testing"
+	"time"
+
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
+	"github.com/eclipse-kanto/container-management/containerm/log"
+	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
+	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/matchers"
+	containerdMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/containerd"
+	ctrdMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
+	loggerMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/logger"
+	"github.com/eclipse-kanto/container-management/containerm/streams"
+	"github.com/eclipse-kanto/container-management/containerm/util"
+
+	statsV1 "github.com/containerd/cgroups/stats/v1"
 	"github.com/containerd/containerd"
+	containerdtypes "github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
@@ -26,24 +42,8 @@ import (
 	"github.com/containerd/imgcrypt/images/encryption"
 	"github.com/containerd/typeurl"
 	"github.com/containers/ocicrypt/config"
-
-	statsV1 "github.com/containerd/cgroups/stats/v1"
-	containerdtypes "github.com/containerd/containerd/api/types"
-
-	"github.com/eclipse-kanto/container-management/containerm/containers/types"
-	"github.com/eclipse-kanto/container-management/containerm/log"
-	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
-	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/matchers"
-	containerdMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/containerd"
-	ctrdMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
-	loggerMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/logger"
-	"github.com/eclipse-kanto/container-management/containerm/streams"
-	"github.com/eclipse-kanto/container-management/containerm/util"
 	"github.com/golang/mock/gomock"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"reflect"
-	"testing"
-	"time"
 )
 
 var testContainerID = "test-container-id"
@@ -878,7 +878,7 @@ func TestRestoreContainer(t *testing.T) {
 				mockSpi.EXPECT().LoadTask(gomock.Any(), mockContainer, gomock.Any()).Return(mockTask, nil)
 				mockContainer.EXPECT().ID().Return(testCtr.ID)
 				resChan := make(<-chan containerd.ExitStatus)
-				mockTask.EXPECT().Wait(context.TODO()).Return(resChan, nil)
+				mockTask.EXPECT().Wait(ctx).Return(resChan, nil)
 				return nil
 			},
 		},

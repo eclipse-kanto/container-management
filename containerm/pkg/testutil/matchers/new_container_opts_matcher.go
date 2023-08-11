@@ -39,8 +39,8 @@ func (matcher *newContainerOptMatcher) Matches(x interface{}) bool {
 			return false
 		}
 		for i := range opts {
-			actual := reflect.ValueOf(opts[i]).Pointer()
-			expected := reflect.ValueOf(matcher.opts[i]).Pointer()
+			actual := reflect.ValueOf(opts[i]).Kind()
+			expected := reflect.ValueOf(matcher.opts[i]).Kind()
 			if !reflect.DeepEqual(expected, actual) {
 				matcher.msg = fmt.Sprintf("expected %v , got %v", expected, actual)
 				return false

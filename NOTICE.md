@@ -466,11 +466,11 @@ go-yaml/yaml (3.0.1)
 * Project: https://github.com/go-yaml/yaml
 * Source:  https://github.com/go-yaml/yaml/releases/tag/v3.0.1
 
-golang/go (1.19.4)
+golang/go (1.21.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/go
-* Source:  https://github.com/golang/go/releases/tag/go1.19.4
+* Source:  https://github.com/golang/go/releases/tag/go1.21.0
 
 ## Cryptography
 

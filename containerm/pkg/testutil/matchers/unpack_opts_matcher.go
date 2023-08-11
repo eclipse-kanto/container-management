@@ -51,8 +51,8 @@ func (matcher *unpackOptsMatcher) Matches(x interface{}) bool {
 			return false
 		}
 		for i := range expected.ApplyOpts {
-			expectedA := reflect.ValueOf(expected.ApplyOpts[i]).Pointer()
-			actualA := reflect.ValueOf(actual.ApplyOpts[i]).Pointer()
+			expectedA := reflect.ValueOf(expected.ApplyOpts[i]).Kind()
+			actualA := reflect.ValueOf(actual.ApplyOpts[i]).Kind()
 			if !reflect.DeepEqual(expectedA, actualA) {
 				matcher.msg = fmt.Sprintf("expected %v , got %v", expected, actual)
 				return false
@@ -63,8 +63,8 @@ func (matcher *unpackOptsMatcher) Matches(x interface{}) bool {
 			return false
 		}
 		for i := range expected.SnapshotOpts {
-			expectedS := reflect.ValueOf(expected.SnapshotOpts[i]).Pointer()
-			actualS := reflect.ValueOf(actual.SnapshotOpts[i]).Pointer()
+			expectedS := reflect.ValueOf(expected.SnapshotOpts[i]).Kind()
+			actualS := reflect.ValueOf(actual.SnapshotOpts[i]).Kind()
 			if !reflect.DeepEqual(expectedS, actualS) {
 				matcher.msg = fmt.Sprintf("expected %v , got %v", expected, actual)
 				return false
