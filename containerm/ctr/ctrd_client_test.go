@@ -14,23 +14,6 @@ package ctr
 
 import (
 	"context"
-
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/snapshots"
-	"github.com/containerd/imgcrypt"
-	"github.com/containerd/imgcrypt/images/encryption"
-	"github.com/containerd/typeurl"
-	"github.com/containers/ocicrypt/config"
-
-	statsV1 "github.com/containerd/cgroups/stats/v1"
-	containerdtypes "github.com/containerd/containerd/api/types"
-
 	"reflect"
 	"testing"
 	"time"
@@ -44,6 +27,21 @@ import (
 	loggerMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/logger"
 	"github.com/eclipse-kanto/container-management/containerm/streams"
 	"github.com/eclipse-kanto/container-management/containerm/util"
+
+	statsV1 "github.com/containerd/cgroups/stats/v1"
+	"github.com/containerd/containerd"
+	containerdtypes "github.com/containerd/containerd/api/types"
+	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/containers"
+	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/images"
+	"github.com/containerd/containerd/namespaces"
+	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/snapshots"
+	"github.com/containerd/imgcrypt"
+	"github.com/containerd/imgcrypt/images/encryption"
+	"github.com/containerd/typeurl"
+	"github.com/containers/ocicrypt/config"
 	"github.com/golang/mock/gomock"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
