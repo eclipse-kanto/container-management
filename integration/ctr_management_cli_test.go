@@ -20,6 +20,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
@@ -91,12 +92,18 @@ func dumpTestdata() error {
 }
 
 func assertJSONContainer(result icmd.Result, args ...string) assert.BoolOrComparison {
-	if result.Stdout() == "" {
+	output := result.Stdout()
+	if output == "" {
 		return errors.New("stdout result is empty")
 	}
 	var container *types.Container
-	if err := json.Unmarshal([]byte(result.Stdout()), &container); err != nil {
+	if err := json.Unmarshal([]byte(output), &container); err != nil {
 		return err
+	}
+	for _, arg := range args {
+		if !strings.Contains(output, arg) {
+			return false
+		}
 	}
 	return true
 }

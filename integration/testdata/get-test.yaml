@@ -45,3 +45,19 @@ customResult:
 onExit:
   - binary: "kanto-cm"
     args: ["remove", "--host", "$KANTO_HOST", "-n", "get_container", "-f"]
+---
+name: get_container_extra_capabilities
+setupCmd:
+  - binary: kanto-cm
+    args: ["create", "--cap-add", "CAP_NET_ADMIN","--host", "$KANTO_HOST", "-n", "get_container_extra_capabilities", "docker.io/library/influxdb:1.8.4"]
+command:
+  binary: kanto-cm
+  args: ["get", "--host", "$KANTO_HOST", "-n", "get_container_extra_capabilities"]
+expected:
+  exitCode: 0
+customResult:
+  type: ASSERT_JSON_CONTAINER
+  args: ["CAP_NET_ADMIN"]
+onExit:
+  - binary: "kanto-cm"
+    args: ["remove", "--host", "$KANTO_HOST", "-n", "get_container_extra_capabilities", "-f"]

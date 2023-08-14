@@ -625,9 +625,6 @@ func TestIsEqualLog(t *testing.T) {
 }
 
 func TestIsEqualIOConfig(t *testing.T) {
-	setIOConfig := func(attachStderr, openstdin, tty bool) *types.IOConfig {
-		return &types.IOConfig{AttachStderr: attachStderr, OpenStdin: openstdin, Tty: tty}
-	}
 	testCases := map[string]struct {
 		current        *types.IOConfig
 		desired        *types.IOConfig
@@ -643,22 +640,22 @@ func TestIsEqualIOConfig(t *testing.T) {
 			current: &types.IOConfig{},
 		},
 		"test_IOConfig_equal": {
-			current:        setIOConfig(true, true, true),
-			desired:        setIOConfig(true, true, true),
+			current:        &types.IOConfig{AttachStderr: true, OpenStdin: true, Tty: true},
+			desired:        &types.IOConfig{AttachStderr: true, OpenStdin: true, Tty: true},
 			expectedResult: true,
 		},
 		"test_IOConfig_equal_AttachStderr_not_equal": {
-			current:        setIOConfig(false, true, true),
-			desired:        setIOConfig(true, true, true),
+			current:        &types.IOConfig{AttachStderr: false, OpenStdin: true, Tty: true},
+			desired:        &types.IOConfig{AttachStderr: true, OpenStdin: true, Tty: true},
 			expectedResult: true,
 		},
 		"test_IOConfig_not_equal": {
-			current: setIOConfig(false, false, false),
-			desired: setIOConfig(true, true, true),
+			current: &types.IOConfig{AttachStderr: false, OpenStdin: false, Tty: false},
+			desired: &types.IOConfig{AttachStderr: true, OpenStdin: true, Tty: true},
 		},
 		"test_IOConfig_openstdin_not_equal": {
-			current: setIOConfig(false, false, false),
-			desired: setIOConfig(true, true, false),
+			current: &types.IOConfig{AttachStderr: false, OpenStdin: false, Tty: false},
+			desired: &types.IOConfig{AttachStderr: true, OpenStdin: true, Tty: false},
 		},
 	}
 
