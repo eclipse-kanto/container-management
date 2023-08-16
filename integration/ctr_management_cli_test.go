@@ -93,6 +93,41 @@ func dumpTestdata() error {
 	return nil
 }
 
+func assertJSONContainer(result icmd.Result, args ...string) assert.BoolOrComparison {
+	output := result.Stdout()
+	if output == "" {
+		return errors.New("stdout result is empty")
+	}
+	var container *types.Container
+	if err := json.Unmarshal([]byte(output), &container); err != nil {
+		return err
+	}
+
+	if len(args)%2 != 0 {
+		return errors.New("there should be even number of arguments")
+	}
+	for i := 0; i < len(args); i = i + 2 {
+		var (
+			value     interface{}
+			err       error
+			byteArray []byte
+		)
+		if value, err = getValueFromStruct(args[i], container); err != nil {
+			return err
+		}
+		if byteArray, err = json.Marshal(value); err != nil {
+			return err
+		}
+		if string(byteArray) != args[i+1] {
+			return false
+		}
+		if i == len(args) {
+			break
+		}
+	}
+	return true
+}
+
 func getValueFromStruct(keyWithDots string, object interface{}) (interface{}, error) {
 	keySlice := strings.Split(keyWithDots, ".")
 	v := reflect.ValueOf(object)
@@ -106,42 +141,4 @@ func getValueFromStruct(keyWithDots string, object interface{}) (interface{}, er
 		v = v.FieldByName(key)
 	}
 	return v.Interface(), nil
-
-}
-
-func assertJSONContainer(result icmd.Result, args ...string) assert.BoolOrComparison {
-	output := result.Stdout()
-	if output == "" {
-		return errors.New("stdout result is empty")
-	}
-	var container *types.Container
-	if err := json.Unmarshal([]byte(output), &container); err != nil {
-		return err
-	}
-	if len(args)%2 == 0 {
-		i := 0
-		for ; i < len(args); i = i + 2 {
-			var (
-				value     interface{}
-				err       error
-				byteArray []byte
-			)
-			if value, err = getValueFromStruct(args[i], container); err != nil {
-				return err
-			}
-			if byteArray, err = json.Marshal(value); err != nil {
-				return err
-			}
-			converted := string(byteArray)
-			if converted != args[i+1] {
-				return false
-			}
-			if i == len(args) {
-				break
-			}
-		}
-	} else {
-		return errors.New("there should be even number of arguments")
-	}
-	return true
 }
