@@ -57,7 +57,7 @@ expected:
   exitCode: 0
 customResult:
   type: ASSERT_JSON_CONTAINER
-  args: ["CAP_NET_ADMIN"]
+  args: ["container.HostConfig.ExtraCapabilities", "[\"CAP_NET_ADMIN\"]"]
 onExit:
   - binary: "kanto-cm"
     args: ["remove", "--host", "$KANTO_HOST", "-n", "get_container_extra_capabilities", "-f"]

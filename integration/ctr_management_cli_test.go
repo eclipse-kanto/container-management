@@ -17,9 +17,11 @@ import (
 	"embed"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -91,6 +93,22 @@ func dumpTestdata() error {
 	return nil
 }
 
+func getValueFromStruct(keyWithDots string, object interface{}) (interface{}, error) {
+	keySlice := strings.Split(keyWithDots, ".")
+	v := reflect.ValueOf(object)
+	for _, key := range keySlice[1:] {
+		for v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		if v.Kind() != reflect.Struct {
+			return nil, fmt.Errorf("only accepts structs; got %T", v)
+		}
+		v = v.FieldByName(key)
+	}
+	return v.Interface(), nil
+
+}
+
 func assertJSONContainer(result icmd.Result, args ...string) assert.BoolOrComparison {
 	output := result.Stdout()
 	if output == "" {
@@ -100,10 +118,30 @@ func assertJSONContainer(result icmd.Result, args ...string) assert.BoolOrCompar
 	if err := json.Unmarshal([]byte(output), &container); err != nil {
 		return err
 	}
-	for _, arg := range args {
-		if !strings.Contains(output, arg) {
-			return false
+	if len(args)%2 == 0 {
+		i := 0
+		for ; i < len(args); i = i + 2 {
+			var (
+				value     interface{}
+				err       error
+				byteArray []byte
+			)
+			if value, err = getValueFromStruct(args[i], container); err != nil {
+				return err
+			}
+			if byteArray, err = json.Marshal(value); err != nil {
+				return err
+			}
+			converted := string(byteArray)
+			if converted != args[i+1] {
+				return false
+			}
+			if i == len(args) {
+				break
+			}
 		}
+	} else {
+		return errors.New("there should be even number of arguments")
 	}
 	return true
 }
