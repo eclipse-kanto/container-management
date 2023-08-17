@@ -122,7 +122,7 @@ func toAPIContainerConfig(cfg *configuration) *types.Container {
 	if cfg.ExtraHosts != nil && len(cfg.ExtraHosts) > 0 {
 		ctr.HostConfig.ExtraHosts = cfg.ExtraHosts
 	}
-	if !cfg.Privileged && cfg.ExtraCapabilities != nil && len(cfg.ExtraCapabilities) > 0 {
+	if !cfg.Privileged && len(cfg.ExtraCapabilities) > 0 {
 		ctr.HostConfig.ExtraCapabilities = cfg.ExtraCapabilities
 	}
 	if cfg.Devices != nil && len(cfg.Devices) > 0 {

@@ -121,9 +121,6 @@ func assertJSONContainer(result icmd.Result, args ...string) assert.BoolOrCompar
 		if string(byteArray) != args[i+1] {
 			return false
 		}
-		if i == len(args) {
-			break
-		}
 	}
 	return true
 }

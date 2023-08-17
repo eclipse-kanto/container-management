@@ -78,20 +78,22 @@ func ValidateName(name string) error {
 	return nil
 }
 
-// ValidateCapabilities validates the container capabilities
-func ValidateCapabilities(hostConfig *types.HostConfig) error {
-	if hostConfig.Privileged && hostConfig.Devices != nil {
-		return log.NewError("cannot create the container as privileged and with specified devices at the same time - choose one of the options")
-	}
-	if hostConfig.Privileged && hostConfig.ExtraCapabilities != nil {
-		return log.NewError("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options")
+// ValidatePrivileged validates that the container privileged configuration does not overlap with other configurations
+func ValidatePrivileged(hostConfig *types.HostConfig) error {
+	if hostConfig.Privileged {
+		if hostConfig.Devices != nil {
+			return log.NewError("cannot create the container as privileged and with specified devices at the same time - choose one of the options")
+		}
+		if hostConfig.ExtraCapabilities != nil {
+			return log.NewError("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options")
+		}
 	}
 	return nil
 }
 
 // ValidateHostConfig validates the container host configuration
 func ValidateHostConfig(hostConfig *types.HostConfig) error {
-	if err := ValidateCapabilities(hostConfig); err != nil {
+	if err := ValidatePrivileged(hostConfig); err != nil {
 		return err
 	}
 	if err := ValidateNetworking(hostConfig); err != nil {
