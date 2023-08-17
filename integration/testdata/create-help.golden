@@ -7,6 +7,7 @@ Examples:
 create container-image-id
 
 Flags:
+      --cap-add strings              Add Linux capabilities to the container
       --dec-keys strings             Sets a list of private keys filenames (GPG private key ring, JWE and PKCS7 private key). Each entry can include an optional password separated by a colon after the filename.
       --dec-recipients strings       Sets a recipients certificates list of the image (used only for PKCS7 and must be an x509)
       --devices strings              Devices to be made available in the current container and optional cgroups permissions configuration. Both path on host and in container must be set. Possible cgroup permissions options are "r" (read), "w" (write), "m" (mknod) and all combinations of the three are possible. If not set, "rwm" is default device configuration. Example: 

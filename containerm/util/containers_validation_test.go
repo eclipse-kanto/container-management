@@ -120,20 +120,6 @@ func TestNegativeContainerValidations(t *testing.T) {
 			},
 			expectedErr: log.NewErrorf("the containers host config is mandatory and is missing"),
 		},
-		"test_validate_host_config_privileged_with_devices": {
-			ctr: &types.Container{
-				Image: types.Image{Name: "image"},
-				HostConfig: &types.HostConfig{
-					Privileged: true,
-					Devices: []types.DeviceMapping{{
-						PathOnHost:        hostConfigDeviceHost,
-						PathInContainer:   hostConfigDeviceContainer,
-						CgroupPermissions: hostConfigDevicePerm,
-					}},
-				},
-			},
-			expectedErr: log.NewErrorf("cannot have a privileged container with specified devices"),
-		},
 		"test_validate_host_config_device_mappings_invalid_host_path": {
 			ctr: &types.Container{
 				Image: types.Image{Name: "image"},
@@ -318,6 +304,32 @@ func TestNegativeContainerValidations(t *testing.T) {
 				},
 			},
 			expectedErr: log.NewError("cannot use the host_ip reserved key or any of its modifications when in host network mode"),
+		},
+		"test_validate_host_config_privileged_with_devices": {
+			ctr: &types.Container{
+				Image: types.Image{Name: "image"},
+				HostConfig: &types.HostConfig{
+					NetworkMode: types.NetworkModeBridge,
+					Privileged:  true,
+					Devices: []types.DeviceMapping{{
+						PathOnHost:        hostConfigDeviceHost,
+						PathInContainer:   hostConfigDeviceContainer,
+						CgroupPermissions: hostConfigDevicePerm,
+					}},
+				},
+			},
+			expectedErr: log.NewErrorf("cannot create the container as privileged and with specified devices at the same time - choose one of the options"),
+		},
+		"test_validate_host_config_privileged_with_extra_capabilities": {
+			ctr: &types.Container{
+				Image: types.Image{Name: "image"},
+				HostConfig: &types.HostConfig{
+					NetworkMode:       types.NetworkModeBridge,
+					Privileged:        true,
+					ExtraCapabilities: []string{"CAP_NET_ADMIN"},
+				},
+			},
+			expectedErr: log.NewErrorf("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options"),
 		},
 		"test_validate_host_config_host_mode_unsupported": {
 			ctr: &types.Container{

@@ -94,11 +94,13 @@ var (
 	configEnv               = []string{configEnv1, configEnv2, configEnv3, configEnv4, configEnv5, configEnv6}
 	internalContainerConfig = internaltypes.ContainerConfiguration{Env: configEnv}
 
-	hostConfigExtraHosts = []string{"ctrhost:host_ip"}
-	internalHostConfig   = &internaltypes.HostConfig{
-		Privileged:  hostConfigPrivileged,
-		ExtraHosts:  hostConfigExtraHosts,
-		NetworkMode: hostConfigNetType,
+	hostConfigExtraHosts        = []string{"ctrhost:host_ip"}
+	hostConfigExtraCapabilities = []string{"CAP_NET_ADMIN"}
+	internalHostConfig          = &internaltypes.HostConfig{
+		Privileged:        hostConfigPrivileged,
+		ExtraHosts:        hostConfigExtraHosts,
+		ExtraCapabilities: hostConfigExtraCapabilities,
+		NetworkMode:       hostConfigNetType,
 		PortMappings: []internaltypes.PortMapping{{
 			ContainerPort: hostConfigContainerPort,
 			HostPort:      hostConfigHostPort,

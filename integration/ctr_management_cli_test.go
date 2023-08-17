@@ -17,9 +17,12 @@ import (
 	"embed"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
@@ -91,12 +94,48 @@ func dumpTestdata() error {
 }
 
 func assertJSONContainer(result icmd.Result, args ...string) assert.BoolOrComparison {
-	if result.Stdout() == "" {
+	output := result.Stdout()
+	if output == "" {
 		return errors.New("stdout result is empty")
 	}
 	var container *types.Container
-	if err := json.Unmarshal([]byte(result.Stdout()), &container); err != nil {
+	if err := json.Unmarshal([]byte(output), &container); err != nil {
 		return err
 	}
+
+	if len(args)%2 != 0 {
+		return errors.New("there should be even number of arguments")
+	}
+	for i := 0; i < len(args); i = i + 2 {
+		var (
+			value     interface{}
+			err       error
+			byteArray []byte
+		)
+		if value, err = getValueFromStruct(args[i], container); err != nil {
+			return err
+		}
+		if byteArray, err = json.Marshal(value); err != nil {
+			return err
+		}
+		if string(byteArray) != args[i+1] {
+			return false
+		}
+	}
 	return true
+}
+
+func getValueFromStruct(keyWithDots string, object interface{}) (interface{}, error) {
+	keySlice := strings.Split(keyWithDots, ".")
+	v := reflect.ValueOf(object)
+	for _, key := range keySlice[1:] {
+		for v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		if v.Kind() != reflect.Struct {
+			return nil, fmt.Errorf("only accepts structs; got %T", v)
+		}
+		v = v.FieldByName(key)
+	}
+	return v.Interface(), nil
 }

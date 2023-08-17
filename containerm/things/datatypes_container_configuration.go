@@ -12,7 +12,9 @@
 
 package things
 
-import "github.com/eclipse-kanto/container-management/containerm/containers/types"
+import (
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
+)
 
 type configuration struct {
 	DomainName  string                   `json:"domainName,omitempty"`
@@ -22,12 +24,13 @@ type configuration struct {
 	Cmd         []string                 `json:"cmd,omitempty"`
 	Decryption  *decryptionConfiguration `json:"decryption,omitempty"`
 	// host resources
-	Devices       []*device      `json:"devices,omitempty"`
-	Privileged    bool           `json:"privileged,omitempty"`
-	RestartPolicy *restartPolicy `json:"restartPolicy,omitempty"`
-	ExtraHosts    []string       `json:"extraHosts,omitempty"`
-	PortMappings  []*portMapping `json:"portMappings,omitempty"`
-	NetworkMode   networkMode    `json:"networkMode,omitempty"`
+	Devices           []*device      `json:"devices,omitempty"`
+	Privileged        bool           `json:"privileged,omitempty"`
+	RestartPolicy     *restartPolicy `json:"restartPolicy,omitempty"`
+	ExtraHosts        []string       `json:"extraHosts,omitempty"`
+	ExtraCapabilities []string       `json:"extraCapabilities,omitempty"`
+	PortMappings      []*portMapping `json:"portMappings,omitempty"`
+	NetworkMode       networkMode    `json:"networkMode,omitempty"`
 	// IO Config
 	OpenStdin bool              `json:"openStdin,omitempty"`
 	Tty       bool              `json:"tty,omitempty"`
@@ -44,6 +47,9 @@ func fromAPIContainerConfig(ctr *types.Container) *configuration {
 		cfg.Privileged = ctr.HostConfig.Privileged
 		if ctr.HostConfig.RestartPolicy != nil {
 			cfg.RestartPolicy = fromAPIRestartPolicy(ctr.HostConfig.RestartPolicy)
+		}
+		if !ctr.HostConfig.Privileged && ctr.HostConfig.ExtraCapabilities != nil && len(ctr.HostConfig.ExtraCapabilities) > 0 {
+			cfg.ExtraCapabilities = ctr.HostConfig.ExtraCapabilities
 		}
 		if ctr.HostConfig.ExtraHosts != nil && len(ctr.HostConfig.ExtraHosts) > 0 {
 			cfg.ExtraHosts = ctr.HostConfig.ExtraHosts
@@ -115,6 +121,9 @@ func toAPIContainerConfig(cfg *configuration) *types.Container {
 	}
 	if cfg.ExtraHosts != nil && len(cfg.ExtraHosts) > 0 {
 		ctr.HostConfig.ExtraHosts = cfg.ExtraHosts
+	}
+	if !cfg.Privileged && len(cfg.ExtraCapabilities) > 0 {
+		ctr.HostConfig.ExtraCapabilities = cfg.ExtraCapabilities
 	}
 	if cfg.Devices != nil && len(cfg.Devices) > 0 {
 		ctr.HostConfig.Devices = []types.DeviceMapping{}

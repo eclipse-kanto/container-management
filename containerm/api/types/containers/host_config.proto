@@ -52,5 +52,8 @@ message HostConfig {
 
     // Resources
     Resources resources = 9;
+
+    //Additional capabilities for a container
+    repeated string extra_capabilities = 10;
 }
 

@@ -107,6 +107,9 @@ func WithSpecOpts(container *types.Container, image containerd.Image, execRoot s
 	if container.HostConfig.Privileged {
 		specOpts = append(specOpts, ctrdoci.WithPrivileged)
 	}
+	if len(container.HostConfig.ExtraCapabilities) > 0 {
+		specOpts = append(specOpts, ctrdoci.WithAddedCapabilities(container.HostConfig.ExtraCapabilities))
+	}
 
 	return containerd.WithNewSpec(specOpts...)
 }

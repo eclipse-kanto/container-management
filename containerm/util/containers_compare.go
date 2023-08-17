@@ -116,6 +116,9 @@ func isEqualHostConfig0(currentHostConfig *types.HostConfig, newHostConfig *type
 	if !compareSliceSet(currentHostConfig.ExtraHosts, newHostConfig.ExtraHosts) {
 		return false
 	}
+	if !compareSliceSet(currentHostConfig.ExtraCapabilities, newHostConfig.ExtraCapabilities) {
+		return false
+	}
 	if !compareSliceSet(currentHostConfig.PortMappings, newHostConfig.PortMappings) {
 		return false
 	}
@@ -129,6 +132,9 @@ func isEqualHostConfig0(currentHostConfig *types.HostConfig, newHostConfig *type
 func isEqualHostConfig1(currentHostConfig *types.HostConfig, newHostConfig *types.HostConfig) bool {
 	if currentHostConfig == nil {
 		return newHostConfig == nil
+	}
+	if newHostConfig == nil {
+		return false
 	}
 	if !isEqualResources(currentHostConfig.Resources, newHostConfig.Resources) {
 		return false
