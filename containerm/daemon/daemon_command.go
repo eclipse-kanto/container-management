@@ -85,6 +85,12 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.ThingsConfig.ThingsMetaPath, "things-home-dir", cfg.ThingsConfig.ThingsMetaPath, "Specify the home directory for the things container management service persistent storage")
 	flagSet.StringSliceVar(&cfg.ThingsConfig.Features, "things-features", cfg.ThingsConfig.Features, "Specify the desired Ditto features that will be registered for the containers Ditto thing")
 
+	// init update agent
+	flagSet.BoolVar(&cfg.UpdateAgentConfig.UpdateAgentEnable, "ua-enable", cfg.UpdateAgentConfig.UpdateAgentEnable, "Enable the update agent for containers")
+	flagSet.StringVar(&cfg.UpdateAgentConfig.DomainName, "ua-domain", cfg.UpdateAgentConfig.DomainName, "Specify the domain name for the containers update agent")
+	flagSet.StringSliceVar(&cfg.UpdateAgentConfig.SystemContainers, "ua-system-containers", cfg.UpdateAgentConfig.SystemContainers, "Specify the list of system containers which shall be skipped during update process by the update agent")
+	flagSet.BoolVar(&cfg.UpdateAgentConfig.VerboseInventoryReport, "ua-verbose-inventory-report", cfg.UpdateAgentConfig.VerboseInventoryReport, "Enables verbose reporting of current inventory of containers by the update agent")
+
 	// init local communication flags
 	flagSet.StringVar(&cfg.LocalConnection.BrokerURL, "conn-broker-url", cfg.LocalConnection.BrokerURL, "Specify the MQTT broker URL to connect to")
 	flagSet.StringVar(&cfg.LocalConnection.KeepAlive, "conn-keep-alive", cfg.LocalConnection.KeepAlive, "Specify the keep alive duration for the MQTT requests as duration string")

@@ -15,9 +15,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
@@ -119,7 +116,7 @@ func (cc *createCmd) run(args []string) error {
 	}
 
 	if cc.config.devices != nil {
-		devs, err := parseDevices(cc.config.devices)
+		devs, err := util.ParseDeviceMappings(cc.config.devices)
 		if err != nil {
 			return err
 		}
@@ -127,7 +124,7 @@ func (cc *createCmd) run(args []string) error {
 	}
 
 	if cc.config.mountPoints != nil {
-		mounts, err := parseMountPoints(cc.config.mountPoints)
+		mounts, err := util.ParseMountPoints(cc.config.mountPoints)
 		if err != nil {
 			return err
 		} else if mounts != nil {
@@ -135,7 +132,7 @@ func (cc *createCmd) run(args []string) error {
 		}
 	}
 	if cc.config.ports != nil {
-		mappings, err := parsePortMappings(cc.config.ports)
+		mappings, err := util.ParsePortMappings(cc.config.ports)
 		if err != nil {
 			return err
 		}
@@ -309,123 +306,4 @@ func (cc *createCmd) setupFlags() {
 		"If set to -1, the container can use unlimited swap, up to the amount available on the host.")
 	flagSet.StringSliceVar(&cc.config.decKeys, "dec-keys", nil, "Sets a list of private keys filenames (GPG private key ring, JWE and PKCS7 private key). Each entry can include an optional password separated by a colon after the filename.")
 	flagSet.StringSliceVar(&cc.config.decRecipients, "dec-recipients", nil, "Sets a recipients certificates list of the image (used only for PKCS7 and must be an x509)")
-}
-
-func parseDevices(devices []string) ([]types.DeviceMapping, error) {
-	var devs []types.DeviceMapping
-	for _, devPair := range devices {
-		pair := strings.Split(strings.TrimSpace(devPair), ":")
-		if len(pair) == 2 {
-			devs = append(devs, types.DeviceMapping{
-				PathOnHost:        pair[0],
-				PathInContainer:   pair[1],
-				CgroupPermissions: "rwm",
-			})
-		} else if len(pair) == 3 {
-			if len(pair[2]) == 0 || len(pair[2]) > 3 {
-				return nil, log.NewError("incorrect device cgroup permissions format")
-			}
-			for i := 0; i < len(pair[2]); i++ {
-				if (pair[2])[i] != "w"[0] && (pair[2])[i] != "r"[0] && (pair[2])[i] != "m"[0] {
-					return nil, log.NewError("incorrect device cgroup permissions format")
-				}
-			}
-
-			devs = append(devs, types.DeviceMapping{
-				PathOnHost:        pair[0],
-				PathInContainer:   pair[1],
-				CgroupPermissions: pair[2],
-			})
-		} else {
-			return nil, log.NewError("incorrect device configuration format")
-		}
-	}
-	return devs, nil
-}
-
-func parseMountPoints(mps []string) ([]types.MountPoint, error) {
-	var mountPoints []types.MountPoint
-	var mountPoint types.MountPoint
-	for _, mp := range mps {
-		mount := strings.Split(strings.TrimSpace(mp), ":")
-		// if propagation mode is omitted, "rprivate" is set as default
-		if len(mount) < 2 || len(mount) > 3 {
-			return nil, log.NewError("Incorrect number of parameters of the mount point")
-		}
-		mountPoint = types.MountPoint{
-			Destination: mount[1],
-			Source:      mount[0],
-		}
-		if len(mount) == 2 {
-			log.Debug("propagation mode ommited - setting default to rprivate")
-			mountPoint.PropagationMode = types.RPrivatePropagationMode
-		} else {
-			mountPoint.PropagationMode = mount[2]
-		}
-		mountPoints = append(mountPoints, mountPoint)
-	}
-	return mountPoints, nil
-}
-
-func parsePortMappings(mappings []string) ([]types.PortMapping, error) {
-	var (
-		portMappings  []types.PortMapping
-		err           error
-		protocol      string
-		containerPort int64
-		hostIP        string
-		hostPort      int64
-		hostPortEnd   int64
-	)
-
-	for _, mapping := range mappings {
-		mappingWithProto := strings.Split(strings.TrimSpace(mapping), "/")
-		mapping = mappingWithProto[0]
-		if len(mappingWithProto) == 2 {
-			// port is specified, e.g.80:80/tcp
-			protocol = mappingWithProto[1]
-		}
-		addressAndPorts := strings.Split(strings.TrimSpace(mapping), ":")
-		hostPortIdx := 0 // if host ip not set
-		if len(addressAndPorts) == 2 {
-			// host address not specified, e.g. 80:80
-		} else if len(addressAndPorts) == 3 {
-			hostPortIdx = 1
-			hostIP = addressAndPorts[0]
-			validIP := net.ParseIP(hostIP)
-			if validIP == nil {
-				return nil, log.NewError("Incorrect host ip port mapping configuration")
-			}
-			hostPort, err = strconv.ParseInt(addressAndPorts[1], 10, 32)
-			containerPort, err = strconv.ParseInt(addressAndPorts[2], 10, 32)
-
-		} else {
-			return nil, log.NewError("Incorrect port mapping configuration")
-		}
-
-		hostPortWithRange := strings.Split(strings.TrimSpace(addressAndPorts[hostPortIdx]), "-")
-		if len(hostPortWithRange) == 2 {
-			hostPortEnd, err = strconv.ParseInt(hostPortWithRange[1], 10, 32)
-			if err != nil {
-				return nil, log.NewError("Incorrect host range port mapping configuration")
-			}
-			hostPort, err = strconv.ParseInt(hostPortWithRange[0], 10, 32)
-		} else {
-			hostPort, err = strconv.ParseInt(addressAndPorts[hostPortIdx], 10, 32)
-		}
-		containerPort, err = strconv.ParseInt(addressAndPorts[hostPortIdx+1], 10, 32)
-		if err != nil {
-			return nil, log.NewError("Incorrect port mapping configuration, parsing error")
-		}
-
-		portMappings = append(portMappings, types.PortMapping{
-			Proto:         protocol,
-			ContainerPort: uint16(containerPort),
-			HostIP:        hostIP,
-			HostPort:      uint16(hostPort),
-			HostPortEnd:   uint16(hostPortEnd),
-		})
-	}
-	return portMappings, nil
-
 }

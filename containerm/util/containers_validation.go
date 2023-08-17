@@ -80,6 +80,9 @@ func ValidateName(name string) error {
 
 // ValidateHostConfig validates the container host configuration
 func ValidateHostConfig(hostConfig *types.HostConfig) error {
+	if hostConfig.Privileged && len(hostConfig.Devices) > 0 {
+		return log.NewError("cannot have a privileged container with specified devices")
+	}
 	if err := ValidateNetworking(hostConfig); err != nil {
 		return err
 	}

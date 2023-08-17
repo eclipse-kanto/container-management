@@ -44,6 +44,8 @@ const (
 	GRPCServer Type = "container-management.server.grpc.v1"
 	// DeploymentManagerService implements THE container deployment manager service
 	DeploymentManagerService Type = "container-management.service.deployment.ctrs.manager.v1"
+	// UpdateAgentService implements the UpdateAgent API for containers domain
+	UpdateAgentService Type = "container-management.service.ctrs.updateagent.v1"
 )
 
 // Registration holds service's information that will be added to the registry

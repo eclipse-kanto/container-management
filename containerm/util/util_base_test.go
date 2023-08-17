@@ -42,7 +42,7 @@ const (
 	configEnv5 = "VAR5=test,comma"
 	configEnv6 = "_VAR6=test_underscore"
 
-	hostConfigPrivileged                 = true
+	hostConfigPrivileged                 = false
 	hostConfigNetType                    = "bridge"
 	hostConfigContainerPort              = 80
 	hostConfigHostPort                   = 81
