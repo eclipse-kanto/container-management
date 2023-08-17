@@ -120,20 +120,6 @@ func TestNegativeContainerValidations(t *testing.T) {
 			},
 			expectedErr: log.NewErrorf("the containers host config is mandatory and is missing"),
 		},
-		"test_validate_host_config_privileged_with_devices": {
-			ctr: &types.Container{
-				Image: types.Image{Name: "image"},
-				HostConfig: &types.HostConfig{
-					Privileged: true,
-					Devices: []types.DeviceMapping{{
-						PathOnHost:        hostConfigDeviceHost,
-						PathInContainer:   hostConfigDeviceContainer,
-						CgroupPermissions: hostConfigDevicePerm,
-					}},
-				},
-			},
-			expectedErr: log.NewErrorf("cannot have a privileged container with specified devices"),
-		},
 		"test_validate_host_config_device_mappings_invalid_host_path": {
 			ctr: &types.Container{
 				Image: types.Image{Name: "image"},
@@ -319,7 +305,7 @@ func TestNegativeContainerValidations(t *testing.T) {
 			},
 			expectedErr: log.NewError("cannot use the host_ip reserved key or any of its modifications when in host network mode"),
 		},
-		"test_validate_host_config_privileged_with_device": {
+		"test_validate_host_config_privileged_with_devices": {
 			ctr: &types.Container{
 				Image: types.Image{Name: "image"},
 				HostConfig: &types.HostConfig{
