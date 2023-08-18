@@ -412,11 +412,11 @@ golang.org/x/sys (0.7.0)
 * Project: https://github.com/golang/sys
 * Source:  https://github.com/golang/sys/releases/tag/v0.7.0
 
-golang/x/term (0.5.0)
+golang/x/term (0.7.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/term
-* Source:  https://github.com/golang/term/releases/tag/v0.5.0
+* Source:  https://github.com/golang/term/releases/tag/v0.7.0
 
 golang/x/text (0.9.0)
 
