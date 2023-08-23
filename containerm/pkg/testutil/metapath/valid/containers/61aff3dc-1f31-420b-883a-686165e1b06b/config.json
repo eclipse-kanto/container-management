@@ -2,7 +2,7 @@
   "container_id": "61aff3dc-1f31-420b-883a-686165e1b06b",
   "container_name": "influx",
   "image": {
-    "name": "docker.io/library/influxdb:latest"
+    "name": "docker.io/library/influxdb:1.8.4"
   },
   "domain_name": "influx-domain",
   "host_name": "influx-host",

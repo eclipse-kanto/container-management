@@ -159,7 +159,7 @@ func (suite *softwareUpdatableSuite) installContainer(params map[string]interfac
 			}
 			return true, fmt.Errorf("event for an unexpected container status is received")
 		}
-		return true, fmt.Errorf("unknown message is received")
+		return false, fmt.Errorf(unknownMessageError, event.Topic.String())
 	})
 	if err != nil {
 		wsConnection.Close()
@@ -230,7 +230,7 @@ func (suite *softwareUpdatableSuite) removeContainer(params map[string]interface
 
 			return true, fmt.Errorf("event for an unexpected container status while removing is received")
 		}
-		return true, fmt.Errorf("unknown message is received")
+		return false, fmt.Errorf(unknownMessageError, event.Topic.String())
 	})
 	if err != nil {
 		wsConnection.Close()

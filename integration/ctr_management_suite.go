@@ -131,7 +131,7 @@ func (suite *ctrManagementSuite) createOperation(operation string, params map[st
 			}
 			return true, fmt.Errorf("event for an unexpected container status is received")
 		}
-		return true, fmt.Errorf("unknown message is received")
+		return false, fmt.Errorf(unknownMessageError, event.Topic.String())
 	})
 	suite.closeOnError(wsConnection, err, "failed to process creating the container feature")
 	return ctrFeatureID
@@ -225,7 +225,7 @@ func (suite *ctrManagementSuite) remove(ctrFeatureID string) {
 		if event.Topic.String() == suite.topicDeleted {
 			return true, nil
 		}
-		return true, fmt.Errorf("unknown message is received")
+		return false, fmt.Errorf(unknownMessageError, event.Topic.String())
 	})
 	require.NoError(suite.T(), err, "failed to process removing the container feature")
 
