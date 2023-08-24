@@ -34,7 +34,7 @@ const (
 	testContainerName1  = "redis"
 	testContainerImage1 = "docker.io/library/redis:latest"
 	testContainerName2  = "influxdb"
-	testContainerImage2 = "docker.io/library/influxdb:latest"
+	testContainerImage2 = "docker.io/library/influxdb:1.8.4"
 	baseCtrJSONPath     = "../pkg/testutil/config/container"
 	testTimeoutDuration = 5 * time.Second
 )

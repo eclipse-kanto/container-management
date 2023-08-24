@@ -19,6 +19,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/eclipse-kanto/container-management/containerm/things"
 	"github.com/eclipse-kanto/kanto/integration/util"
 	"github.com/eclipse/ditto-clients-golang/protocol"
 	"github.com/stretchr/testify/require"
@@ -39,7 +40,6 @@ const (
 	operationStopWithOptions = "stopWithOptions"
 
 	parseError                    = "failed to parse %s"
-	unknownMessageError           = "unknown message is received"
 	messageProcessError           = "failed to process %s the container feature"
 	unexpectedContainerEventError = "received event is not expected"
 )
@@ -218,7 +218,7 @@ func (suite *ctrInstanceSuite) processStateChange(wsConnection *websocket.Conn, 
 	err := util.ProcessWSMessages(suite.Cfg, wsConnection, func(event *protocol.Envelope) (bool, error) {
 		if event.Topic.String() == suite.topicModified {
 			if event.Path != suite.constructStatusPath(ctrFeatureID, "state") {
-				return true, fmt.Errorf(unexpectedContainerEventError)
+				return true, fmt.Errorf(unexpectedContainerEventError + event.Path)
 			}
 
 			eventValue, err := parseMap(event.Value)
@@ -233,7 +233,7 @@ func (suite *ctrInstanceSuite) processStateChange(wsConnection *websocket.Conn, 
 
 			return true, nil
 		}
-		return true, fmt.Errorf(unknownMessageError)
+		return false, fmt.Errorf(unknownMessageError, event.Topic.String())
 	})
 	require.NoError(suite.T(), err, fmt.Sprintf(messageProcessError, "updating the state of"))
 }
@@ -254,7 +254,7 @@ func (suite *ctrInstanceSuite) processNameChange(wsConnection *websocket.Conn, c
 
 			return true, nil
 		}
-		return true, fmt.Errorf(unknownMessageError)
+		return false, fmt.Errorf(unknownMessageError, event.Topic.String())
 	})
 	require.NoError(suite.T(), err, fmt.Sprintf(messageProcessError, "updating the name of"))
 }
@@ -265,10 +265,15 @@ func (suite *ctrInstanceSuite) processRemove(wsConnection *websocket.Conn, ctrFe
 			if event.Path != fmt.Sprintf("/features/%s", ctrFeatureID) {
 				return true, fmt.Errorf(unexpectedContainerEventError)
 			}
-
 			return true, nil
+		} else if event.Topic.String() == suite.topicModified {
+			// state change to DEAD and update of SoftwareUpdatable installedDependencies is expected before deleted
+			if event.Path == suite.constructStatusPath(ctrFeatureID, "state") ||
+				event.Path == suite.constructStatusPath(things.SoftwareUpdatableFeatureID, "installedDependencies") {
+				return false, nil
+			}
 		}
-		return true, fmt.Errorf(unknownMessageError)
+		return false, fmt.Errorf(unknownMessageError, event.Topic.String())
 	})
 	require.NoError(suite.T(), err, fmt.Sprintf(messageProcessError, "removing"))
 }
@@ -292,7 +297,7 @@ func (suite *ctrInstanceSuite) processUpdate(wsConnection *websocket.Conn, ctrFe
 
 			return true, nil
 		}
-		return true, fmt.Errorf(unknownMessageError)
+		return false, fmt.Errorf(unknownMessageError, event.Topic.String())
 	})
 	require.NoError(suite.T(), err, fmt.Sprintf(messageProcessError, "updating the configuration of"))
 }
