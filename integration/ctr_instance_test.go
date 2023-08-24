@@ -265,7 +265,6 @@ func (suite *ctrInstanceSuite) processRemove(wsConnection *websocket.Conn, ctrFe
 			if event.Path != fmt.Sprintf("/features/%s", ctrFeatureID) {
 				return true, fmt.Errorf(unexpectedContainerEventError)
 			}
-
 			return true, nil
 		} else if event.Topic.String() == suite.topicModified {
 			// state change to DEAD and update of SoftwareUpdatable installedDependencies is expected before deleted
