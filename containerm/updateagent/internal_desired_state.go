@@ -98,6 +98,9 @@ func toInternalDesiredState(desiredState *types.DesiredState, domainName string)
 	for _, configPair := range desiredState.Domains[0].Config {
 		if configPair.Key == keySystemContainers {
 			systemContainers = strings.Split(configPair.Value, ",")
+			for index, name := range systemContainers {
+				systemContainers[index] = strings.TrimSpace(name)
+			}
 		}
 	}
 
