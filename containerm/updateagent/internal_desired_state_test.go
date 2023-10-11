@@ -25,8 +25,8 @@ func TestFindComponent(t *testing.T) {
 		desiredState: &types.DesiredState{
 			Domains: []*types.Domain{{
 				Components: []*types.ComponentWithConfig{
-					{Component: types.Component{ID: testContainerName, Version: testContainerVersion}},
-					{Component: types.Component{ID: testContainerName2, Version: testContainerVersion2}},
+					createSimpleDesiredComponent(testContainerName, testContainerVersion),
+					createSimpleDesiredComponent(testContainerName2, testContainerVersion2),
 				},
 			}},
 		},
@@ -84,9 +84,9 @@ func TestToInternalDesiredContainersError(t *testing.T) {
 func TestToInternalDesiredBaselinesError(t *testing.T) {
 	testDesiredState := &types.DesiredState{
 		Domains: []*types.Domain{{ID: "containers",
-			Components: []*types.ComponentWithConfig{{
-				Component: types.Component{ID: testContainerName, Version: testContainerVersion},
-			}},
+			Components: []*types.ComponentWithConfig{
+				createSimpleDesiredComponent(testContainerName, testContainerVersion),
+			},
 		}},
 		Baselines: []*types.Baseline{
 			{Title: "test-baseline", Components: []string{"containers:" + testContainerName, "containers:" + testContainerName2}},
@@ -104,8 +104,8 @@ func TestToInternalDesiredStateSystemContainers(t *testing.T) {
 		expected []string
 	}{
 		"test_valid_system_containers": {key: "systemContainers", value: "sys-container-1, corelib", expected: []string{"sys-container-1", "corelib"}},
-		// "test_no_system_containers":    {key: "coreContainers", value: "some-container"},
-		// "test_no_config":               {},
+		"test_no_system_containers":    {key: "coreContainers", value: "some-container"},
+		"test_no_config":               {},
 	}
 	for testName, testCase := range testCases {
 		t.Log("TestName: ", testName)
@@ -113,8 +113,8 @@ func TestToInternalDesiredStateSystemContainers(t *testing.T) {
 			Domains: []*types.Domain{{ID: "containers",
 				Config: []*types.KeyValuePair{{Key: testCase.key, Value: testCase.value}},
 				Components: []*types.ComponentWithConfig{
-					{Component: types.Component{ID: testContainerName, Version: testContainerVersion}},
-					{Component: types.Component{ID: testContainerName2, Version: testContainerVersion2}},
+					createSimpleDesiredComponent(testContainerName, testContainerVersion),
+					createSimpleDesiredComponent(testContainerName2, testContainerVersion2),
 				},
 			}},
 			Baselines: []*types.Baseline{

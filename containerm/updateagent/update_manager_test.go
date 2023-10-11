@@ -148,34 +148,17 @@ func TestApplyWithDesiredContainers(t *testing.T) {
 			ID: domainName,
 			Components: []*types.ComponentWithConfig{
 				// sys container shall be skipped and no actions identified
-				{
-					Component: types.Component{ID: sysContainerName, Version: sysContainerNext},
-					Config:    []*types.KeyValuePair{{Key: "image", Value: sysContainerName + ":" + sysContainerNext}},
-				},
+				createSimpleDesiredComponent(sysContainerName, sysContainerNext),
 				// test container is not existing and to be created
-				{
-					Component: types.Component{ID: testContainerName, Version: testContainerVersion},
-					Config:    []*types.KeyValuePair{{Key: "image", Value: testContainerName + ":" + testContainerVersion}},
-				},
+				createSimpleDesiredComponent(testContainerName, testContainerVersion),
 				// test container 2 is existing and to be checked if running only
-				{
-					Component: types.Component{ID: testContainerName2, Version: testContainerVersion2},
-					Config:    []*types.KeyValuePair{{Key: "image", Value: testContainerName2 + ":" + testContainerVersion2}},
-				},
+				createSimpleDesiredComponent(testContainerName2, testContainerVersion2),
 			},
 		}},
 	}
 
-	sysContainer := &ctrtypes.Container{
-		Name:  sysContainerName,
-		Image: ctrtypes.Image{Name: sysContainerName + ":" + sysContainerCurrent},
-	}
-	appContainer := &ctrtypes.Container{
-		Name:  testContainerName2,
-		Image: ctrtypes.Image{Name: testContainerName2 + ":" + testContainerVersion2},
-	}
-	util.FillDefaults(sysContainer)
-	util.FillDefaults(appContainer)
+	sysContainer := createSimpleContainer(sysContainerName, sysContainerCurrent)
+	appContainer := createSimpleContainer(testContainerName2, testContainerVersion2)
 
 	expActions := []*types.Action{
 		{
@@ -275,13 +258,7 @@ func TestGet(t *testing.T) {
 			expSoftwareNodes = 1 + numberOfContainers
 			listContainers = make([]*ctrtypes.Container, numberOfContainers)
 			for i := 0; i < numberOfContainers; i++ {
-				name := testContainerName + "-" + strconv.Itoa(i)
-				ctr := &ctrtypes.Container{
-					Name:  name,
-					Image: ctrtypes.Image{Name: name + ":" + testContainerVersion},
-				}
-				util.FillDefaults(ctr)
-				listContainers[i] = ctr
+				listContainers[i] = createSimpleContainer(testContainerName+"-"+strconv.Itoa(i), testContainerVersion)
 			}
 		}
 		mockContainerManager.EXPECT().List(context.Background()).Return(listContainers, errListContainers)
@@ -313,5 +290,19 @@ func TestGet(t *testing.T) {
 			testutil.AssertEqual(t, expContainerID, inventory.Associations[i-1].TargetID)
 		}
 	}
+}
 
+func createSimpleContainer(name, version string) *ctrtypes.Container {
+	ctr := &ctrtypes.Container{
+		Name:  name,
+		Image: ctrtypes.Image{Name: name + ":" + version},
+	}
+	util.FillDefaults(ctr)
+	return ctr
+}
+
+func createSimpleDesiredComponent(name, version string) *types.ComponentWithConfig {
+	return &types.ComponentWithConfig{
+		Component: types.Component{ID: name, Version: version},
+	}
 }

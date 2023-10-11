@@ -22,9 +22,7 @@ import (
 )
 
 func TestToContainerMinimalConfig(t *testing.T) {
-	containerConfig := &types.ComponentWithConfig{
-		Component: types.Component{ID: testContainerName, Version: testContainerVersion},
-	}
+	containerConfig := createSimpleDesiredComponent(testContainerName, testContainerVersion)
 	container, err := toContainer(containerConfig)
 	testutil.AssertNil(t, err)
 	testutil.AssertNotEqual(t, "", container.ID)
