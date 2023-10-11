@@ -51,7 +51,7 @@ type operation struct {
 // UpdateOperation defines an interface for an update operation process
 type UpdateOperation interface {
 	GetActivityID() string
-	Identify() error
+	Identify() (bool, error)
 	Execute(command types.CommandType, baseline string)
 	Feedback(status types.StatusType, message string, baseline string)
 }
@@ -72,14 +72,14 @@ func (o *operation) GetActivityID() string {
 }
 
 // Identify executes the IDENTIFYING phase, triggered with the full desired state for the domain
-func (o *operation) Identify() error {
+func (o *operation) Identify() (bool, error) {
 	if o.ctx == nil {
 		o.ctx = context.Background()
 	}
 	currentContainers, err := o.updateManager.mgr.List(o.ctx)
 	if err != nil {
 		log.ErrorErr(err, "could not list all existing containers")
-		return err
+		return false, err
 	}
 	currentContainersMap := util.AsNamedMap(currentContainers)
 
@@ -123,7 +123,7 @@ func (o *operation) Identify() error {
 	}
 	o.baselineActions = baselineActions
 
-	return nil
+	return len(allActions) > 0, nil
 }
 
 func (o *operation) newContainerAction(current *ctrtypes.Container, desired *ctrtypes.Container) *containerAction {

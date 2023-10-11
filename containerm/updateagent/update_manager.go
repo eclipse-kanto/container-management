@@ -65,16 +65,23 @@ func (updMgr *containersUpdateManager) Apply(ctx context.Context, activityID str
 		updMgr.eventCallback.HandleDesiredStateFeedbackEvent(updMgr.Name(), activityID, "", types.StatusIdentificationFailed, err.Error(), []*types.Action{})
 		return
 	}
-	updMgr.operation = updMgr.createUpdateOperation(updMgr, activityID, internalDesiredState)
+	newOperation := updMgr.createUpdateOperation(updMgr, activityID, internalDesiredState)
 
 	// identification phase
-	updMgr.operation.Feedback(types.StatusIdentifying, "", "")
-	if err := updMgr.operation.Identify(); err != nil {
-		updMgr.operation.Feedback(types.StatusIdentificationFailed, err.Error(), "")
+	newOperation.Feedback(types.StatusIdentifying, "", "")
+	hasActions, err := newOperation.Identify()
+	if err != nil {
+		newOperation.Feedback(types.StatusIdentificationFailed, err.Error(), "")
 		log.ErrorErr(err, "processing desired state - identification phase failed")
 		return
 	}
-	updMgr.operation.Feedback(types.StatusIdentified, "", "")
+	newOperation.Feedback(types.StatusIdentified, "", "")
+	if !hasActions {
+		log.Debug("processing desired state - identification phase completed, no actions identified, sending COMPLETE status")
+		newOperation.Feedback(types.StatusCompleted, "", "")
+		return
+	}
+	updMgr.operation = newOperation
 	log.Debug("processing desired state - identification phase completed, waiting for commands...")
 }
 
