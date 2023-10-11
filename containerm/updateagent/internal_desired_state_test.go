@@ -20,14 +20,6 @@ import (
 	"github.com/eclipse-kanto/update-manager/api/types"
 )
 
-const (
-	testContainerName    = "test-container"
-	testContainerVersion = "1.2.3"
-
-	testContainerName2    = "test-container2"
-	testContainerVersion2 = "11.22.33"
-)
-
 func TestFindComponent(t *testing.T) {
 	desiredState := &internalDesiredState{
 		desiredState: &types.DesiredState{

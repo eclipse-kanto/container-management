@@ -30,7 +30,19 @@ import (
 	"github.com/pkg/errors"
 )
 
-const domainName = "containers"
+const (
+	domainName = "containers"
+
+	testContainerName    = "test-container"
+	testContainerVersion = "1.2.3"
+
+	testContainerName2    = "test-container2"
+	testContainerVersion2 = "11.22.33"
+
+	sysContainerName    = "syslib"
+	sysContainerCurrent = "1.1.0"
+	sysContainerNext    = "1.2.0"
+)
 
 func TestNewUpdateManager(t *testing.T) {
 	mockCtr := gomock.NewController(t)
@@ -66,7 +78,7 @@ func TestApplyInvalidDesiredState(t *testing.T) {
 	updateManager.Apply(context.Background(), testActivityID, &types.DesiredState{})
 }
 
-func TestApplyDesiredState(t *testing.T) {
+func TestApplyNoDesiredContainers(t *testing.T) {
 	testCases := map[string]struct {
 		currentContainer  string
 		errListContainers error
@@ -124,6 +136,74 @@ func TestApplyDesiredState(t *testing.T) {
 			testutil.AssertEqual(t, testActivityID, ctrUpdManager.operation.GetActivityID())
 		}
 	}
+}
+
+func TestApplyWithDesiredContainers(t *testing.T) {
+	mockCtr := gomock.NewController(t)
+	defer mockCtr.Finish()
+
+	testActivityID := "test-identify-with-desired-containers"
+	testDesiredState := &types.DesiredState{
+		Domains: []*types.Domain{{
+			ID: domainName,
+			Components: []*types.ComponentWithConfig{
+				// sys container shall be skipped and no actions identified
+				{
+					Component: types.Component{ID: sysContainerName, Version: sysContainerNext},
+					Config:    []*types.KeyValuePair{{Key: "image", Value: sysContainerName + ":" + sysContainerNext}},
+				},
+				// test container is not existing and to be created
+				{
+					Component: types.Component{ID: testContainerName, Version: testContainerVersion},
+					Config:    []*types.KeyValuePair{{Key: "image", Value: testContainerName + ":" + testContainerVersion}},
+				},
+				// test container 2 is existing and to be checked if running only
+				{
+					Component: types.Component{ID: testContainerName2, Version: testContainerVersion2},
+					Config:    []*types.KeyValuePair{{Key: "image", Value: testContainerName2 + ":" + testContainerVersion2}},
+				},
+			},
+		}},
+	}
+
+	sysContainer := &ctrtypes.Container{
+		Name:  sysContainerName,
+		Image: ctrtypes.Image{Name: sysContainerName + ":" + sysContainerCurrent},
+	}
+	appContainer := &ctrtypes.Container{
+		Name:  testContainerName2,
+		Image: ctrtypes.Image{Name: testContainerName2 + ":" + testContainerVersion2},
+	}
+	util.FillDefaults(sysContainer)
+	util.FillDefaults(appContainer)
+
+	expActions := []*types.Action{
+		{
+			Component: &types.Component{ID: domainName + ":" + testContainerName, Version: testContainerVersion},
+			Status:    types.ActionStatusIdentified,
+			Message:   util.GetActionMessage(util.ActionCreate),
+		},
+		{
+			Component: &types.Component{ID: domainName + ":" + testContainerName2, Version: testContainerVersion2},
+			Status:    types.ActionStatusIdentified,
+			Message:   util.GetActionMessage(util.ActionCheck),
+		},
+	}
+
+	mockContainerManager := mgrmocks.NewMockContainerManager(mockCtr)
+	updateManager := newUpdateManager(mockContainerManager, nil, domainName, []string{sysContainerName}, false)
+	ctrUpdManager := updateManager.(*containersUpdateManager)
+	mockCallback := ummocks.NewMockUpdateManagerCallback(mockCtr)
+	updateManager.SetCallback(mockCallback)
+
+	mockContainerManager.EXPECT().List(gomock.Any()).Return([]*ctrtypes.Container{sysContainer, appContainer}, nil)
+	mockCallback.EXPECT().HandleDesiredStateFeedbackEvent(domainName, testActivityID, "", types.StatusIdentifying, "", nil)
+	mockCallback.EXPECT().HandleDesiredStateFeedbackEvent(domainName, testActivityID, "", types.StatusIdentified, "", expActions)
+
+	updateManager.Apply(context.Background(), testActivityID, testDesiredState)
+
+	testutil.AssertNotNil(t, ctrUpdManager.operation)
+	testutil.AssertEqual(t, testActivityID, ctrUpdManager.operation.GetActivityID())
 }
 
 func TestCommand(t *testing.T) {
