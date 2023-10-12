@@ -91,50 +91,52 @@ func TestApplyNoDesiredContainers(t *testing.T) {
 	defer mockCtr.Finish()
 
 	for testActivityID, testCase := range testCases {
-		t.Log(testActivityID)
-		mockContainerManager := mgrmocks.NewMockContainerManager(mockCtr)
-		updateManager := newUpdateManager(mockContainerManager, nil, domainName, nil, false)
-		ctrUpdManager := updateManager.(*containersUpdateManager)
+		t.Run(testActivityID, func(t *testing.T) {
+			t.Log(testActivityID)
+			mockContainerManager := mgrmocks.NewMockContainerManager(mockCtr)
+			updateManager := newUpdateManager(mockContainerManager, nil, domainName, nil, false)
+			ctrUpdManager := updateManager.(*containersUpdateManager)
 
-		mockCallback := ummocks.NewMockUpdateManagerCallback(mockCtr)
-		updateManager.SetCallback(mockCallback)
+			mockCallback := ummocks.NewMockUpdateManagerCallback(mockCtr)
+			updateManager.SetCallback(mockCallback)
 
-		var listContainers []*ctrtypes.Container
-		var expActions []*types.Action
-		if len(testCase.currentContainer) > 0 {
-			listContainers = []*ctrtypes.Container{
-				{Name: testCase.currentContainer, Image: ctrtypes.Image{Name: testCase.currentContainer + ":" + testContainerVersion}},
+			var listContainers []*ctrtypes.Container
+			var expActions []*types.Action
+			if len(testCase.currentContainer) > 0 {
+				listContainers = []*ctrtypes.Container{
+					{Name: testCase.currentContainer, Image: ctrtypes.Image{Name: testCase.currentContainer + ":" + testContainerVersion}},
+				}
+				expActions = []*types.Action{
+					{
+						Component: &types.Component{ID: ctrUpdManager.domainName + ":" + listContainers[0].Name, Version: testContainerVersion},
+						Status:    types.ActionStatusIdentified,
+						Message:   util.GetActionMessage(util.ActionDestroy),
+					},
+				}
+			} else {
+				expActions = []*types.Action{}
 			}
-			expActions = []*types.Action{
-				{
-					Component: &types.Component{ID: ctrUpdManager.domainName + ":" + listContainers[0].Name, Version: testContainerVersion},
-					Status:    types.ActionStatusIdentified,
-					Message:   util.GetActionMessage(util.ActionDestroy),
-				},
+			mockContainerManager.EXPECT().List(gomock.Any()).Return(listContainers, testCase.errListContainers)
+			mockCallback.EXPECT().HandleDesiredStateFeedbackEvent(domainName, testActivityID, "", types.StatusIdentifying, "", nil)
+
+			if testCase.errListContainers == nil {
+				mockCallback.EXPECT().HandleDesiredStateFeedbackEvent(domainName, testActivityID, "", types.StatusIdentified, "", expActions)
+			} else {
+				mockCallback.EXPECT().HandleDesiredStateFeedbackEvent(domainName, testActivityID, "", types.StatusIdentificationFailed, testCase.errListContainers.Error(), nil)
 			}
-		} else {
-			expActions = []*types.Action{}
-		}
-		mockContainerManager.EXPECT().List(gomock.Any()).Return(listContainers, testCase.errListContainers)
-		mockCallback.EXPECT().HandleDesiredStateFeedbackEvent(domainName, testActivityID, "", types.StatusIdentifying, "", nil)
 
-		if testCase.errListContainers == nil {
-			mockCallback.EXPECT().HandleDesiredStateFeedbackEvent(domainName, testActivityID, "", types.StatusIdentified, "", expActions)
-		} else {
-			mockCallback.EXPECT().HandleDesiredStateFeedbackEvent(domainName, testActivityID, "", types.StatusIdentificationFailed, testCase.errListContainers.Error(), nil)
-		}
+			if listContainers == nil && testCase.errListContainers == nil {
+				mockCallback.EXPECT().HandleDesiredStateFeedbackEvent(domainName, testActivityID, "", types.StatusCompleted, "", expActions)
+			}
 
-		if listContainers == nil && testCase.errListContainers == nil {
-			mockCallback.EXPECT().HandleDesiredStateFeedbackEvent(domainName, testActivityID, "", types.StatusCompleted, "", expActions)
-		}
-
-		updateManager.Apply(context.Background(), testActivityID, &types.DesiredState{Domains: []*types.Domain{{ID: domainName}}})
-		if listContainers == nil || testCase.errListContainers != nil {
-			testutil.AssertNil(t, ctrUpdManager.operation)
-		} else {
-			testutil.AssertNotNil(t, ctrUpdManager.operation)
-			testutil.AssertEqual(t, testActivityID, ctrUpdManager.operation.GetActivityID())
-		}
+			updateManager.Apply(context.Background(), testActivityID, &types.DesiredState{Domains: []*types.Domain{{ID: domainName}}})
+			if listContainers == nil || testCase.errListContainers != nil {
+				testutil.AssertNil(t, ctrUpdManager.operation)
+			} else {
+				testutil.AssertNotNil(t, ctrUpdManager.operation)
+				testutil.AssertEqual(t, testActivityID, ctrUpdManager.operation.GetActivityID())
+			}
+		})
 	}
 }
 
@@ -221,14 +223,15 @@ func TestCommand(t *testing.T) {
 	defer mockCtr.Finish()
 
 	for testActivityID, testCase := range testCases {
-		t.Log(testActivityID)
-		updateManager := newUpdateManager(nil, nil, domainName, nil, false)
-		if testCase.setupOperation != nil {
-			mockOperation := uamocks.NewMockUpdateOperation(mockCtr)
-			updateManager.(*containersUpdateManager).operation = mockOperation
-			testCase.setupOperation(mockOperation)
-		}
-		updateManager.Command(context.Background(), testActivityID, testCase.command)
+		t.Run(testActivityID, func(t *testing.T) {
+			updateManager := newUpdateManager(nil, nil, domainName, nil, false)
+			if testCase.setupOperation != nil {
+				mockOperation := uamocks.NewMockUpdateOperation(mockCtr)
+				updateManager.(*containersUpdateManager).operation = mockOperation
+				testCase.setupOperation(mockOperation)
+			}
+			updateManager.Command(context.Background(), testActivityID, testCase.command)
+		})
 	}
 
 }
@@ -245,50 +248,51 @@ func TestGet(t *testing.T) {
 	defer mockCtr.Finish()
 
 	for testActivityID, numberOfContainers := range testCases {
-		t.Log(testActivityID)
-		mockContainerManager := mgrmocks.NewMockContainerManager(mockCtr)
-		updateManager := newUpdateManager(mockContainerManager, nil, domainName, nil, false)
+		t.Run(testActivityID, func(t *testing.T) {
+			mockContainerManager := mgrmocks.NewMockContainerManager(mockCtr)
+			updateManager := newUpdateManager(mockContainerManager, nil, domainName, nil, false)
 
-		expSoftwareNodes := 1
-		var errListContainers error
-		var listContainers []*ctrtypes.Container
-		if numberOfContainers < 0 {
-			errListContainers = errors.New("cannot list containers")
-		} else {
-			expSoftwareNodes = 1 + numberOfContainers
-			listContainers = make([]*ctrtypes.Container, numberOfContainers)
-			for i := 0; i < numberOfContainers; i++ {
-				listContainers[i] = createSimpleContainer(testContainerName+"-"+strconv.Itoa(i), testContainerVersion)
+			expSoftwareNodes := 1
+			var errListContainers error
+			var listContainers []*ctrtypes.Container
+			if numberOfContainers < 0 {
+				errListContainers = errors.New("cannot list containers")
+			} else {
+				expSoftwareNodes = 1 + numberOfContainers
+				listContainers = make([]*ctrtypes.Container, numberOfContainers)
+				for i := 0; i < numberOfContainers; i++ {
+					listContainers[i] = createSimpleContainer(testContainerName+"-"+strconv.Itoa(i), testContainerVersion)
+				}
 			}
-		}
-		mockContainerManager.EXPECT().List(context.Background()).Return(listContainers, errListContainers)
+			mockContainerManager.EXPECT().List(context.Background()).Return(listContainers, errListContainers)
 
-		inventory, err := updateManager.Get(context.Background(), testActivityID)
-		testutil.AssertNil(t, err)
-		testutil.AssertNotNil(t, inventory)
-		testutil.AssertEqual(t, expSoftwareNodes, len(inventory.SoftwareNodes))
+			inventory, err := updateManager.Get(context.Background(), testActivityID)
+			testutil.AssertNil(t, err)
+			testutil.AssertNotNil(t, inventory)
+			testutil.AssertEqual(t, expSoftwareNodes, len(inventory.SoftwareNodes))
 
-		expUpdateAgentID := domainName + "-update-agent"
-		testutil.AssertEqual(t, types.SoftwareTypeApplication, inventory.SoftwareNodes[0].Type)
-		testutil.AssertEqual(t, expUpdateAgentID, inventory.SoftwareNodes[0].ID)
-		testutil.AssertNotEqual(t, "", inventory.SoftwareNodes[0].Name)
-		testutil.AssertNotEqual(t, "", inventory.SoftwareNodes[0].Version)
-		testutil.AssertEqual(t, 1, len(inventory.SoftwareNodes[0].Parameters))
-		testutil.AssertEqual(t, "domain", inventory.SoftwareNodes[0].Parameters[0].Key)
-		testutil.AssertEqual(t, domainName, inventory.SoftwareNodes[0].Parameters[0].Value)
+			expUpdateAgentID := domainName + "-update-agent"
+			testutil.AssertEqual(t, types.SoftwareTypeApplication, inventory.SoftwareNodes[0].Type)
+			testutil.AssertEqual(t, expUpdateAgentID, inventory.SoftwareNodes[0].ID)
+			testutil.AssertNotEqual(t, "", inventory.SoftwareNodes[0].Name)
+			testutil.AssertNotEqual(t, "", inventory.SoftwareNodes[0].Version)
+			testutil.AssertEqual(t, 1, len(inventory.SoftwareNodes[0].Parameters))
+			testutil.AssertEqual(t, "domain", inventory.SoftwareNodes[0].Parameters[0].Key)
+			testutil.AssertEqual(t, domainName, inventory.SoftwareNodes[0].Parameters[0].Value)
 
-		testutil.AssertEqual(t, expSoftwareNodes-1, len(inventory.Associations))
-		for i := 1; i < expSoftwareNodes; i++ {
-			expContainerID := domainName + ":" + listContainers[i-1].Name
-			testutil.AssertEqual(t, types.SoftwareTypeContainer, inventory.SoftwareNodes[i].Type)
-			testutil.AssertEqual(t, expContainerID, inventory.SoftwareNodes[i].ID)
-			testutil.AssertEqual(t, "", inventory.SoftwareNodes[i].Name)
-			testutil.AssertEqual(t, testContainerVersion, inventory.SoftwareNodes[i].Version)
-			testutil.AssertTrue(t, len(inventory.SoftwareNodes[i].Parameters) > 0)
+			testutil.AssertEqual(t, expSoftwareNodes-1, len(inventory.Associations))
+			for i := 1; i < expSoftwareNodes; i++ {
+				expContainerID := domainName + ":" + listContainers[i-1].Name
+				testutil.AssertEqual(t, types.SoftwareTypeContainer, inventory.SoftwareNodes[i].Type)
+				testutil.AssertEqual(t, expContainerID, inventory.SoftwareNodes[i].ID)
+				testutil.AssertEqual(t, "", inventory.SoftwareNodes[i].Name)
+				testutil.AssertEqual(t, testContainerVersion, inventory.SoftwareNodes[i].Version)
+				testutil.AssertTrue(t, len(inventory.SoftwareNodes[i].Parameters) > 0)
 
-			testutil.AssertEqual(t, expUpdateAgentID, inventory.Associations[i-1].SourceID)
-			testutil.AssertEqual(t, expContainerID, inventory.Associations[i-1].TargetID)
-		}
+				testutil.AssertEqual(t, expUpdateAgentID, inventory.Associations[i-1].SourceID)
+				testutil.AssertEqual(t, expContainerID, inventory.Associations[i-1].TargetID)
+			}
+		})
 	}
 }
 

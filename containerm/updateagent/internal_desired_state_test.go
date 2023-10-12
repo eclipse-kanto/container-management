@@ -41,8 +41,9 @@ func TestFindComponent(t *testing.T) {
 		"test_empty":     {target: "", expected: types.Component{}},
 	}
 	for testName, testCase := range testCases {
-		t.Log("TestName: ", testName)
-		testutil.AssertEqual(t, testCase.expected, desiredState.findComponent(testCase.target))
+		t.Run(testName, func(t *testing.T) {
+			testutil.AssertEqual(t, testCase.expected, desiredState.findComponent(testCase.target))
+		})
 	}
 }
 
@@ -54,18 +55,20 @@ func TestToInternalDesiredStateDomainError(t *testing.T) {
 		"test_too_many_domains":     {"containers", "apps"},
 	}
 	for testName, testCaseDomains := range testCases {
-		t.Log("TestName: ", testName)
-		testDesiredState := &types.DesiredState{}
-		if testCaseDomains != nil {
-			domains := []*types.Domain{}
-			for _, domain := range testCaseDomains {
-				domains = append(domains, &types.Domain{ID: domain})
+		t.Run(testName, func(t *testing.T) {
+			testDesiredState := &types.DesiredState{}
+			if testCaseDomains != nil {
+				domains := []*types.Domain{}
+				for _, domain := range testCaseDomains {
+					domains = append(domains, &types.Domain{ID: domain})
+				}
+				testDesiredState.Domains = domains
 			}
-			testDesiredState.Domains = domains
-		}
-		internalDesiredState, err := toInternalDesiredState(testDesiredState, "containers")
-		testutil.AssertNil(t, internalDesiredState)
-		testutil.AssertNotNil(t, err)
+			internalDesiredState, err := toInternalDesiredState(testDesiredState, "containers")
+			testutil.AssertNil(t, internalDesiredState)
+			testutil.AssertNotNil(t, err)
+
+		})
 	}
 }
 
@@ -108,24 +111,26 @@ func TestToInternalDesiredStateSystemContainers(t *testing.T) {
 		"test_no_config":               {},
 	}
 	for testName, testCase := range testCases {
-		t.Log("TestName: ", testName)
-		testDesiredState := &types.DesiredState{
-			Domains: []*types.Domain{{ID: "containers",
-				Config: []*types.KeyValuePair{{Key: testCase.key, Value: testCase.value}},
-				Components: []*types.ComponentWithConfig{
-					createSimpleDesiredComponent(testContainerName, testContainerVersion),
-					createSimpleDesiredComponent(testContainerName2, testContainerVersion2),
+		t.Run(testName, func(t *testing.T) {
+			testDesiredState := &types.DesiredState{
+				Domains: []*types.Domain{{ID: "containers",
+					Config: []*types.KeyValuePair{{Key: testCase.key, Value: testCase.value}},
+					Components: []*types.ComponentWithConfig{
+						createSimpleDesiredComponent(testContainerName, testContainerVersion),
+						createSimpleDesiredComponent(testContainerName2, testContainerVersion2),
+					},
+				}},
+				Baselines: []*types.Baseline{
+					{Title: "test-baseline", Components: []string{"containers:" + testContainerName}},
 				},
-			}},
-			Baselines: []*types.Baseline{
-				{Title: "test-baseline", Components: []string{"containers:" + testContainerName}},
-			},
-		}
-		internalDesiredState, err := toInternalDesiredState(testDesiredState, "containers")
-		testutil.AssertNil(t, err)
-		testutil.AssertEqual(t, testDesiredState, internalDesiredState.desiredState)
-		testutil.AssertEqual(t, 2, len(internalDesiredState.containers))
-		testutil.AssertEqual(t, 2, len(internalDesiredState.baselines))
-		testutil.AssertEqual(t, testCase.expected, internalDesiredState.systemContainers)
+			}
+			internalDesiredState, err := toInternalDesiredState(testDesiredState, "containers")
+			testutil.AssertNil(t, err)
+			testutil.AssertEqual(t, testDesiredState, internalDesiredState.desiredState)
+			testutil.AssertEqual(t, 2, len(internalDesiredState.containers))
+			testutil.AssertEqual(t, 2, len(internalDesiredState.baselines))
+			testutil.AssertEqual(t, testCase.expected, internalDesiredState.systemContainers)
+
+		})
 	}
 }
