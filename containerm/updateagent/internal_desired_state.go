@@ -64,7 +64,7 @@ type internalDesiredState struct {
 	desiredState     *types.DesiredState
 	systemContainers []string
 
-	containers map[string]*ctrtypes.Container
+	containers []*ctrtypes.Container
 	baselines  map[string][]*ctrtypes.Container
 }
 
@@ -106,7 +106,7 @@ func toInternalDesiredState(desiredState *types.DesiredState, domainName string)
 
 	return &internalDesiredState{
 		desiredState:     desiredState,
-		containers:       util.AsNamedMap(containers),
+		containers:       containers,
 		baselines:        baselines,
 		systemContainers: systemContainers,
 	}, nil
