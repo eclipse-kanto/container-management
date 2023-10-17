@@ -400,7 +400,7 @@ golang.org/x/net (0.17.0)
 * Project: https://github.com/golang/net
 * Source:  https://github.com/golang/net/releases/tag/v0.17.0
 
-golang/x/sync (0.1.0)
+golang.org/x/sync (0.1.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sync
@@ -412,17 +412,17 @@ golang.org/x/sys (0.13.0)
 * Project: https://github.com/golang/sys
 * Source:  https://github.com/golang/sys/releases/tag/v0.13.0
 
-golang/x/term (0.7.0)
+golang.org/x/term (0.13.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/term
-* Source:  https://github.com/golang/term/releases/tag/v0.7.0
+* Source:  https://github.com/golang/term/releases/tag/v0.13.0
 
-golang/x/text (0.9.0)
+golang.org/x/text (0.13.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/text
-* Source:  https://github.com/golang/text/releases/tag/v0.9.0
+* Source:  https://github.com/golang/text/releases/tag/v0.13.0
 
 mozilla-services/pkcs7 (0.0.0-20200128120323-432b2356ecb1)
 
