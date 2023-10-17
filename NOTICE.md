@@ -388,41 +388,41 @@ vishvananda/netns (0.0.0-20210104183010-2eb08e3e575f)
 * Project: https://github.com/vishvananda/netns
 * Source:  https://github.com/vishvananda/netns/tree/2eb08e3e575f00733a612d25cc5d7470f8db6f35
 
-golang/crypto (0.0.0-20220315160706-3147a52a75dd)
+golang.org/x/crypto (0.14.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/crypto
-* Source:  https://github.com/golang/crypto/tree/3147a52a75dda54ac3a611ef8978640d85188a2a
+* Source:  https://github.com/golang/crypto/releases/tag/v0.14.0
 
-golang.org/x/net (0.9.0)
+golang.org/x/net (0.17.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/net
-* Source:  https://github.com/golang/net/releases/tag/v0.9.0
+* Source:  https://github.com/golang/net/releases/tag/v0.17.0
 
-golang/x/sync (0.1.0)
+golang.org/x/sync (0.1.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sync
 * Source:  https://github.com/golang/sync/releases/tag/v0.1.0
 
-golang.org/x/sys (0.7.0)
+golang.org/x/sys (0.13.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sys
-* Source:  https://github.com/golang/sys/releases/tag/v0.7.0
+* Source:  https://github.com/golang/sys/releases/tag/v0.13.0
 
-golang/x/term (0.7.0)
+golang.org/x/term (0.13.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/term
-* Source:  https://github.com/golang/term/releases/tag/v0.7.0
+* Source:  https://github.com/golang/term/releases/tag/v0.13.0
 
-golang/x/text (0.9.0)
+golang.org/x/text (0.13.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/text
-* Source:  https://github.com/golang/text/releases/tag/v0.9.0
+* Source:  https://github.com/golang/text/releases/tag/v0.13.0
 
 mozilla-services/pkcs7 (0.0.0-20200128120323-432b2356ecb1)
 
