@@ -578,7 +578,7 @@ func TestAttachContainer(t *testing.T) {
 
 	tests := map[string]struct {
 		attachConfig *streams.AttachConfig
-		mockExec func() error
+		mockExec     func() error
 	}{
 		"test_containerIO_nil": {
 			attachConfig: attachConfig,
@@ -596,14 +596,14 @@ func TestAttachContainer(t *testing.T) {
 					errChan <- nil
 					close(errChan)
 				}()
-			
+
 				mockIoMgr.EXPECT().GetIO(testCtr.ID).Return(mockIO)
 				mockReadCloser.EXPECT().Read(gomock.Any()).DoAndReturn(func(p []byte) (int, error) {
 					return -1, io.EOF
 				})
 				mockIO.EXPECT().Stream().Return(mockStream)
 				mockStream.EXPECT().Attach(ctx, gomock.AssignableToTypeOf(attachConfig)).Return(errChan)
-			
+
 				return nil
 			},
 		},
@@ -615,11 +615,11 @@ func TestAttachContainer(t *testing.T) {
 					errChan <- nil
 					close(errChan)
 				}()
-			
+
 				mockIoMgr.EXPECT().GetIO(testCtr.ID).Return(mockIO)
 				mockIO.EXPECT().Stream().Return(mockStream)
 				mockStream.EXPECT().Attach(ctx, gomock.AssignableToTypeOf(attachConfig)).Return(errChan)
-			
+
 				return nil
 			},
 		},

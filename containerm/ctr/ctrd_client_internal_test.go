@@ -118,20 +118,20 @@ func TestConfigureRuncRuntime(t *testing.T) {
 		runcRuntime: types.RuntimeTypeV2runcV2,
 	}
 	tests := map[string]struct {
-		container       *types.Container
-		runtime			types.Runtime
+		container *types.Container
+		runtime   types.Runtime
 	}{
 		"test_RuntimeTypeV1": {
-			container: &types.Container {
-				HostConfig: &types.HostConfig {
+			container: &types.Container{
+				HostConfig: &types.HostConfig{
 					Runtime: types.RuntimeTypeV1,
 				},
 			},
 			runtime: ctrdClient.runcRuntime,
 		},
 		"test_default": {
-			container: &types.Container {
-				HostConfig: &types.HostConfig {
+			container: &types.Container{
+				HostConfig: &types.HostConfig{
 					Runtime: types.RuntimeTypeV2kataV2,
 				},
 			},
