@@ -113,6 +113,40 @@ func TestClientInternalGenerateNewContainerOpts(t *testing.T) {
 	}
 }
 
+func TestConfigureRuncRuntime(t *testing.T) {
+	ctrdClient := &containerdClient{
+		runcRuntime: types.RuntimeTypeV2runcV2,
+	}
+	tests := map[string]struct {
+		container       *types.Container
+		runtime			types.Runtime
+	}{
+		"test_RuntimeTypeV1": {
+			container: &types.Container {
+				HostConfig: &types.HostConfig {
+					Runtime: types.RuntimeTypeV1,
+				},
+			},
+			runtime: ctrdClient.runcRuntime,
+		},
+		"test_default": {
+			container: &types.Container {
+				HostConfig: &types.HostConfig {
+					Runtime: types.RuntimeTypeV2kataV2,
+				},
+			},
+			runtime: types.RuntimeTypeV2kataV2,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			ctrdClient.configureRuncRuntime(test.container)
+			testutil.AssertEqual(t, test.runtime, test.container.HostConfig.Runtime)
+		})
+	}
+}
+
 func TestClientInternalGenerateRemoteOpts(t *testing.T) {
 	const containerImageRef = "some.repo/image:tag"
 	testImageInfo := types.Image{

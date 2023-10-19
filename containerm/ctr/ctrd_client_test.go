@@ -14,6 +14,7 @@ package ctr
 
 import (
 	"context"
+	"io"
 	"reflect"
 	"testing"
 	"time"
@@ -24,7 +25,9 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil/matchers"
 	containerdMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/containerd"
 	ctrdMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/ctrd"
+	ioMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/io"
 	loggerMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/logger"
+	streamsMocks "github.com/eclipse-kanto/container-management/containerm/pkg/testutil/mocks/streams"
 	"github.com/eclipse-kanto/container-management/containerm/streams"
 	"github.com/eclipse-kanto/container-management/containerm/util"
 
@@ -555,12 +558,16 @@ func TestAttachContainer(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockIoMgr := NewMockcontainerIOManager(mockCtrl)
+	mockReadCloser := ioMocks.NewMockReadCloser(mockCtrl)
+	mockStream := streamsMocks.NewMockStream(mockCtrl)
+	mockIO := NewMockIO(mockCtrl)
+	attachConfig := &streams.AttachConfig{UseStdin: true, Stdin: mockReadCloser}
+	ctx := context.Background()
 
 	testClient := &containerdClient{
 		ioMgr: mockIoMgr,
 	}
 
-	ctx := context.Background()
 	testCtr := &types.Container{
 		ID: "test-id",
 		IOConfig: &types.IOConfig{
@@ -569,13 +576,62 @@ func TestAttachContainer(t *testing.T) {
 		},
 	}
 
-	expectedError := log.NewErrorf("failed to initialise IO for container ID = test-id")
+	tests := map[string]struct {
+		attachConfig *streams.AttachConfig
+		mockExec func() error
+	}{
+		"test_containerIO_nil": {
+			attachConfig: attachConfig,
+			mockExec: func() error {
+				mockIoMgr.EXPECT().GetIO(testCtr.ID).Return(nil)
+				mockIoMgr.EXPECT().InitIO(testCtr.ID, testCtr.IOConfig.OpenStdin).Return(nil, log.NewErrorf("failed to initialise IO for container ID = test-id"))
+				return log.NewErrorf("failed to initialise IO for container ID = test-id")
+			},
+		},
+		"test_container_stdin_true": {
+			attachConfig: attachConfig,
+			mockExec: func() error {
+				errChan := make(chan error)
+				go func() {
+					errChan <- nil
+					close(errChan)
+				}()
+			
+				mockIoMgr.EXPECT().GetIO(testCtr.ID).Return(mockIO)
+				mockReadCloser.EXPECT().Read(gomock.Any()).DoAndReturn(func(p []byte) (int, error) {
+					return -1, io.EOF
+				})
+				mockIO.EXPECT().Stream().Return(mockStream)
+				mockStream.EXPECT().Attach(ctx, gomock.AssignableToTypeOf(attachConfig)).Return(errChan)
+			
+				return nil
+			},
+		},
+		"test_container_stdin_false": {
+			attachConfig: &streams.AttachConfig{Stdin: mockReadCloser},
+			mockExec: func() error {
+				errChan := make(chan error)
+				go func() {
+					errChan <- nil
+					close(errChan)
+				}()
+			
+				mockIoMgr.EXPECT().GetIO(testCtr.ID).Return(mockIO)
+				mockIO.EXPECT().Stream().Return(mockStream)
+				mockStream.EXPECT().Attach(ctx, gomock.AssignableToTypeOf(attachConfig)).Return(errChan)
+			
+				return nil
+			},
+		},
+	}
 
-	mockIoMgr.EXPECT().GetIO(testCtr.ID).Return(nil)
-	mockIoMgr.EXPECT().InitIO(testCtr.ID, testCtr.IOConfig.OpenStdin).Return(nil, expectedError)
-
-	actualError := testClient.AttachContainer(ctx, testCtr, &streams.AttachConfig{})
-	testutil.AssertError(t, expectedError, actualError)
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			expectedError := testCase.mockExec()
+			actualError := testClient.AttachContainer(ctx, testCtr, testCase.attachConfig)
+			testutil.AssertError(t, expectedError, actualError)
+		})
+	}
 }
 
 func TestPauseContainer(t *testing.T) {
