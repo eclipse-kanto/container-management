@@ -129,6 +129,22 @@ func TestConfigureRuncRuntime(t *testing.T) {
 			},
 			runtime: ctrdClient.runcRuntime,
 		},
+		"RuntimeTypeV2runcV1": {
+			container: &types.Container{
+				HostConfig: &types.HostConfig{
+					Runtime: types.RuntimeTypeV2runcV1,
+				},
+			},
+			runtime: ctrdClient.runcRuntime,
+		},
+		"RuntimeTypeV2runcV2": {
+			container: &types.Container{
+				HostConfig: &types.HostConfig{
+					Runtime: types.RuntimeTypeV2runcV2,
+				},
+			},
+			runtime: ctrdClient.runcRuntime,
+		},
 		"test_default": {
 			container: &types.Container{
 				HostConfig: &types.HostConfig{

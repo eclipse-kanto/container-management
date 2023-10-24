@@ -24,7 +24,6 @@ import (
 func TestWithRuntimeOpts(t *testing.T) {
 	tests := map[string]struct {
 		container       *types.Container
-		runtimeRootPath string
 	}{
 		"test_runtime_type_v1": {
 			&types.Container{
@@ -34,7 +33,6 @@ func TestWithRuntimeOpts(t *testing.T) {
 					Runtime: types.RuntimeTypeV1,
 				},
 			},
-			"",
 		},
 		"test_runtime_type_v2": {
 			&types.Container{
@@ -44,7 +42,6 @@ func TestWithRuntimeOpts(t *testing.T) {
 					Runtime: types.RuntimeTypeV2runcV1,
 				},
 			},
-			"",
 		},
 		"testing_default": {
 			&types.Container{
@@ -54,54 +51,47 @@ func TestWithRuntimeOpts(t *testing.T) {
 					Runtime: "",
 				},
 			},
-			"",
 		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			got := WithRuntimeOpts(test.container, test.runtimeRootPath)
+			got := WithRuntimeOpts(test.container, "")
 			testutil.AssertNotNil(t, got)
 		})
 	}
 }
 
 func TestWithSpecOpts(t *testing.T) {
-
 	tests := map[string]struct {
 		container *types.Container
-		image     containerd.Image
-		execRoot  string
 	}{
-		"test_privileged": {
+		"test_config": {
 			&types.Container{
 				Config: &types.ContainerConfiguration{
 					Cmd: []string{"test"},
 					Env: []string{"test"},
 				},
+				HostConfig: &types.HostConfig{},
+			},
+		},
+		"test_privileged": {
+			&types.Container{
 				HostConfig: &types.HostConfig{
 					Privileged: true,
 				},
 			},
-			containerd.NewImage(&containerd.Client{}, images.Image{}),
-			"/tmp/test",
 		},
 		"test_extra_capabilities": {
 			&types.Container{
-				Config: &types.ContainerConfiguration{
-					Cmd: []string{"test"},
-					Env: []string{"test"},
-				},
 				HostConfig: &types.HostConfig{
 					ExtraCapabilities: []string{"CAP_NET_ADMIN"},
 				},
 			},
-			containerd.NewImage(&containerd.Client{}, images.Image{}),
-			"/tmp/test",
 		},
 	}
-	for name, tests := range tests {
+	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			got := WithSpecOpts(tests.container, tests.image, tests.execRoot)
+			got := WithSpecOpts(test.container, containerd.NewImage(&containerd.Client{}, images.Image{}), "/tmp/test")
 			testutil.AssertNotNil(t, got)
 		})
 	}
