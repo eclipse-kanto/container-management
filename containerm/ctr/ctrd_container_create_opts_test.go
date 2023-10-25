@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Contributors to the Eclipse Foundation
+// Copyright (c) 2023 Contributors to the Eclipse Foundation
 //
 // See the NOTICE file(s) distributed with this work for additional
 // information regarding copyright ownership.
@@ -15,15 +15,16 @@ package ctr
 import (
 	"testing"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/images"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
+
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/images"
 )
 
 func TestWithRuntimeOpts(t *testing.T) {
 	tests := map[string]struct {
-		container       *types.Container
+		container *types.Container
 	}{
 		"test_runtime_type_v1": {
 			&types.Container{
@@ -55,8 +56,7 @@ func TestWithRuntimeOpts(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			got := WithRuntimeOpts(test.container, "")
-			testutil.AssertNotNil(t, got)
+			testutil.AssertNotNil(t, WithRuntimeOpts(test.container, ""))
 		})
 	}
 }
@@ -91,8 +91,7 @@ func TestWithSpecOpts(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			got := WithSpecOpts(test.container, containerd.NewImage(&containerd.Client{}, images.Image{}), "/tmp/test")
-			testutil.AssertNotNil(t, got)
+			testutil.AssertNotNil(t, WithSpecOpts(test.container, containerd.NewImage(&containerd.Client{}, images.Image{}), "/tmp/test"))
 		})
 	}
 }

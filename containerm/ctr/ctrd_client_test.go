@@ -143,9 +143,7 @@ func TestCtrdClientCreateContainer(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			expectedError := testCase.mockExec()
-			actualError := testClient.CreateContainer(ctx, testCtr, "")
-			testutil.AssertError(t, expectedError, actualError)
+			testutil.AssertError(t, testCase.mockExec(), testClient.CreateContainer(ctx, testCtr, ""))
 		})
 	}
 }
@@ -584,8 +582,8 @@ func TestAttachContainer(t *testing.T) {
 			attachConfig: attachConfig,
 			mockExec: func() error {
 				mockIoMgr.EXPECT().GetIO(testCtr.ID).Return(nil)
-				mockIoMgr.EXPECT().InitIO(testCtr.ID, testCtr.IOConfig.OpenStdin).Return(nil, log.NewErrorf("failed to initialise IO for container ID = test-id"))
-				return log.NewErrorf("failed to initialise IO for container ID = test-id")
+				mockIoMgr.EXPECT().InitIO(testCtr.ID, testCtr.IOConfig.OpenStdin).Return(nil, log.NewError("failed to initialise IO for container ID = test-id"))
+				return log.NewError("failed to initialise IO for container ID = test-id")
 			},
 		},
 		"test_container_stdin_true": {
@@ -627,9 +625,7 @@ func TestAttachContainer(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			expectedError := testCase.mockExec()
-			actualError := testClient.AttachContainer(ctx, testCtr, testCase.attachConfig)
-			testutil.AssertError(t, expectedError, actualError)
+			testutil.AssertError(t, testCase.mockExec(), testClient.AttachContainer(ctx, testCtr, testCase.attachConfig))
 		})
 	}
 }
@@ -689,9 +685,7 @@ func TestPauseContainer(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			expectedError := testCase.mockExec(ctx, mockTask)
-			actualError := testClient.PauseContainer(ctx, testCase.arg)
-			testutil.AssertError(t, expectedError, actualError)
+			testutil.AssertError(t, testCase.mockExec(ctx, mockTask), testClient.PauseContainer(ctx, testCase.arg))
 		})
 	}
 }
@@ -751,9 +745,7 @@ func TestUnpauseContainer(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			expectedError := testCase.mockExec(ctx, mockTask)
-			actualError := testClient.UnpauseContainer(ctx, testCase.arg)
-			testutil.AssertError(t, expectedError, actualError)
+			testutil.AssertError(t, testCase.mockExec(ctx, mockTask), testClient.UnpauseContainer(ctx, testCase.arg))
 		})
 	}
 }
@@ -942,9 +934,7 @@ func TestRestoreContainer(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			expectedError := testCase.mockExec()
-			actualError := testClient.RestoreContainer(ctx, testCtr)
-			testutil.AssertError(t, expectedError, actualError)
+			testutil.AssertError(t, testCase.mockExec(), testClient.RestoreContainer(ctx, testCtr))
 		})
 	}
 }
@@ -979,11 +969,10 @@ func TestSetContainerExitHooks(t *testing.T) {
 
 	testClient.SetContainerExitHooks(arg)
 
-	got := testClient.ctrdCache.containerExitHooks
-	testutil.AssertEqual(t, 1, len(got))
+	testutil.AssertEqual(t, 1, len(testClient.ctrdCache.containerExitHooks))
 
-	if reflect.ValueOf(got[0]).Pointer() != reflect.ValueOf(arg).Pointer() {
-		t.Errorf("SetContainerExitHooks() = %v, want %v", reflect.ValueOf(got[0]), reflect.ValueOf(arg))
+	if reflect.ValueOf(testClient.ctrdCache.containerExitHooks[0]).Pointer() != reflect.ValueOf(arg).Pointer() {
+		t.Errorf("SetContainerExitHooks() = %v, want %v", reflect.ValueOf(testClient.ctrdCache.containerExitHooks[0]), reflect.ValueOf(arg))
 	}
 }
 
@@ -1174,9 +1163,7 @@ func TestCtrdClientUpdateContainer(t *testing.T) {
 				task:      mockTask,
 			}
 
-			expectedErr := testCase.mockExec()
-			actualErr := testClient.UpdateContainer(ctx, testCase.ctr, testCase.resources)
-			testutil.AssertError(t, expectedErr, actualErr)
+			testutil.AssertError(t, testCase.mockExec(), testClient.UpdateContainer(ctx, testCase.ctr, testCase.resources))
 		})
 	}
 }
