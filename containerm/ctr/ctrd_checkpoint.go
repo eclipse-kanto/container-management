@@ -83,7 +83,6 @@ func withCheckpointOpt(checkpoint *containerdtypes.Descriptor) containerd.NewTas
 // getCheckpointDir verifies checkpoint directory for create,remove, list options and checks if checkpoint already exists
 func getCheckpointDir(checkDir, checkpointID, ctrName, ctrID, ctrCheckpointDir string, create bool) (string, error) {
 	var checkpointDir string
-	var err2 error
 	if checkDir != "" {
 		checkpointDir = checkDir
 	} else {
@@ -94,27 +93,27 @@ func getCheckpointDir(checkDir, checkpointID, ctrName, ctrID, ctrCheckpointDir s
 	if create {
 		switch {
 		case err == nil && stat.IsDir():
-			err2 = fmt.Errorf("checkpoint with name %s already exists for container %s", checkpointID, ctrName)
+			return checkpointAbsDir, fmt.Errorf("checkpoint with name %s already exists for container %s", checkpointID, ctrName)
 		case err != nil && os.IsNotExist(err):
-			err2 = os.MkdirAll(checkpointAbsDir, 0700)
+			return checkpointAbsDir, os.MkdirAll(checkpointAbsDir, 0700)
 		case err != nil:
-			err2 = err
+			return checkpointAbsDir, err
 		case err == nil:
-			err2 = fmt.Errorf("%s exists and is not a directory", checkpointAbsDir)
+			return checkpointAbsDir, fmt.Errorf("%s exists and is not a directory", checkpointAbsDir)
 		default:
 			// should never get here
 		}
 	} else {
 		switch {
 		case err != nil:
-			err2 = fmt.Errorf("checkpoint %s does not exist for container %s", checkpointID, ctrName)
+			return checkpointAbsDir, fmt.Errorf("checkpoint %s does not exist for container %s", checkpointID, ctrName)
 		case err == nil && stat.IsDir():
-			err2 = nil
+			return checkpointAbsDir, nil
 		case err == nil:
-			err2 = fmt.Errorf("%s exists and is not a directory", checkpointAbsDir)
+			return checkpointAbsDir, fmt.Errorf("%s exists and is not a directory", checkpointAbsDir)
 		default:
 			// should never get here
 		}
 	}
-	return checkpointAbsDir, err2
+	return checkpointAbsDir, nil
 }
