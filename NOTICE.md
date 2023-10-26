@@ -178,11 +178,11 @@ google/btree (1.0.1)
 * Project: https://github.com/google/btree
 * Source:  https://github.com/google/btree/tree/v1.0.1
 
-google/uuid (1.3.0)
+google/uuid (1.3.1)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/google/uuid
-* Source:  https://github.com/google/uuid/releases/tag/v1.3.0
+* Source:  https://github.com/google/uuid/releases/tag/v1.3.1
 
 gorilla/websocket (1.4.2)
 
@@ -400,11 +400,11 @@ golang.org/x/net (0.17.0)
 * Project: https://github.com/golang/net
 * Source:  https://github.com/golang/net/releases/tag/v0.17.0
 
-golang.org/x/sync (0.1.0)
+golang.org/x/sync (0.3.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sync
-* Source:  https://github.com/golang/sync/releases/tag/v0.1.0
+* Source:  https://github.com/golang/sync/releases/tag/v0.3.0
 
 golang.org/x/sys (0.13.0)
 
@@ -436,17 +436,17 @@ googleapis/go-genproto (0.0.0-20230410155749-daa745c078e1)
 * Project: https://github.com/googleapis/go-genproto
 * Source:  https://github.com/googleapis/go-genproto/tree/daa745c078e18def54ea6b63235554b59c97f01d
 
-grpc/grpc-go (1.56.1)
+grpc/grpc-go (1.59.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/grpc/grpc-go
-* Source:  https://github.com/grpc/grpc-go/releases/tag/v1.56.1
+* Source:  https://github.com/grpc/grpc-go/releases/tag/v1.59.0
 
-protocolbuffers/protobuf-go (1.30.0)
+protocolbuffers/protobuf-go (1.31.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/protocolbuffers/protobuf-go
-* Source:  https://github.com/protocolbuffers/protobuf-go/releases/tag/v1.30.0
+* Source:  https://github.com/protocolbuffers/protobuf-go/releases/tag/v1.31.0
 
 natefinch/lumberjack (2.0.0)
 
