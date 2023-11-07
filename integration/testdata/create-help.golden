@@ -1,7 +1,7 @@
 Create a container.
 
 Usage:
-  kanto-cm create [option]... container-image-id [command] [command-arg]...
+  kanto-cm create [option]... [container-image-id] [command] [command-arg]...
 
 Examples:
 create container-image-id
@@ -16,6 +16,7 @@ Flags:
                                      --e=VAR1=2 --e=VAR2="a bc"
                                      If --e=VAR1= is used, the environment variable would be set to empty.
                                      If --e=VAR1 is used, the environment variable would be removed from the container environment inherited from the image.
+  -f, --file string                  Creates a container with a predefined config given by the user.
   -h, --help                         help for create
       --hosts strings                Extra hosts to be added in the current container's /etc/hosts file. Example: 
                                      --hosts="hostname1:<IP1>, hostname2:<IP2>.." 

@@ -14,7 +14,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
@@ -46,6 +48,7 @@ type createConfig struct {
 	interactive       bool
 	privileged        bool
 	network           string
+	containerFile     string
 	extraHosts        []string
 	extraCapabilities []string
 	devices           []string
@@ -68,10 +71,10 @@ type createConfig struct {
 func (cc *createCmd) init(cli *cli) {
 	cc.cli = cli
 	cc.cmd = &cobra.Command{
-		Use:   "create [option]... container-image-id [command] [command-arg]...",
+		Use:   "create [option]... [container-image-id] [command] [command-arg]...",
 		Short: "Create a container.",
 		Long:  "Create a container.",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.MinimumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cc.run(args)
 		},
@@ -82,19 +85,20 @@ func (cc *createCmd) init(cli *cli) {
 }
 
 func (cc *createCmd) run(args []string) error {
-	// parse parameters
-	imageID := args[0]
+
+	imageID := ""
+	if len(cc.config.containerFile) == 0 {
+		if len(args) == 0 {
+			return log.NewError("container image argument is expected")
+		}
+		imageID = args[0]
+	} else if len(args) > 0 {
+		return log.NewError("no arguments are expected when container is created from a file")
+	}
+
 	var command []string
 	if len(args) > 1 {
 		command = args[1:]
-	}
-
-	if cc.config.privileged && cc.config.devices != nil {
-		return log.NewError("cannot create the container as privileged and with specified devices at the same time - choose one of the options")
-	}
-
-	if cc.config.privileged && cc.config.extraCapabilities != nil {
-		return log.NewError("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options")
 	}
 
 	ctrToCreate := &types.Container{
@@ -112,6 +116,14 @@ func (cc *createCmd) run(args []string) error {
 			Tty:       cc.config.terminal,
 			OpenStdin: cc.config.interactive,
 		},
+	}
+
+	if cc.config.privileged && cc.config.devices != nil {
+		return log.NewError("cannot create the container as privileged and with specified devices at the same time - choose one of the options")
+	}
+
+	if cc.config.privileged && cc.config.extraCapabilities != nil {
+		return log.NewError("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options")
 	}
 
 	if cc.config.env != nil || command != nil {
@@ -155,7 +167,6 @@ func (cc *createCmd) run(args []string) error {
 			Type: types.No,
 		}
 	case string(types.UnlessStopped):
-
 		ctrToCreate.HostConfig.RestartPolicy = &types.RestartPolicy{
 			Type: types.UnlessStopped,
 		}
@@ -202,6 +213,16 @@ func (cc *createCmd) run(args []string) error {
 
 	ctrToCreate.HostConfig.Resources = getResourceLimits(cc.config.resources)
 	ctrToCreate.Image.DecryptConfig = getDecryptConfig(cc.config)
+
+	if cc.config.containerFile != "" {
+		byteValue, err := os.ReadFile(cc.config.containerFile)
+		if err != nil {
+			return err
+		}
+		if err = json.Unmarshal(byteValue, ctrToCreate); err != nil {
+			return err
+		}
+	}
 
 	if err := util.ValidateContainer(ctrToCreate); err != nil {
 		return err
@@ -314,4 +335,5 @@ func (cc *createCmd) setupFlags() {
 	flagSet.StringSliceVar(&cc.config.decRecipients, "dec-recipients", nil, "Sets a recipients certificates list of the image (used only for PKCS7 and must be an x509)")
 	//init extra capabilities
 	flagSet.StringSliceVar(&cc.config.extraCapabilities, "cap-add", nil, "Add Linux capabilities to the container")
+	flagSet.StringVarP(&cc.config.containerFile, "file", "f", "", "Creates a container with a predefined config given by the user.")
 }
