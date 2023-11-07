@@ -40,7 +40,7 @@ import (
 var testdataFS embed.FS
 
 type cliTestConfiguration struct {
-	KantoHost string `env:"KANTO_HOST" envDefault:"/run/container-management/container-management.sock"`
+	KantoHost       string `env:"KANTO_HOST" envDefault:"/run/container-management/container-management.sock"`
 	ContainerConfig string `env:"CONTAINER_CONFIG" envDefault:"./testdata/container.json"`
 }
 
