@@ -16,6 +16,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
+	"net"
+	"net/http"
 	"path/filepath"
 	"runtime"
 
@@ -109,6 +111,33 @@ func validateTLSConfigFile(file, expectedFileExt string) error {
 		return log.NewErrorf("unsupported file format %s - must be %s", ext, expectedFileExt)
 	}
 	return nil
+}
+
+func getTransport(isInsecure bool, config *TLSConfig, host string) *http.Transport {
+	tlsConfig := createDefaultTLSConfig(isInsecure)
+	if !isInsecure && config != nil {
+		if err := applyLocalTLSConfig(config, tlsConfig); err != nil {
+			log.WarnErr(err, "could not process provided TLS configuration - default will be used for registry host %s", host)
+			tlsConfig = createDefaultTLSConfig(isInsecure)
+		} else {
+			log.Debug("successfully applied TLS configuration for registry host %s", host)
+		}
+	}
+
+	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   registryResolverDialContextTimeout,
+			KeepAlive: registryResolverDialContextKeepAlive,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          registryResolverTransportMaxIdeConns,
+		IdleConnTimeout:       registryResolverTransportIdleConnTimeout,
+		TLSHandshakeTimeout:   registryResolverTransportTLSHandshakeTimeout,
+		TLSClientConfig:       tlsConfig,
+		ExpectContinueTimeout: registryResolverTransportExpectContinueTimeout,
+	}
+	return tr
 }
 
 // excludes cipher suites with security issues

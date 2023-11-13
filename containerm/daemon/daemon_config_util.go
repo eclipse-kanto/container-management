@@ -48,6 +48,8 @@ func extractCtrClientConfigOptions(daemonConfig *config) []ctr.ContainerOpts {
 		ctr.WithCtrdImageExpiry(daemonConfig.ContainerClientConfig.CtrImageExpiry),
 		ctr.WithCtrdImageExpiryDisable(daemonConfig.ContainerClientConfig.CtrImageExpiryDisable),
 		ctr.WithCtrdLeaseID(daemonConfig.ContainerClientConfig.CtrLeaseID),
+		ctr.WithCtrImageVerifierType(daemonConfig.ContainerClientConfig.CtrImageVerifierType),
+		ctr.WithCtrImageVerifierConfig(daemonConfig.ContainerClientConfig.CtrImageVerifierConfig),
 	)
 	return ctrOpts
 }
@@ -288,6 +290,8 @@ func dumpContClient(configInstance *config) {
 		log.Debug("[daemon_cfg][ccl-image-expiry] : %s", configInstance.ContainerClientConfig.CtrImageExpiry)
 		log.Debug("[daemon_cfg][ccl-image-expiry-disable] : %v", configInstance.ContainerClientConfig.CtrImageExpiryDisable)
 		log.Debug("[daemon_cfg][ccl-lease-id] : %s", configInstance.ContainerClientConfig.CtrLeaseID)
+		log.Debug("[daemon_cfg][ccl-image-verifier-type] : %v", configInstance.ContainerClientConfig.CtrImageVerifierType)
+		log.Debug("[daemon_cfg][ccl-image-verifier-config] : %v", configInstance.ContainerClientConfig.CtrImageVerifierConfig.String())
 	}
 }
 

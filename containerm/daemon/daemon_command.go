@@ -56,6 +56,8 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.DurationVar(&cfg.ContainerClientConfig.CtrImageExpiry, "ccl-image-expiry", cfg.ContainerClientConfig.CtrImageExpiry, "Specify the time period for the cached images and content to be kept in the form of e.g. 72h3m0.5s")
 	flagSet.BoolVar(&cfg.ContainerClientConfig.CtrImageExpiryDisable, "ccl-image-expiry-disable", cfg.ContainerClientConfig.CtrImageExpiryDisable, "Disables expiry management of cached images and content - must be used with caution as it may lead to large memory volumes being persistently allocated")
 	flagSet.StringVar(&cfg.ContainerClientConfig.CtrLeaseID, "ccl-lease-id", cfg.ContainerClientConfig.CtrLeaseID, "Specify the lease identifier to be used for container resources persistence")
+	flagSet.StringVar(&cfg.ContainerClientConfig.CtrImageVerifierType, "ccl-image-verifier-type", cfg.ContainerClientConfig.CtrImageVerifierType, "Specify the image verifier type - possible values are none and notation, when set to none image signatures wil not be verified.")
+	flagSet.Var(&cfg.ContainerClientConfig.CtrImageVerifierConfig, "ccl-image-verifier-config", "Specify the configuration of the image verifier, as comma separated {key}={value} pairs - possible keys for notation verifier are configDir and libexecDir, for more info https://notaryproject.dev/docs/user-guides/how-to/directory-structure/#user-level")
 
 	// init network manager flags
 	flagSet.StringVar(&cfg.NetworkConfig.NetType, "net-type", cfg.NetworkConfig.NetType, "Specify the default network management type for containers")

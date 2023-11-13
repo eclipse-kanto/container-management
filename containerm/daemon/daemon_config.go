@@ -14,6 +14,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/log"
@@ -51,18 +53,20 @@ type managerConfig struct {
 
 // container client config- e.g. containerd
 type containerRuntimeConfig struct {
-	CtrNamespace          string                     `json:"default_ns,omitempty"`
-	CtrAddressPath        string                     `json:"address_path,omitempty"`
-	CtrRegistryConfigs    map[string]*registryConfig `json:"registry_configurations,omitempty"`
-	CtrInsecureRegistries []string                   `json:"insecure_registries,omitempty"`
-	CtrRootExec           string                     `json:"exec_root_dir,omitempty"`
-	CtrMetaPath           string                     `json:"home_dir,omitempty"`
-	CtrImageDecKeys       []string                   `json:"image_dec_keys,omitempty"`
-	CtrImageDecRecipients []string                   `json:"image_dec_recipients,omitempty"`
-	CtrRuncRuntime        string                     `json:"runc_runtime,omitempty"`
-	CtrImageExpiry        time.Duration              `json:"image_expiry,omitempty"`
-	CtrImageExpiryDisable bool                       `json:"image_expiry_disable,omitempty"`
-	CtrLeaseID            string                     `json:"lease_id,omitempty"`
+	CtrNamespace           string                     `json:"default_ns,omitempty"`
+	CtrAddressPath         string                     `json:"address_path,omitempty"`
+	CtrRegistryConfigs     map[string]*registryConfig `json:"registry_configurations,omitempty"`
+	CtrInsecureRegistries  []string                   `json:"insecure_registries,omitempty"`
+	CtrRootExec            string                     `json:"exec_root_dir,omitempty"`
+	CtrMetaPath            string                     `json:"home_dir,omitempty"`
+	CtrImageDecKeys        []string                   `json:"image_dec_keys,omitempty"`
+	CtrImageDecRecipients  []string                   `json:"image_dec_recipients,omitempty"`
+	CtrRuncRuntime         string                     `json:"runc_runtime,omitempty"`
+	CtrImageExpiry         time.Duration              `json:"image_expiry,omitempty"`
+	CtrImageExpiryDisable  bool                       `json:"image_expiry_disable,omitempty"`
+	CtrLeaseID             string                     `json:"lease_id,omitempty"`
+	CtrImageVerifierType   string                     `json:"image_verifier_type,omitempty"`
+	CtrImageVerifierConfig verifierConfig             `json:"image_verifier_config,omitempty"`
 }
 
 // deployment manager config
@@ -188,4 +192,45 @@ type thingsConnectionConfig struct {
 	SubscribeTimeout   int64      `json:"subscribe_timeout,omitempty"`
 	UnsubscribeTimeout int64      `json:"unsubscribe_timeout,omitempty"`
 	Transport          *tlsConfig `json:"transport,omitempty"`
+}
+
+// verifierConfig is alias used as flag value
+type verifierConfig map[string]string
+
+// String is representation of verifierConfig as a comma separated {key}={value} pairs
+func (vc *verifierConfig) String() string {
+	if len(*vc) == 0 {
+		return ""
+	}
+	var pairs []string
+	for key, value := range *vc {
+		pairs = append(pairs, fmt.Sprintf("%s=%s", key, value))
+	}
+
+	return strings.Join(pairs, ",")
+}
+
+// Set verifierConfig from string, used for flag set
+func (vc *verifierConfig) Set(value string) error {
+	if value == "" {
+		return log.NewError("the image verifier config could not be empty")
+	}
+	if *vc == nil {
+		*vc = make(map[string]string)
+	}
+
+	pairs := strings.Split(value, ",")
+	for _, pair := range pairs {
+		key, value, ok := strings.Cut(pair, "=")
+		if !ok || key == "" || value == "" {
+			return log.NewErrorf("could not parse image verification config, invalid key-value pair - %s", pair)
+		}
+		(*vc)[key] = value
+	}
+	return nil
+}
+
+// Set verifierConfig from string, used for flag set
+func (vc verifierConfig) Type() string {
+	return "stringSlice"
 }

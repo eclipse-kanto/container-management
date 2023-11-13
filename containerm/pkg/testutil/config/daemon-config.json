@@ -25,7 +25,8 @@
     "runc_runtime": "io.containerd.runc.v2",
     "image_expiry": "744h",
     "image_expiry_disable": false,
-    "lease_id": "kanto-cm.lease"
+    "lease_id": "kanto-cm.lease",
+    "image_verifier_type": "none"
   },
   "network": {
     "type": "bridge",

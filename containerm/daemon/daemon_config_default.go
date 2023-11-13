@@ -51,6 +51,7 @@ const (
 	containerClientImageExpiry        = 31 * 24 * time.Hour // 31 days
 	containerClientImageExpiryDisable = false
 	containerClientLeaseIDDefault     = "kanto-cm.lease"
+	containerClientImageVerifierType  = string(ctr.VerifierNone)
 
 	// default network manager config
 	networkManagerNetTypeDefault  = string(types.NetworkModeBridge)
@@ -137,6 +138,7 @@ func getDefaultInstance() *config {
 			CtrImageExpiry:        containerClientImageExpiry,
 			CtrImageExpiryDisable: containerClientImageExpiryDisable,
 			CtrLeaseID:            containerClientLeaseIDDefault,
+			CtrImageVerifierType:  containerClientImageVerifierType,
 		},
 		NetworkConfig: &networkConfig{
 			NetType:     networkManagerNetTypeDefault,

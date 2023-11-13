@@ -15,9 +15,10 @@ package ctr
 import (
 	"context"
 	"fmt"
-	"github.com/opencontainers/image-spec/identity"
 	"syscall"
 	"time"
+
+	"github.com/opencontainers/image-spec/identity"
 
 	"golang.org/x/sys/unix"
 
@@ -115,6 +116,9 @@ func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageInfo typ
 	if err != nil {
 		// if the image is not present locally - pull it
 		if errdefs.IsNotFound(err) {
+			if err = ctrdClient.verifier.Verify(ctx, imageInfo); err != nil {
+				return nil, err
+			}
 			ctrdImage, err = ctrdClient.spi.PullImage(ctx, imageInfo.Name, ctrdClient.generateRemoteOpts(imageInfo)...)
 			if err != nil {
 				return nil, err
