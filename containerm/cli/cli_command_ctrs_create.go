@@ -233,9 +233,10 @@ func (cc *createCmd) containerFromFlags(args []string) (*types.Container, error)
 }
 
 func (cc *createCmd) run(args []string) error {
-	var ctrToCreate *types.Container
-	var err error
-	//isFile := cc.cmd.Flags().Changed("file")
+	var (
+		ctrToCreate *types.Container
+		err         error
+	)
 
 	if len(cc.config.containerFile) > 0 {
 		if len(args) > 0 {
