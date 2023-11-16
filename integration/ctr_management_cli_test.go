@@ -40,7 +40,8 @@ import (
 var testdataFS embed.FS
 
 type cliTestConfiguration struct {
-	KantoHost string `env:"KANTO_HOST" envDefault:"/run/container-management/container-management.sock"`
+	KantoHost       string `env:"KANTO_HOST" envDefault:"/run/container-management/container-management.sock"`
+	ContainerConfig string `env:"CONTAINER_CONFIG" envDefault:"./testdata/container.json"`
 }
 
 func init() {
@@ -51,6 +52,7 @@ func TestCtrMgrCLI(t *testing.T) {
 	cliTestConfiguration := &cliTestConfiguration{}
 	require.NoError(t, env.Parse(cliTestConfiguration, env.Options{RequiredIfNoDef: true}))
 	require.NoError(t, os.Setenv("KANTO_HOST", cliTestConfiguration.KantoHost))
+	require.NoError(t, os.Setenv("CONTAINER_CONFIG", cliTestConfiguration.ContainerConfig))
 
 	if exist, _ := util.IsDirectory(TestData); !exist {
 		require.NoError(t, dumpTestdata())
