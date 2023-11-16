@@ -23,6 +23,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 type createCmd struct {
@@ -84,46 +85,60 @@ func (cc *createCmd) init(cli *cli) {
 	cc.setupFlags()
 }
 
-func (cc *createCmd) run(args []string) error {
-
-	imageID := ""
-	if len(cc.config.containerFile) == 0 {
-		if len(args) == 0 {
-			return log.NewError("container image argument is expected")
-		}
-		imageID = args[0]
-	} else if len(args) > 0 {
-		return log.NewError("no arguments are expected when container is created from a file")
+func initContainer(config createConfig, imageName string) *types.Container {
+	return &types.Container{
+		Name: config.name,
+		Image: types.Image{
+			Name: imageName,
+		},
+		HostConfig: &types.HostConfig{
+			Privileged:        config.privileged,
+			ExtraHosts:        config.extraHosts,
+			ExtraCapabilities: config.extraCapabilities,
+			NetworkMode:       types.NetworkMode(config.network),
+		},
+		IOConfig: &types.IOConfig{
+			Tty:       config.terminal,
+			OpenStdin: config.interactive,
+		},
 	}
+}
+
+func (cc *createCmd) containerFromFile() (*types.Container, error) {
+	var err error
+	cc.cmd.LocalFlags().VisitAll(func(flag *pflag.Flag) {
+		if flag.Changed && flag.Name != "file" {
+			err = log.NewError("no other flags are expected when creating a container from file")
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+	byteValue, err := os.ReadFile(cc.config.containerFile)
+	if err != nil {
+		return nil, err
+	}
+	ctrToCreate := initContainer(cc.config, "")
+	if err = json.Unmarshal(byteValue, ctrToCreate); err != nil {
+		return nil, err
+	}
+	return ctrToCreate, nil
+}
+
+func (cc *createCmd) containerFromFlags(args []string) (*types.Container, error) {
+	ctrToCreate := initContainer(cc.config, args[0])
 
 	var command []string
 	if len(args) > 1 {
 		command = args[1:]
 	}
 
-	ctrToCreate := &types.Container{
-		Name: cc.config.name,
-		Image: types.Image{
-			Name: imageID,
-		},
-		HostConfig: &types.HostConfig{
-			Privileged:        cc.config.privileged,
-			ExtraHosts:        cc.config.extraHosts,
-			ExtraCapabilities: cc.config.extraCapabilities,
-			NetworkMode:       types.NetworkMode(cc.config.network),
-		},
-		IOConfig: &types.IOConfig{
-			Tty:       cc.config.terminal,
-			OpenStdin: cc.config.interactive,
-		},
-	}
-
 	if cc.config.privileged && cc.config.devices != nil {
-		return log.NewError("cannot create the container as privileged and with specified devices at the same time - choose one of the options")
+		return nil, log.NewError("cannot create the container as privileged and with specified devices at the same time - choose one of the options")
 	}
 
 	if cc.config.privileged && cc.config.extraCapabilities != nil {
-		return log.NewError("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options")
+		return nil, log.NewError("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options")
 	}
 
 	if cc.config.env != nil || command != nil {
@@ -136,7 +151,7 @@ func (cc *createCmd) run(args []string) error {
 	if cc.config.devices != nil {
 		devs, err := util.ParseDeviceMappings(cc.config.devices)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		ctrToCreate.HostConfig.Devices = devs
 	}
@@ -144,7 +159,7 @@ func (cc *createCmd) run(args []string) error {
 	if cc.config.mountPoints != nil {
 		mounts, err := util.ParseMountPoints(cc.config.mountPoints)
 		if err != nil {
-			return err
+			return nil, err
 		} else if mounts != nil {
 			ctrToCreate.Mounts = mounts
 		}
@@ -152,7 +167,7 @@ func (cc *createCmd) run(args []string) error {
 	if cc.config.ports != nil {
 		mappings, err := util.ParsePortMappings(cc.config.ports)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		ctrToCreate.HostConfig.PortMappings = mappings
 	}
@@ -214,17 +229,30 @@ func (cc *createCmd) run(args []string) error {
 	ctrToCreate.HostConfig.Resources = getResourceLimits(cc.config.resources)
 	ctrToCreate.Image.DecryptConfig = getDecryptConfig(cc.config)
 
-	if cc.config.containerFile != "" {
-		byteValue, err := os.ReadFile(cc.config.containerFile)
-		if err != nil {
+	return ctrToCreate, nil
+}
+
+func (cc *createCmd) run(args []string) error {
+	var ctrToCreate *types.Container
+	var err error
+	//isFile := cc.cmd.Flags().Changed("file")
+
+	if len(cc.config.containerFile) > 0 {
+		if len(args) > 0 {
+			return log.NewError("no arguments are expected when creating a container from file")
+		}
+		if ctrToCreate, err = cc.containerFromFile(); err != nil {
 			return err
 		}
-		if err = json.Unmarshal(byteValue, ctrToCreate); err != nil {
+	} else if len(args) != 0 {
+		if ctrToCreate, err = cc.containerFromFlags(args); err != nil {
 			return err
 		}
+	} else {
+		return log.NewError("container image argument is expected")
 	}
 
-	if err := util.ValidateContainer(ctrToCreate); err != nil {
+	if err = util.ValidateContainer(ctrToCreate); err != nil {
 		return err
 	}
 

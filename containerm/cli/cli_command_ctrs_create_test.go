@@ -1006,7 +1006,12 @@ func (createTc *createCommandTest) mockExecCreateWithPrivileged(args []string) e
 
 func (createTc *createCommandTest) mockExecCreateContainerFile(_ []string) error {
 	byteValue, _ := os.ReadFile("../pkg/testutil/config/container/valid.json")
-	container := initExpectedCtr(&types.Container{})
+	container := &types.Container{
+		HostConfig: &types.HostConfig{
+			NetworkMode: types.NetworkModeBridge,
+		},
+		IOConfig: &types.IOConfig{},
+	}
 	json.Unmarshal(byteValue, container)
 
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
@@ -1028,7 +1033,7 @@ func (createTc *createCommandTest) mockExecCreateContainerFileInvalidJSON(_ []st
 
 func (createTc *createCommandTest) mockExecCreateContainerFileWithArgs(_ []string) error {
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
-	return log.NewError("no arguments are expected when container is created from a file")
+	return log.NewError("no arguments are expected when creating a container from file")
 }
 
 func (createTc *createCommandTest) mockExecCreateWithTerminal(args []string) error {
@@ -1142,19 +1147,13 @@ func initExpectedCtr(ctr *types.Container) *types.Container {
 	//merge default and provided
 	if ctr.HostConfig == nil {
 		ctr.HostConfig = &types.HostConfig{
-			Privileged:        false,
-			ExtraHosts:        nil,
-			ExtraCapabilities: nil,
-			NetworkMode:       types.NetworkModeBridge,
+			NetworkMode: types.NetworkModeBridge,
 		}
 	} else if ctr.HostConfig.NetworkMode == "" {
 		ctr.HostConfig.NetworkMode = types.NetworkModeBridge
 	}
 	if ctr.IOConfig == nil {
-		ctr.IOConfig = &types.IOConfig{
-			Tty:       false,
-			OpenStdin: false,
-		}
+		ctr.IOConfig = &types.IOConfig{}
 	}
 	if ctr.HostConfig.LogConfig == nil {
 		ctr.HostConfig.LogConfig = &types.LogConfiguration{
