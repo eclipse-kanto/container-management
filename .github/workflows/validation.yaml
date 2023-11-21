@@ -4,10 +4,12 @@ on:
   pull_request:
     branches:
       - main
+      - dev-m5
     paths-ignore:
       - "**/*.md"
   push:
     branches:
+      - dev-m5
       - main
     paths-ignore:
       - "**/*.md"
