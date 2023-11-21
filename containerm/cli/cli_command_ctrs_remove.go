@@ -14,9 +14,11 @@ package main
 
 import (
 	"context"
+	"errors"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	utilcli "github.com/eclipse-kanto/container-management/containerm/util/cli"
+	errorcli "github.com/eclipse-kanto/container-management/containerm/util/error"
 	"github.com/spf13/cobra"
 )
 
@@ -33,30 +35,38 @@ type removeConfig struct {
 func (cc *removeCmd) init(cli *cli) {
 	cc.cli = cli
 	cc.cmd = &cobra.Command{
-		Use:   "remove <container-id>",
-		Short: "Remove a container.",
+		Use:   "remove <container-id/s>",
+		Short: "Remove a container/s.",
 		Long:  "Remove a container and frees the associated resources.",
-		Args:  cobra.MaximumNArgs(1),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cc.run(args)
 		},
-		Example: "remove <container-id>\n remove --name <container-name>\n remove -n <container-name>",
+		Example: "remove <container-id>\n remove <container-id> <container-id> \n remove --name <container-name>\n remove -n <container-name>",
 	}
 	cc.setupFlags()
 }
 
 func (cc *removeCmd) run(args []string) error {
 	var (
-		ctr *types.Container
-		err error
-		ctx = context.Background()
+		ctr  *types.Container
+		err  error
+		ctx  = context.Background()
+		errs errorcli.CompoundError
 	)
 	// parse parameters
-	if ctr, err = utilcli.ValidateContainerByNameArgsSingle(ctx, args, cc.config.name, cc.cli.gwManClient); err != nil {
-		return err
+	for _, arg := range args {
+		ctr, err = utilcli.ValidateContainerByNameArgsSingle(ctx, []string{arg}, cc.config.name, cc.cli.gwManClient)
+		if err == nil {
+			cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force)
+		} else {
+			errs.Append(err)
+		}
 	}
-	return cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force)
-
+	if errs.Size() > 0 {
+		return errors.New(errs.Error())
+	}
+	return nil
 }
 
 func (cc *removeCmd) setupFlags() {
