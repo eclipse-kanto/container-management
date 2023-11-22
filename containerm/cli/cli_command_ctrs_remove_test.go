@@ -21,6 +21,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/client"
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
+	errorutil "github.com/eclipse-kanto/container-management/containerm/util/error"
 	"github.com/golang/mock/gomock"
 )
 
@@ -121,6 +122,14 @@ func (rmTc *removeCommandTest) generateRunExecutionConfigs() map[string]testRunE
 			args:          removeCmdArgs,
 			mockExecution: rmTc.mockExecRemoveNoErrors,
 		},
+		"test_remove_multiple": {
+			args:          []string{"test-container-one", "test-container-two"},
+			mockExecution: rmTc.mockExecRemoveMultipleNoErrors,
+		},
+		"test_remove_multiple_with_err": {
+			args:          []string{"test-container-one", "test-container-two"},
+			mockExecution: rmTc.mockExecRemoveMultipleWithErrors,
+		},
 		"test_remove_by_id_err": {
 			args:          removeCmdArgs,
 			mockExecution: rmTc.mockExecRemoveGetError,
@@ -177,12 +186,14 @@ func (rmTc *removeCommandTest) mockExecRemoveIDAndName(args []string) error {
 	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false).Times(0)
 	return log.NewError("Container ID and --name (-n) cannot be provided at the same time - use only one of them")
 }
+
 func (rmTc *removeCommandTest) mockExecRemoveNoIDorName(args []string) error {
 	rmTc.mockClient.EXPECT().Get(context.Background(), gomock.Any()).Times(0)
 	rmTc.mockClient.EXPECT().List(context.Background(), gomock.Any()).Times(0)
 	rmTc.mockClient.EXPECT().Get(context.Background(), gomock.Any()).Times(0)
 	return log.NewError("You must provide either an ID or a name for the container via --name (-n) ")
 }
+
 func (rmTc *removeCommandTest) mockExecRemoveNoErrors(args []string) error {
 	// setup expected calls
 	ctr := &types.Container{
@@ -193,6 +204,41 @@ func (rmTc *removeCommandTest) mockExecRemoveNoErrors(args []string) error {
 	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false).Times(1).Return(nil)
 	// no error expected
 	return nil
+}
+
+func (rmTc *removeCommandTest) mockExecRemoveMultipleNoErrors(args []string) error {
+	// setup expected calls
+	ctr1 := &types.Container{
+		ID:   args[0],
+		Name: removeContainerName,
+	}
+	ctr2 := &types.Container{
+		ID:   args[1],
+		Name: removeContainerName,
+	}
+	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(ctr1, nil)
+	rmTc.mockClient.EXPECT().Get(context.Background(), args[1]).Times(1).Return(ctr2, nil)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false).Times(1).Return(nil)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[1], false).Times(1).Return(nil)
+	// no error expected
+	return nil
+}
+
+func (rmTc *removeCommandTest) mockExecRemoveMultipleWithErrors(args []string) error {
+	// setup expected calls
+	var errs errorutil.CompoundError
+	err1 := log.NewErrorf("The requested container with ID = %s was not found.", args[0])
+	err2 := errors.New("failed to remove container")
+	ctr := &types.Container{
+		ID:   args[1],
+		Name: removeContainerName,
+	}
+	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(nil, err1)
+	rmTc.mockClient.EXPECT().Get(context.Background(), args[1]).Times(1).Return(ctr, nil)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[1], false).Times(1).Return(err2)
+	errs.Append(err1, err2)
+
+	return errors.New(errs.ErrorWithMessage("containers couldn't be removed due to the following reasons: "))
 }
 
 func (rmTc *removeCommandTest) mockExecRemoveError(args []string) error {
@@ -206,6 +252,7 @@ func (rmTc *removeCommandTest) mockExecRemoveError(args []string) error {
 	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false).Times(1).Return(err)
 	return err
 }
+
 func (rmTc *removeCommandTest) mockExecRemoveByNameNoErrors(args []string) error {
 	// setup expected calls
 	ctrs := []*types.Container{{ID: removeContainerID, Name: removeContainerName}}
@@ -224,6 +271,7 @@ func (rmTc *removeCommandTest) mockExecRemoveByNameError(args []string) error {
 	// no error expected
 	return err
 }
+
 func (rmTc *removeCommandTest) mockExecRemoveByNameListError(args []string) error {
 	// setup expected calls
 	err := errors.New("failed to list containers")
@@ -231,30 +279,35 @@ func (rmTc *removeCommandTest) mockExecRemoveByNameListError(args []string) erro
 	rmTc.mockClient.EXPECT().Remove(context.Background(), gomock.Any(), false).Times(0)
 	return err
 }
+
 func (rmTc *removeCommandTest) mockExecRemoveByNameListNilCtrs(args []string) error {
 	// setup expected calls
 	rmTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(removeContainerName))).Times(1).Return(nil, nil)
 	rmTc.mockClient.EXPECT().Remove(context.Background(), gomock.Any(), false).Times(0)
 	return log.NewErrorf("The requested container with name = %s was not found. Try using an ID instead.", removeContainerName)
 }
+
 func (rmTc *removeCommandTest) mockExecRemoveByNameListZeroCtrs(args []string) error {
 	// setup expected calls
 	rmTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(removeContainerName))).Times(1).Return([]*types.Container{}, nil)
 	rmTc.mockClient.EXPECT().Remove(context.Background(), gomock.Any(), false).Times(0)
 	return log.NewErrorf("The requested container with name = %s was not found. Try using an ID instead.", removeContainerName)
 }
+
 func (rmTc *removeCommandTest) mockExecRemoveByNameListMoreThanOneCtrs(args []string) error {
 	// setup expected calls
 	rmTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(removeContainerName))).Times(1).Return([]*types.Container{{}, {}}, nil)
 	rmTc.mockClient.EXPECT().Remove(context.Background(), gomock.Any(), false).Times(0)
 	return log.NewErrorf("There are more than one containers with name = %s. Try using an ID instead.", removeContainerName)
 }
+
 func (rmTc *removeCommandTest) mockExecRemoveGetNilError(args []string) error {
 	// setup expected calls
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(nil, nil)
 	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false).Times(0)
 	return log.NewErrorf("The requested container with ID = %s was not found.", args[0])
 }
+
 func (rmTc *removeCommandTest) mockExecRemoveGetError(args []string) error {
 	// setup expected calls
 	err := errors.New("failed to remove container")

@@ -1,10 +1,11 @@
 Remove a container and frees the associated resources.
 
 Usage:
-  kanto-cm remove <container-id>
+  kanto-cm remove <container-id/s>
 
 Examples:
-remove <container-id>
+ remove <container-id>
+ remove <container-id> <container-id> 
  remove --name <container-name>
  remove -n <container-name>
 

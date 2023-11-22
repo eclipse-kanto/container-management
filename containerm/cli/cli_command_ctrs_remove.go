@@ -18,7 +18,7 @@ import (
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	utilcli "github.com/eclipse-kanto/container-management/containerm/util/cli"
-	errorcli "github.com/eclipse-kanto/container-management/containerm/util/error"
+	errorutil "github.com/eclipse-kanto/container-management/containerm/util/error"
 	"github.com/spf13/cobra"
 )
 
@@ -38,11 +38,10 @@ func (cc *removeCmd) init(cli *cli) {
 		Use:   "remove <container-id/s>",
 		Short: "Remove a container/s.",
 		Long:  "Remove a container and frees the associated resources.",
-		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cc.run(args)
 		},
-		Example: "remove <container-id>\n remove <container-id> <container-id> \n remove --name <container-name>\n remove -n <container-name>",
+		Example: " remove <container-id>\n remove <container-id> <container-id> \n remove --name <container-name>\n remove -n <container-name>",
 	}
 	cc.setupFlags()
 }
@@ -52,19 +51,28 @@ func (cc *removeCmd) run(args []string) error {
 		ctr  *types.Container
 		err  error
 		ctx  = context.Background()
-		errs errorcli.CompoundError
+		errs errorutil.CompoundError
 	)
 	// parse parameters
-	for _, arg := range args {
-		ctr, err = utilcli.ValidateContainerByNameArgsSingle(ctx, []string{arg}, cc.config.name, cc.cli.gwManClient)
-		if err == nil {
-			cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force)
-		} else {
-			errs.Append(err)
+	if len(args) == 0 {
+		if ctr, err = utilcli.ValidateContainerByNameArgsSingle(ctx, nil, cc.config.name, cc.cli.gwManClient); err != nil {
+			return err
 		}
-	}
-	if errs.Size() > 0 {
-		return errors.New(errs.Error())
+		return cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force)
+	} else {
+		for _, arg := range args {
+			ctr, err = utilcli.ValidateContainerByNameArgsSingle(ctx, []string{arg}, cc.config.name, cc.cli.gwManClient)
+			if err == nil {
+				if err = cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force); err != nil {
+					errs.Append(err)
+				}
+			} else {
+				errs.Append(err)
+			}
+		}
+		if errs.Size() > 0 {
+			return errors.New(errs.ErrorWithMessage("containers couldn't be removed due to the following reasons: "))
+		}
 	}
 	return nil
 }

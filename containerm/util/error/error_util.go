@@ -34,6 +34,10 @@ func (m *CompoundError) Size() int {
 
 // Error returns the combined error messages.
 func (m *CompoundError) Error() string {
+	return m.ErrorWithMessage(fmt.Sprintf("%d errors:", len(m.errs)))
+}
+
+func (m *CompoundError) ErrorWithMessage(message string) string {
 	if len(m.errs) == 0 {
 		return fmt.Sprintf("no error")
 	}
@@ -46,5 +50,6 @@ func (m *CompoundError) Error() string {
 	for i, err := range m.errs {
 		serrs[i] = fmt.Sprintf("* %s", err)
 	}
-	return fmt.Sprintf("%d errors:\n\n%s", len(m.errs), strings.Join(serrs, "\n"))
+
+	return fmt.Sprintf("%s\n\n%s", message, strings.Join(serrs, "\n"))
 }
