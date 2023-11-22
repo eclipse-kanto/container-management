@@ -59,21 +59,21 @@ func (cc *removeCmd) run(args []string) error {
 			return err
 		}
 		return cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force)
-	} else {
-		for _, arg := range args {
-			ctr, err = utilcli.ValidateContainerByNameArgsSingle(ctx, []string{arg}, cc.config.name, cc.cli.gwManClient)
-			if err == nil {
-				if err = cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force); err != nil {
-					errs.Append(err)
-				}
-			} else {
+	}
+	for _, arg := range args {
+		ctr, err = utilcli.ValidateContainerByNameArgsSingle(ctx, []string{arg}, cc.config.name, cc.cli.gwManClient)
+		if err == nil {
+			if err = cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force); err != nil {
 				errs.Append(err)
 			}
-		}
-		if errs.Size() > 0 {
-			return errors.New(errs.ErrorWithMessage("containers couldn't be removed due to the following reasons: "))
+		} else {
+			errs.Append(err)
 		}
 	}
+	if errs.Size() > 0 {
+		return errors.New(errs.ErrorWithMessage("containers couldn't be removed due to the following reasons: "))
+	}
+
 	return nil
 }
 

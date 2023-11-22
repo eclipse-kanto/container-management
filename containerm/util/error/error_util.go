@@ -37,6 +37,7 @@ func (m *CompoundError) Error() string {
 	return m.ErrorWithMessage(fmt.Sprintf("%d errors:", len(m.errs)))
 }
 
+// ErrorWithMessage returns combined error messages with a custom message.
 func (m *CompoundError) ErrorWithMessage(message string) string {
 	if len(m.errs) == 0 {
 		return fmt.Sprintf("no error")
