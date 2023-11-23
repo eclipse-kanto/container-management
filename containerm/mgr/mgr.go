@@ -269,7 +269,7 @@ func (mgr *containerMgr) Stop(ctx context.Context, id string, stopOpts *types.St
 	}
 	container.Lock()
 	defer container.Unlock()
-	go mgr.applyRestartPolicy(context.Background(), container)
+	mgr.applyRestartPolicy(context.Background(), container)
 	return nil
 }
 
@@ -312,10 +312,11 @@ func (mgr *containerMgr) Update(ctx context.Context, id string, updateOpts *type
 		changesMade = true
 	}
 
+	var rpChanged bool
 	if updateOpts.RestartPolicy != nil && !reflect.DeepEqual(updateOpts.RestartPolicy, container.HostConfig.RestartPolicy) {
 		mgr.resetContainerRestartManager(container, false)
 		container.HostConfig.RestartPolicy = updateOpts.RestartPolicy
-		changesMade = true
+		changesMade, rpChanged = true, true
 	}
 
 	if changesMade {
@@ -326,6 +327,10 @@ func (mgr *containerMgr) Update(ctx context.Context, id string, updateOpts *type
 		if _, errMeta := mgr.containerRepository.Save(container); errMeta != nil {
 			log.ErrorErr(errMeta, failedConfigStoringErrorMsg)
 		}
+	}
+
+	if rpChanged && (container.State.Exited || container.State.Status == types.Stopped) {
+		mgr.applyRestartPolicy(context.Background(), container)
 	}
 	return nil
 }
