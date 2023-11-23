@@ -1,7 +1,7 @@
-Remove a container and frees the associated resources.
+Remove one or more containers and frees the associated resources.
 
 Usage:
-  kanto-cm remove <container-id/s>
+  kanto-cm remove <container-id> ...
 
 Examples:
  remove <container-id>

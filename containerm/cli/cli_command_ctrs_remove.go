@@ -35,9 +35,9 @@ type removeConfig struct {
 func (cc *removeCmd) init(cli *cli) {
 	cc.cli = cli
 	cc.cmd = &cobra.Command{
-		Use:   "remove <container-id/s>",
-		Short: "Remove a container/s.",
-		Long:  "Remove a container and frees the associated resources.",
+		Use:   "remove <container-id> ...",
+		Short: "Remove one or more containers.",
+		Long:  "Remove one or more containers and frees the associated resources.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cc.run(args)
 		},
