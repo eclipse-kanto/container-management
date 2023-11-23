@@ -96,7 +96,7 @@ func (mgr *containerMgr) applyRestartPolicy(ctx context.Context, container *type
 				}
 			}
 			if err != nil {
-				mgr.updateConfigToStopped(ctx, container, -1, err)
+				mgr.updateConfigToStopped(ctx, container, -1, err, false)
 			}
 		}()
 	}
@@ -132,7 +132,7 @@ func (mgr *containerMgr) containersToArray() []*types.Container {
 	}
 	return ctrs
 }
-func (mgr *containerMgr) updateConfigToStopped(ctx context.Context, c *types.Container, exitCode int64, err error) error {
+func (mgr *containerMgr) updateConfigToStopped(ctx context.Context, c *types.Container, exitCode int64, err error, releaseContainerResources bool) error {
 	var (
 		code   int64
 		errMsg string
@@ -155,7 +155,10 @@ func (mgr *containerMgr) updateConfigToStopped(ctx context.Context, c *types.Con
 		}
 	}()
 
-	return mgr.releaseContainerResources(c)
+	if releaseContainerResources {
+		return mgr.releaseContainerResources(c)
+	}
+	return nil
 }
 
 func (mgr *containerMgr) updateConfigToExited(ctx context.Context, c *types.Container, exitCode int64, err error, oomKilled bool) error {
@@ -298,7 +301,7 @@ func (mgr *containerMgr) processStartContainer(ctx context.Context, id string, r
 
 	pid, err = mgr.ctrClient.StartContainer(ctx, container, "")
 	if err != nil {
-		_ = mgr.updateConfigToStopped(ctx, container, -1, err)
+		_ = mgr.updateConfigToStopped(ctx, container, -1, err, true)
 		return err
 	}
 
@@ -361,7 +364,7 @@ func (mgr *containerMgr) stopContainer(ctx context.Context, container *types.Con
 		container.ManuallyStopped = false
 		return exitErr
 	}
-	return mgr.updateConfigToStopped(ctx, container, exitCode, exitErr)
+	return mgr.updateConfigToStopped(ctx, container, exitCode, exitErr, true)
 }
 
 func (mgr *containerMgr) stopManagerService(ctx context.Context) error {
