@@ -32,7 +32,7 @@ func ValidateContainerByNameArgsSingle(ctx context.Context, args []string, provi
 		err       error
 	)
 	// parse parameters
-	if len(args) == 1 {
+	if len(args) >= 1 {
 		if container, err = kantoCMClient.Get(ctx, args[0]); err != nil {
 			return nil, err
 		} else if container == nil {
