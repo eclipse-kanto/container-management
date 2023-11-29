@@ -1,0 +1,12 @@
+name: Create Coverage
+
+on: 
+  push:
+    branches:
+    - main
+
+jobs:
+  generate-coverage-report:
+    uses: eclipse-kanto/kanto/.github/workflows/coverage-template.yaml@main
+    with: 
+      coverage-command: go test ./... -coverprofile=coverage.out -covermode count
