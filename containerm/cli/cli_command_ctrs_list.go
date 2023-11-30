@@ -17,6 +17,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	"strings"
 	"text/tabwriter"
 
 	"github.com/eclipse-kanto/container-management/containerm/client"
@@ -30,7 +32,9 @@ type listCmd struct {
 }
 
 type listConfig struct {
-	name string
+	name   string
+	quiet  bool
+	filter []string
 }
 
 func (cc *listCmd) init(cli *cli) {
@@ -43,7 +47,7 @@ func (cc *listCmd) init(cli *cli) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cc.run(args)
 		},
-		Example: "list\n list --name <container-name>\n list -n <container-name>",
+		Example: " list\n list --name <container-name>\n list -n <container-name>\n list -q\n list --filter <status/image/exitcode>",
 	}
 	cc.setupFlags()
 }
@@ -57,6 +61,20 @@ func (cc *listCmd) run(args []string) error {
 	if err != nil {
 		return err
 	}
+	if len(cc.config.filter) > 0 && len(ctrs) > 0 {
+		filtered, err := filterBy(cc.config.filter, ctrs)
+		if err != nil {
+			return err
+		}
+		ctrs = filtered
+	}
+	if cc.config.quiet != false && len(ctrs) > 0 {
+		for _, ctr := range ctrs {
+			fmt.Printf("%s ", ctr.ID)
+		}
+		fmt.Println()
+		return nil
+	}
 	if len(ctrs) == 0 {
 		fmt.Println("No found containers.")
 	} else {
@@ -69,6 +87,46 @@ func (cc *listCmd) setupFlags() {
 	flagSet := cc.cmd.Flags()
 	// init name flags
 	flagSet.StringVarP(&cc.config.name, "name", "n", "", "List all containers with a specific name.")
+	flagSet.BoolVarP(&cc.config.quiet, "quiet", "q", false, "List only container IDs.")
+	flagSet.StringSliceVar(&cc.config.filter, "filter", nil, "Lists only containers with the filter.")
+}
+
+func filterBy(input []string, ctrs []*types.Container) ([]*types.Container, error) {
+	var (
+		holderStatus      string
+		holderImage       string
+		convertedExitCode int = -1
+		err               error
+	)
+	filteredCtrs := []*types.Container{}
+	for _, inp := range input {
+		if strings.HasPrefix(inp, "status=") {
+			holderStatus = strings.TrimPrefix(inp, "status=")
+		} else if strings.HasPrefix(inp, "image=") {
+			holderImage = strings.TrimPrefix(inp, "image=")
+		} else if strings.HasPrefix(inp, "exitcode=") {
+			exitcodeHolder := strings.TrimPrefix(inp, "exitcode=")
+			convertedExitCode, err = strconv.Atoi(exitcodeHolder)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, fmt.Errorf("No such filter.")
+		}
+	}
+	for _, ctr := range ctrs {
+		if holderStatus != "" && !strings.EqualFold(ctr.State.Status.String(), holderStatus) {
+			continue
+		}
+		if holderImage != "" && !strings.EqualFold(ctr.Image.Name, holderImage) {
+			continue
+		}
+		if int64(convertedExitCode) != -1 && ctr.State.ExitCode != int64(convertedExitCode) {
+			continue
+		}
+		filteredCtrs = append(filteredCtrs, ctr)
+	}
+	return filteredCtrs, nil
 }
 
 /*

@@ -4,13 +4,17 @@ Usage:
   kanto-cm list
 
 Examples:
-list
+ list
  list --name <container-name>
  list -n <container-name>
+ list -q
+ list --filter <status/image/exitcode>
 
 Flags:
-  -h, --help          help for list
-  -n, --name string   List all containers with a specific name.
+      --filter strings   Lists only containers with the filter.
+  -h, --help             help for list
+  -n, --name string      List all containers with a specific name.
+  -q, --quiet            List only container IDs.
 
 Global Flags:
       --debug         Switch commands log level to DEBUG mode

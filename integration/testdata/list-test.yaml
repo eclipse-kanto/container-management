@@ -50,6 +50,26 @@ onExit:
   - binary: "kanto-cm"
     args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_state_created", "-f"]
 ---
+name: list_containers_with_quiet
+setupCmd:
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "list_containers_with_quiet_one", "docker.io/library/influxdb:1.8.4"]
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "list_containers_with_quiet_two", "docker.io/library/influxdb:1.8.4"]
+command:
+  binary: kanto-cm
+  args: ["list", "--host", "$KANTO_HOST", "-q"]
+expected:
+  exitCode: 0
+customResult:
+  type: REGEX
+  args: ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]
+onExit:
+  - binary: "kanto-cm"
+    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_quiet_one", "-f"]
+  - binary: "kanto-cm"
+    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_quiet_two", "-f"]
+---
 name: list_existing_container
 setupCmd:
   - binary: kanto-cm

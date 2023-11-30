@@ -24,7 +24,9 @@ import (
 
 const (
 	// command flags
-	listCmdFlagName = "name"
+	listCmdFlagName   = "name"
+	listCmdFlagQuiet  = "quiet"
+	listCmdFlagFilter = "filter"
 
 	// test input constants
 	listContainerID = "test-ctr"
@@ -117,6 +119,42 @@ func (listTc *listCommandTest) generateRunExecutionConfigs() map[string]testRunE
 			},
 			mockExecution: listTc.mockExecListByNameNoCtrs,
 		},
+		"test_list_quiet": {
+			flags: map[string]string{
+				listCmdFlagQuiet: "true",
+			},
+			mockExecution: listTc.mockExecListQuiet,
+		},
+		"test_list_with_filter_status": {
+			flags: map[string]string{
+				listCmdFlagFilter: "status=creating",
+			},
+			mockExecution: listTc.mockExecListWithFilter,
+		},
+		"test_list_with_filter_image": {
+			flags: map[string]string{
+				listCmdFlagFilter: "image=test",
+			},
+			mockExecution: listTc.mockExecListWithFilter,
+		},
+		"test_list_with_filter_exit_code": {
+			flags: map[string]string{
+				listCmdFlagFilter: "exitcode=0",
+			},
+			mockExecution: listTc.mockExecListWithFilter,
+		},
+		"test_list_with_multiple_filters": {
+			flags: map[string]string{
+				listCmdFlagFilter: "image=test,exitcode=0",
+			},
+			mockExecution: listTc.mockExecListWithFilter,
+		},
+		"test_list_with_filter_error": {
+			flags: map[string]string{
+				listCmdFlagFilter: "test=test",
+			},
+			mockExecution: listTc.mockExecListWithFilterError,
+		},
 		"test_list_by_name_err": {
 			flags: map[string]string{
 				listCmdFlagName: listFlagName,
@@ -170,6 +208,41 @@ func (listTc *listCommandTest) mockExecListByNameNoCtrs(args []string) error {
 	listTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(listFlagName))).Times(1).Return(nil, nil)
 	// no error expected
 	return nil
+}
+
+func (listTc *listCommandTest) mockExecListQuiet(args []string) error {
+	// setup expected calls
+	ctrs := []*types.Container{{
+		ID:    listContainerID,
+		Name:  listFlagName,
+		State: &types.State{},
+	}}
+	listTc.mockClient.EXPECT().List(context.Background()).Times(1).Return(ctrs, nil)
+	// no error expected
+	return nil
+}
+
+func (listTc *listCommandTest) mockExecListWithFilter(args []string) error {
+	// setup expected calls
+	ctrs := []*types.Container{{
+		ID:    listContainerID,
+		Name:  listFlagName,
+		State: &types.State{},
+	}}
+	listTc.mockClient.EXPECT().List(context.Background()).Times(1).Return(ctrs, nil)
+	// no error expected
+	return nil
+}
+
+func (listTc *listCommandTest) mockExecListWithFilterError(args []string) error {
+	err := log.NewError("No such filter.")
+	ctrs := []*types.Container{{
+		ID:    listContainerID,
+		Name:  listFlagName,
+		State: &types.State{},
+	}}
+	listTc.mockClient.EXPECT().List(context.Background()).Times(1).Return(ctrs, nil)
+	return err
 }
 
 func (listTc *listCommandTest) mockExecListByNameErrors(args []string) error {
