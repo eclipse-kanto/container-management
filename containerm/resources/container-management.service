@@ -7,6 +7,8 @@ Requires=containerd.service
 
 [Service]
 Type=simple
+Environment=HOME=%h
+Environment=XDG_CONFIG_HOME=%E
 ExecStart=/usr/bin/container-management --cfg-file /etc/container-management/config.json
 Restart=always
 TimeoutSec=300
