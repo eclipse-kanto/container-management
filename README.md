@@ -2,6 +2,8 @@
 
 # Eclipse Kanto - Container Management
 
+![Coverage](https://github.com/eclipse-kanto/container-management/wiki/coverage.svg)
+
 Eclipse Kanto Container Management adopts cloud-native concepts, approaches and specifications adapted in a
 device-centric fashion achieving a lightweight pluggable management for containers at the edge. It is specially designed
 to be lightweight and easily deployable on a wide range of edge devices and platforms to enable a secured, isolated and
