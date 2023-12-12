@@ -50,6 +50,7 @@ type containerdClient struct {
 	ioMgr              containerIOManager
 	logsMgr            containerLogsManager
 	decMgr             containerDecryptMgr
+	verifier           containerVerifier
 	spi                containerdSpi
 	eventsCancel       context.CancelFunc
 	runcRuntime        types.Runtime

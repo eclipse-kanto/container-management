@@ -443,6 +443,7 @@ func TestClientInternalPullImage(t *testing.T) {
 				decMgr:             decryptMgrMock,
 				spi:                spiMock,
 				registriesResolver: registriesResolverMock,
+				verifier:           &skipVerifier{},
 			}
 			expectedImage, expectedErr := testCaseData.mockExec(decryptMgrMock, spiMock, registriesResolverMock, ctrl)
 			actualImage, actualErr := ctrdClient.pullImage(context.TODO(), testImageInfo)
