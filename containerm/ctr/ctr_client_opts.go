@@ -13,26 +13,29 @@
 package ctr
 
 import (
+	"time"
+
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
-	"time"
 )
 
 // ContainerOpts represents container engine client's configuration options.
 type ContainerOpts func(ctrOptions *ctrOpts) error
 
 type ctrOpts struct {
-	namespace          string
-	connectionPath     string
-	registryConfigs    map[string]*RegistryConfig
-	rootExec           string
-	metaPath           string
-	imageDecKeys       []string
-	imageDecRecipients []string
-	runcRuntime        types.Runtime
-	imageExpiry        time.Duration
-	imageExpiryDisable bool
-	leaseID            string
+	namespace           string
+	connectionPath      string
+	registryConfigs     map[string]*RegistryConfig
+	rootExec            string
+	metaPath            string
+	imageDecKeys        []string
+	imageDecRecipients  []string
+	runcRuntime         types.Runtime
+	imageExpiry         time.Duration
+	imageExpiryDisable  bool
+	leaseID             string
+	imageVerifierType   VerifierType
+	imageVerifierConfig map[string]string
 }
 
 // RegistryConfig represents a single registry's access configuration.
@@ -153,6 +156,27 @@ func WithCtrdImageExpiryDisable(disable bool) ContainerOpts {
 func WithCtrdLeaseID(leaseID string) ContainerOpts {
 	return func(ctrOptions *ctrOpts) error {
 		ctrOptions.leaseID = leaseID
+		return nil
+	}
+}
+
+// WithCtrImageVerifierType sets the image verifier type of the container client instance.
+func WithCtrImageVerifierType(imageVerifierType string) ContainerOpts {
+	return func(ctrOptions *ctrOpts) error {
+		switch imageVerifierType {
+		case string(VerifierNone), string(VerifierNotation):
+			ctrOptions.imageVerifierType = VerifierType(imageVerifierType)
+		default:
+			return log.NewErrorf("unexpected image verifier type = %s", imageVerifierType)
+		}
+		return nil
+	}
+}
+
+// WithCtrImageVerifierConfig sets the image verifier config of the container client instance.
+func WithCtrImageVerifierConfig(imageVerifierConfig map[string]string) ContainerOpts {
+	return func(ctrOptions *ctrOpts) error {
+		ctrOptions.imageVerifierConfig = imageVerifierConfig
 		return nil
 	}
 }

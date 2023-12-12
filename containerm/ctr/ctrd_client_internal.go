@@ -15,11 +15,8 @@ package ctr
 import (
 	"context"
 	"fmt"
-	"github.com/opencontainers/image-spec/identity"
 	"syscall"
 	"time"
-
-	"golang.org/x/sys/unix"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/events"
@@ -31,6 +28,8 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"
+	"github.com/opencontainers/image-spec/identity"
+	"golang.org/x/sys/unix"
 )
 
 func (ctrdClient *containerdClient) generateRemoteOpts(imageInfo types.Image) []containerd.RemoteOpt {
@@ -115,6 +114,9 @@ func (ctrdClient *containerdClient) pullImage(ctx context.Context, imageInfo typ
 	if err != nil {
 		// if the image is not present locally - pull it
 		if errdefs.IsNotFound(err) {
+			if err = ctrdClient.verifier.Verify(ctx, imageInfo); err != nil {
+				return nil, err
+			}
 			ctrdImage, err = ctrdClient.spi.PullImage(ctx, imageInfo.Name, ctrdClient.generateRemoteOpts(imageInfo)...)
 			if err != nil {
 				return nil, err
