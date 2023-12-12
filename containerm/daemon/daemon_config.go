@@ -230,7 +230,7 @@ func (vc *verifierConfig) Set(value string) error {
 	return nil
 }
 
-// Set verifierConfig from string, used for flag set
+// Type returns the verifierConfig flag type
 func (vc verifierConfig) Type() string {
 	return "stringSlice"
 }

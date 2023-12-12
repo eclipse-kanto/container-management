@@ -18,10 +18,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/opencontainers/image-spec/identity"
-
-	"golang.org/x/sys/unix"
-
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/errdefs"
@@ -32,6 +28,8 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"
+	"github.com/opencontainers/image-spec/identity"
+	"golang.org/x/sys/unix"
 )
 
 func (ctrdClient *containerdClient) generateRemoteOpts(imageInfo types.Image) []containerd.RemoteOpt {
