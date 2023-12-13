@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -675,10 +676,10 @@ func TestImageVerifierFlag(t *testing.T) {
 	)
 
 	tests := map[string]struct {
-		value          string
-		expectedValue  map[string]string
-		expectedString string
-		expectedErr    error
+		value               string
+		expectedValue       map[string]string
+		expectedStringPairs []string
+		expectedErr         error
 	}{
 		"test_empty_error": {
 			expectedErr: log.NewError("the image verifier config could not be empty"),
@@ -688,21 +689,23 @@ func TestImageVerifierFlag(t *testing.T) {
 			expectedErr: log.NewError("could not parse image verification config, invalid key-value pair - invalid"),
 		},
 		"test_single_config_no_error": {
-			value:          testSinglePair,
-			expectedString: testSinglePair,
-			expectedValue:  map[string]string{"key": "value"},
+			value:               testSinglePair,
+			expectedStringPairs: []string{testSinglePair},
+			expectedValue:       map[string]string{"key": "value"},
 		},
 		"test_multiple_configs_no_error": {
-			value:          testMultiplePairs,
-			expectedString: testMultiplePairs,
-			expectedValue:  map[string]string{"key0": "value0", "key1": "value1", "key2": "value2"},
+			value:               testMultiplePairs,
+			expectedStringPairs: strings.Split(testMultiplePairs, ","),
+			expectedValue:       map[string]string{"key0": "value0", "key1": "value1", "key2": "value2"},
 		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			verifierConfig := &verifierConfig{}
 			testutil.AssertError(t, test.expectedErr, verifierConfig.Set(test.value))
-			testutil.AssertEqual(t, test.expectedString, verifierConfig.String())
+			for _, expectedPair := range test.expectedStringPairs {
+				testutil.AssertTrue(t, strings.Contains(verifierConfig.String(), expectedPair))
+			}
 			testutil.AssertEqual(t, len(test.expectedValue), len(*verifierConfig))
 			assertStringMap(t, test.expectedValue, *verifierConfig)
 
