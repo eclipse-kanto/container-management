@@ -111,7 +111,7 @@ func filterBy(input []string, ctrs []*types.Container) ([]*types.Container, erro
 				return nil, err
 			}
 		} else {
-			return nil, fmt.Errorf("No such filter.")
+			return nil, fmt.Errorf("no such filter")
 		}
 	}
 	for _, ctr := range ctrs {

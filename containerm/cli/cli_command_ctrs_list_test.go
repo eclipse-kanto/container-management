@@ -235,7 +235,7 @@ func (listTc *listCommandTest) mockExecListWithFilter(args []string) error {
 }
 
 func (listTc *listCommandTest) mockExecListWithFilterError(args []string) error {
-	err := log.NewError("No such filter.")
+	err := log.NewError("no such filter")
 	ctrs := []*types.Container{{
 		ID:    listContainerID,
 		Name:  listFlagName,
