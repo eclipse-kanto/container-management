@@ -13,10 +13,11 @@
 package ctr
 
 import (
-	"github.com/eclipse-kanto/container-management/containerm/containers/types"
-	"github.com/eclipse-kanto/container-management/containerm/log"
 	"testing"
 	"time"
+
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
+	"github.com/eclipse-kanto/container-management/containerm/log"
 
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 )
@@ -35,7 +36,7 @@ const (
 )
 
 var (
-	regConfig = &RegistryConfig{
+	testRegConfig = &RegistryConfig{
 		IsInsecure: false,
 		Credentials: &AuthCredentials{
 			UserID:   testUser,
@@ -43,19 +44,22 @@ var (
 		},
 		Transport: nil,
 	}
+	testVerifierConfig = map[string]string{"testKey": "testValue", "testAnotherKey": "testAnotherValue"}
 
 	testOpt = &ctrOpts{
-		namespace:          testNamespace,
-		connectionPath:     testConnectionPath,
-		registryConfigs:    map[string]*RegistryConfig{testHost: regConfig},
-		rootExec:           testRootExec,
-		metaPath:           testMetaPath,
-		imageDecKeys:       testDecKeys,
-		imageDecRecipients: testDecRecipients,
-		runcRuntime:        types.RuntimeTypeV2runcV2,
-		imageExpiry:        testImageExpiry,
-		imageExpiryDisable: testImageExpiryDisable,
-		leaseID:            testLeaseID,
+		namespace:           testNamespace,
+		connectionPath:      testConnectionPath,
+		registryConfigs:     map[string]*RegistryConfig{testHost: testRegConfig},
+		rootExec:            testRootExec,
+		metaPath:            testMetaPath,
+		imageDecKeys:        testDecKeys,
+		imageDecRecipients:  testDecRecipients,
+		runcRuntime:         types.RuntimeTypeV2runcV2,
+		imageExpiry:         testImageExpiry,
+		imageExpiryDisable:  testImageExpiryDisable,
+		leaseID:             testLeaseID,
+		imageVerifierType:   VerifierNotation,
+		imageVerifierConfig: testVerifierConfig,
 	}
 )
 
@@ -72,18 +76,27 @@ func TestCtrOpts(t *testing.T) {
 			expectedOpts: &ctrOpts{},
 			expectedErr:  log.NewErrorf("unexpected runc runtime = unknown"),
 		},
+		"test_ctr_opts_unexpected_image_verifier_type_error": {
+			opts: []ContainerOpts{
+				WithCtrImageVerifierType("unknown"),
+			},
+			expectedOpts: &ctrOpts{},
+			expectedErr:  log.NewErrorf("unexpected image verifier type = unknown"),
+		},
 		"test_ctr_opts_no_error": {
 			opts: []ContainerOpts{WithCtrdConnectionPath(testConnectionPath),
 				WithCtrdNamespace(testNamespace),
 				WithCtrdRootExec(testRootExec),
 				WithCtrdMetaPath(testMetaPath),
-				WithCtrdRegistryConfigs(map[string]*RegistryConfig{testHost: regConfig}),
+				WithCtrdRegistryConfigs(map[string]*RegistryConfig{testHost: testRegConfig}),
 				WithCtrdImageDecryptKeys(testDecKeys...),
 				WithCtrdImageDecryptRecipients(testDecRecipients...),
 				WithCtrdRuncRuntime(string(types.RuntimeTypeV2runcV2)),
 				WithCtrdImageExpiry(testImageExpiry),
 				WithCtrdImageExpiryDisable(testImageExpiryDisable),
-				WithCtrdLeaseID(testLeaseID)},
+				WithCtrdLeaseID(testLeaseID),
+				WithCtrImageVerifierType(string(VerifierNotation)),
+				WithCtrImageVerifierConfig(testVerifierConfig)},
 			expectedOpts: testOpt,
 		},
 	}
