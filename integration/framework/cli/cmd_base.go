@@ -106,9 +106,7 @@ func RunCmdTestCases(t *testing.T, cmdList []TestCaseCMD) {
 				runMultipleCommands(t, *cmd.setupCmd)
 			}
 			checkArguments(t, &cmd.icmd)
-			fmt.Printf("Running command: %s %s\n", cmd.icmd.Command[0], cmd.icmd.Command[1:])
 			result := icmd.RunCommand(cmd.icmd.Command[0], cmd.icmd.Command[1:]...)
-			// result := icmd.RunCmd(cmd.icmd)
 			if cmd.goldenFile != "" {
 				assert.Assert(t, golden.String(result.Stdout(), cmd.goldenFile))
 			}
@@ -167,7 +165,6 @@ func fromAPITestCommand(cmd TestCommand) TestCaseCMD {
 	return TestCaseCMD{
 		name: cmd.Name,
 		icmd: icmd.Command(cmd.Command.Binary, cmd.Command.Args...),
-		// icmd: *checkArguments(cmd.Command.Binary, cmd.Command.Args...),
 		expected: icmd.Expected{
 			ExitCode: cmd.Expected.ExitCode,
 			Timeout:  cmd.Expected.Timeout,
@@ -190,7 +187,6 @@ func buildCmdArrFromCommand(cmd *[]Command) *[]icmd.Cmd {
 	cmds := make([]icmd.Cmd, 0)
 	for _, cmd := range *cmd {
 		cmds = append(cmds, icmd.Command(cmd.Binary, cmd.Args...))
-		// cmds = append(cmds, *checkArguments(cmd.Binary, cmd.Args...))
 	}
 	return &cmds
 }

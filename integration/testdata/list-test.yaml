@@ -58,7 +58,7 @@ setupCmd:
     args: ["create", "--host", "$KANTO_HOST", "-n", "list_containers_with_quiet_two", "docker.io/library/influxdb:1.8.4"]
 command:
   binary: kanto-cm
-  args: ["list", "--host", "$KANTO_HOST", "-q"]
+  args: ["list", "--host", "$KANTO_HOST", "--quiet"]
 expected:
   exitCode: 0
 customResult:
@@ -69,6 +69,29 @@ onExit:
     args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_quiet_one", "-f"]
   - binary: "kanto-cm"
     args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_quiet_two", "-f"]
+---
+name: list_containers_with_filter
+setupCmd:
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "list_containers_with_filter_one", "docker.io/library/influxdb:1.8.4"]
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "list_containers_with_filter_two", "docker.io/library/influxdb:1.8.4"]
+command:
+  binary: kanto-cm
+  args: ["list", "--host", "$KANTO_HOST", "--filter", "status=created"]
+expected:
+  exitCode: 0
+customResult:
+  type: REGEX
+  args: ["ID                                      |Name                                   |Image                                                          |Status         |Finished At                     |Exit Code     |
+        -------------------------------------   |-------------------------------------  |------------------------------------------------------------   |----------     |------------------------------  |----------    |
+        [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}    |list_containers_with_filter_one                     |docker.io/library/influxdb:1.8.4                               |Created        |                                |0             |
+        [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}    |list_containers_with_filter_two                     |docker.io/library/influxdb:1.8.4                               |Created        |                                |0             |"]
+onExit:
+  - binary: "kanto-cm"
+    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_filter_one", "-f"]
+  - binary: "kanto-cm"
+    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_filter_two", "-f"]
 ---
 name: list_existing_container
 setupCmd:

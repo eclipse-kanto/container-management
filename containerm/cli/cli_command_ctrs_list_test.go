@@ -14,6 +14,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/eclipse-kanto/container-management/containerm/client"
@@ -212,11 +213,18 @@ func (listTc *listCommandTest) mockExecListByNameNoCtrs(args []string) error {
 
 func (listTc *listCommandTest) mockExecListQuiet(args []string) error {
 	// setup expected calls
-	ctrs := []*types.Container{{
-		ID:    listContainerID,
-		Name:  listFlagName,
-		State: &types.State{},
-	}}
+	ctrs := []*types.Container{
+		{
+			ID:    fmt.Sprintf("%s-%d", listContainerID, 1),
+			Name:  listFlagName,
+			State: &types.State{},
+		},
+		{
+			ID:    fmt.Sprintf("%s-%d", listContainerID, 2),
+			Name:  listFlagName,
+			State: &types.State{},
+		},
+	}
 	listTc.mockClient.EXPECT().List(context.Background()).Times(1).Return(ctrs, nil)
 	// no error expected
 	return nil
@@ -235,7 +243,7 @@ func (listTc *listCommandTest) mockExecListWithFilter(args []string) error {
 }
 
 func (listTc *listCommandTest) mockExecListWithFilterError(args []string) error {
-	err := log.NewError("no such filter")
+	err := log.NewError("no filter: test")
 	ctrs := []*types.Container{{
 		ID:    listContainerID,
 		Name:  listFlagName,

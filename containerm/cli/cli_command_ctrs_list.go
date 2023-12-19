@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-
 	"strings"
 	"text/tabwriter"
 
@@ -47,7 +46,7 @@ func (cc *listCmd) init(cli *cli) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cc.run(args)
 		},
-		Example: " list\n list --name <container-name>\n list -n <container-name>\n list -q\n list --filter <status/image/exitcode>",
+		Example: " list\n list --name <container-name>\n list --quiet\n list --filter status=created",
 	}
 	cc.setupFlags()
 }
@@ -61,18 +60,21 @@ func (cc *listCmd) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	if len(cc.config.filter) > 0 && len(ctrs) > 0 {
+	if len(cc.config.filter) > 0 {
 		filtered, err := filterBy(cc.config.filter, ctrs)
 		if err != nil {
 			return err
 		}
 		ctrs = filtered
 	}
-	if cc.config.quiet != false && len(ctrs) > 0 {
-		for _, ctr := range ctrs {
-			fmt.Printf("%s ", ctr.ID)
+	if cc.config.quiet {
+		for i, ctr := range ctrs {
+			if i != len(ctrs)-1 {
+				fmt.Printf("%s ", ctr.ID)
+			} else {
+				fmt.Println(ctr.ID)
+			}
 		}
-		fmt.Println()
 		return nil
 	}
 	if len(ctrs) == 0 {
@@ -88,7 +90,7 @@ func (cc *listCmd) setupFlags() {
 	// init name flags
 	flagSet.StringVarP(&cc.config.name, "name", "n", "", "List all containers with a specific name.")
 	flagSet.BoolVarP(&cc.config.quiet, "quiet", "q", false, "List only container IDs.")
-	flagSet.StringSliceVar(&cc.config.filter, "filter", nil, "Lists only containers with the filter.")
+	flagSet.StringSliceVar(&cc.config.filter, "filter", nil, "Lists only containers with a specified filter. The containers can be filtered by their status, image and exitcode.")
 }
 
 func filterBy(input []string, ctrs []*types.Container) ([]*types.Container, error) {
@@ -105,13 +107,12 @@ func filterBy(input []string, ctrs []*types.Container) ([]*types.Container, erro
 		} else if strings.HasPrefix(inp, "image=") {
 			holderImage = strings.TrimPrefix(inp, "image=")
 		} else if strings.HasPrefix(inp, "exitcode=") {
-			exitcodeHolder := strings.TrimPrefix(inp, "exitcode=")
-			convertedExitCode, err = strconv.Atoi(exitcodeHolder)
+			convertedExitCode, err = strconv.Atoi(strings.TrimPrefix(inp, "exitcode="))
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			return nil, fmt.Errorf("no such filter")
+			return nil, fmt.Errorf("no filter: %s", strings.Split(inp, "=")[0])
 		}
 	}
 	for _, ctr := range ctrs {
