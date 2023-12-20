@@ -44,11 +44,7 @@ onExit:
   - binary: "kanto-cm"
     args: ["stop", "--host", "$KANTO_HOST", "-s", "SIGKILL", "-n", "list_containers_with_state_running"]
   - binary: "kanto-cm"
-    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_state_running", "-f"]
-  - binary: "kanto-cm"
-    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_state_stopped", "-f"]
-  - binary: "kanto-cm"
-    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_state_created", "-f"]
+    args: ["remove", "--host", "$KANTO_HOST", "$(kanto-cm list --quiet)"]
 ---
 name: list_containers_with_quiet
 setupCmd:
@@ -66,9 +62,7 @@ customResult:
   args: ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_quiet_one", "-f"]
-  - binary: "kanto-cm"
-    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_quiet_two", "-f"]
+    args: ["remove", "--host", "$KANTO_HOST", "$(kanto-cm list --quiet)"]
 ---
 name: list_containers_with_filter
 setupCmd:
@@ -89,9 +83,7 @@ customResult:
         [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}    |list_containers_with_filter_two                     |docker.io/library/influxdb:1.8.4                               |Created        |                                |0             |"]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_filter_one", "-f"]
-  - binary: "kanto-cm"
-    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_with_filter_two", "-f"]
+    args: ["remove", "--host", "$KANTO_HOST", "$(kanto-cm list --quiet)"]
 ---
 name: list_existing_container
 setupCmd:
@@ -112,9 +104,7 @@ customResult:
         ]
 onExit:
   - binary: "kanto-cm"
-    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_ctr0", "-f"]
-  - binary: "kanto-cm"
-    args: ["remove", "--host", "$KANTO_HOST", "-n", "list_containers_ctr1", "-f"]
+    args: ["remove", "--host", "$KANTO_HOST", "$(kanto-cm list --quiet)"]
 ---
 name: list_not_existing_container
 command:
