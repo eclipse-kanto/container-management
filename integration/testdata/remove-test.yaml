@@ -59,3 +59,15 @@ onExit:
     args: ["stop", "--host", "$KANTO_HOST", "-s", "SIGKILL", "-n", "remove_container_with_state_running"]
   - binary: "kanto-cm"
     args: ["remove", "--host", "$KANTO_HOST", "-n", "remove_container_with_state_running", "-f"]
+---
+name: remove_multiple_containers
+setupCmd:
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "remove_container_one", "docker.io/library/influxdb:1.8.4"]
+  - binary: kanto-cm
+    args: ["create", "--host", "$KANTO_HOST", "-n", "remove_container_two", "docker.io/library/influxdb:1.8.4"]
+command:
+  binary: kanto-cm
+  args: ["remove", "--host", "$KANTO_HOST", "$(kanto-cm list --quiet)"]
+expected:
+  exitCode: 0

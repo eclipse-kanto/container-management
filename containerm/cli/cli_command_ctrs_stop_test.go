@@ -26,7 +26,7 @@ import (
 
 const (
 	// command flags
-	stopCmdFlagTimeout = "timeout"
+	stopCmdFlagTimeout = "time"
 	stopCmdFlagName    = "name"
 	stopCmdFlagForce   = "force"
 	stopCmdFlagSignal  = "signal"
