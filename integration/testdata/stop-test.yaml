@@ -1,4 +1,4 @@
-name: remove_help
+name: stop_help
 command:
   binary: kanto-cm
   args: ["stop", "-h"]

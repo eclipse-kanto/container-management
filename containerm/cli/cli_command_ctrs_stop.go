@@ -44,7 +44,7 @@ func (cc *stopCmd) init(cli *cli) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cc.run(args)
 		},
-		Example: "stop <container-id>\n stop --name <container-name>\n stop -n <container-name>",
+		Example: " stop <container-id>\n stop --name <container-name>\n stop -n <container-name>",
 	}
 	cc.setupFlags()
 }
@@ -75,7 +75,7 @@ func (cc *stopCmd) run(args []string) error {
 func (cc *stopCmd) setupFlags() {
 	flagSet := cc.cmd.Flags()
 	// init timeout flag
-	flagSet.Int64VarP(&cc.config.timeout, "timeout", "t", math.MinInt64, "Sets the timeout period in seconds to gracefully stop the container. When timeout expires the container process would be forcibly killed.")
+	flagSet.Int64VarP(&cc.config.timeout, "time", "t", math.MinInt64, "Sets the timeout period in seconds to gracefully stop the container. When timeout expires the container process would be forcibly killed.")
 	// init name flag
 	flagSet.StringVarP(&cc.config.name, "name", "n", "", "Stop a container with a specific name.")
 	// init force flag
