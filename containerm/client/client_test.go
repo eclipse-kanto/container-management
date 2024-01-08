@@ -605,9 +605,10 @@ func TestUpdate(t *testing.T) {
 }
 
 type testRemoveArgs struct {
-	ctx   context.Context
-	id    string
-	force bool
+	ctx      context.Context
+	id       string
+	force    bool
+	stopOpts *types.StopOpts
 }
 type mockExecRemove func(args testRemoveArgs) error
 
@@ -634,6 +635,14 @@ func TestRemove(t *testing.T) {
 			},
 			mockExecution: mockExecRemoveErrors,
 		},
+		"test_remove_stop_opts": {
+			args: testRemoveArgs{
+				ctx:      testCtx,
+				force:    true,
+				stopOpts: &types.StopOpts{Timeout: 10},
+			},
+			mockExecution: mockExecRemoveStopOpts,
+		},
 	}
 
 	// execute tests
@@ -643,7 +652,7 @@ func TestRemove(t *testing.T) {
 
 			expectedRunErr := testCase.mockExecution(testCase.args)
 
-			resultErr := testClient.Remove(testCase.args.ctx, testCase.args.id, testCase.args.force)
+			resultErr := testClient.Remove(testCase.args.ctx, testCase.args.id, testCase.args.force, testCase.args.stopOpts)
 
 			testutil.AssertError(t, expectedRunErr, resultErr)
 		})
@@ -994,6 +1003,18 @@ func mockExecRemoveNoErrors(args testRemoveArgs) error {
 	mockContainersClient.EXPECT().Remove(args.ctx, gomock.Eq(&pbcontainers.RemoveContainerRequest{
 		Id:    args.id,
 		Force: args.force,
+	})).Times(1).Return(nil, nil)
+	return nil
+}
+
+func mockExecRemoveStopOpts(args testRemoveArgs) error {
+	mockContainersClient.EXPECT().Remove(args.ctx, gomock.Eq(&pbcontainers.RemoveContainerRequest{
+		Id:    args.id,
+		Force: args.force,
+		StopOptions: &containers.StopOptions{
+			Timeout: args.stopOpts.Timeout,
+			Force:   args.stopOpts.Force,
+		},
 	})).Times(1).Return(nil, nil)
 	return nil
 }

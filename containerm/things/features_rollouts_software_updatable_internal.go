@@ -258,7 +258,7 @@ func (su *softwareUpdatable) removeDependency(toRemove *datatypes.DependencyDesc
 		log.Warn("container with ID = %s does not exist", toRemove.Name)
 		err = log.NewErrorf("container with ID = %s does not exist", toRemove.Name)
 	} else {
-		err = su.mgr.Remove(ctx, toRemove.Name, true) // TODO currently matching only on Name - the container id
+		err = su.mgr.Remove(ctx, toRemove.Name, true, nil) // TODO currently matching only on Name - the container id
 	}
 	return err
 }

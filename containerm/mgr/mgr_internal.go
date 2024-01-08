@@ -390,10 +390,11 @@ func (mgr *containerMgr) stopManagerService(ctx context.Context) error {
 	}
 	return nil
 }
+
 func (mgr *containerMgr) fillContainerStopDefaults(stopOpts *types.StopOpts) {
 	if stopOpts != nil {
 		if stopOpts.Timeout == 0 {
-			stopOpts.Timeout = mgr.defaultCtrsStopTimeout
+			stopOpts.Timeout = int64(mgr.defaultCtrsStopTimeout.Seconds())
 		}
 		if stopOpts.Signal == "" {
 			stopOpts.Signal = sigterm
@@ -402,7 +403,7 @@ func (mgr *containerMgr) fillContainerStopDefaults(stopOpts *types.StopOpts) {
 }
 func (mgr *containerMgr) getContainerStopOptions(force bool) *types.StopOpts {
 	return &types.StopOpts{
-		Timeout: mgr.defaultCtrsStopTimeout,
+		Timeout: int64(mgr.defaultCtrsStopTimeout.Seconds()),
 		Force:   force,
 		Signal:  sigterm,
 	}

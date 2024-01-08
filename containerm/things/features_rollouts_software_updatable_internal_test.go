@@ -414,7 +414,7 @@ func mockExecInstallErrorNoAtrifacts(t *testing.T) error {
 
 func mockExecRemoveNoDependencyDescription(t *testing.T) error {
 	setupSUFeature(t)
-	mockContainerManager.EXPECT().Remove(gomock.Any(), gomock.Any(), gomock.Any()).Times(0).Return(nil)
+	mockContainerManager.EXPECT().Remove(gomock.Any(), gomock.Any(), gomock.Any(), nil).Times(0).Return(nil)
 	mockThing.EXPECT().SetFeatureProperty(testSUFeature.GetID(), gomock.Any(), gomock.Any()).Times(0).Return(nil)
 	return client.NewMessagesParameterInvalidError("there are no DependencyDescriptions to be removed")
 }
@@ -466,14 +466,14 @@ func mockExecSURemoveForced(t *testing.T) error {
 	gomock.InOrder(
 		mockThing.EXPECT().SetFeatureProperty(testSUFeature.GetID(), testLastOperationProperty, testOperationRemoveStatusRemoving).Times(1).Return(nil),
 		mockContainerManager.EXPECT().Get(gomock.Any(), testSoftwareName).Return(&types.Container{}, nil),
-		mockContainerManager.EXPECT().Remove(gomock.Any(), testSoftwareName, true).Return(nil),
+		mockContainerManager.EXPECT().Remove(gomock.Any(), testSoftwareName, true, nil).Return(nil),
 		mockThing.EXPECT().SetFeatureProperty(testSUFeature.GetID(), testLastOperationProperty, testOperationRemovingStatusRemoved).Times(1).Return(nil),
 		mockThing.EXPECT().SetFeatureProperty(testSUFeature.GetID(), testLastOperationProperty, testOperationRemoveStatusRemoving).Times(1).Return(nil),
 		mockContainerManager.EXPECT().Get(gomock.Any(), testSoftwareName).Return(&types.Container{}, nil),
-		mockContainerManager.EXPECT().Remove(gomock.Any(), testSoftwareName, true).Return(log.NewErrorf(testOperationRemoveErrorWhileRemovingMessage)),
+		mockContainerManager.EXPECT().Remove(gomock.Any(), testSoftwareName, true, nil).Return(log.NewErrorf(testOperationRemoveErrorWhileRemovingMessage)),
 		mockThing.EXPECT().SetFeatureProperty(testSUFeature.GetID(), testLastOperationProperty, testOperationRemoveStatusRemoving).Times(1).Return(nil),
 		mockContainerManager.EXPECT().Get(gomock.Any(), testSoftwareName).Return(&types.Container{}, nil),
-		mockContainerManager.EXPECT().Remove(gomock.Any(), testSoftwareName, true).Return(nil),
+		mockContainerManager.EXPECT().Remove(gomock.Any(), testSoftwareName, true, nil).Return(nil),
 		mockThing.EXPECT().SetFeatureProperty(testSUFeature.GetID(), testLastOperationProperty, testOperationRemovingStatusRemoved).Times(1).Return(nil),
 		mockThing.EXPECT().SetFeatureProperty(testSUFeature.GetID(), testLastFailedOperationProperty, testOperationRemoveStatusRemovingFinishedError).Times(1).Return(nil),
 		mockThing.EXPECT().SetFeatureProperty(testSUFeature.GetID(), testLastOperationProperty, testOperationRemoveStatusRemovingFinishedError).Times(1).Return(nil),
@@ -488,7 +488,7 @@ func mockExecSURemoveNoSuchContainer(t *testing.T) error {
 	gomock.InOrder(
 		mockThing.EXPECT().SetFeatureProperty(testSUFeature.GetID(), testLastOperationProperty, testOperationRemoveStatusRemoving).Times(1).Return(nil),
 		mockContainerManager.EXPECT().Get(gomock.Any(), testSoftwareName).Return(nil, nil),
-		mockContainerManager.EXPECT().Remove(gomock.Any(), testSoftwareName, true).Times(0).Return(nil),
+		mockContainerManager.EXPECT().Remove(gomock.Any(), testSoftwareName, true, nil).Times(0).Return(nil),
 		mockThing.EXPECT().SetFeatureProperty(testSUFeature.GetID(), testLastFailedOperationProperty, testOperationRemoveStatusRemovingFinishedErrorNoSuchContainer).Times(1).Return(nil),
 		mockThing.EXPECT().SetFeatureProperty(testSUFeature.GetID(), testLastOperationProperty, testOperationRemoveStatusRemovingFinishedErrorNoSuchContainer).Times(1).Return(nil),
 	)

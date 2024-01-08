@@ -40,7 +40,7 @@ const (
 	managerExecRootPathDefault             = "/var/run/container-management"
 	managerContainerClientServiceIDDefault = ctr.ContainerdClientServiceLocalID
 	managerNetworkManagerServiceIDDefault  = network.LibnetworkManagerServiceLocalID
-	managerNetworkManagerStopTimeout       = 30
+	managerContainerStopTimeoutDefault     = "30s"
 
 	// default container client config
 	containerClientNamespaceDefault   = "kanto-cm"
@@ -126,7 +126,7 @@ func getDefaultInstance() *config {
 			MgrExecPath:               managerExecRootPathDefault,
 			MgrCtrClientServiceID:     managerContainerClientServiceIDDefault,
 			MgrNetMgrServiceID:        managerNetworkManagerServiceIDDefault,
-			MgrDefaultCtrsStopTimeout: managerNetworkManagerStopTimeout,
+			MgrDefaultCtrsStopTimeout: managerContainerStopTimeoutDefault,
 		},
 		ContainerClientConfig: &containerRuntimeConfig{
 			CtrNamespace:          containerClientNamespaceDefault,

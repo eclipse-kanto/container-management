@@ -15,6 +15,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -48,7 +49,33 @@ type managerConfig struct {
 	MgrExecPath               string `json:"exec_root_dir,omitempty"`
 	MgrCtrClientServiceID     string `json:"container_client_sid,omitempty"`
 	MgrNetMgrServiceID        string `json:"network_manager_sid,omitempty"`
-	MgrDefaultCtrsStopTimeout int64  `json:"default_ctrs_stop_timeout,omitempty"`
+	MgrDefaultCtrsStopTimeout string `json:"default_ctrs_stop_timeout,omitempty"`
+}
+
+func (mc *managerConfig) UnmarshalJSON(data []byte) error {
+	type managerConfigPlain managerConfig
+
+	plain := (*managerConfigPlain)(mc)
+	err := json.Unmarshal(data, &plain)
+	if err == nil {
+		return nil
+	}
+
+	tmp := struct {
+		MgrDefaultCtrsStopTimeout int `json:"default_ctrs_stop_timeout,omitempty"`
+		*managerConfigPlain
+	}{
+		managerConfigPlain: plain,
+	}
+
+	if err = json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	if tmp.MgrDefaultCtrsStopTimeout != 0 {
+		mc.MgrDefaultCtrsStopTimeout = strconv.Itoa(tmp.MgrDefaultCtrsStopTimeout)
+	}
+	return nil
 }
 
 // container client config- e.g. containerd

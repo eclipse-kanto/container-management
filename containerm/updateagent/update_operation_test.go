@@ -83,9 +83,9 @@ func TestExecute(t *testing.T) {
 						expActions1 := copyAndUpdateActions(testctx.actions, 4, types.ActionStatusRemovalSuccess, "Old container instance is removed.")
 						gomock.InOrder(
 							// call to ContainerManager to remove old instance of test-container-2
-							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[1].ID, true).Return(nil),
+							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[1].ID, true, nil).Return(nil),
 							// call to ContainerManager to remove instance of test-container-5
-							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[3].ID, true).Return(nil),
+							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[3].ID, true, nil).Return(nil),
 							expectFeedback(t, mockCallback, testctx.activityID, testctx.baseline, types.BaselineStatusCleanupSuccess, expActions1),
 							expectFeedback(t, mockCallback, testctx.activityID, testctx.baseline, types.StatusCompleted, expActions1),
 						)
@@ -151,7 +151,7 @@ func TestExecute(t *testing.T) {
 					expect: func(t *testing.T, mockContainerManager *mgrmocks.MockContainerManager, mockCallback *ummocks.MockUpdateManagerCallback, testctx *testContext) {
 						gomock.InOrder(
 							// call to ContainerManager to remove old instance of test-container-2
-							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[1].ID, true).Return(nil),
+							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[1].ID, true, nil).Return(nil),
 							expectFeedback(t, mockCallback, testctx.activityID, testctx.baseline, types.BaselineStatusCleanupSuccess, testctx.actions),
 						)
 					},
@@ -249,7 +249,7 @@ func TestExecute(t *testing.T) {
 						expActions1 := copyAndUpdateActions(testctx.actions, 4, types.ActionStatusRemovalSuccess, "Old container instance is removed.")
 						gomock.InOrder(
 							// call to ContainerManager to remove instance of test-container-5
-							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[3].ID, true).Return(nil),
+							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[3].ID, true, nil).Return(nil),
 							expectFeedback(t, mockCallback, testctx.activityID, testctx.baseline, types.BaselineStatusCleanupSuccess, expActions1),
 						)
 						testctx.actions = expActions1
@@ -636,9 +636,9 @@ func TestExecute(t *testing.T) {
 						expActions1 := copyAndUpdateActions(testctx.actions, 4, types.ActionStatusRemovalSuccess, "Old container instance is removed.")
 						gomock.InOrder(
 							// call to ContainerManager to remove old instance of test-container-2
-							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[1].ID, true).Return(errors.New("cannot remove old container instance")),
+							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[1].ID, true, nil).Return(errors.New("cannot remove old container instance")),
 							// call to ContainerManager to remove instance of test-container-5
-							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[3].ID, true).Return(nil),
+							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[3].ID, true, nil).Return(nil),
 							expectFeedback(t, mockCallback, testctx.activityID, testctx.baseline, types.BaselineStatusCleanupSuccess, expActions1),
 							expectFeedback(t, mockCallback, testctx.activityID, testctx.baseline, types.StatusCompleted, expActions1),
 						)
@@ -667,9 +667,9 @@ func TestExecute(t *testing.T) {
 						expActions1 := copyAndUpdateActions(testctx.actions, 4, types.ActionStatusRemovalFailure, "old container instance cannot be removed")
 						gomock.InOrder(
 							// call to ContainerManager to remove old instance of test-container-2
-							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[1].ID, true).Return(nil),
+							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[1].ID, true, nil).Return(nil),
 							// call to ContainerManager to remove instance of test-container-5
-							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[3].ID, true).Return(errors.New("old container instance cannot be removed")),
+							mockContainerManager.EXPECT().Remove(context.Background(), testctx.currentContainers[3].ID, true, nil).Return(errors.New("old container instance cannot be removed")),
 							expectFeedback(t, mockCallback, testctx.activityID, testctx.baseline, types.BaselineStatusCleanupFailure, expActions1),
 							expectFeedback(t, mockCallback, testctx.activityID, testctx.baseline, types.StatusIncomplete, expActions1),
 						)

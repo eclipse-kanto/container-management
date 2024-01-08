@@ -12,7 +12,7 @@
     "exec_root_dir": "/var/run/container-management",
     "container_client_sid": "container-management.service.local.v1.service-containerd-client",
     "network_manager_sid": "container-management.service.local.v1.service-libnetwork-manager",
-    "default_ctrs_stop_timeout": 30
+    "default_ctrs_stop_timeout": "30s"
   },
   "containers": {
     "default_ns": "kanto-cm",

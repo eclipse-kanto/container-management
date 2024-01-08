@@ -272,7 +272,7 @@ func TestFeatureOperationsHandlerRemove(t *testing.T) {
 		"test_feature_operations_handler_remove_no_errors": {
 			opts: testValidUnmarshaled,
 			mockExecution: func() error {
-				mockContainerManager.EXPECT().Remove(gomock.Any(), testContainerID, true).Times(1)
+				mockContainerManager.EXPECT().Remove(gomock.Any(), testContainerID, true, nil).Times(1)
 				return nil
 			},
 		},
@@ -296,7 +296,7 @@ func TestFeatureOperationsHandlerRemove(t *testing.T) {
 			opts: testValidUnmarshaled,
 			mockExecution: func() error {
 				err := log.NewError("error while removing")
-				mockContainerManager.EXPECT().Remove(gomock.Any(), testContainerID, true).Times(1).Return(err)
+				mockContainerManager.EXPECT().Remove(gomock.Any(), testContainerID, true, nil).Times(1).Return(err)
 				return err
 			},
 		},
@@ -454,7 +454,7 @@ func TestFeatureOperationsUnsupportedOperation(t *testing.T) {
 	mockContainerManager.EXPECT().Stop(gomock.Any(), testContainerID, gomock.Any()).Times(0)
 	mockContainerManager.EXPECT().Pause(gomock.Any(), testContainerID).Times(0)
 	mockContainerManager.EXPECT().Unpause(gomock.Any(), testContainerID).Times(0)
-	mockContainerManager.EXPECT().Remove(gomock.Any(), testContainerID, true).Times(0)
+	mockContainerManager.EXPECT().Remove(gomock.Any(), testContainerID, true, nil).Times(0)
 
 	t.Run("test_feature_operations_handler_unsupported_operation", func(t *testing.T) {
 		result, resultErr := containerFeature.featureOperationsHandler(testUnsupportedOperationName, nil)

@@ -75,10 +75,10 @@ func TestMgrOpts(t *testing.T) {
 				networkManagerServiceID: testNetworkManagerServiceID,
 			},
 		},
-		"test_mgs_default_container_stop_timeout": {
-			testOpt: WithMgrDefaultContainerStopTimeout(testDefaultContainerStopTimeout),
+		"test_mgr_default_container_stop_timeout": {
+			testOpt: WithMgrDefaultContainerStopTimeout(testContainerStopTimeout),
 			expectedOpts: &mgrOpts{
-				defaultCtrsStopTimeout: testDefaultContainerStopTimeout,
+				defaultCtrsStopTimeout: testContainerStopTimeout,
 			},
 		},
 	}

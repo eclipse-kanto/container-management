@@ -42,7 +42,7 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.ManagerConfig.MgrExecPath, "cm-exec-root-dir", cfg.ManagerConfig.MgrExecPath, "Specify the exec root directory of the container manager service")
 	flagSet.StringVar(&cfg.ManagerConfig.MgrCtrClientServiceID, "cm-cc-sid", cfg.ManagerConfig.MgrCtrClientServiceID, "Specify the ID of the container runtime client service to be used by the container manager service")
 	flagSet.StringVar(&cfg.ManagerConfig.MgrNetMgrServiceID, "cm-net-sid", cfg.ManagerConfig.MgrNetMgrServiceID, "Specify the ID of the network manager service to be used by container manager service")
-	flagSet.Int64Var(&cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "cm-deflt-ctrs-stop-timeout", cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "Specify the default timeout that the container manager service will wait before killing the container's process")
+	flagSet.StringVar(&cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "cm-deflt-ctrs-stop-timeout", cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "Specify the default timeout that the container manager service will wait before killing the container's process")
 
 	// init container client flags
 	flagSet.StringVar(&cfg.ContainerClientConfig.CtrNamespace, "ccl-default-ns", cfg.ContainerClientConfig.CtrNamespace, "Specify the default namespace to be used for container management isolation")

@@ -14,7 +14,7 @@ package main
 
 import (
 	"context"
-	"math"
+	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/util"
@@ -28,7 +28,7 @@ type stopCmd struct {
 }
 
 type stopConfig struct {
-	timeout int64
+	timeout string
 	name    string
 	force   bool
 	signal  string
@@ -63,8 +63,12 @@ func (cc *stopCmd) run(args []string) error {
 		Force:  cc.config.force,
 		Signal: cc.config.signal,
 	}
-	if cc.config.timeout != math.MinInt64 {
-		stopOpts.Timeout = cc.config.timeout
+	if cc.config.timeout != "" {
+		stopTime, err := time.ParseDuration(cc.config.timeout)
+		if err != nil {
+			return err
+		}
+		stopOpts.Timeout = int64(stopTime.Seconds())
 	}
 	if err = util.ValidateStopOpts(stopOpts); err != nil {
 		return err
@@ -75,7 +79,7 @@ func (cc *stopCmd) run(args []string) error {
 func (cc *stopCmd) setupFlags() {
 	flagSet := cc.cmd.Flags()
 	// init timeout flag
-	flagSet.Int64VarP(&cc.config.timeout, "time", "t", math.MinInt64, "Sets the timeout period in seconds to gracefully stop the container. When timeout expires the container process would be forcibly killed.")
+	flagSet.StringVarP(&cc.config.timeout, "time", "t", "", "Sets the timeout period to gracefully stop the container as duration string, e.g. 15s or 1m15s. When timeout expires the container process would be forcibly killed. If not specified the daemon default container stop timeout will be used.")
 	// init name flag
 	flagSet.StringVarP(&cc.config.name, "name", "n", "", "Stop a container with a specific name.")
 	// init force flag
