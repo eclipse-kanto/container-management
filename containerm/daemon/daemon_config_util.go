@@ -269,8 +269,7 @@ func dumpContManager(configInstance *config) {
 		log.Debug("[daemon_cfg][cm-exec-root-dir] : %s", configInstance.ManagerConfig.MgrExecPath)
 		log.Debug("[daemon_cfg][cm-cc-sid] : %s", configInstance.ManagerConfig.MgrCtrClientServiceID)
 		log.Debug("[daemon_cfg][cm-net-sid] : %s", configInstance.ManagerConfig.MgrNetMgrServiceID)
-		log.Info("[daemon_cfg][cm-deflt-ctrs-stop-timeout] : %s", configInstance.ManagerConfig.MgrDefaultCtrsStopTimeout)
-		fmt.Printf("[daemon_cfg][cm-deflt-ctrs-stop-timeout] : %s\n", configInstance.ManagerConfig.MgrDefaultCtrsStopTimeout)
+		log.Debug("[daemon_cfg][cm-deflt-ctrs-stop-timeout] : %s", configInstance.ManagerConfig.MgrDefaultCtrsStopTimeout)
 	}
 }
 

@@ -517,6 +517,20 @@ func TestRemove(t *testing.T) {
 			},
 			mockExecution: mockExecRemoveErrors,
 		},
+		"test_remove_timeout": {
+			args: testRemoveArgs{
+				ctx: testCtx,
+				request: &pbcontainers.RemoveContainerRequest{
+					Id:    containerID,
+					Force: true,
+					StopOptions: &pbcontainerstypes.StopOptions{
+						Timeout: 20,
+						Force:   true,
+					},
+				},
+			},
+			mockExecution: mockExecRemoveNoErrors,
+		},
 	}
 
 	// execute tests

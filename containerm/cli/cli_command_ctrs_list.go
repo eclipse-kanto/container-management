@@ -78,7 +78,7 @@ func (cc *listCmd) run(args []string) error {
 		return nil
 	}
 	if len(ctrs) == 0 {
-		fmt.Println("No found containers.")
+		fmt.Println("No containers found.")
 	} else {
 		prettyPrint(ctrs)
 	}

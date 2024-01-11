@@ -12,7 +12,7 @@ command:
   args: ["list", "--host", "$KANTO_HOST"]
 expected:
   exitCode: 0
-  out: "No found containers."
+  out: "No containers found."
 ---
 name: list_all_containers
 setupCmd:
@@ -112,7 +112,7 @@ command:
   args: ["list", "--host", "$KANTO_HOST", "-n", "invalid"]
 expected:
   exitCode: 0
-  out: "No found containers."
+  out: "No containers found."
 ---
 name: list_invalid_arg
 command:
