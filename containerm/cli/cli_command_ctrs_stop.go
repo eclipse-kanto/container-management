@@ -63,17 +63,24 @@ func (cc *stopCmd) run(args []string) error {
 		Force:  cc.config.force,
 		Signal: cc.config.signal,
 	}
-	if cc.config.timeout != "" {
-		stopTime, err := time.ParseDuration(cc.config.timeout)
-		if err != nil {
-			return err
-		}
-		stopOpts.Timeout = int64(stopTime.Seconds())
+	if stopOpts.Timeout, err = durationStringToSeconds(cc.config.timeout); err != nil {
+		return err
 	}
 	if err = util.ValidateStopOpts(stopOpts); err != nil {
 		return err
 	}
 	return cc.cli.gwManClient.Stop(ctx, container.ID, stopOpts)
+}
+
+func durationStringToSeconds(duration string) (int64, error) {
+	if duration == "" {
+		return 0, nil
+	}
+	stopTime, err := time.ParseDuration(duration)
+	if err != nil {
+		return 0, err
+	}
+	return int64(stopTime.Round(time.Second).Seconds()), nil
 }
 
 func (cc *stopCmd) setupFlags() {

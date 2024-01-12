@@ -188,6 +188,14 @@ func (rmTc *removeCommandTest) generateRunExecutionConfigs() map[string]testRunE
 			},
 			mockExecution: rmTc.mockExecRemoveWithTimeout,
 		},
+		"test_remove_with_timeout_round": {
+			args: stopCmdArgs,
+			flags: map[string]string{
+				removeCmdFlagForce: "true",
+				stopCmdFlagTimeout: "19.7s",
+			},
+			mockExecution: rmTc.mockExecRemoveWithTimeout,
+		},
 	}
 }
 

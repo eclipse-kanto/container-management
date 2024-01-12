@@ -15,7 +15,6 @@ package main
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	utilcli "github.com/eclipse-kanto/container-management/containerm/util/cli"
@@ -58,11 +57,9 @@ func (cc *removeCmd) run(args []string) error {
 	)
 	if cc.config.force && cc.config.timeout != "" {
 		stopOpts = &types.StopOpts{Force: true}
-		stopTime, err := time.ParseDuration(cc.config.timeout)
-		if err != nil {
+		if stopOpts.Timeout, err = durationStringToSeconds(cc.config.timeout); err != nil {
 			return err
 		}
-		stopOpts.Timeout = int64(stopTime.Seconds())
 	}
 	if len(args) == 0 {
 		if ctr, err = utilcli.ValidateContainerByNameArgsSingle(ctx, nil, cc.config.name, cc.cli.gwManClient); err != nil {

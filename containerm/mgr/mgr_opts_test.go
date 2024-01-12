@@ -81,6 +81,18 @@ func TestMgrOpts(t *testing.T) {
 				defaultCtrsStopTimeout: testContainerStopTimeout,
 			},
 		},
+		"test_mgr_default_container_stop_timeout_int64": {
+			testOpt: WithMgrDefaultContainerStopTimeout(int64(10)),
+			expectedOpts: &mgrOpts{
+				defaultCtrsStopTimeout: testContainerStopTimeout,
+			},
+		},
+		"test_mgr_default_container_stop_timeout_string": {
+			testOpt: WithMgrDefaultContainerStopTimeout("10"),
+			expectedOpts: &mgrOpts{
+				defaultCtrsStopTimeout: 0,
+			},
+		},
 	}
 
 	for testName, testCase := range tests {
