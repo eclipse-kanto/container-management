@@ -360,7 +360,7 @@ func ToInternalLogModeConfig(grpcLogModeConfig *apitypescontainers.LogModeConfig
 // ToInternalStopOptions converts a types.StopOptions to an internal StopOptions
 func ToInternalStopOptions(grpcStopOptions *apitypescontainers.StopOptions) *internaltypes.StopOpts {
 	if grpcStopOptions == nil {
-		return &internaltypes.StopOpts{}
+		return nil
 	}
 	return &internaltypes.StopOpts{
 		Timeout: grpcStopOptions.Timeout,

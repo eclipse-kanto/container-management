@@ -28,8 +28,9 @@ type removeCmd struct {
 }
 
 type removeConfig struct {
-	force bool
-	name  string
+	force   bool
+	name    string
+	timeout string
 }
 
 func (cc *removeCmd) init(cli *cli) {
@@ -48,22 +49,28 @@ func (cc *removeCmd) init(cli *cli) {
 
 func (cc *removeCmd) run(args []string) error {
 	var (
-		ctr  *types.Container
-		err  error
-		ctx  = context.Background()
-		errs errorutil.CompoundError
+		ctr      *types.Container
+		err      error
+		ctx      = context.Background()
+		errs     errorutil.CompoundError
+		stopOpts *types.StopOpts
 	)
-	// parse parameters
+	if cc.config.force && cc.config.timeout != "" {
+		stopOpts = &types.StopOpts{Force: true}
+		if stopOpts.Timeout, err = durationStringToSeconds(cc.config.timeout); err != nil {
+			return err
+		}
+	}
 	if len(args) == 0 {
 		if ctr, err = utilcli.ValidateContainerByNameArgsSingle(ctx, nil, cc.config.name, cc.cli.gwManClient); err != nil {
 			return err
 		}
-		return cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force)
+		return cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force, stopOpts)
 	}
 	for _, arg := range args {
 		ctr, err = utilcli.ValidateContainerByNameArgsSingle(ctx, []string{arg}, cc.config.name, cc.cli.gwManClient)
 		if err == nil {
-			if err = cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force); err != nil {
+			if err = cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force, stopOpts); err != nil {
 				errs.Append(err)
 			}
 		} else {
@@ -83,4 +90,5 @@ func (cc *removeCmd) setupFlags() {
 	flagSet.BoolVarP(&cc.config.force, "force", "f", false, "Force stopping before removing a container")
 	// init name flags
 	flagSet.StringVarP(&cc.config.name, "name", "n", "", "Remove a container with a specific name.")
+	flagSet.StringVarP(&cc.config.timeout, "time", "t", "", "Sets the timeout period to gracefully stop the container as duration string, e.g. 15s or 1m15s. When timeout expires the container process would be forcibly killed. If not specified the daemon default container stop timeout will be used.")
 }

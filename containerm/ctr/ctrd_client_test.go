@@ -596,10 +596,10 @@ func TestAttachContainer(t *testing.T) {
 				}()
 
 				mockIoMgr.EXPECT().GetIO(testCtr.ID).Return(mockIO)
+				mockIO.EXPECT().Stream().Return(mockStream)
 				mockReadCloser.EXPECT().Read(gomock.Any()).DoAndReturn(func(p []byte) (int, error) {
 					return -1, io.EOF
-				})
-				mockIO.EXPECT().Stream().Return(mockStream)
+				}).AnyTimes()
 				mockStream.EXPECT().Attach(ctx, gomock.AssignableToTypeOf(attachConfig)).Return(errChan)
 
 				return nil

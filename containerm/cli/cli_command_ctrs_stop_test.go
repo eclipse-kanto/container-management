@@ -14,7 +14,6 @@ package main
 
 import (
 	"context"
-	"math"
 	"strconv"
 	"testing"
 
@@ -65,14 +64,16 @@ func TestStopCmdFlags(t *testing.T) {
 	stopCliTest.init()
 
 	expectedCfg := stopConfig{
-		timeout: 50,
+		timeout: "50",
 		name:    stopContainerName,
 		force:   true,
 		signal:  sigterm,
 	}
 
+	conv, _ := strconv.ParseInt(expectedCfg.timeout, 10, 64)
+
 	flagsToApply := map[string]string{
-		stopCmdFlagTimeout: strconv.FormatInt(expectedCfg.timeout, 10),
+		stopCmdFlagTimeout: strconv.FormatInt(conv, 10),
 		stopCmdFlagName:    expectedCfg.name,
 		stopCmdFlagForce:   strconv.FormatBool(expectedCfg.force),
 	}
@@ -103,7 +104,7 @@ func (stopTc *stopCommandTest) commandConfig() interface{} {
 
 func (stopTc *stopCommandTest) commandConfigDefault() interface{} {
 	return stopConfig{
-		timeout: math.MinInt64,
+		timeout: "",
 		name:    "",
 		force:   false,
 		signal:  sigterm,
@@ -175,7 +176,7 @@ func (stopTc *stopCommandTest) generateRunExecutionConfigs() map[string]testRunE
 		"test_stop_with_timeout": {
 			args: stopCmdArgs,
 			flags: map[string]string{
-				stopCmdFlagTimeout: "20",
+				stopCmdFlagTimeout: "20s",
 			},
 			mockExecution: stopTc.mockExecStopWithTimeout,
 		},
@@ -186,7 +187,7 @@ func (stopTc *stopCommandTest) generateRunExecutionConfigs() map[string]testRunE
 		"test_stop_with_negative_timeout_error": {
 			args: stopCmdArgs,
 			flags: map[string]string{
-				stopCmdFlagTimeout: "-10",
+				stopCmdFlagTimeout: "-10s",
 			},
 			mockExecution: stopTc.mockExecStopWithNegativeTimeoutError,
 		},
@@ -198,7 +199,7 @@ func (stopTc *stopCommandTest) generateRunExecutionConfigs() map[string]testRunE
 		},
 		"test_stop_by_name_with_timeout": {
 			flags: map[string]string{
-				stopCmdFlagTimeout: "20",
+				stopCmdFlagTimeout: "20s",
 				stopCmdFlagName:    stopContainerName,
 			},
 			mockExecution: stopTc.mockExecStopByNameWithTimeout,
@@ -211,7 +212,7 @@ func (stopTc *stopCommandTest) generateRunExecutionConfigs() map[string]testRunE
 		},
 		"test_stop_by_name_with_negative_timeout_error": {
 			flags: map[string]string{
-				stopCmdFlagTimeout: "-10",
+				stopCmdFlagTimeout: "-10s",
 				stopCmdFlagName:    stopContainerName,
 			},
 			mockExecution: stopTc.mockExecStopByNameWithNegativeTimeoutError,
@@ -275,6 +276,7 @@ func (stopTc *stopCommandTest) mockExecStopNoIDorName(args []string) error {
 	stopTc.mockClient.EXPECT().Stop(context.Background(), gomock.Any(), gomock.Any()).Times(0)
 	return log.NewError("You must provide either an ID or a name for the container via --name (-n) ")
 }
+
 func (stopTc *stopCommandTest) mockExecStopByIDGetErr(args []string) error {
 	err := log.NewError("could not get container")
 	stopTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(nil, err)
@@ -282,6 +284,7 @@ func (stopTc *stopCommandTest) mockExecStopByIDGetErr(args []string) error {
 	stopTc.mockClient.EXPECT().Stop(context.Background(), gomock.Any(), gomock.Any()).Times(0)
 	return err
 }
+
 func (stopTc *stopCommandTest) mockExecStopByIDGetNilCtr(args []string) error {
 	stopTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(nil, nil)
 	stopTc.mockClient.EXPECT().List(context.Background(), gomock.Any()).Times(0)
@@ -296,24 +299,28 @@ func (stopTc *stopCommandTest) mockExecStopByNameListErr(args []string) error {
 	stopTc.mockClient.EXPECT().Stop(context.Background(), gomock.Any(), gomock.Any()).Times(0)
 	return err
 }
+
 func (stopTc *stopCommandTest) mockExecStopByNameListNilCtrs(args []string) error {
 	stopTc.mockClient.EXPECT().Get(context.Background(), gomock.Any()).Times(0)
 	stopTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(startContainerName))).Times(1).Return(nil, nil)
 	stopTc.mockClient.EXPECT().Stop(context.Background(), gomock.Any(), gomock.Any()).Times(0)
 	return log.NewErrorf("The requested container with name = %s was not found. Try using an ID instead.", startContainerName)
 }
+
 func (stopTc *stopCommandTest) mockExecStopByNameListZeroCtrs(args []string) error {
 	stopTc.mockClient.EXPECT().Get(context.Background(), gomock.Any()).Times(0)
 	stopTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(startContainerName))).Times(1).Return([]*types.Container{}, nil)
 	stopTc.mockClient.EXPECT().Stop(context.Background(), gomock.Any(), gomock.Any()).Times(0)
 	return log.NewErrorf("The requested container with name = %s was not found. Try using an ID instead.", startContainerName)
 }
+
 func (stopTc *stopCommandTest) mockExecStopByNameListMoreThanOneCtrs(args []string) error {
 	stopTc.mockClient.EXPECT().Get(context.Background(), gomock.Any()).Times(0)
 	stopTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(startContainerName))).Times(1).Return([]*types.Container{{}, {}}, nil)
 	stopTc.mockClient.EXPECT().Stop(context.Background(), gomock.Any(), gomock.Any()).Times(0)
 	return log.NewErrorf("There are more than one containers with name = %s. Try using an ID instead.", startContainerName)
 }
+
 func (stopTc *stopCommandTest) mockExecStopNoErrors(args []string) error {
 	// setup expected calls
 	ctr := &types.Container{
@@ -345,6 +352,7 @@ func (stopTc *stopCommandTest) mockExecStopError(args []string) error {
 	stopTc.mockClient.EXPECT().Stop(context.Background(), ctr.ID, defaultStopOpts).Times(1).Return(err)
 	return err
 }
+
 func (stopTc *stopCommandTest) mockExecStopWithNegativeTimeoutError(args []string) error {
 	err := log.NewError("the timeout = -10 shouldn't be negative")
 	ctr := &types.Container{
@@ -365,6 +373,7 @@ func (stopTc *stopCommandTest) mockExecStopByNameWithNegativeTimeoutError(args [
 	stopTc.mockClient.EXPECT().Stop(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 	return err
 }
+
 func (stopTc *stopCommandTest) mockExecStopByNameNoErrors(args []string) error {
 	// setup expected calls
 	ctrs := []*types.Container{{

@@ -1,0 +1,5 @@
+{
+  "manager": {
+    "default_ctrs_stop_timeout": 15
+  }
+}

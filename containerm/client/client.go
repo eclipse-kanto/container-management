@@ -149,8 +149,8 @@ func (cl *client) Rename(ctx context.Context, id string, name string) error {
 }
 
 // Remove removes a container, it may be running or stopped and so on.
-func (cl *client) Remove(ctx context.Context, id string, force bool) error {
-	_, err := cl.grpcContainersClient.Remove(ctx, &pbcontainers.RemoveContainerRequest{Id: id, Force: force})
+func (cl *client) Remove(ctx context.Context, id string, force bool, stopOpts *types.StopOpts) error {
+	_, err := cl.grpcContainersClient.Remove(ctx, &pbcontainers.RemoveContainerRequest{Id: id, Force: force, StopOptions: protobuf.ToProtoStopOptions(stopOpts)})
 	return err
 }
 

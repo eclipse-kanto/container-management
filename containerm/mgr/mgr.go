@@ -49,7 +49,7 @@ func init() {
 type containerMgr struct {
 	metaPath               string
 	execPath               string
-	defaultCtrsStopTimeout int64
+	defaultCtrsStopTimeout time.Duration
 	ctrClient              ctr.ContainerAPIClient
 	netMgr                 network.ContainerNetworkManager
 	eventsMgr              events.ContainerEventsManager
@@ -423,7 +423,7 @@ func (mgr *containerMgr) Rename(ctx context.Context, id string, name string) err
 }
 
 // Remove removes a container, it may be running or stopped and so on.
-func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool) error {
+func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool, stopOpts *types.StopOpts) error {
 	container := mgr.getContainerFromCache(id)
 	if container == nil {
 		return log.NewErrorf(noSuchContainerErrorMsg, id)
@@ -444,7 +444,15 @@ func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool) erro
 	if (!util.IsContainerRunningOrPaused(container)) || force {
 		mgr.cancelContainerRestartManager(container)
 
-		stopOpts := mgr.getContainerStopOptions(force)
+		if stopOpts == nil {
+			stopOpts = mgr.getContainerStopOptions(force)
+		} else {
+			mgr.fillContainerStopDefaults(stopOpts)
+		}
+		if err := util.ValidateStopOpts(stopOpts); err != nil {
+			log.ErrorErr(err, "invalid stop options for container id = %s", container.ID)
+			return err
+		}
 
 		_, _, err := mgr.ctrClient.DestroyContainer(ctx, container, stopOpts, true)
 		if err != nil && !(strings.Contains(err.Error(), "does not exist") || strings.Contains(err.Error(), "not found")) {

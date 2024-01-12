@@ -18,10 +18,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/opencontainers/image-spec/identity"
-
-	"golang.org/x/sys/unix"
-
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/errdefs"

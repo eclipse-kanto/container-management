@@ -169,6 +169,7 @@ message RemoveContainerRequest {
 
     // Whether the container should be removed disregarding its current state.
     bool force = 2;
+    github.com.eclipse_kanto.container_management.containerm.api.types.containers.StopOptions stopOptions = 3;
 }
 
 message GetLogsRequest {

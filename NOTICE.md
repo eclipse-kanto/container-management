@@ -472,17 +472,23 @@ golang.org/x/text (0.14.0)
 * Project: https://github.com/golang/text
 * Source:  https://github.com/golang/text/releases/tag/v0.14.0
 
+golang.org/x/mod (0.13.0)
+
+* License: BSD 3-Clause "New" or "Revised" License
+* Project: https://github.com/golang/mod
+* Source:  https://github.com/golang/mod/releases/tag/v0.13.0
+
 mozilla-services/pkcs7 (0.0.0-20200128120323-432b2356ecb1)
 
 * License: MIT License
 * Project: https://github.com/mozilla-services
 * Source:  https://github.com/mozilla-services/pkcs7/tree/432b2356ecb18209c1cec25680b8a23632794f21
 
-googleapis/go-genproto (0.0.0-20230410155749-daa745c078e1)
+googleapis/go-genproto v0.0.0-20230822172742-b8732ec3820d
 
 * License: Apache License 2.0
 * Project: https://github.com/googleapis/go-genproto
-* Source:  https://github.com/googleapis/go-genproto/tree/daa745c078e18def54ea6b63235554b59c97f01d
+* Source:  https://github.com/googleapis/go-genproto/tree/b8732ec3820d
 
 grpc/grpc-go (1.59.0)
 
@@ -526,6 +532,30 @@ golang/go (1.21.0)
 * Project: https://github.com/golang/go
 * Source:  https://github.com/golang/go/releases/tag/go1.21.0
 
+x448/float16 (v0.8.4)
+
+* License: MIT License
+* Project: https://github.com/x448/float16
+* Source:  https://github.com/x448/float16/releases/tag/v0.8.4
+
+go-ldap/ldap (v3.4.6)
+
+* License: MIT License
+* Project: https://github.com/go-ldap/ldap
+* Source:  https://github.com/go-ldap/ldap/releases/tag/v3.4.6
+
+fxamacker/cbor/v2 v2.5.0
+
+* License: MIT License
+* Project: https://github.com/fxamacker/cbor
+* Source:  https://github.com/fxamacker/cbor/releases/tag/v2.5.0
+
+go-asn1-ber/asn1-ber v1.5.5
+
+* License: MIT License
+* Project: https://github.com/go-asn1-ber/asn1-ber
+* Source:  https://github.com/go-asn1-ber/asn1-ber/releases/tag/v1.5.5
+  
 ## Cryptography
 
 Content may contain encryption software. The country in which you are currently

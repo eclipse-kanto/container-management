@@ -23,7 +23,6 @@ require (
 	github.com/notaryproject/notation-core-go v1.0.1
 	github.com/notaryproject/notation-go v1.0.1
 	github.com/opencontainers/go-digest v1.0.0
-<<<<<<< HEAD
 	github.com/opencontainers/image-spec v1.1.0-rc6
 	github.com/opencontainers/runc v1.1.12
 	github.com/opencontainers/runtime-spec v1.1.0
@@ -31,50 +30,25 @@ require (
 	github.com/shirou/gopsutil/v3 v3.22.7
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.2.1
-=======
-	github.com/opencontainers/image-spec v1.1.0-rc5
-	github.com/opencontainers/runc v1.1.5
-	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
-	github.com/pkg/errors v0.9.1
-	github.com/shirou/gopsutil/v3 v3.22.7
-	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.7.0
->>>>>>> e361ff5 (Implement signed images verification (#215))
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
 	github.com/vishvananda/netlink v1.2.1-beta.2
-<<<<<<< HEAD
 	golang.org/x/crypto v0.18.0
 	golang.org/x/net v0.18.0
-	golang.org/x/sync v0.3.0
-	golang.org/x/sys v0.16.0
-=======
-	golang.org/x/crypto v0.14.0
-	golang.org/x/net v0.17.0
 	golang.org/x/sync v0.4.0
-	golang.org/x/sys v0.13.0
->>>>>>> e361ff5 (Implement signed images verification (#215))
+	golang.org/x/sys v0.16.0
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v3 v3.0.1
-<<<<<<< HEAD
 	gotest.tools/v3 v3.5.0
-)
-
-require (
-	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/Microsoft/hcsshim v0.11.4 // indirect
-=======
-	gotest.tools/v3 v3.4.0
 	oras.land/oras-go/v2 v2.3.1
 )
 
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
-	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/Microsoft/hcsshim v0.9.6 // indirect
->>>>>>> e361ff5 (Implement signed images verification (#215))
+	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/Microsoft/hcsshim v0.11.4 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/boltdb/bolt v1.3.1 // indirect
@@ -88,13 +62,10 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/libkv v0.2.1 // indirect
-<<<<<<< HEAD
-	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
-=======
 	github.com/fxamacker/cbor/v2 v2.5.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.5 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
 	github.com/go-ldap/ldap/v3 v3.4.6 // indirect
->>>>>>> e361ff5 (Implement signed images verification (#215))
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
@@ -135,18 +106,10 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.mozilla.org/pkcs7 v0.0.0-20200128120323-432b2356ecb1 // indirect
-<<<<<<< HEAD
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/mod v0.11.0 // indirect
+	golang.org/x/mod v0.13.0 // indirect
 	golang.org/x/term v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.10.0 // indirect
-=======
-	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/mod v0.13.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
->>>>>>> e361ff5 (Implement signed images verification (#215))
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
 )

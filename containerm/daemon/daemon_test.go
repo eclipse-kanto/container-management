@@ -93,34 +93,48 @@ func TestThingsTLSConfig(t *testing.T) {
 	testutil.AssertEqual(t, &tlsConfig{RootCA: "ca.crt", ClientCert: "client.crt", ClientKey: "client.key"}, local.ThingsConfig.ThingsConnectionConfig.Transport)
 }
 
+func TestMgrDefaultCtrsStopTimeoutConfig(t *testing.T) {
+	local := &config{}
+	_ = loadLocalConfig("../pkg/testutil/config/daemon-mgr-default-ctrs-stop-timeout-config.json", local)
+	testutil.AssertEqual(t, local.ManagerConfig.MgrDefaultCtrsStopTimeout, "15")
+}
+
 func TestExtractOpts(t *testing.T) {
 	t.Run("test_extract_ctr_client_opts", func(t *testing.T) {
 		opts := extractCtrClientConfigOptions(cfg)
-		if opts == nil || len(opts) == 0 {
+		if len(opts) == 0 {
 			t.Error("no ctr client opts after extraction")
 		}
 	})
 	t.Run("test_extract_net_mgr_opts", func(t *testing.T) {
 		opts := extractNetManagerConfigOptions(cfg)
-		if opts == nil || len(opts) == 0 {
+		if len(opts) == 0 {
 			t.Error("no net mgr opts after extraction")
 		}
 	})
 	t.Run("test_extract_ctr_mgr_opts", func(t *testing.T) {
 		opts := extractContainerManagerOptions(cfg)
-		if opts == nil || len(opts) == 0 {
+		if len(opts) == 0 {
 			t.Error("no ctr mgr opts after extraction")
 		}
 	})
+	t.Run("test_extract_ctr_mgr_opts_with_not_suffixed_stop_timeout", func(t *testing.T) {
+		config := &config{ManagerConfig: &managerConfig{MgrDefaultCtrsStopTimeout: "10"}}
+		opts := extractContainerManagerOptions(config)
+		if len(opts) == 0 {
+			t.Error("no ctr mgr opts after extraction")
+		}
+		testutil.AssertEqual(t, "10s", config.ManagerConfig.MgrDefaultCtrsStopTimeout)
+	})
 	t.Run("test_extract_grpc_opts", func(t *testing.T) {
 		opts := extractGrpcOptions(cfg)
-		if opts == nil || len(opts) == 0 {
+		if len(opts) == 0 {
 			t.Error("no grpc opts after extraction")
 		}
 	})
 	t.Run("test_extract_things_opts", func(t *testing.T) {
 		opts := extractThingsOptions(cfg)
-		if opts == nil || len(opts) == 0 {
+		if len(opts) == 0 {
 			t.Error("no things opts after extraction")
 		}
 	})
@@ -216,7 +230,7 @@ func TestSetCommandFlags(t *testing.T) {
 		},
 		"test_flags_cm-deflt-ctrs-stop-timeout": {
 			flag:         "cm-deflt-ctrs-stop-timeout",
-			expectedType: reflect.Int64.String(),
+			expectedType: reflect.String.String(),
 		},
 		"test_flags_ccl-default-ns": {
 			flag:         "ccl-default-ns",
