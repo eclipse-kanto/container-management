@@ -1,8 +1,8 @@
-![Kanto logo](https://github.com/eclipse-kanto/kanto/raw/main/logo/kanto.svg)
+[![Kanto logo](https://github.com/eclipse-kanto/kanto/raw/main/logo/kanto.svg)](https://eclipse.dev/kanto/)
 
 # Eclipse Kanto - Container Management
 
-![Coverage](https://github.com/eclipse-kanto/container-management/wiki/coverage.svg)
+[![Coverage](https://github.com/eclipse-kanto/container-management/wiki/coverage.svg)](#)
 
 Eclipse Kanto Container Management adopts cloud-native concepts, approaches and specifications adapted in a
 device-centric fashion achieving a lightweight pluggable management for containers at the edge. It is specially designed
