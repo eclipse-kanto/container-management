@@ -292,11 +292,11 @@ opencontainers/go-digest (1.0.0)
 * Project: https://github.com/opencontainers/go-digest
 * Source:  https://github.com/opencontainers/go-digest/releases/tag/v1.0.0
 
-opencontainers/image-spec (1.0.3-0.20220114050600-8b9d41f48198)
+opencontainers/image-spec (v1.1.0-rc6)
 
 * License: Apache License 2.0
 * Project: https://github.com/opencontainers/image-spec
-* Source:  https://github.com/opencontainers/image-spec/tree/8b9d41f48198a7d6d0a5c1a12dc2d1f7f47fc97f
+* Source:  https://github.com/opencontainers/image-spec/releases/tag/v1.1.0-rc6
 
 opencontainers/runc (1.1.5)
 
