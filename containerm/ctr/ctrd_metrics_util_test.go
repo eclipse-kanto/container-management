@@ -13,18 +13,20 @@
 package ctr
 
 import (
-	statsV1 "github.com/containerd/cgroups/stats/v1"
-	statsV2 "github.com/containerd/cgroups/v2/stats"
-	ctrdTypes "github.com/containerd/containerd/api/types"
-	"github.com/containerd/typeurl"
+	"math"
+	"testing"
+	"time"
+
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/pkg/testutil"
 	"github.com/eclipse-kanto/container-management/containerm/util"
+
+	statsV1 "github.com/containerd/cgroups/stats/v1"
+	statsV2 "github.com/containerd/cgroups/v2/stats"
+	ctrdTypes "github.com/containerd/containerd/api/types"
+	"github.com/containerd/typeurl"
 	protoTypes "github.com/gogo/protobuf/types"
-	"math"
-	"testing"
-	"time"
 )
 
 func TestToMetrics(t *testing.T) {

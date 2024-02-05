@@ -14,6 +14,9 @@ package ctr
 
 import (
 	"encoding/json"
+	"strings"
+	"time"
+
 	statsV1 "github.com/containerd/cgroups/stats/v1"
 	statsV2 "github.com/containerd/cgroups/v2/stats"
 	ctrdTypes "github.com/containerd/containerd/api/types"
@@ -21,8 +24,6 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
 	"github.com/eclipse-kanto/container-management/containerm/util"
-	"strings"
-	"time"
 )
 
 func toMetrics(ctrdMetrics *ctrdTypes.Metric, ctrID string) (*types.CPUStats, *types.MemoryStats, *types.IOStats, uint64, time.Time, error) {

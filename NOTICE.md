@@ -58,41 +58,41 @@ boltdb/bolt (1.3.1)
 * Project: https://github.com/boltdb/bolt
 * Source:  https://github.com/boltdb/bolt/releases/tag/v1.3.1
 
-containerd/cgroups (1.0.4)
+containerd/cgroups (1.1.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/containerd/cgroups
-* Source:  https://github.com/containerd/cgroups/releases/tag/v1.0.4
+* Source:  https://github.com/containerd/cgroups/releases/tag/v1.1.0
 
-containerd/containerd (1.6.18)
+containerd/containerd (1.6.28)
 
 * License: Apache License 2.0
 * Project: https://github.com/containerd/containerd
-* Source:  https://github.com/containerd/containerd/releases/tag/v1.6.18
+* Source:  https://github.com/containerd/containerd/releases/tag/v1.6.28
 
-containerd/continuity (0.3.0)
+containerd/continuity (0.4.2)
 
 * License: Apache License 2.0
 * Project: https://github.com/containerd/continuity
-* Source:  https://github.com/containerd/continuity/releases/tag/v0.3.0
+* Source:  https://github.com/containerd/continuity/releases/tag/v0.4.2
 
-containerd/fifo (1.0.0)
+containerd/fifo (1.1.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/containerd/fifo
-* Source:  https://github.com/containerd/fifo/releases/tag/v1.0.0
+* Source:  https://github.com/containerd/fifo/releases/tag/v1.1.0
 
-containerd/imgcrypt (1.1.7)
+containerd/imgcrypt (1.1.9)
 
 * License: Apache License 2.0
 * Project: https://github.com/containerd/imgcrypt
-* Source:  https://github.com/containerd/imgcrypt/releases/tag/v1.1.7
+* Source:  https://github.com/containerd/imgcrypt/releases/tag/v1.1.9
 
-containerd/ttrpc (1.1.0)
+containerd/ttrpc (1.2.2)
 
 * License: Apache License 2.0
 * Project: https://github.com/containerd/ttrpc
-* Source:  https://github.com/containerd/ttrpc/releases/tag/v1.1.0
+* Source:  https://github.com/containerd/ttrpc/releases/tag/v1.2.2
 
 containerd/typeurl (1.0.2)
 
@@ -100,11 +100,22 @@ containerd/typeurl (1.0.2)
 * Project: https://github.com/containerd/typeurl
 * Source:  https://github.com/containerd/typeurl/releases/tag/v1.0.2
 
-containers/ocicrypt (1.1.6)
+containerd/typeurl (1.0.2)
+
+* License: Apache License 2.0
+* Project: https://github.com/containerd/typeurl
+* Source:  https://github.com/containerd/typeurl/releases/tag/v1.0.2
+
+containerd/log (0.1.0)
+* License: Apache License 2.0
+* Project: https://github.com/containerd/log
+* Source:  https://github.com/containerd/log/releases/tag/v0.1.0
+
+containers/ocicrypt (1.1.9)
 
 * License: Apache License 2.0
 * Project: https://github.com/containers/ocicrypt
-* Source:  https://github.com/containers/ocicrypt/releases/tag/v1.1.6
+* Source:  https://github.com/containers/ocicrypt/releases/tag/v1.1.9
 
 deckarep/golang-set (1.8.0)
 
@@ -112,11 +123,11 @@ deckarep/golang-set (1.8.0)
 * Project: https://github.com/deckarep/golang-set
 * Source:  https://github.com/deckarep/golang-set/releases/tag/v1.8.0
 
-moby/moby (v23.0.3)
+moby/moby (v23.0.9)
 
 * License: Apache License 2.0
 * Project: https://github.com/moby/moby
-* Source:  https://github.com/moby/moby/releases/tag/v23.0.3
+* Source:  https://github.com/moby/moby/releases/tag/v23.0.9
   
 docker/go-connections (0.4.0)
 
@@ -142,11 +153,11 @@ eclipse/paho.mqtt.golang (1.4.1)
 * Project: https://github.com/eclipse/paho.mqtt.golang
 * Source:  https://github.com/eclipse/paho.mqtt.golang/releases/tag/v1.4.1
 
-godbus/dbus (5.0.6)
+godbus/dbus (5.1.0)
 
 * License: BSD 2-Clause "Simplified" License
 * Project: https://github.com/godbus/dbus
-* Source:  https://github.com/godbus/dbus/releases/tag/v5.0.6
+* Source:  https://github.com/godbus/dbus/releases/tag/v5.1.0
 
 gogo/googleapis (1.4.0)
 
@@ -244,11 +255,11 @@ ishidawataru/sctp (0.0.0-20210707070123-9a39160e9062)
 * Project: https://github.com/ishidawataru/sctp
 * Source:  https://github.com/ishidawataru/sctp/tree/9a39160e9062ad0b3e6522f838a116918e58a811
 
-klauspost/compress (1.13.6)
+klauspost/compress (1.16.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/klauspost/compress
-* Source:  https://github.com/klauspost/compress/releases/tag/v1.13.6
+* Source:  https://github.com/klauspost/compress/releases/tag/v1.16.0
 
 miekg/dns (1.1.46)
 
@@ -280,11 +291,17 @@ moby/sys/mountinfo (0.6.2)
 * Project: https://github.com/moby/sys/mountinfo
 * Source:  https://github.com/moby/sys/tree/mountinfo/v0.6.2
 
-moby/sys/signal (0.6.0)
+moby/sys/signal (0.7.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/moby/sys/signal
-* Source:  https://github.com/moby/sys/tree/signal/v0.6.0
+* Source:  https://github.com/moby/sys/tree/signal/v0.7.0
+
+moby/sys/user (0.1.0)
+
+* License: Apache License 2.0
+* Project: https://github.com/moby/sys/user
+* Source:  https://github.com/moby/sys/tree/user/v0.1.0
 
 opencontainers/go-digest (1.0.0)
 
@@ -298,23 +315,23 @@ opencontainers/image-spec (v1.1.0-rc6)
 * Project: https://github.com/opencontainers/image-spec
 * Source:  https://github.com/opencontainers/image-spec/releases/tag/v1.1.0-rc6
 
-opencontainers/runc (1.1.5)
+opencontainers/runc (1.1.12)
 
 * License: Apache License 2.0
 * Project: https://github.com/opencontainers/runc
-* Source:  https://github.com/opencontainers/runc/releases/tag/v1.1.5
+* Source:  https://github.com/opencontainers/runc/releases/tag/v1.1.12
 
-opencontainers/runtime-spec (1.0.3-0.20210326190908-1c3f411f0417)
+opencontainers/runtime-spec (1.1.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/opencontainers/runtime-spec
-* Source:  https://github.com/opencontainers/runtime-spec/tree/1c3f411f041711bbeecf35ff7e93461ea6789220
+* Source:  https://github.com/opencontainers/runtime-spec/releases/tag/v1.1.0
 
-opencontainers/selinux (1.10.1)
+opencontainers/selinux (1.11.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/opencontainers/selinux
-* Source:  https://github.com/opencontainers/selinux/releases/tag/v1.10.1
+* Source:  https://github.com/opencontainers/selinux/releases/tag/v1.11.0
 
 pkg/errors (0.9.1)
 
@@ -322,11 +339,11 @@ pkg/errors (0.9.1)
 * Project: https://github.com/pkg/errors
 * Source:  https://github.com/pkg/errors/releases/tag/v0.9.1
 
-rootless-containers/rootlesskit (1.1.0)
+rootless-containers/rootlesskit (1.1.1)
 
 * License: Apache License 2.0
 * Project: https://github.com/rootless-containers/rootlesskit
-* Source:  https://github.com/rootless-containers/rootlesskit/releases/tag/v1.1.0
+* Source:  https://github.com/rootless-containers/rootlesskit/releases/tag/v1.1.1
 
 shirou/gopsutil (3.22.7)
 
@@ -340,11 +357,11 @@ sean-/seed (0.0.0-20170313163322-e2103e2c3529)
 * Project: https://github.com/sean-/seed
 * Source:  https://github.com/sean-/seed/tree/e2103e2c35297fb7e17febb81e49b312087a2372
 
-sirupsen/logrus (v1.9.0)
+sirupsen/logrus (v1.9.3)
 
 * License: MIT License
 * Project: https://github.com/sirupsen/logrus
-* Source:  https://github.com/sirupsen/logrus/releases/tag/v1.9.0
+* Source:  https://github.com/sirupsen/logrus/releases/tag/v1.9.3
 
 spf13/cobra (1.2.1)
 
@@ -388,17 +405,17 @@ vishvananda/netns (0.0.0-20210104183010-2eb08e3e575f)
 * Project: https://github.com/vishvananda/netns
 * Source:  https://github.com/vishvananda/netns/tree/2eb08e3e575f00733a612d25cc5d7470f8db6f35
 
-golang.org/x/crypto (0.14.0)
+golang.org/x/crypto (0.18.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/crypto
-* Source:  https://github.com/golang/crypto/releases/tag/v0.14.0
+* Source:  https://github.com/golang/crypto/releases/tag/v0.18.0
 
-golang.org/x/net (0.17.0)
+golang.org/x/net (0.18.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/net
-* Source:  https://github.com/golang/net/releases/tag/v0.17.0
+* Source:  https://github.com/golang/net/releases/tag/v0.18.0
 
 golang.org/x/sync (0.3.0)
 
@@ -406,23 +423,23 @@ golang.org/x/sync (0.3.0)
 * Project: https://github.com/golang/sync
 * Source:  https://github.com/golang/sync/releases/tag/v0.3.0
 
-golang.org/x/sys (0.13.0)
+golang.org/x/sys (0.16.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sys
-* Source:  https://github.com/golang/sys/releases/tag/v0.13.0
+* Source:  https://github.com/golang/sys/releases/tag/v0.16.0
 
-golang.org/x/term (0.13.0)
+golang.org/x/term (0.16.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/term
-* Source:  https://github.com/golang/term/releases/tag/v0.13.0
+* Source:  https://github.com/golang/term/releases/tag/v0.16.0
 
-golang.org/x/text (0.13.0)
+golang.org/x/text (0.14.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/text
-* Source:  https://github.com/golang/text/releases/tag/v0.13.0
+* Source:  https://github.com/golang/text/releases/tag/v0.14.0
 
 mozilla-services/pkcs7 (0.0.0-20200128120323-432b2356ecb1)
 
@@ -454,11 +471,11 @@ natefinch/lumberjack (2.0.0)
 * Project: https://github.com/natefinch/lumberjack
 * Source:  https://github.com/natefinch/lumberjack/releases/tag/v2.0.0
 
-square/go-jose (2.5.1)
+square/go-jose (3.0.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/square/go-jose
-* Source:  https://github.com/square/go-jose/releases/tag/v2.5.1
+* Source:  https://github.com/square/go-jose/releases/tag/v3.0.0
 
 go-yaml/yaml (3.0.1)
 
