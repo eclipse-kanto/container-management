@@ -100,13 +100,8 @@ containerd/typeurl (1.0.2)
 * Project: https://github.com/containerd/typeurl
 * Source:  https://github.com/containerd/typeurl/releases/tag/v1.0.2
 
-containerd/typeurl (1.0.2)
-
-* License: Apache License 2.0
-* Project: https://github.com/containerd/typeurl
-* Source:  https://github.com/containerd/typeurl/releases/tag/v1.0.2
-
 containerd/log (0.1.0)
+
 * License: Apache License 2.0
 * Project: https://github.com/containerd/log
 * Source:  https://github.com/containerd/log/releases/tag/v0.1.0
@@ -116,6 +111,12 @@ containers/ocicrypt (1.1.9)
 * License: Apache License 2.0
 * Project: https://github.com/containers/ocicrypt
 * Source:  https://github.com/containers/ocicrypt/releases/tag/v1.1.9
+
+coreos/go-systemd (22.3.2)
+
+* License: Apache License 2.0
+* Project: https://github.com/coreos/go-systemd
+* Source:  https://github.com/coreos/go-systemd/releases/tag/v22.3.2
 
 deckarep/golang-set (1.8.0)
 
