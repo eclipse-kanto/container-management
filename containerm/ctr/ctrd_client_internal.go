@@ -15,9 +15,10 @@ package ctr
 import (
 	"context"
 	"fmt"
-	"github.com/opencontainers/image-spec/identity"
 	"syscall"
 	"time"
+
+	"github.com/opencontainers/image-spec/identity"
 
 	"golang.org/x/sys/unix"
 
