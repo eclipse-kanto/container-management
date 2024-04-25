@@ -90,7 +90,7 @@ func ParseMountPoints(mps []string) ([]types.MountPoint, error) {
 func ParseMountPoint(mp string) (*types.MountPoint, []byte, error) {
 	mount := strings.Split(strings.TrimSpace(mp), ":")
 	if len(mount) < 2 || len(mount) > 4 {
-		return nil, []byte(""), log.NewErrorf("Incorrect number of parameters of the mount point %s", mp)
+		return nil, nil, log.NewErrorf("incorrect number of parameters of the mount point %s", mp)
 	}
 	mountPoint := &types.MountPoint{
 		Destination: mount[1],
@@ -109,14 +109,14 @@ func ParseMountPoint(mp string) (*types.MountPoint, []byte, error) {
 			mountPoint.PropagationMode = types.RPrivatePropagationMode
 			configInfo, err = base64.StdEncoding.DecodeString(mount[2])
 			if err != nil {
-				log.Fatal("error:", err)
+				log.WarnErr("error:", err)
 			}
 		}
 	} else {
 		mountPoint.PropagationMode = mount[2]
 		configInfo, err = base64.StdEncoding.DecodeString(mount[3])
 		if err != nil {
-			log.Fatal("error:", err)
+			log.WarnErr("error:", err)
 		}
 	}
 	return mountPoint, configInfo, nil
