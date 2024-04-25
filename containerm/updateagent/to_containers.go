@@ -15,6 +15,7 @@ package updateagent
 import (
 	"strconv"
 	"time"
+	"os"
 
 	ctrtypes "github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
@@ -66,7 +67,14 @@ func toContainer(component *types.ComponentWithConfig) (*ctrtypes.Container, err
 		case keyHost:
 			extraHosts = append(extraHosts, keyValuePair.Value)
 		case keyMount:
-			mountPoint, err := util.ParseMountPoint(keyValuePair.Value)
+			mountPoint, configInfo, err := util.ParseMountPoint(keyValuePair.Value)
+			if len(configInfo) != 0 {
+				err :=os.WriteFile(mountPoint.Source+"/"+component.ID+"_config.json", configInfo, 0755)
+				if err != nil {
+					log.WarnErr(err, "Error writing to file.")
+					//add case where file is not written properly.
+				}
+			}
 			if err != nil {
 				log.WarnErr(err, "Ignoring invalid mount point")
 			} else {

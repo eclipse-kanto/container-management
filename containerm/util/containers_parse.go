@@ -16,6 +16,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"encoding/base64"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
@@ -73,7 +74,7 @@ func ParseDeviceMapping(device string) (*types.DeviceMapping, error) {
 func ParseMountPoints(mps []string) ([]types.MountPoint, error) {
 	var mountPoints []types.MountPoint
 	for _, mp := range mps {
-		mount, err := ParseMountPoint(mp)
+		mount, _, err := ParseMountPoint(mp)
 		if err != nil {
 			return nil, err
 		}
@@ -83,25 +84,42 @@ func ParseMountPoints(mps []string) ([]types.MountPoint, error) {
 }
 
 // ParseMountPoint converts a single string representation of a container's mount to a structured MountPoint instance.
-// Format: source:destination[:propagation_mode].
+// Format: source:destination[:propagation_mode]:encoded_config_file_information.
 // If the propagation mode parameter is omitted, rprivate will be set by default.
 // Available propagation modes are: rprivate, private, rshared, shared, rslave, slave.
-func ParseMountPoint(mp string) (*types.MountPoint, error) {
+func ParseMountPoint(mp string) (*types.MountPoint, []byte, error) {
 	mount := strings.Split(strings.TrimSpace(mp), ":")
-	if len(mount) < 2 || len(mount) > 3 {
-		return nil, log.NewErrorf("Incorrect number of parameters of the mount point %s", mp)
+	if len(mount) < 2 || len(mount) > 4 {
+		return nil, []byte(""), log.NewErrorf("Incorrect number of parameters of the mount point %s", mp)
 	}
 	mountPoint := &types.MountPoint{
 		Destination: mount[1],
 		Source:      mount[0],
 	}
+	var configInfo []byte
+	var err error
 	if len(mount) == 2 {
 		// if propagation mode is omitted, "rprivate" is set as default
 		mountPoint.PropagationMode = types.RPrivatePropagationMode
+	} else if len(mount) == 3 {
+		// if the lenght of mount is 3, figure out which part was omitted and proceed accordingly.
+		if mount[2] == types.RPrivatePropagationMode || mount[2] == types.PrivatePropagationMode || mount[2] == types.RSharedPropagationMode || mount[2] == types.SharedPropagationMode || mount[2] == types.RSlavePropagationMode || mount[2] == types.SlavePropagationMode {
+			mountPoint.PropagationMode = mount[2]
+		} else {
+			mountPoint.PropagationMode = types.RPrivatePropagationMode
+			configInfo, err = base64.StdEncoding.DecodeString(mount[2])
+			if err != nil {
+				log.Fatal("error:", err)
+			}
+		}
 	} else {
 		mountPoint.PropagationMode = mount[2]
+		configInfo, err = base64.StdEncoding.DecodeString(mount[3])
+		if err != nil {
+			log.Fatal("error:", err)
+		}
 	}
-	return mountPoint, nil
+	return mountPoint, configInfo, nil
 }
 
 // ParsePortMappings converts string representations of container's port mappings to structured PortMapping instances.
