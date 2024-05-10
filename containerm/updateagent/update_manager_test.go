@@ -300,8 +300,10 @@ func createSimpleContainer(name, version string) *ctrtypes.Container {
 	ctr := &ctrtypes.Container{
 		Name:  name,
 		Image: ctrtypes.Image{Name: name + ":" + version},
+		State: &ctrtypes.State{},
 	}
 	util.FillDefaults(ctr)
+	util.SetContainerStatusRunning(ctr, 1234)
 	return ctr
 }
 
@@ -309,4 +311,8 @@ func createSimpleDesiredComponent(name, version string) *types.ComponentWithConf
 	return &types.ComponentWithConfig{
 		Component: types.Component{ID: name, Version: version},
 	}
+}
+
+func createActionComponent(component *types.ComponentWithConfig) *types.Component {
+	return &types.Component{ID: domainName + ":" + component.ID, Version: component.Version}
 }

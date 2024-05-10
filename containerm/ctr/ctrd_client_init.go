@@ -14,9 +14,10 @@ package ctr
 
 import (
 	"context"
-	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"path/filepath"
 	"time"
+
+	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 
 	"github.com/containerd/containerd"
 	"github.com/eclipse-kanto/container-management/containerm/log"
@@ -24,7 +25,8 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-func newContainerdClient(namespace string, socket string, rootExec string, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string, runcRuntime types.Runtime, imageExpiry time.Duration, imageExpiryDisable bool, leaseID string) (ContainerAPIClient, error) {
+func newContainerdClient(namespace string, socket string, rootExec string, metaPath string, registryConfigs map[string]*RegistryConfig, imageDecKeys, imageDecRecipients []string,
+	runcRuntime types.Runtime, imageExpiry time.Duration, imageExpiryDisable bool, leaseID string, imageVerifierType VerifierType, imageVerifierConfig map[string]string) (ContainerAPIClient, error) {
 
 	//ensure storage
 	err := util.MkDir(rootExec)
@@ -45,6 +47,10 @@ func newContainerdClient(namespace string, socket string, rootExec string, metaP
 	if decrErr != nil {
 		return nil, decrErr
 	}
+	verifier, verifierErr := newContainerVerifier(imageVerifierType, imageVerifierConfig, registryConfigs)
+	if verifierErr != nil {
+		return nil, verifierErr
+	}
 
 	ctrdClient := &containerdClient{
 		rootExec:           rootExec,
@@ -55,6 +61,7 @@ func newContainerdClient(namespace string, socket string, rootExec string, metaP
 		ioMgr:              newContainerIOManager(filepath.Join(rootExec, "fifo"), newCache()),
 		logsMgr:            newContainerLogsManager(filepath.Join(metaPath, "containers")),
 		decMgr:             decryptMgr,
+		verifier:           verifier,
 		runcRuntime:        runcRuntime,
 		imageExpiry:        imageExpiry,
 		imageExpiryDisable: imageExpiryDisable,
@@ -78,5 +85,6 @@ func registryInit(registryCtx *registry.ServiceRegistryContext) (interface{}, er
 	if err := applyOptsCtr(opts, createOpts...); err != nil {
 		return nil, err
 	}
-	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients, opts.runcRuntime, opts.imageExpiry, opts.imageExpiryDisable, opts.leaseID)
+	return newContainerdClient(opts.namespace, opts.connectionPath, opts.rootExec, opts.metaPath, opts.registryConfigs, opts.imageDecKeys, opts.imageDecRecipients,
+		opts.runcRuntime, opts.imageExpiry, opts.imageExpiryDisable, opts.leaseID, opts.imageVerifierType, opts.imageVerifierConfig)
 }

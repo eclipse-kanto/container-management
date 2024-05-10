@@ -12,6 +12,12 @@
 
 package mgr
 
+import (
+	"time"
+
+	"github.com/eclipse-kanto/container-management/containerm/log"
+)
+
 // ContainerManagerOpt provides container manager options
 type ContainerManagerOpt func(mgrOptions *mgrOpts) error
 
@@ -20,7 +26,7 @@ type mgrOpts struct {
 	rootExec                 string
 	containerClientServiceID string
 	networkManagerServiceID  string
-	defaultCtrsStopTimeout   int64
+	defaultCtrsStopTimeout   time.Duration
 }
 
 func applyOptsMgr(mgrOpts *mgrOpts, opts ...ContainerManagerOpt) error {
@@ -65,9 +71,16 @@ func WithMgrNetworkManagerServiceID(networkManagerServiceID string) ContainerMan
 }
 
 // WithMgrDefaultContainerStopTimeout sets default container stop timeout.
-func WithMgrDefaultContainerStopTimeout(networkManagerCtrsStopTimeout int64) ContainerManagerOpt {
+func WithMgrDefaultContainerStopTimeout(managerCtrsStopTimeout interface{}) ContainerManagerOpt {
 	return func(mgrOptions *mgrOpts) error {
-		mgrOptions.defaultCtrsStopTimeout = networkManagerCtrsStopTimeout
+		switch v := managerCtrsStopTimeout.(type) {
+		case int64:
+			mgrOptions.defaultCtrsStopTimeout = time.Duration(managerCtrsStopTimeout.(int64)) * time.Second
+		case time.Duration:
+			mgrOptions.defaultCtrsStopTimeout = managerCtrsStopTimeout.(time.Duration)
+		default:
+			return log.NewErrorf("unexpected stop timeout type: %v", v)
+		}
 		return nil
 	}
 }

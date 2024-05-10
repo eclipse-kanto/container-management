@@ -19,7 +19,6 @@ package ctr
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
@@ -36,7 +35,7 @@ func (mgr *cioMgr) newFIFOSet(processID string, withStdin bool, withTerminal boo
 		return nil, err
 	}
 
-	fifoDir, err := ioutil.TempDir(mgr.fifoRootDir, "")
+	fifoDir, err := os.MkdirTemp(mgr.fifoRootDir, "")
 	if err != nil {
 		return nil, err
 	}

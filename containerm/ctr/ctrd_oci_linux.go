@@ -14,6 +14,7 @@ package ctr
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -137,6 +138,14 @@ func WithHooks(container *types.Container, execRoot string) crtdoci.SpecOpts {
 				if err != nil {
 					return err
 				}
+
+				var env []string // set XDG_CONFIG_HOME and HOME as they are needed for notation init, otherwise libnet hook execution fails
+				for _, key := range []string{"XDG_CONFIG_HOME", "HOME"} {
+					value := os.Getenv(key)
+					if value != "" {
+						env = append(env, fmt.Sprintf("%s=%s", key, value))
+					}
+				}
 				libnetHook := specs.Hook{
 					Path: target,
 					Args: []string{
@@ -145,6 +154,7 @@ func WithHooks(container *types.Container, execRoot string) crtdoci.SpecOpts {
 						container.ID,
 						stringid.TruncateID(container.NetworkSettings.NetworkControllerID),
 					},
+					Env: env,
 				}
 				s.Hooks.Prestart = append(s.Hooks.Prestart, libnetHook)
 			}

@@ -14,6 +14,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -30,6 +32,7 @@ const (
 	createCmdFlagTerminal              = "t"
 	createCmdFlagInteractive           = "i"
 	createCmdFlagPrivileged            = "privileged"
+	createCmdFlagContainerFile         = "file"
 	createCmdFlagRestartPolicy         = "rp"
 	createCmdFlagRestartPolicyMaxCount = "rp-cnt"
 	createCmdFlagRestartPolicyTimeout  = "rp-to"
@@ -74,10 +77,11 @@ func TestCreateCmdSetupFlags(t *testing.T) {
 	createCliTest.init()
 
 	expectedCfg := createConfig{
-		name:        "",
-		terminal:    true,
-		interactive: true,
-		privileged:  true,
+		name:          "",
+		terminal:      true,
+		interactive:   true,
+		privileged:    true,
+		containerFile: string("config.json"),
 		restartPolicy: restartPolicy{
 			kind:          string(types.Always),
 			timeout:       10,
@@ -109,6 +113,7 @@ func TestCreateCmdSetupFlags(t *testing.T) {
 		createCmdFlagTerminal:              strconv.FormatBool(expectedCfg.terminal),
 		createCmdFlagInteractive:           strconv.FormatBool(expectedCfg.interactive),
 		createCmdFlagPrivileged:            strconv.FormatBool(expectedCfg.privileged),
+		createCmdFlagContainerFile:         expectedCfg.containerFile,
 		createCmdFlagRestartPolicy:         expectedCfg.restartPolicy.kind,
 		createCmdFlagRestartPolicyMaxCount: strconv.Itoa(expectedCfg.restartPolicy.maxRetryCount),
 		createCmdFlagRestartPolicyTimeout:  strconv.FormatInt(expectedCfg.restartPolicy.timeout, 10),
@@ -451,6 +456,14 @@ func (createTc *createCommandTest) generateRunExecutionConfigs() map[string]test
 			},
 			mockExecution: createTc.mockExecCreateWithExtraCapabilities,
 		},
+		"test_create_extra_capabilities_with_privileged": {
+			args: createCmdArgs,
+			flags: map[string]string{
+				createCmdFlagExtraCapabilities: "CAP_NET_ADMIN",
+				createCmdFlagPrivileged:        "true",
+			},
+			mockExecution: createTc.mockExecCreateWithExtraCapabilitiesWithPrivileged,
+		},
 		// Test privileged
 		"test_create_privileged": {
 			args: createCmdArgs,
@@ -458,6 +471,35 @@ func (createTc *createCommandTest) generateRunExecutionConfigs() map[string]test
 				createCmdFlagPrivileged: "true",
 			},
 			mockExecution: createTc.mockExecCreateWithPrivileged,
+		},
+		// Test container file
+		"test_create_no_args": {
+			mockExecution: createTc.mockExecCreateWithNoArgs,
+		},
+		"test_create_container_file": {
+			flags: map[string]string{
+				createCmdFlagContainerFile: "../pkg/testutil/config/container/valid.json",
+			},
+			mockExecution: createTc.mockExecCreateContainerFile,
+		},
+		"test_create_container_file_invalid_path": {
+			flags: map[string]string{
+				createCmdFlagContainerFile: "/test/test",
+			},
+			mockExecution: createTc.mockExecCreateContainerFileInvalidPath,
+		},
+		"test_create_container_file_invalid_json": {
+			flags: map[string]string{
+				createCmdFlagContainerFile: "../pkg/testutil/config/container/invalid.json",
+			},
+			mockExecution: createTc.mockExecCreateContainerFileInvalidJSON,
+		},
+		"test_create_container_file_with_args": {
+			args: createCmdArgs,
+			flags: map[string]string{
+				createCmdFlagContainerFile: "../pkg/testutil/config/container/valid.json",
+			},
+			mockExecution: createTc.mockExecCreateContainerFileWithArgs,
 		},
 		// Test terminal
 		"test_create_terminal": {
@@ -884,6 +926,12 @@ func (createTc *createCommandTest) mockExecCreateWithPortsProto(args []string) e
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
 	return nil
 }
+
+func (createTc *createCommandTest) mockExecCreateWithNoArgs(args []string) error {
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
+	return log.NewError("container image argument is expected")
+}
+
 func (createTc *createCommandTest) mockExecCreateWithPortsIncorrectPortsConfig(args []string) error {
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
 	return log.NewError("Incorrect port mapping configuration")
@@ -937,6 +985,11 @@ func (createTc *createCommandTest) mockExecCreateWithExtraCapabilities(args []st
 	return nil
 }
 
+func (createTc *createCommandTest) mockExecCreateWithExtraCapabilitiesWithPrivileged(args []string) error {
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
+	return log.NewError("cannot create the container as privileged and with extra capabilities at the same time - choose one of the options")
+}
+
 func (createTc *createCommandTest) mockExecCreateWithPrivileged(args []string) error {
 	container := initExpectedCtr(&types.Container{
 		Image: types.Image{
@@ -950,6 +1003,39 @@ func (createTc *createCommandTest) mockExecCreateWithPrivileged(args []string) e
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
 	return nil
 }
+
+func (createTc *createCommandTest) mockExecCreateContainerFile(_ []string) error {
+	byteValue, _ := os.ReadFile("../pkg/testutil/config/container/valid.json")
+	container := &types.Container{
+		HostConfig: &types.HostConfig{
+			NetworkMode: types.NetworkModeBridge,
+		},
+		IOConfig: &types.IOConfig{},
+	}
+	json.Unmarshal(byteValue, container)
+
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Eq(container)).Times(1).Return(container, nil)
+	return nil
+}
+
+func (createTc *createCommandTest) mockExecCreateContainerFileInvalidPath(_ []string) error {
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
+	_, err := os.ReadFile("/test/test")
+	return err
+}
+
+func (createTc *createCommandTest) mockExecCreateContainerFileInvalidJSON(_ []string) error {
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
+	byteValue, _ := os.ReadFile("../pkg/testutil/config/container/invalid.json")
+	err := json.Unmarshal(byteValue, &types.Container{})
+	return err
+}
+
+func (createTc *createCommandTest) mockExecCreateContainerFileWithArgs(_ []string) error {
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
+	return log.NewError("no arguments are expected when creating a container from file")
+}
+
 func (createTc *createCommandTest) mockExecCreateWithTerminal(args []string) error {
 	container := initExpectedCtr(&types.Container{
 		Image: types.Image{
@@ -1061,19 +1147,13 @@ func initExpectedCtr(ctr *types.Container) *types.Container {
 	//merge default and provided
 	if ctr.HostConfig == nil {
 		ctr.HostConfig = &types.HostConfig{
-			Privileged:        false,
-			ExtraHosts:        nil,
-			ExtraCapabilities: nil,
-			NetworkMode:       types.NetworkModeBridge,
+			NetworkMode: types.NetworkModeBridge,
 		}
 	} else if ctr.HostConfig.NetworkMode == "" {
 		ctr.HostConfig.NetworkMode = types.NetworkModeBridge
 	}
 	if ctr.IOConfig == nil {
-		ctr.IOConfig = &types.IOConfig{
-			Tty:       false,
-			OpenStdin: false,
-		}
+		ctr.IOConfig = &types.IOConfig{}
 	}
 	if ctr.HostConfig.LogConfig == nil {
 		ctr.HostConfig.LogConfig = &types.LogConfiguration{

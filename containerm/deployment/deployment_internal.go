@@ -166,7 +166,7 @@ func stopContainer(ctx context.Context, ctrMgr mgr.ContainerManager, container *
 }
 
 func removeContainer(ctx context.Context, ctrMgr mgr.ContainerManager, container *types.Container) {
-	if removeErr := ctrMgr.Remove(ctx, container.ID, true); removeErr != nil {
+	if removeErr := ctrMgr.Remove(ctx, container.ID, true, nil); removeErr != nil {
 		log.WarnErr(removeErr, "could not remove container with ID = %s, name = %s and image name = %s", container.ID, container.Name, container.Image.Name)
 	} else {
 		log.Debug("successfully removed container with ID = %s, name = %s and image name = %s", container.ID, container.Name, container.Image.Name)

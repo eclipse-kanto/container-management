@@ -13,7 +13,6 @@
 package ctr
 
 import (
-	"net"
 	"net/http"
 	"time"
 
@@ -100,7 +99,6 @@ func (resolver *ctrImagesResolver) processImageRegistries() {
 		//needed for insecure registries with self-signed certificates
 		var httpConfig docker.RegistryHost
 
-		tlsConfig := createDefaultTLSConfig(config.IsInsecure)
 		if config.Transport != nil && config.IsInsecure {
 			log.Warn("a TLS configuration for registry host %s is provided but the registry is marked as insecure - the TLS config will not be applied", host)
 		}
@@ -117,32 +115,9 @@ func (resolver *ctrImagesResolver) processImageRegistries() {
 			if config.Credentials != nil {
 				httpConfig.Authorizer = docker.NewDockerAuthorizer(docker.WithAuthClient(http.DefaultClient), docker.WithAuthCreds(resolver.getRegistryAuthCreds))
 			}
-		} else {
-			if config.Transport != nil {
-				if err := applyLocalTLSConfig(config.Transport, tlsConfig); err != nil {
-					log.WarnErr(err, "could not process provided TLS configuration - default will be used for registry host %s", host)
-					tlsConfig = createDefaultTLSConfig(config.IsInsecure)
-				} else {
-					log.Debug("successfully applied TLS configuration for registry host %s", host)
-				}
-			}
 		}
 
-		tr := &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   registryResolverDialContextTimeout,
-				KeepAlive: registryResolverDialContextKeepAlive,
-				DualStack: true,
-			}).DialContext,
-			MaxIdleConns:          registryResolverTransportMaxIdeConns,
-			IdleConnTimeout:       registryResolverTransportIdleConnTimeout,
-			TLSHandshakeTimeout:   registryResolverTransportTLSHandshakeTimeout,
-			TLSClientConfig:       tlsConfig,
-			ExpectContinueTimeout: registryResolverTransportExpectContinueTimeout,
-		}
-
-		httpsClient := &http.Client{Transport: tr}
+		httpsClient := &http.Client{Transport: getTransport(config.IsInsecure, config.Transport, host)}
 		httpsConfig := docker.RegistryHost{
 			Client:       httpsClient,
 			Host:         host,

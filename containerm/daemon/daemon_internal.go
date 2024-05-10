@@ -27,6 +27,11 @@ import (
 func (d *daemon) start() error {
 	log.Debug("starting daemon instance")
 
+	if err := d.startGrpcServers(); err != nil {
+		log.ErrorErr(err, "could not start gRPC servers")
+		return err
+	}
+
 	if err := d.loadContainerManagersStoredInfo(); err != nil {
 		log.ErrorErr(err, "could not load and restore persistent data for the Container Manager Services")
 		return err
@@ -54,7 +59,7 @@ func (d *daemon) start() error {
 		log.Debug("Containers Update Agent is not enabled.")
 	}
 
-	return d.startGrpcServers()
+	return nil
 }
 
 func (d *daemon) stop() {

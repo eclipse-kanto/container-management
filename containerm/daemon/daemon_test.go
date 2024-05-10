@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -83,43 +84,57 @@ func TestDefaultConfig(t *testing.T) {
 func TestThingsServiceFeaturesConfig(t *testing.T) {
 	local := &config{}
 	_ = loadLocalConfig("../pkg/testutil/config/daemon-things-features-config.json", local)
-	testutil.AssertEqual(t, local.ThingsConfig.Features, []string{things.ContainerFactoryFeatureID})
+	testutil.AssertEqual(t, []string{things.ContainerFactoryFeatureID}, local.ThingsConfig.Features)
 }
 
 func TestThingsTLSConfig(t *testing.T) {
 	local := &config{}
 	_ = loadLocalConfig("../pkg/testutil/config/daemon-things-tls-config.json", local)
-	testutil.AssertEqual(t, local.ThingsConfig.ThingsConnectionConfig.Transport, &tlsConfig{RootCA: "ca.crt", ClientCert: "client.crt", ClientKey: "client.key"})
+	testutil.AssertEqual(t, &tlsConfig{RootCA: "ca.crt", ClientCert: "client.crt", ClientKey: "client.key"}, local.ThingsConfig.ThingsConnectionConfig.Transport)
+}
+
+func TestMgrDefaultCtrsStopTimeoutConfig(t *testing.T) {
+	local := &config{}
+	_ = loadLocalConfig("../pkg/testutil/config/daemon-mgr-default-ctrs-stop-timeout-config.json", local)
+	testutil.AssertEqual(t, local.ManagerConfig.MgrDefaultCtrsStopTimeout, "15")
 }
 
 func TestExtractOpts(t *testing.T) {
 	t.Run("test_extract_ctr_client_opts", func(t *testing.T) {
 		opts := extractCtrClientConfigOptions(cfg)
-		if opts == nil || len(opts) == 0 {
+		if len(opts) == 0 {
 			t.Error("no ctr client opts after extraction")
 		}
 	})
 	t.Run("test_extract_net_mgr_opts", func(t *testing.T) {
 		opts := extractNetManagerConfigOptions(cfg)
-		if opts == nil || len(opts) == 0 {
+		if len(opts) == 0 {
 			t.Error("no net mgr opts after extraction")
 		}
 	})
 	t.Run("test_extract_ctr_mgr_opts", func(t *testing.T) {
 		opts := extractContainerManagerOptions(cfg)
-		if opts == nil || len(opts) == 0 {
+		if len(opts) == 0 {
 			t.Error("no ctr mgr opts after extraction")
 		}
 	})
+	t.Run("test_extract_ctr_mgr_opts_with_not_suffixed_stop_timeout", func(t *testing.T) {
+		config := &config{ManagerConfig: &managerConfig{MgrDefaultCtrsStopTimeout: "10"}}
+		opts := extractContainerManagerOptions(config)
+		if len(opts) == 0 {
+			t.Error("no ctr mgr opts after extraction")
+		}
+		testutil.AssertEqual(t, "10s", config.ManagerConfig.MgrDefaultCtrsStopTimeout)
+	})
 	t.Run("test_extract_grpc_opts", func(t *testing.T) {
 		opts := extractGrpcOptions(cfg)
-		if opts == nil || len(opts) == 0 {
+		if len(opts) == 0 {
 			t.Error("no grpc opts after extraction")
 		}
 	})
 	t.Run("test_extract_things_opts", func(t *testing.T) {
 		opts := extractThingsOptions(cfg)
-		if opts == nil || len(opts) == 0 {
+		if len(opts) == 0 {
 			t.Error("no things opts after extraction")
 		}
 	})
@@ -215,7 +230,7 @@ func TestSetCommandFlags(t *testing.T) {
 		},
 		"test_flags_cm-deflt-ctrs-stop-timeout": {
 			flag:         "cm-deflt-ctrs-stop-timeout",
-			expectedType: reflect.Int64.String(),
+			expectedType: reflect.String.String(),
 		},
 		"test_flags_ccl-default-ns": {
 			flag:         "ccl-default-ns",
@@ -260,6 +275,14 @@ func TestSetCommandFlags(t *testing.T) {
 		"test_flags_ccl-lease-id": {
 			flag:         "ccl-lease-id",
 			expectedType: reflect.String.String(),
+		},
+		"test_flags_ccl-image-verifier-type": {
+			flag:         "ccl-image-verifier-type",
+			expectedType: reflect.String.String(),
+		},
+		"test_flags_ccl-image-verifier-config": {
+			flag:         "ccl-image-verifier-config",
+			expectedType: "stringSlice",
 		},
 		"test_flags_net-type": {
 			flag:         "net-type",
@@ -508,15 +531,6 @@ func TestParseRegistryConfigs(t *testing.T) {
 			t.Errorf("error while parsing registry configs, with nil insecure registries")
 		}
 	})
-	t.Run("test_parse_registry_configs_null_insecure", func(t *testing.T) {
-		cfg := getDefaultInstance()
-		_ = loadLocalConfig(registriesDaemonConfig, cfg)
-		cfg.ContainerClientConfig.CtrInsecureRegistries = nil
-		registryConfigs := parseRegistryConfigs(cfg.ContainerClientConfig.CtrRegistryConfigs, cfg.ContainerClientConfig.CtrInsecureRegistries)
-		if registryConfigs == nil || len(registryConfigs) == 0 {
-			t.Errorf("error while parsing registry configs, with nil insecure registries")
-		}
-	})
 	t.Run("test_parse_registry_configs_null_registry_config", func(t *testing.T) {
 		cfg := getDefaultInstance()
 		_ = loadLocalConfig(registriesDaemonConfig, cfg)
@@ -659,6 +673,68 @@ func TestRunLock(t *testing.T) {
 			t.Error("couldn't create lock")
 		}
 	})
+}
+
+func TestImageVerifierConfig(t *testing.T) {
+	local := &config{}
+	_ = loadLocalConfig("../pkg/testutil/config/daemon-config-image-verifier.json", local)
+	testutil.AssertEqual(t, "notation", local.ContainerClientConfig.CtrImageVerifierType)
+	expected := map[string]string{"configDir": "/path/notation/config", "libexecDir": "/path/notation/libexec"}
+	assertStringMap(t, expected, local.ContainerClientConfig.CtrImageVerifierConfig)
+}
+
+func TestImageVerifierFlag(t *testing.T) {
+	const (
+		testSinglePair    = "key=value"
+		testMultiplePairs = "key0=value0,key1=value1,key2=value2"
+	)
+
+	tests := map[string]struct {
+		value               string
+		expectedValue       map[string]string
+		expectedStringPairs []string
+		expectedErr         error
+	}{
+		"test_empty_error": {
+			expectedErr: log.NewError("the image verifier config could not be empty"),
+		},
+		"test_parse_error": {
+			value:       "invalid",
+			expectedErr: log.NewError("could not parse image verification config, invalid key-value pair - invalid"),
+		},
+		"test_single_config_no_error": {
+			value:               testSinglePair,
+			expectedStringPairs: []string{testSinglePair},
+			expectedValue:       map[string]string{"key": "value"},
+		},
+		"test_multiple_configs_no_error": {
+			value:               testMultiplePairs,
+			expectedStringPairs: strings.Split(testMultiplePairs, ","),
+			expectedValue:       map[string]string{"key0": "value0", "key1": "value1", "key2": "value2"},
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			verifierConfig := &verifierConfig{}
+			testutil.AssertError(t, test.expectedErr, verifierConfig.Set(test.value))
+			for _, expectedPair := range test.expectedStringPairs {
+				testutil.AssertTrue(t, strings.Contains(verifierConfig.String(), expectedPair))
+			}
+			testutil.AssertEqual(t, len(test.expectedValue), len(*verifierConfig))
+			assertStringMap(t, test.expectedValue, *verifierConfig)
+
+		})
+
+	}
+}
+
+func assertStringMap(t *testing.T, expected, actual map[string]string) {
+	testutil.AssertEqual(t, len(expected), len(actual))
+	for key, expectedValue := range expected {
+		value, ok := actual[key]
+		testutil.AssertTrue(t, ok)
+		testutil.AssertEqual(t, expectedValue, value)
+	}
 }
 
 // TODO test the behavior of the daemon towards its services (start, stop), with mocked instanced of GRPC service etc.

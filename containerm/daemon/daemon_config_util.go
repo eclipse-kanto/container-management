@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
@@ -48,6 +49,8 @@ func extractCtrClientConfigOptions(daemonConfig *config) []ctr.ContainerOpts {
 		ctr.WithCtrdImageExpiry(daemonConfig.ContainerClientConfig.CtrImageExpiry),
 		ctr.WithCtrdImageExpiryDisable(daemonConfig.ContainerClientConfig.CtrImageExpiryDisable),
 		ctr.WithCtrdLeaseID(daemonConfig.ContainerClientConfig.CtrLeaseID),
+		ctr.WithCtrImageVerifierType(daemonConfig.ContainerClientConfig.CtrImageVerifierType),
+		ctr.WithCtrImageVerifierConfig(daemonConfig.ContainerClientConfig.CtrImageVerifierConfig),
 	)
 	return ctrOpts
 }
@@ -76,12 +79,15 @@ func extractNetManagerConfigOptions(daemonConfig *config) []network.NetOpt {
 
 func extractContainerManagerOptions(daemonConfig *config) []mgr.ContainerManagerOpt {
 	mgrOpts := []mgr.ContainerManagerOpt{}
+	if _, err := strconv.Atoi(daemonConfig.ManagerConfig.MgrDefaultCtrsStopTimeout); err == nil {
+		daemonConfig.ManagerConfig.MgrDefaultCtrsStopTimeout = fmt.Sprintf("%ss", daemonConfig.ManagerConfig.MgrDefaultCtrsStopTimeout)
+	}
 	mgrOpts = append(mgrOpts,
 		mgr.WithMgrMetaPath(daemonConfig.ManagerConfig.MgrMetaPath),
 		mgr.WithMgrRootExec(daemonConfig.ManagerConfig.MgrExecPath),
 		mgr.WithMgrContainerClientServiceID(daemonConfig.ManagerConfig.MgrCtrClientServiceID),
 		mgr.WithMgrNetworkManagerServiceID(daemonConfig.ManagerConfig.MgrNetMgrServiceID),
-		mgr.WithMgrDefaultContainerStopTimeout(daemonConfig.ManagerConfig.MgrDefaultCtrsStopTimeout),
+		mgr.WithMgrDefaultContainerStopTimeout(parseDuration(daemonConfig.ManagerConfig.MgrDefaultCtrsStopTimeout, managerContainerStopTimeoutDefault)),
 	)
 	return mgrOpts
 }
@@ -263,7 +269,7 @@ func dumpContManager(configInstance *config) {
 		log.Debug("[daemon_cfg][cm-exec-root-dir] : %s", configInstance.ManagerConfig.MgrExecPath)
 		log.Debug("[daemon_cfg][cm-cc-sid] : %s", configInstance.ManagerConfig.MgrCtrClientServiceID)
 		log.Debug("[daemon_cfg][cm-net-sid] : %s", configInstance.ManagerConfig.MgrNetMgrServiceID)
-		log.Debug("[daemon_cfg][cm-deflt-ctrs-stop-timeout] : %d", configInstance.ManagerConfig.MgrDefaultCtrsStopTimeout)
+		log.Debug("[daemon_cfg][cm-deflt-ctrs-stop-timeout] : %s", configInstance.ManagerConfig.MgrDefaultCtrsStopTimeout)
 	}
 }
 
@@ -288,6 +294,8 @@ func dumpContClient(configInstance *config) {
 		log.Debug("[daemon_cfg][ccl-image-expiry] : %s", configInstance.ContainerClientConfig.CtrImageExpiry)
 		log.Debug("[daemon_cfg][ccl-image-expiry-disable] : %v", configInstance.ContainerClientConfig.CtrImageExpiryDisable)
 		log.Debug("[daemon_cfg][ccl-lease-id] : %s", configInstance.ContainerClientConfig.CtrLeaseID)
+		log.Debug("[daemon_cfg][ccl-image-verifier-type] : %v", configInstance.ContainerClientConfig.CtrImageVerifierType)
+		log.Debug("[daemon_cfg][ccl-image-verifier-config] : %v", configInstance.ContainerClientConfig.CtrImageVerifierConfig.String())
 	}
 }
 

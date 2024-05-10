@@ -42,8 +42,8 @@ const (
 	testRootExec                    = "testRootExec"
 	testContainerClientServiceID    = "testContainerClientServiceID"
 	testNetworkManagerServiceID     = "testNetworkManagerServiceID"
-	testDefaultContainerStopTimeout = 10
-	testNetworkManagerStopTimeout   = 30
+	testContainerStopTimeout        = time.Duration(10) * time.Second
+	testDefaultContainerStopTimeout = time.Duration(30) * time.Second
 )
 
 func TestGetContainer(t *testing.T) {
@@ -528,7 +528,7 @@ func TestDeleteContainerFromManager(t *testing.T) {
 	testutil.AssertEqual(t, 1, len(containerCheck))
 
 	// Act
-	unitUnderTest.Remove(context.Background(), containerCheck[0].ID, true)
+	unitUnderTest.Remove(context.Background(), containerCheck[0].ID, true, &types.StopOpts{Force: true})
 
 	containerCheckAfter, err := unitUnderTest.List(context.Background())
 	testutil.AssertNil(t, err)
@@ -1260,7 +1260,7 @@ func createContainerManagerWithCustomMocks(
 	return containerMgr{
 		metaPath:               metaPath,
 		execPath:               testRootExec,
-		defaultCtrsStopTimeout: testNetworkManagerStopTimeout,
+		defaultCtrsStopTimeout: testDefaultContainerStopTimeout,
 		ctrClient:              mockCtrClient,
 		netMgr:                 mockNetworkManager,
 		eventsMgr:              mockEventsManager,

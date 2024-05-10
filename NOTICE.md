@@ -40,6 +40,12 @@ alibaba/pouch (1.3.0)
 * Project: https://github.com/alibaba/pouch
 * Source:  https://github.com/alibaba/pouch/releases/tag/1.3.0
 
+Azure/go-ntlmssp (0.0.0-20221128193559-754e69321358)
+
+* License: MIT License
+* Project: https://github.com/Azure/go-ntlmssp
+* Source:  https://github.com/Azure/go-ntlmssp/tree/754e69321358ada85ce213a4ec971d3e4d1bfdf7
+
 armon/go-metrics (0.0.0-20180917152333-f0300d1749da)
 
 * License: MIT License
@@ -171,6 +177,12 @@ gogo/protobuf (1.3.2)
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/gogo/protobuf
 * Source:  https://github.com/gogo/protobuf/releases/tag/v1.3.2
+
+golang-jwt/jwt (4.5.0)
+
+* License: MIT License
+* Project: https://github.com/golang-jwt/jwt
+* Source:  https://github.com/golang-jwt/jwt/releases/tag/v4.5.0
 
 golang/mock (1.6.0)
 
@@ -304,6 +316,18 @@ moby/sys/user (0.1.0)
 * Project: https://github.com/moby/sys/user
 * Source:  https://github.com/moby/sys/tree/user/v0.1.0
 
+notaryproject/notation-core-go (1.0.1)
+
+* License: Apache License 2.0
+* Project: https://github.com/notaryproject/notation-core-go
+* Source:  https://github.com/notaryproject/notation-core-go/releases/tag/v1.0.1
+
+notaryproject/notation-go (1.0.1)
+
+* License: Apache License 2.0
+* Project: https://github.com/notaryproject/notation-go
+* Source:  https://github.com/notaryproject/notation-go/releases/tag/v1.0.1
+
 opencontainers/go-digest (1.0.0)
 
 * License: Apache License 2.0
@@ -364,11 +388,11 @@ sirupsen/logrus (v1.9.3)
 * Project: https://github.com/sirupsen/logrus
 * Source:  https://github.com/sirupsen/logrus/releases/tag/v1.9.3
 
-spf13/cobra (1.2.1)
+spf13/cobra (1.7.0)
 
 * License: Apache License 2.0
 * Project: https://github.com/spf13/cobra
-* Source:  https://github.com/spf13/cobra/releases/tag/v1.2.1
+* Source:  https://github.com/spf13/cobra/releases/tag/v1.7.0
 
 spf13/pflag (1.0.5)
 
@@ -394,6 +418,12 @@ tklauser/numcpus (0.4.0)
 * Project: https://github.com/tklauser/numcpus
 * Source:  https://github.com/tklauser/numcpus/releases/tag/v0.4.0
 
+veraison/go-cose (1.1.0)
+
+* License: Mozilla Public License 2.0
+* Project: https://github.com/veraison/go-cose
+* Source:  https://github.com/veraison/go-cose/releases/tag/v1.1.0
+
 vishvananda/netlink (v1.2.1-beta.2)
 
 * License: Apache License 2.0
@@ -418,11 +448,11 @@ golang.org/x/net (0.18.0)
 * Project: https://github.com/golang/net
 * Source:  https://github.com/golang/net/releases/tag/v0.18.0
 
-golang.org/x/sync (0.3.0)
+golang.org/x/sync (0.4.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sync
-* Source:  https://github.com/golang/sync/releases/tag/v0.3.0
+* Source:  https://github.com/golang/sync/releases/tag/v0.4.0
 
 golang.org/x/sys (0.16.0)
 
@@ -442,17 +472,23 @@ golang.org/x/text (0.14.0)
 * Project: https://github.com/golang/text
 * Source:  https://github.com/golang/text/releases/tag/v0.14.0
 
+golang.org/x/mod (0.13.0)
+
+* License: BSD 3-Clause "New" or "Revised" License
+* Project: https://github.com/golang/mod
+* Source:  https://github.com/golang/mod/releases/tag/v0.13.0
+
 mozilla-services/pkcs7 (0.0.0-20200128120323-432b2356ecb1)
 
 * License: MIT License
 * Project: https://github.com/mozilla-services
 * Source:  https://github.com/mozilla-services/pkcs7/tree/432b2356ecb18209c1cec25680b8a23632794f21
 
-googleapis/go-genproto (0.0.0-20230410155749-daa745c078e1)
+googleapis/go-genproto v0.0.0-20230822172742-b8732ec3820d
 
 * License: Apache License 2.0
 * Project: https://github.com/googleapis/go-genproto
-* Source:  https://github.com/googleapis/go-genproto/tree/daa745c078e18def54ea6b63235554b59c97f01d
+* Source:  https://github.com/googleapis/go-genproto/tree/b8732ec3820d
 
 grpc/grpc-go (1.59.0)
 
@@ -484,12 +520,42 @@ go-yaml/yaml (3.0.1)
 * Project: https://github.com/go-yaml/yaml
 * Source:  https://github.com/go-yaml/yaml/releases/tag/v3.0.1
 
+oras-project/oras-go (2.3.1)
+
+* License: Apache License 2.0
+* Project: https://github.com/oras-project/oras-go
+* Source:  https://github.com/oras-project/oras-go/releases/tag/v2.3.1
+
 golang/go (1.21.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/go
 * Source:  https://github.com/golang/go/releases/tag/go1.21.0
 
+x448/float16 (v0.8.4)
+
+* License: MIT License
+* Project: https://github.com/x448/float16
+* Source:  https://github.com/x448/float16/releases/tag/v0.8.4
+
+go-ldap/ldap (v3.4.6)
+
+* License: MIT License
+* Project: https://github.com/go-ldap/ldap
+* Source:  https://github.com/go-ldap/ldap/releases/tag/v3.4.6
+
+fxamacker/cbor/v2 v2.5.0
+
+* License: MIT License
+* Project: https://github.com/fxamacker/cbor
+* Source:  https://github.com/fxamacker/cbor/releases/tag/v2.5.0
+
+go-asn1-ber/asn1-ber v1.5.5
+
+* License: MIT License
+* Project: https://github.com/go-asn1-ber/asn1-ber
+* Source:  https://github.com/go-asn1-ber/asn1-ber/releases/tag/v1.5.5
+  
 ## Cryptography
 
 Content may contain encryption software. The country in which you are currently

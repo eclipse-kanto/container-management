@@ -42,7 +42,7 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.ManagerConfig.MgrExecPath, "cm-exec-root-dir", cfg.ManagerConfig.MgrExecPath, "Specify the exec root directory of the container manager service")
 	flagSet.StringVar(&cfg.ManagerConfig.MgrCtrClientServiceID, "cm-cc-sid", cfg.ManagerConfig.MgrCtrClientServiceID, "Specify the ID of the container runtime client service to be used by the container manager service")
 	flagSet.StringVar(&cfg.ManagerConfig.MgrNetMgrServiceID, "cm-net-sid", cfg.ManagerConfig.MgrNetMgrServiceID, "Specify the ID of the network manager service to be used by container manager service")
-	flagSet.Int64Var(&cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "cm-deflt-ctrs-stop-timeout", cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "Specify the default timeout that the container manager service will wait before killing the container's process")
+	flagSet.StringVar(&cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "cm-deflt-ctrs-stop-timeout", cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "Specify the default timeout that the container manager service will wait before killing the container's process")
 
 	// init container client flags
 	flagSet.StringVar(&cfg.ContainerClientConfig.CtrNamespace, "ccl-default-ns", cfg.ContainerClientConfig.CtrNamespace, "Specify the default namespace to be used for container management isolation")
@@ -56,6 +56,8 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.DurationVar(&cfg.ContainerClientConfig.CtrImageExpiry, "ccl-image-expiry", cfg.ContainerClientConfig.CtrImageExpiry, "Specify the time period for the cached images and content to be kept in the form of e.g. 72h3m0.5s")
 	flagSet.BoolVar(&cfg.ContainerClientConfig.CtrImageExpiryDisable, "ccl-image-expiry-disable", cfg.ContainerClientConfig.CtrImageExpiryDisable, "Disables expiry management of cached images and content - must be used with caution as it may lead to large memory volumes being persistently allocated")
 	flagSet.StringVar(&cfg.ContainerClientConfig.CtrLeaseID, "ccl-lease-id", cfg.ContainerClientConfig.CtrLeaseID, "Specify the lease identifier to be used for container resources persistence")
+	flagSet.StringVar(&cfg.ContainerClientConfig.CtrImageVerifierType, "ccl-image-verifier-type", cfg.ContainerClientConfig.CtrImageVerifierType, "Specify the image verifier type - possible values are none and notation, when set to none image signatures wil not be verified.")
+	flagSet.Var(&cfg.ContainerClientConfig.CtrImageVerifierConfig, "ccl-image-verifier-config", "Specify the configuration of the image verifier, as comma separated {key}={value} pairs - possible keys for notation verifier are configDir and libexecDir, for more info https://notaryproject.dev/docs/user-guides/how-to/directory-structure/#user-level")
 
 	// init network manager flags
 	flagSet.StringVar(&cfg.NetworkConfig.NetType, "net-type", cfg.NetworkConfig.NetType, "Specify the default network management type for containers")

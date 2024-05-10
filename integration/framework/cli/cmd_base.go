@@ -105,7 +105,8 @@ func RunCmdTestCases(t *testing.T, cmdList []TestCaseCMD) {
 			if cmd.setupCmd != nil {
 				runMultipleCommands(t, *cmd.setupCmd)
 			}
-			result := icmd.RunCmd(cmd.icmd)
+			checkArguments(t, &cmd.icmd)
+			result := icmd.RunCommand(cmd.icmd.Command[0], cmd.icmd.Command[1:]...)
 			if cmd.goldenFile != "" {
 				assert.Assert(t, golden.String(result.Stdout(), cmd.goldenFile))
 			}
@@ -122,25 +123,36 @@ func RunCmdTestCases(t *testing.T, cmdList []TestCaseCMD) {
 	}
 }
 
-func runMultipleCommands(t *testing.T, cmdArr []icmd.Cmd) {
-	for _, cmd := range cmdArr {
-		result := icmd.RunCmd(cmd)
-		result.Assert(t, icmd.Expected{ExitCode: 0})
-	}
-}
-
-func buildCmd(binary string, args ...string) *icmd.Cmd {
-	envArgs := []string{}
-	for _, arg := range args {
+func checkArguments(t *testing.T, cmd *icmd.Cmd) {
+	execCmd := []string{}
+	for _, arg := range cmd.Command {
+		if strings.HasPrefix(arg, "$(") && strings.HasSuffix(arg, ")") {
+			arg = strings.TrimPrefix(arg, "$(")
+			arg = strings.TrimSuffix(arg, ")")
+			arguments := strings.Split(arg, " ")
+			cmd := icmd.Command(arguments[0], arguments[1:]...)
+			checkArguments(t, &cmd)
+			result := icmd.RunCmd(cmd)
+			assert.Equal(t, result.ExitCode, 0)
+			execCmd = append(execCmd, strings.Split(strings.TrimSuffix(strings.TrimSuffix(result.Stdout(), "\n"), " "), " ")...)
+			continue
+		}
 		if strings.HasPrefix(arg, "$") {
 			if val, ok := os.LookupEnv(strings.TrimPrefix(arg, "$")); ok {
 				arg = val
 			}
 		}
-		envArgs = append(envArgs, arg)
+		execCmd = append(execCmd, arg)
 	}
-	cmd := icmd.Command(binary, envArgs...)
-	return &cmd
+	*cmd = icmd.Cmd{Command: execCmd}
+}
+
+func runMultipleCommands(t *testing.T, cmdArr []icmd.Cmd) {
+	for _, cmd := range cmdArr {
+		checkArguments(t, &cmd)
+		result := icmd.RunCommand(cmd.Command[0], cmd.Command[1:]...)
+		result.Assert(t, icmd.Expected{ExitCode: 0})
+	}
 }
 
 func assertCustomResult(t *testing.T, result icmd.Result, name string, args ...string) {
@@ -152,7 +164,7 @@ func assertCustomResult(t *testing.T, result icmd.Result, name string, args ...s
 func fromAPITestCommand(cmd TestCommand) TestCaseCMD {
 	return TestCaseCMD{
 		name: cmd.Name,
-		icmd: *buildCmd(cmd.Command.Binary, cmd.Command.Args...),
+		icmd: icmd.Command(cmd.Command.Binary, cmd.Command.Args...),
 		expected: icmd.Expected{
 			ExitCode: cmd.Expected.ExitCode,
 			Timeout:  cmd.Expected.Timeout,
@@ -174,7 +186,7 @@ func buildCmdArrFromCommand(cmd *[]Command) *[]icmd.Cmd {
 	}
 	cmds := make([]icmd.Cmd, 0)
 	for _, cmd := range *cmd {
-		cmds = append(cmds, *buildCmd(cmd.Binary, cmd.Args...))
+		cmds = append(cmds, icmd.Command(cmd.Binary, cmd.Args...))
 	}
 	return &cmds
 }

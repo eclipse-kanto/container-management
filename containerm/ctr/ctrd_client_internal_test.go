@@ -113,6 +113,56 @@ func TestClientInternalGenerateNewContainerOpts(t *testing.T) {
 	}
 }
 
+func TestConfigureRuncRuntime(t *testing.T) {
+	ctrdClient := &containerdClient{
+		runcRuntime: types.RuntimeTypeV2runcV2,
+	}
+	tests := map[string]struct {
+		container *types.Container
+		runtime   types.Runtime
+	}{
+		"test_RuntimeTypeV1": {
+			container: &types.Container{
+				HostConfig: &types.HostConfig{
+					Runtime: types.RuntimeTypeV1,
+				},
+			},
+			runtime: ctrdClient.runcRuntime,
+		},
+		"RuntimeTypeV2runcV1": {
+			container: &types.Container{
+				HostConfig: &types.HostConfig{
+					Runtime: types.RuntimeTypeV2runcV1,
+				},
+			},
+			runtime: ctrdClient.runcRuntime,
+		},
+		"RuntimeTypeV2runcV2": {
+			container: &types.Container{
+				HostConfig: &types.HostConfig{
+					Runtime: types.RuntimeTypeV2runcV2,
+				},
+			},
+			runtime: ctrdClient.runcRuntime,
+		},
+		"test_default": {
+			container: &types.Container{
+				HostConfig: &types.HostConfig{
+					Runtime: types.RuntimeTypeV2kataV2,
+				},
+			},
+			runtime: types.RuntimeTypeV2kataV2,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			ctrdClient.configureRuncRuntime(test.container)
+			testutil.AssertEqual(t, test.runtime, test.container.HostConfig.Runtime)
+		})
+	}
+}
+
 func TestClientInternalGenerateRemoteOpts(t *testing.T) {
 	const containerImageRef = "some.repo/image:tag"
 	testImageInfo := types.Image{
@@ -275,17 +325,17 @@ func TestClientInternalPullImage(t *testing.T) {
 		DecryptConfig: &types.DecryptConfig{},
 	}
 	testCases := map[string]struct {
-		mockExec func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, ctrl *gomock.Controller) (containerd.Image, error)
+		mockExec func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, verifierMock *MockcontainerVerifier, ctrl *gomock.Controller) (containerd.Image, error)
 	}{
 		"test_get_decrypt_cfg_error": {
-			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, ctrl *gomock.Controller) (containerd.Image, error) {
+			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, verifierMock *MockcontainerVerifier, ctrl *gomock.Controller) (containerd.Image, error) {
 				err := log.NewError("test error")
 				decryptMgrMock.EXPECT().GetDecryptConfig(testImageInfo.DecryptConfig).Return(nil, err)
 				return nil, err
 			},
 		},
 		"test_spi_get_image_error": {
-			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, ctrl *gomock.Controller) (containerd.Image, error) {
+			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, verifierMock *MockcontainerVerifier, ctrl *gomock.Controller) (containerd.Image, error) {
 				dc := &config.DecryptConfig{}
 				decryptMgrMock.EXPECT().GetDecryptConfig(testImageInfo.DecryptConfig).Return(dc, nil)
 				err := log.NewError("test error")
@@ -294,7 +344,7 @@ func TestClientInternalPullImage(t *testing.T) {
 			},
 		},
 		"test_spi_get_image_available_check_auth_error": {
-			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, ctrl *gomock.Controller) (containerd.Image, error) {
+			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, verifierMock *MockcontainerVerifier, ctrl *gomock.Controller) (containerd.Image, error) {
 				dc := &config.DecryptConfig{}
 				decryptMgrMock.EXPECT().GetDecryptConfig(testImageInfo.DecryptConfig).Return(dc, nil)
 				imageMock := mocksContainerd.NewMockImage(ctrl)
@@ -305,7 +355,7 @@ func TestClientInternalPullImage(t *testing.T) {
 			},
 		},
 		"test_spi_get_image_available_no_error": {
-			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, ctrl *gomock.Controller) (containerd.Image, error) {
+			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, verifierMock *MockcontainerVerifier, ctrl *gomock.Controller) (containerd.Image, error) {
 				dc := &config.DecryptConfig{}
 				decryptMgrMock.EXPECT().GetDecryptConfig(testImageInfo.DecryptConfig).Return(dc, nil)
 				imageMock := mocksContainerd.NewMockImage(ctrl)
@@ -314,11 +364,22 @@ func TestClientInternalPullImage(t *testing.T) {
 				return imageMock, nil
 			},
 		},
-		"test_spi_get_image_not_available_pull_error": {
-			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, ctrl *gomock.Controller) (containerd.Image, error) {
+		"test_spi_get_image_not_available_verifier_error": {
+			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, verifierMock *MockcontainerVerifier, ctrl *gomock.Controller) (containerd.Image, error) {
 				dc := &config.DecryptConfig{}
 				decryptMgrMock.EXPECT().GetDecryptConfig(testImageInfo.DecryptConfig).Return(dc, nil)
 				spiMock.EXPECT().GetImage(gomock.Any(), testImageInfo.Name).Return(nil, errdefs.ErrNotFound)
+				err := log.NewError("test error")
+				verifierMock.EXPECT().Verify(gomock.Any(), testImageInfo).Return(err)
+				return nil, err
+			},
+		},
+		"test_spi_get_image_not_available_pull_error": {
+			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, verifierMock *MockcontainerVerifier, ctrl *gomock.Controller) (containerd.Image, error) {
+				dc := &config.DecryptConfig{}
+				decryptMgrMock.EXPECT().GetDecryptConfig(testImageInfo.DecryptConfig).Return(dc, nil)
+				spiMock.EXPECT().GetImage(gomock.Any(), testImageInfo.Name).Return(nil, errdefs.ErrNotFound)
+				verifierMock.EXPECT().Verify(gomock.Any(), testImageInfo).Return(nil)
 				regsResolverMock.EXPECT().ResolveImageRegistry(util.GetImageHost(testImageInfo.Name)).Return(nil)
 				err := log.NewError("test error")
 				spiMock.EXPECT().PullImage(gomock.Any(), testImageInfo.Name, matchers.MatchesResolverOpts(containerd.WithSchema1Conversion)).Return(nil, err)
@@ -326,10 +387,11 @@ func TestClientInternalPullImage(t *testing.T) {
 			},
 		},
 		"test_spi_get_image_not_available_check_auth_error": {
-			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, ctrl *gomock.Controller) (containerd.Image, error) {
+			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, verifierMock *MockcontainerVerifier, ctrl *gomock.Controller) (containerd.Image, error) {
 				dc := &config.DecryptConfig{}
 				decryptMgrMock.EXPECT().GetDecryptConfig(testImageInfo.DecryptConfig).Return(dc, nil)
 				spiMock.EXPECT().GetImage(gomock.Any(), testImageInfo.Name).Return(nil, errdefs.ErrNotFound)
+				verifierMock.EXPECT().Verify(gomock.Any(), testImageInfo).Return(nil)
 				regsResolverMock.EXPECT().ResolveImageRegistry(util.GetImageHost(testImageInfo.Name)).Return(nil)
 				imageMock := mocksContainerd.NewMockImage(ctrl)
 				spiMock.EXPECT().PullImage(gomock.Any(), testImageInfo.Name, matchers.MatchesResolverOpts(containerd.WithSchema1Conversion)).Return(imageMock, nil)
@@ -339,10 +401,11 @@ func TestClientInternalPullImage(t *testing.T) {
 			},
 		},
 		"test_spi_get_image_not_available_gen_unpack_opts_error": {
-			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, ctrl *gomock.Controller) (containerd.Image, error) {
+			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, verifierMock *MockcontainerVerifier, ctrl *gomock.Controller) (containerd.Image, error) {
 				dc := &config.DecryptConfig{}
 				decryptMgrMock.EXPECT().GetDecryptConfig(testImageInfo.DecryptConfig).Return(dc, nil)
 				spiMock.EXPECT().GetImage(gomock.Any(), testImageInfo.Name).Return(nil, errdefs.ErrNotFound)
+				verifierMock.EXPECT().Verify(gomock.Any(), testImageInfo).Return(nil)
 				regsResolverMock.EXPECT().ResolveImageRegistry(util.GetImageHost(testImageInfo.Name)).Return(nil)
 				imageMock := mocksContainerd.NewMockImage(ctrl)
 				spiMock.EXPECT().PullImage(gomock.Any(), testImageInfo.Name, matchers.MatchesResolverOpts(containerd.WithSchema1Conversion)).Return(imageMock, nil)
@@ -353,10 +416,11 @@ func TestClientInternalPullImage(t *testing.T) {
 			},
 		},
 		"test_spi_get_image_not_available_unpack_error": {
-			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, ctrl *gomock.Controller) (containerd.Image, error) {
+			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, verifierMock *MockcontainerVerifier, ctrl *gomock.Controller) (containerd.Image, error) {
 				dc := &config.DecryptConfig{}
 				decryptMgrMock.EXPECT().GetDecryptConfig(testImageInfo.DecryptConfig).Return(dc, nil).Times(2)
 				spiMock.EXPECT().GetImage(gomock.Any(), testImageInfo.Name).Return(nil, errdefs.ErrNotFound)
+				verifierMock.EXPECT().Verify(gomock.Any(), testImageInfo).Return(nil)
 				regsResolverMock.EXPECT().ResolveImageRegistry(util.GetImageHost(testImageInfo.Name)).Return(nil)
 				imageMock := mocksContainerd.NewMockImage(ctrl)
 				spiMock.EXPECT().PullImage(gomock.Any(), testImageInfo.Name, matchers.MatchesResolverOpts(containerd.WithSchema1Conversion)).Return(imageMock, nil)
@@ -367,10 +431,11 @@ func TestClientInternalPullImage(t *testing.T) {
 			},
 		},
 		"test_spi_get_image_not_available_no_error": {
-			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, ctrl *gomock.Controller) (containerd.Image, error) {
+			mockExec: func(decryptMgrMock *mocksCtrd.MockcontainerDecryptMgr, spiMock *mocksCtrd.MockcontainerdSpi, regsResolverMock *mocksCtrd.MockcontainerImageRegistriesResolver, verifierMock *MockcontainerVerifier, ctrl *gomock.Controller) (containerd.Image, error) {
 				dc := &config.DecryptConfig{}
 				decryptMgrMock.EXPECT().GetDecryptConfig(testImageInfo.DecryptConfig).Return(dc, nil).Times(2)
 				spiMock.EXPECT().GetImage(gomock.Any(), testImageInfo.Name).Return(nil, errdefs.ErrNotFound)
+				verifierMock.EXPECT().Verify(gomock.Any(), testImageInfo).Return(nil)
 				regsResolverMock.EXPECT().ResolveImageRegistry(util.GetImageHost(testImageInfo.Name)).Return(nil)
 				imageMock := mocksContainerd.NewMockImage(ctrl)
 				spiMock.EXPECT().PullImage(gomock.Any(), testImageInfo.Name, matchers.MatchesResolverOpts(containerd.WithSchema1Conversion)).Return(imageMock, nil)
@@ -389,12 +454,14 @@ func TestClientInternalPullImage(t *testing.T) {
 			decryptMgrMock := mocksCtrd.NewMockcontainerDecryptMgr(ctrl)
 			spiMock := mocksCtrd.NewMockcontainerdSpi(ctrl)
 			registriesResolverMock := mocksCtrd.NewMockcontainerImageRegistriesResolver(ctrl)
+			verifierMock := NewMockcontainerVerifier(ctrl)
 			ctrdClient := &containerdClient{
 				decMgr:             decryptMgrMock,
 				spi:                spiMock,
 				registriesResolver: registriesResolverMock,
+				verifier:           verifierMock,
 			}
-			expectedImage, expectedErr := testCaseData.mockExec(decryptMgrMock, spiMock, registriesResolverMock, ctrl)
+			expectedImage, expectedErr := testCaseData.mockExec(decryptMgrMock, spiMock, registriesResolverMock, verifierMock, ctrl)
 			actualImage, actualErr := ctrdClient.pullImage(context.TODO(), testImageInfo)
 			testutil.AssertError(t, expectedErr, actualErr)
 			testutil.AssertEqual(t, expectedImage, actualImage)
