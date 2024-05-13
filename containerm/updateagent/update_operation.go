@@ -215,9 +215,10 @@ var baselineCommandHandlers = map[types.CommandType]struct {
 		commandHandler:         activate,
 	},
 	types.CommandRollback: {
-		expectedBaselineStatus: []types.StatusType{types.BaselineStatusActivationFailure, types.BaselineStatusActivationSuccess},
-		baselineFailureStatus:  types.BaselineStatusRollbackFailure,
-		commandHandler:         rollback,
+		expectedBaselineStatus: []types.StatusType{types.BaselineStatusDownloadSuccess, types.BaselineStatusUpdateSuccess,
+			types.BaselineStatusActivationFailure, types.BaselineStatusActivationSuccess},
+		baselineFailureStatus: types.BaselineStatusRollbackFailure,
+		commandHandler:        rollback,
 	},
 	types.CommandCleanup: {
 		baselineFailureStatus: types.BaselineStatusCleanup,
