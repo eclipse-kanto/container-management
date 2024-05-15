@@ -47,7 +47,6 @@ func newContainerMgr(metaPath string, execPath string, defaultCtrsStopTimeout ti
 		restartCtrsMgrCache:    newRestartMgrCache(),
 		containerRepository:    &ctrRepository,
 	}
-	fmt.Println("mgr:", defaultCtrsStopTimeout.String())
 	ctrClient.SetContainerExitHooks(manager.exitedAndRelease)
 
 	return manager, nil
