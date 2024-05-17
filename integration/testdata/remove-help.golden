@@ -13,6 +13,7 @@ Flags:
   -f, --force         Force stopping before removing a container
   -h, --help          help for remove
   -n, --name string   Remove a container with a specific name.
+  -t, --time string   Sets the timeout period to gracefully stop the container as duration string, e.g. 15s or 1m15s. When timeout expires the container process would be forcibly killed. If not specified the daemon default container stop timeout will be used.
 
 Global Flags:
       --debug         Switch commands log level to DEBUG mode
