@@ -130,11 +130,11 @@ deckarep/golang-set (1.8.0)
 * Project: https://github.com/deckarep/golang-set
 * Source:  https://github.com/deckarep/golang-set/releases/tag/v1.8.0
 
-moby/moby (v23.0.9)
+moby/moby (v24.0.9)
 
 * License: Apache License 2.0
 * Project: https://github.com/moby/moby
-* Source:  https://github.com/moby/moby/releases/tag/v23.0.9
+* Source:  https://github.com/moby/moby/releases/tag/v24.0.9
   
 docker/go-connections (0.4.0)
 
@@ -436,17 +436,17 @@ vishvananda/netns (0.0.0-20210104183010-2eb08e3e575f)
 * Project: https://github.com/vishvananda/netns
 * Source:  https://github.com/vishvananda/netns/tree/2eb08e3e575f00733a612d25cc5d7470f8db6f35
 
-golang.org/x/crypto (0.18.0)
+golang.org/x/crypto (0.23.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/crypto
-* Source:  https://github.com/golang/crypto/releases/tag/v0.18.0
+* Source:  https://github.com/golang/crypto/releases/tag/v0.23.0
 
-golang.org/x/net (0.18.0)
+golang.org/x/net (0.25.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/net
-* Source:  https://github.com/golang/net/releases/tag/v0.18.0
+* Source:  https://github.com/golang/net/releases/tag/v0.25.0
 
 golang.org/x/sync (0.4.0)
 
@@ -454,23 +454,23 @@ golang.org/x/sync (0.4.0)
 * Project: https://github.com/golang/sync
 * Source:  https://github.com/golang/sync/releases/tag/v0.4.0
 
-golang.org/x/sys (0.16.0)
+golang.org/x/sys (0.20.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/sys
-* Source:  https://github.com/golang/sys/releases/tag/v0.16.0
+* Source:  https://github.com/golang/sys/releases/tag/v0.20.0
 
-golang.org/x/term (0.16.0)
+golang.org/x/term (0.20.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/term
-* Source:  https://github.com/golang/term/releases/tag/v0.16.0
+* Source:  https://github.com/golang/term/releases/tag/v0.20.0
 
-golang.org/x/text (0.14.0)
+golang.org/x/text (0.15.0)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/golang/text
-* Source:  https://github.com/golang/text/releases/tag/v0.14.0
+* Source:  https://github.com/golang/text/releases/tag/v0.15.0
 
 golang.org/x/mod (0.13.0)
 
@@ -496,11 +496,11 @@ grpc/grpc-go (1.59.0)
 * Project: https://github.com/grpc/grpc-go
 * Source:  https://github.com/grpc/grpc-go/releases/tag/v1.59.0
 
-protocolbuffers/protobuf-go (1.31.0)
+protocolbuffers/protobuf-go (1.34.1)
 
 * License: BSD 3-Clause "New" or "Revised" License
 * Project: https://github.com/protocolbuffers/protobuf-go
-* Source:  https://github.com/protocolbuffers/protobuf-go/releases/tag/v1.31.0
+* Source:  https://github.com/protocolbuffers/protobuf-go/releases/tag/v1.34.1
 
 natefinch/lumberjack (2.0.0)
 
@@ -508,11 +508,11 @@ natefinch/lumberjack (2.0.0)
 * Project: https://github.com/natefinch/lumberjack
 * Source:  https://github.com/natefinch/lumberjack/releases/tag/v2.0.0
 
-square/go-jose (3.0.0)
+square/go-jose (3.0.3)
 
 * License: Apache License 2.0
 * Project: https://github.com/square/go-jose
-* Source:  https://github.com/square/go-jose/releases/tag/v3.0.0
+* Source:  https://github.com/square/go-jose/releases/tag/v3.0.3
 
 go-yaml/yaml (3.0.1)
 

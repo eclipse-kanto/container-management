@@ -11,7 +11,7 @@ require (
 	github.com/containerd/imgcrypt v1.1.9
 	github.com/containerd/typeurl v1.0.2
 	github.com/containers/ocicrypt v1.1.9
-	github.com/docker/docker v23.0.9+incompatible
+	github.com/docker/docker v24.0.9+incompatible
 	github.com/eclipse-kanto/kanto/integration/util v0.0.0-20230103144956-911e45a2bf55
 	github.com/eclipse-kanto/update-manager v0.0.0-20230628072101-b91f0c30e00f
 	github.com/eclipse/ditto-clients-golang v0.0.0-20220225085802-cf3b306280d3
@@ -33,12 +33,12 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
 	github.com/vishvananda/netlink v1.2.1-beta.2
-	golang.org/x/crypto v0.18.0
-	golang.org/x/net v0.18.0
+	golang.org/x/crypto v0.23.0
+	golang.org/x/net v0.25.0
 	golang.org/x/sync v0.4.0
-	golang.org/x/sys v0.16.0
+	golang.org/x/sys v0.20.0
 	google.golang.org/grpc v1.59.0
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.34.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.5.0
@@ -64,7 +64,7 @@ require (
 	github.com/docker/libkv v0.2.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.5.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.5 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/go-ldap/ldap/v3 v3.4.6 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
@@ -108,8 +108,8 @@ require (
 	go.mozilla.org/pkcs7 v0.0.0-20200128120323-432b2356ecb1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/mod v0.13.0 // indirect
-	golang.org/x/term v0.16.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/term v0.20.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
 )
