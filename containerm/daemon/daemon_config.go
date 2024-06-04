@@ -178,10 +178,9 @@ type grpcServerConfig struct {
 
 // things client configuration
 type thingsConfig struct {
-	ThingsEnable           bool                    `json:"enable,omitempty"`
-	ThingsMetaPath         string                  `json:"home_dir,omitempty"`
-	Features               []string                `json:"features,omitempty"`
-	ThingsConnectionConfig *thingsConnectionConfig `json:"connection,omitempty"`
+	ThingsEnable   bool     `json:"enable,omitempty"`
+	ThingsMetaPath string   `json:"home_dir,omitempty"`
+	Features       []string `json:"features,omitempty"`
 }
 
 // things client configuration
@@ -203,21 +202,6 @@ type localConnectionConfig struct {
 	AcknowledgeTimeout string     `json:"acknowledge_timeout,omitempty"`
 	SubscribeTimeout   string     `json:"subscribe_timeout,omitempty"`
 	UnsubscribeTimeout string     `json:"unsubscribe_timeout,omitempty"`
-	Transport          *tlsConfig `json:"transport,omitempty"`
-}
-
-// TODO Remove in M5
-// things service connection config
-type thingsConnectionConfig struct {
-	BrokerURL          string     `json:"broker_url,omitempty"`
-	KeepAlive          int64      `json:"keep_alive,omitempty"`
-	DisconnectTimeout  int64      `json:"disconnect_timeout,omitempty"`
-	ClientUsername     string     `json:"client_username,omitempty"`
-	ClientPassword     string     `json:"client_password,omitempty"`
-	ConnectTimeout     int64      `json:"connect_timeout,omitempty"`
-	AcknowledgeTimeout int64      `json:"acknowledge_timeout,omitempty"`
-	SubscribeTimeout   int64      `json:"subscribe_timeout,omitempty"`
-	UnsubscribeTimeout int64      `json:"unsubscribe_timeout,omitempty"`
 	Transport          *tlsConfig `json:"transport,omitempty"`
 }
 

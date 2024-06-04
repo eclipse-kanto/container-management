@@ -14,7 +14,6 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 func setupCommandFlags(cmd *cobra.Command) {
@@ -111,27 +110,4 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.LocalConnection.Transport.RootCA, "conn-root-ca", cfg.LocalConnection.Transport.RootCA, "Specify the PEM encoded CA certificates file")
 	flagSet.StringVar(&cfg.LocalConnection.Transport.ClientCert, "conn-client-cert", cfg.LocalConnection.Transport.ClientCert, "Specify the PEM encoded certificate file to authenticate to the MQTT server/broker")
 	flagSet.StringVar(&cfg.LocalConnection.Transport.ClientKey, "conn-client-key", cfg.LocalConnection.Transport.ClientKey, "Specify the PEM encoded unencrypted private key file to authenticate to the MQTT server/broker")
-
-	//TODO remove in M5
-	setupDeprecatedCommandFlags(flagSet)
-}
-
-func setupDeprecatedCommandFlags(flagSet *pflag.FlagSet) {
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.BrokerURL, "things-conn-broker", cfg.ThingsConfig.ThingsConnectionConfig.BrokerURL, "DEPRECATED Specify the MQTT broker URL to connect to")
-	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.KeepAlive, "things-conn-keep-alive", cfg.ThingsConfig.ThingsConnectionConfig.KeepAlive, "DEPRECATED Specify the keep alive duration for the MQTT requests in milliseconds")
-	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.DisconnectTimeout, "things-conn-disconnect-timeout", cfg.ThingsConfig.ThingsConnectionConfig.DisconnectTimeout, "DEPRECATED Specify the disconnection timeout for the MQTT connection in milliseconds")
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.ClientUsername, "things-conn-client-username", cfg.ThingsConfig.ThingsConnectionConfig.ClientUsername, "DEPRECATED Specify the MQTT client username to authenticate with")
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.ClientPassword, "things-conn-client-password", cfg.ThingsConfig.ThingsConnectionConfig.ClientPassword, "DEPRECATED Specify the MQTT client password to authenticate with")
-	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.ConnectTimeout, "things-conn-connect-timeout", cfg.ThingsConfig.ThingsConnectionConfig.ConnectTimeout, "DEPRECATED Specify the connect timeout for the MQTT in milliseconds")
-	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout, "things-conn-ack-timeout", cfg.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout, "DEPRECATED Specify the acknowledgement timeout for the MQTT requests in milliseconds")
-	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout, "things-conn-sub-timeout", cfg.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout, "DEPRECATED Specify the subscribe timeout for the MQTT requests in milliseconds")
-	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout, "things-conn-unsub-timeout", cfg.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout, "DEPRECATED Specify the unsubscribe timeout for the MQTT requests in milliseconds")
-
-	// init tls support
-	if cfg.ThingsConfig.ThingsConnectionConfig.Transport == nil {
-		cfg.ThingsConfig.ThingsConnectionConfig.Transport = &tlsConfig{}
-	}
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.RootCA, "things-conn-root-ca", cfg.ThingsConfig.ThingsConnectionConfig.Transport.RootCA, "DEPRECATED Specify the PEM encoded CA certificates file")
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert, "things-conn-client-cert", cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert, "DEPRECATED Specify the PEM encoded certificate file to authenticate to the MQTT server/broker")
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey, "things-conn-client-key", cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey, "DEPRECATED Specify the PEM encoded unencrypted private key file to authenticate to the MQTT server/broker")
 }
