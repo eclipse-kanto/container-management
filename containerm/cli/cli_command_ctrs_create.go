@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"strings"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
@@ -113,6 +114,10 @@ func (cc *createCmd) containerFromFile() (*types.Container, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+	if !strings.HasSuffix(strings.ToLower(cc.config.containerFile), ".json") {
+		fileName := cc.config.containerFile
+		return nil, log.NewError(fmt.Sprintf("file %s is not a json file", fileName))
 	}
 	byteValue, err := os.ReadFile(cc.config.containerFile)
 	if err != nil {
