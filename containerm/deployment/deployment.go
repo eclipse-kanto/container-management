@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"strings"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
@@ -88,11 +89,13 @@ func (d *deploymentMgr) Deploy(ctx context.Context) error {
 			return err
 		}
 		if !entry.IsDir() {
-			ctr, readErr := util.ReadContainer(path)
-			if readErr != nil {
-				log.ErrorErr(readErr, "error reading container configuration from file = %s", path)
-			} else {
-				ctrs = append(ctrs, ctr)
+			if strings.HasSuffix(path, ".json") {
+				ctr, readErr := util.ReadContainer(path)
+				if readErr != nil {
+					log.ErrorErr(readErr, "error reading container configuration from file = %s", path)
+				} else {
+					ctrs = append(ctrs, ctr)
+				}
 			}
 		}
 		return nil
