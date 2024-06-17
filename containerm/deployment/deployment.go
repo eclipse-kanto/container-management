@@ -17,8 +17,8 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"sync"
 	"strings"
+	"sync"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
