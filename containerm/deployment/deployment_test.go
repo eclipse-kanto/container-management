@@ -85,20 +85,7 @@ func TestDeployCommon(t *testing.T) {
 		"test_deploy_ignore_non_json_files": {
 			ctrPath: filepath.Join(baseCtrJSONPath, "non_json_files"),
 			mockExec: func(mockMgr *mocks.MockContainerManager) error {
-				// Set up the mock directory with only the specified non-JSON file
-				mockDirPath := filepath.Join(baseCtrJSONPath, "non_json_files")
-				createMockDirectoryWithNonJSONFile(t, mockDirPath)
-
-				// Expecting no interactions with the mock manager for the non-JSON file
 				mockMgr.EXPECT().List(testContext).Return(nil, nil).Times(2)
-
-				// Clean up the mock directory after test
-				defer func() {
-					if err := os.RemoveAll(mockDirPath); err != nil {
-						t.Fatalf("failed to remove mock directory: %v", err)
-					}
-				}()
-
 				return nil
 			},
 		},
@@ -643,17 +630,4 @@ func createTmpMetaPathNonEmpty(t *testing.T) string {
 
 func newTestContainer(name, image string) *types.Container {
 	return &types.Container{Name: name, Image: types.Image{Name: image}}
-}
-
-func createMockDirectoryWithNonJSONFile(t *testing.T, dirPath string) {
-	err := os.MkdirAll(dirPath, 0755)
-	if err != nil {
-		t.Fatalf("failed to create mock directory: %v", err)
-	}
-
-	filePath := filepath.Join(dirPath, "file1.txt")
-	content := "This is a text file."
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
-		t.Fatalf("failed to create mock file %s: %v", filePath, err)
-	}
 }
