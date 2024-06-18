@@ -82,6 +82,13 @@ func TestDeployCommon(t *testing.T) {
 				return nil
 			},
 		},
+		"test_deploy_ignore_non_json_files": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "non_json_files"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				mockMgr.EXPECT().List(testContext).Return(nil, nil).Times(2)
+				return nil
+			},
+		},
 	}
 
 	// execute tests

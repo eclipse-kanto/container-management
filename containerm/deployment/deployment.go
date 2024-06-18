@@ -17,6 +17,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
@@ -87,7 +88,7 @@ func (d *deploymentMgr) Deploy(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if !entry.IsDir() {
+		if !entry.IsDir() && strings.HasSuffix(path, ".json") {
 			ctr, readErr := util.ReadContainer(path)
 			if readErr != nil {
 				log.ErrorErr(readErr, "error reading container configuration from file = %s", path)
