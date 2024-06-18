@@ -91,7 +91,7 @@ func (d *deploymentMgr) Deploy(ctx context.Context) error {
 		if !entry.IsDir() && strings.HasSuffix(path, ".json") {
 			ctr, readErr := util.ReadContainer(path)
 			if readErr != nil {
-				log.ErrorErr(readErr, "error reading container configuration from file =", path)
+				log.ErrorErr(readErr, "error reading container configuration from file = %s", path)
 			} else {
 				ctrs = append(ctrs, ctr)
 			}
