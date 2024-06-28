@@ -52,18 +52,7 @@
       "ContainerFactory",
       "SoftwareUpdatable",
       "Metrics"
-    ],
-    "connection": {
-      "broker_url": "tcp://localhost:1883",
-      "keep_alive": 20000,
-      "disconnect_timeout": 250,
-      "client_username": "",
-      "client_password": "",
-      "connect_timeout": 30000,
-      "acknowledge_timeout": 15000,
-      "subscribe_timeout": 15000,
-      "unsubscribe_timeout": 5000
-    }
+    ]
   },
   "deployment": {
     "enable": true,

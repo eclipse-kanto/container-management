@@ -167,17 +167,6 @@ func getDefaultInstance() *config {
 			ThingsEnable:   thingsEnableDefault,
 			ThingsMetaPath: thingsMetaPathDefault,
 			Features:       thingsServiceFeaturesDefault,
-			ThingsConnectionConfig: &thingsConnectionConfig{
-				BrokerURL:          connectionBrokerURLDefault,
-				KeepAlive:          20000,
-				DisconnectTimeout:  250,
-				ClientUsername:     connectionClientUsername,
-				ClientPassword:     connectionClientPassword,
-				ConnectTimeout:     30000,
-				AcknowledgeTimeout: 15000,
-				SubscribeTimeout:   15000,
-				UnsubscribeTimeout: 5000,
-			},
 		},
 		DeploymentManagerConfig: &deploymentManagerConfig{
 			DeploymentEnable:   deploymentEnableDefault,

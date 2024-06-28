@@ -90,7 +90,7 @@ func TestThingsServiceFeaturesConfig(t *testing.T) {
 func TestThingsTLSConfig(t *testing.T) {
 	local := &config{}
 	_ = loadLocalConfig("../pkg/testutil/config/daemon-things-tls-config.json", local)
-	testutil.AssertEqual(t, &tlsConfig{RootCA: "ca.crt", ClientCert: "client.crt", ClientKey: "client.key"}, local.ThingsConfig.ThingsConnectionConfig.Transport)
+	testutil.AssertEqual(t, &tlsConfig{RootCA: "ca.crt", ClientCert: "client.crt", ClientKey: "client.key"}, local.LocalConnection.Transport)
 }
 
 func TestMgrDefaultCtrsStopTimeoutConfig(t *testing.T) {
@@ -363,54 +363,6 @@ func TestSetCommandFlags(t *testing.T) {
 		"test_flags_things-features": {
 			flag:         "things-features",
 			expectedType: "stringSlice",
-		},
-		"test_flags_things-conn-broker": {
-			flag:         "things-conn-broker",
-			expectedType: reflect.String.String(),
-		},
-		"test_flags_things-conn-keep-alive": {
-			flag:         "things-conn-keep-alive",
-			expectedType: reflect.Int64.String(),
-		},
-		"test_flags_things-conn-disconnect-timeout": {
-			flag:         "things-conn-disconnect-timeout",
-			expectedType: reflect.Int64.String(),
-		},
-		"test_flags_things-conn-client-username": {
-			flag:         "things-conn-client-username",
-			expectedType: reflect.String.String(),
-		},
-		"test_flags_things-conn-client-password": {
-			flag:         "things-conn-client-password",
-			expectedType: reflect.String.String(),
-		},
-		"test_flags_things-conn-connect-timeout": {
-			flag:         "things-conn-connect-timeout",
-			expectedType: reflect.Int64.String(),
-		},
-		"test_flags_things-conn-ack-timeout": {
-			flag:         "things-conn-ack-timeout",
-			expectedType: reflect.Int64.String(),
-		},
-		"test_flags_things-conn-sub-timeout": {
-			flag:         "things-conn-sub-timeout",
-			expectedType: reflect.Int64.String(),
-		},
-		"test_flags_things-conn-unsub-timeout": {
-			flag:         "things-conn-unsub-timeout",
-			expectedType: reflect.Int64.String(),
-		},
-		"test_flags_things-conn-root-ca": {
-			flag:         "things-conn-root-ca",
-			expectedType: reflect.String.String(),
-		},
-		"test_flags_things-conn-client-cert": {
-			flag:         "things-conn-client-cert",
-			expectedType: reflect.String.String(),
-		},
-		"test_flags_things-conn-client-key": {
-			flag:         "things-conn-client-key",
-			expectedType: reflect.String.String(),
 		},
 		"test_flags_deployment-enable": {
 			flag:         "deployment-enable",
