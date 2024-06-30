@@ -201,11 +201,11 @@ func TestParseMountPoints(t *testing.T) {
 
 			t.Log(testCase.inputString)
 
-			res, err := ParseMountPoint(testCase.inputString)
+			res, _, err := ParseMountPoint(testCase.inputString)
 			testutil.AssertNil(t, err)
 			testutil.AssertEqual(t, testCase.expectedMount, res)
 
-			res, err = ParseMountPoint(MountPointToString(res))
+			res, _, err = ParseMountPoint(MountPointToString(res))
 			testutil.AssertNil(t, err)
 			testutil.AssertEqual(t, testCase.expectedMount, res)
 
