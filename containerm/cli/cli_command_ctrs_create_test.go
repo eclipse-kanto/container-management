@@ -484,7 +484,7 @@ func (createTc *createCommandTest) generateRunExecutionConfigs() map[string]test
 		},
 		"test_create_container_file_invalid_path": {
 			flags: map[string]string{
-				createCmdFlagContainerFile: "/test/test",
+				createCmdFlagContainerFile: "/test/test.json",
 			},
 			mockExecution: createTc.mockExecCreateContainerFileInvalidPath,
 		},
@@ -500,6 +500,12 @@ func (createTc *createCommandTest) generateRunExecutionConfigs() map[string]test
 				createCmdFlagContainerFile: "../pkg/testutil/config/container/valid.json",
 			},
 			mockExecution: createTc.mockExecCreateContainerFileWithArgs,
+		},
+		"test_create_container_file_with_non_json": {
+			flags: map[string]string{
+				createCmdFlagContainerFile: "../pkg/testutil/config/container/non_json_files/file1.txt",
+			},
+			mockExecution: createTc.mockExecCreateContainerFileWithNonJSON,
 		},
 		// Test terminal
 		"test_create_terminal": {
@@ -1020,7 +1026,7 @@ func (createTc *createCommandTest) mockExecCreateContainerFile(_ []string) error
 
 func (createTc *createCommandTest) mockExecCreateContainerFileInvalidPath(_ []string) error {
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
-	_, err := os.ReadFile("/test/test")
+	_, err := os.ReadFile("/test/test.json")
 	return err
 }
 
@@ -1034,6 +1040,14 @@ func (createTc *createCommandTest) mockExecCreateContainerFileInvalidJSON(_ []st
 func (createTc *createCommandTest) mockExecCreateContainerFileWithArgs(_ []string) error {
 	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
 	return log.NewError("no arguments are expected when creating a container from file")
+}
+
+func (createTc *createCommandTest) mockExecCreateContainerFileWithNonJSON(_ []string) error {
+	createTc.mockClient.EXPECT().Create(gomock.AssignableToTypeOf(context.Background()), gomock.Any()).Times(0)
+	if !strings.HasSuffix("../pkg/testutil/config/container/non_json_files/file1.txt", ".json") {
+		return log.NewError("../pkg/testutil/config/container/non_json_files/file1.txt is not a json file")
+	}
+	return nil
 }
 
 func (createTc *createCommandTest) mockExecCreateWithTerminal(args []string) error {
