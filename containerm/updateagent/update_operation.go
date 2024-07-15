@@ -14,7 +14,9 @@ package updateagent
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	ctrtypes "github.com/eclipse-kanto/container-management/containerm/containers/types"
@@ -379,7 +381,7 @@ func activate(o *operation, baselineAction *baselineAction) {
 	}
 }
 
-// ActionCreate: removes the newly created container instance (from DOWNLOAD phase)
+// ActionCreate: removes the newly created container instance (from DOWNLOAD phase).
 // ActionRecreate: removes the newly created container instance (from DOWNLOAD phase) and restarts the old existing container instance.
 // ActionUpdate: restores the old configuration to the existing container and ensures it is started.
 func rollback(o *operation, baselineAction *baselineAction) {
@@ -407,6 +409,7 @@ func rollback(o *operation, baselineAction *baselineAction) {
 		if action.actionType == util.ActionUpdate {
 			o.updateBaselineActionStatus(baselineAction, types.BaselineStatusRollback, action, types.ActionStatusUpdating, action.feedbackAction.Message)
 			if err := o.updateContainer(action.current, action.current); err != nil {
+				o.configurationFileRollBack(action.current, &action.current.Mounts[len(action.current.Mounts)-1])
 				lastActionMessage = err.Error()
 				failure = true
 				continue
@@ -535,6 +538,7 @@ func (o *operation) createContainer(desired *ctrtypes.Container) error {
 	_, err := o.updateManager.mgr.Create(o.ctx, desired)
 	if err != nil {
 		log.ErrorErr(err, "could not create container [%s]", desired.Name)
+		o.configurationFileRollBack(desired, &desired.Mounts[len(desired.Mounts)-1])
 		return err
 	}
 	log.Debug("successfully created container [%s]", desired.Name)
@@ -617,4 +621,18 @@ func (o *operation) stopContainer(container *ctrtypes.Container) error {
 	}
 	log.Debug("successfully stopped outdated container [%s]", container.Name)
 	return nil
+}
+
+func (o *operation) configurationFileRollBack(container *ctrtypes.Container, mount *ctrtypes.MountPoint) {
+	if _, err := os.Stat(mount.Source + "/" + container.Name + "_config.json"); errors.Is(err, os.ErrNotExist) {
+		return
+	}
+	err := util.MakeAtomicCopy(mount.Source+"/"+container.Name+"_config_backup.json", mount.Source+"/"+container.Name+"_config.json")
+	if os.IsNotExist(err) {
+		log.WarnErr(err, "earlier configuration does not exist, removing any configuration files")
+		os.Remove(mount.Source + "/" + container.Name + "_config.json")
+	} else {
+		log.Debug("configuration file rolled back to previous configuration")
+	}
+	// os.Remove(mount.Source + "/" + container.Name + "_config_backup.json") - final step of container update, irrespective of success or failure.
 }

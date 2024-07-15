@@ -13,9 +13,9 @@
 package updateagent
 
 import (
+	"os"
 	"strconv"
 	"time"
-	"os"
 
 	ctrtypes "github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/log"
@@ -46,7 +46,6 @@ func toContainer(component *types.ComponentWithConfig) (*ctrtypes.Container, err
 		portMappings   []ctrtypes.PortMapping
 		deviceMappings []ctrtypes.DeviceMapping
 	)
-
 	config := make(map[string]string, len(component.Config))
 	for _, keyValuePair := range component.Config {
 		switch keyValuePair.Key {
@@ -67,17 +66,22 @@ func toContainer(component *types.ComponentWithConfig) (*ctrtypes.Container, err
 		case keyHost:
 			extraHosts = append(extraHosts, keyValuePair.Value)
 		case keyMount:
-			mountPoint, configInfo, err := util.ParseMountPoint(keyValuePair.Value)
-			if len(configInfo) != 0 {
-				err :=os.WriteFile(mountPoint.Source+"/"+component.ID+"_config.json", configInfo, 0755)
-				if err != nil {
-					log.WarnErr(err, "Error writing to file.")
-					//add case where file is not written properly.
-				}
-			}
-			if err != nil {
-				log.WarnErr(err, "Ignoring invalid mount point")
+			mountPoint, err := util.ParseMountPoint(keyValuePair.Value)
+			//defer to remove config backup file after the entire process
+			defer func() {
+				os.Remove(mountPoint.Source + "/" + component.ID + "_config_backup.json")
+			}()
+			if err != nil || len(mountPoint.Data) == 0 {
+				log.WarnErr(err, "ignoring invalid mount point")
 			} else {
+				err = util.MakeAtomicCopy(mountPoint.Source+"/"+component.ID+"_config.json", mountPoint.Source+"/"+component.ID+"_config_backup.json")
+				if err != nil && !os.IsNotExist(err) {
+					log.Fatal("could not create backup, exiting out of process, no changes will be made to the container will be made ", err)
+				}
+				err = util.WriteAtomicFile(mountPoint.Source+"/"+component.ID+"_config.json", []byte(mountPoint.Data), 0755)
+				if err != nil {
+					log.WarnErr(err, "error writing to file, rolling back to previous configuration file data")
+				}
 				mountPoints = append(mountPoints, *mountPoint)
 			}
 		case keyEnv:
@@ -154,6 +158,7 @@ func toContainer(component *types.ComponentWithConfig) (*ctrtypes.Container, err
 	}
 
 	return container, nil
+
 }
 
 func parseBool(key string, config map[string]string) bool {
