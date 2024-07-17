@@ -60,11 +60,6 @@
   },
   "things": {
     "enable": true,
-    "home_dir": "/var/lib/container-management",
-    "connection": {
-      "broker_url": "tcp://localhost:1883",
-      "keep_alive": 20000,
-      "disconnect_timeout": 250
-    }
+    "home_dir": "/var/lib/container-management"
   }
 }
