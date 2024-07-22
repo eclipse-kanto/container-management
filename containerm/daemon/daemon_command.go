@@ -14,7 +14,6 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 func setupCommandFlags(cmd *cobra.Command) {
@@ -42,7 +41,7 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.ManagerConfig.MgrExecPath, "cm-exec-root-dir", cfg.ManagerConfig.MgrExecPath, "Specify the exec root directory of the container manager service")
 	flagSet.StringVar(&cfg.ManagerConfig.MgrCtrClientServiceID, "cm-cc-sid", cfg.ManagerConfig.MgrCtrClientServiceID, "Specify the ID of the container runtime client service to be used by the container manager service")
 	flagSet.StringVar(&cfg.ManagerConfig.MgrNetMgrServiceID, "cm-net-sid", cfg.ManagerConfig.MgrNetMgrServiceID, "Specify the ID of the network manager service to be used by container manager service")
-	flagSet.Int64Var(&cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "cm-deflt-ctrs-stop-timeout", cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "Specify the default timeout that the container manager service will wait before killing the container's process")
+	flagSet.StringVar(&cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "cm-deflt-ctrs-stop-timeout", cfg.ManagerConfig.MgrDefaultCtrsStopTimeout, "Specify the default timeout that the container manager service will wait before killing the container's process")
 
 	// init container client flags
 	flagSet.StringVar(&cfg.ContainerClientConfig.CtrNamespace, "ccl-default-ns", cfg.ContainerClientConfig.CtrNamespace, "Specify the default namespace to be used for container management isolation")
@@ -56,6 +55,8 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.DurationVar(&cfg.ContainerClientConfig.CtrImageExpiry, "ccl-image-expiry", cfg.ContainerClientConfig.CtrImageExpiry, "Specify the time period for the cached images and content to be kept in the form of e.g. 72h3m0.5s")
 	flagSet.BoolVar(&cfg.ContainerClientConfig.CtrImageExpiryDisable, "ccl-image-expiry-disable", cfg.ContainerClientConfig.CtrImageExpiryDisable, "Disables expiry management of cached images and content - must be used with caution as it may lead to large memory volumes being persistently allocated")
 	flagSet.StringVar(&cfg.ContainerClientConfig.CtrLeaseID, "ccl-lease-id", cfg.ContainerClientConfig.CtrLeaseID, "Specify the lease identifier to be used for container resources persistence")
+	flagSet.StringVar(&cfg.ContainerClientConfig.CtrImageVerifierType, "ccl-image-verifier-type", cfg.ContainerClientConfig.CtrImageVerifierType, "Specify the image verifier type - possible values are none and notation, when set to none image signatures wil not be verified.")
+	flagSet.Var(&cfg.ContainerClientConfig.CtrImageVerifierConfig, "ccl-image-verifier-config", "Specify the configuration of the image verifier, as comma separated {key}={value} pairs - possible keys for notation verifier are configDir and libexecDir, for more info https://notaryproject.dev/docs/user-guides/how-to/directory-structure/#user-level")
 
 	// init network manager flags
 	flagSet.StringVar(&cfg.NetworkConfig.NetType, "net-type", cfg.NetworkConfig.NetType, "Specify the default network management type for containers")
@@ -109,27 +110,4 @@ func setupCommandFlags(cmd *cobra.Command) {
 	flagSet.StringVar(&cfg.LocalConnection.Transport.RootCA, "conn-root-ca", cfg.LocalConnection.Transport.RootCA, "Specify the PEM encoded CA certificates file")
 	flagSet.StringVar(&cfg.LocalConnection.Transport.ClientCert, "conn-client-cert", cfg.LocalConnection.Transport.ClientCert, "Specify the PEM encoded certificate file to authenticate to the MQTT server/broker")
 	flagSet.StringVar(&cfg.LocalConnection.Transport.ClientKey, "conn-client-key", cfg.LocalConnection.Transport.ClientKey, "Specify the PEM encoded unencrypted private key file to authenticate to the MQTT server/broker")
-
-	//TODO remove in M5
-	setupDeprecatedCommandFlags(flagSet)
-}
-
-func setupDeprecatedCommandFlags(flagSet *pflag.FlagSet) {
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.BrokerURL, "things-conn-broker", cfg.ThingsConfig.ThingsConnectionConfig.BrokerURL, "DEPRECATED Specify the MQTT broker URL to connect to")
-	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.KeepAlive, "things-conn-keep-alive", cfg.ThingsConfig.ThingsConnectionConfig.KeepAlive, "DEPRECATED Specify the keep alive duration for the MQTT requests in milliseconds")
-	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.DisconnectTimeout, "things-conn-disconnect-timeout", cfg.ThingsConfig.ThingsConnectionConfig.DisconnectTimeout, "DEPRECATED Specify the disconnection timeout for the MQTT connection in milliseconds")
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.ClientUsername, "things-conn-client-username", cfg.ThingsConfig.ThingsConnectionConfig.ClientUsername, "DEPRECATED Specify the MQTT client username to authenticate with")
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.ClientPassword, "things-conn-client-password", cfg.ThingsConfig.ThingsConnectionConfig.ClientPassword, "DEPRECATED Specify the MQTT client password to authenticate with")
-	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.ConnectTimeout, "things-conn-connect-timeout", cfg.ThingsConfig.ThingsConnectionConfig.ConnectTimeout, "DEPRECATED Specify the connect timeout for the MQTT in milliseconds")
-	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout, "things-conn-ack-timeout", cfg.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout, "DEPRECATED Specify the acknowledgement timeout for the MQTT requests in milliseconds")
-	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout, "things-conn-sub-timeout", cfg.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout, "DEPRECATED Specify the subscribe timeout for the MQTT requests in milliseconds")
-	flagSet.Int64Var(&cfg.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout, "things-conn-unsub-timeout", cfg.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout, "DEPRECATED Specify the unsubscribe timeout for the MQTT requests in milliseconds")
-
-	// init tls support
-	if cfg.ThingsConfig.ThingsConnectionConfig.Transport == nil {
-		cfg.ThingsConfig.ThingsConnectionConfig.Transport = &tlsConfig{}
-	}
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.RootCA, "things-conn-root-ca", cfg.ThingsConfig.ThingsConnectionConfig.Transport.RootCA, "DEPRECATED Specify the PEM encoded CA certificates file")
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert, "things-conn-client-cert", cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert, "DEPRECATED Specify the PEM encoded certificate file to authenticate to the MQTT server/broker")
-	flagSet.StringVar(&cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey, "things-conn-client-key", cfg.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey, "DEPRECATED Specify the PEM encoded unencrypted private key file to authenticate to the MQTT server/broker")
 }

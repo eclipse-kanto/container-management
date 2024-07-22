@@ -14,6 +14,7 @@ package mgr
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
 	"github.com/eclipse-kanto/container-management/containerm/ctr"
@@ -23,7 +24,7 @@ import (
 	"github.com/eclipse-kanto/container-management/containerm/util"
 )
 
-func newContainerMgr(metaPath string, execPath string, defaultCtrsStopTimeout int64, ctrClient ctr.ContainerAPIClient, netMgr network.ContainerNetworkManager, eventsMgr events.ContainerEventsManager) (ContainerManager, error) {
+func newContainerMgr(metaPath string, execPath string, defaultCtrsStopTimeout time.Duration, ctrClient ctr.ContainerAPIClient, netMgr network.ContainerNetworkManager, eventsMgr events.ContainerEventsManager) (ContainerManager, error) {
 	if err := util.MkDir(execPath); err != nil {
 		return nil, err
 	}

@@ -59,7 +59,7 @@ type Client interface {
 	Rename(ctx context.Context, id string, name string) error
 
 	// Remove removes a container, it may be running or stopped and so on.
-	Remove(ctx context.Context, id string, force bool) error
+	Remove(ctx context.Context, id string, force bool, stopOpts *types.StopOpts) error
 
 	ProjectInfo(ctx context.Context) (sysinfotypes.ProjectInfo, error)
 

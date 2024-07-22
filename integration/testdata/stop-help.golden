@@ -4,7 +4,7 @@ Usage:
   kanto-cm stop <container-id>
 
 Examples:
-stop <container-id>
+ stop <container-id>
  stop --name <container-name>
  stop -n <container-name>
 
@@ -13,6 +13,7 @@ Flags:
   -h, --help            help for stop
   -n, --name string     Stop a container with a specific name.
   -s, --signal string   Stop a container using a specific signal. Signals could be specified by using their names or numbers, e.g. SIGINT or 2. (default "SIGTERM")
+  -t, --time string     Sets the timeout period to gracefully stop the container as duration string, e.g. 15s or 1m15s. When timeout expires the container process would be forcibly killed. If not specified the daemon default container stop timeout will be used.
 
 Global Flags:
       --debug         Switch commands log level to DEBUG mode

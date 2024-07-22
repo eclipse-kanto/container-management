@@ -40,7 +40,7 @@ const (
 	managerExecRootPathDefault             = "/var/run/container-management"
 	managerContainerClientServiceIDDefault = ctr.ContainerdClientServiceLocalID
 	managerNetworkManagerServiceIDDefault  = network.LibnetworkManagerServiceLocalID
-	managerNetworkManagerStopTimeout       = 30
+	managerContainerStopTimeoutDefault     = "30s"
 
 	// default container client config
 	containerClientNamespaceDefault   = "kanto-cm"
@@ -51,6 +51,7 @@ const (
 	containerClientImageExpiry        = 31 * 24 * time.Hour // 31 days
 	containerClientImageExpiryDisable = false
 	containerClientLeaseIDDefault     = "kanto-cm.lease"
+	containerClientImageVerifierType  = string(ctr.VerifierNone)
 
 	// default network manager config
 	networkManagerNetTypeDefault  = string(types.NetworkModeBridge)
@@ -125,7 +126,7 @@ func getDefaultInstance() *config {
 			MgrExecPath:               managerExecRootPathDefault,
 			MgrCtrClientServiceID:     managerContainerClientServiceIDDefault,
 			MgrNetMgrServiceID:        managerNetworkManagerServiceIDDefault,
-			MgrDefaultCtrsStopTimeout: managerNetworkManagerStopTimeout,
+			MgrDefaultCtrsStopTimeout: managerContainerStopTimeoutDefault,
 		},
 		ContainerClientConfig: &containerRuntimeConfig{
 			CtrNamespace:          containerClientNamespaceDefault,
@@ -137,6 +138,7 @@ func getDefaultInstance() *config {
 			CtrImageExpiry:        containerClientImageExpiry,
 			CtrImageExpiryDisable: containerClientImageExpiryDisable,
 			CtrLeaseID:            containerClientLeaseIDDefault,
+			CtrImageVerifierType:  containerClientImageVerifierType,
 		},
 		NetworkConfig: &networkConfig{
 			NetType:     networkManagerNetTypeDefault,
@@ -165,17 +167,6 @@ func getDefaultInstance() *config {
 			ThingsEnable:   thingsEnableDefault,
 			ThingsMetaPath: thingsMetaPathDefault,
 			Features:       thingsServiceFeaturesDefault,
-			ThingsConnectionConfig: &thingsConnectionConfig{
-				BrokerURL:          connectionBrokerURLDefault,
-				KeepAlive:          20000,
-				DisconnectTimeout:  250,
-				ClientUsername:     connectionClientUsername,
-				ClientPassword:     connectionClientPassword,
-				ConnectTimeout:     30000,
-				AcknowledgeTimeout: 15000,
-				SubscribeTimeout:   15000,
-				UnsubscribeTimeout: 5000,
-			},
 		},
 		DeploymentManagerConfig: &deploymentManagerConfig{
 			DeploymentEnable:   deploymentEnableDefault,

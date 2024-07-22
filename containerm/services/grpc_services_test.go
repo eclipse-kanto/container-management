@@ -517,6 +517,20 @@ func TestRemove(t *testing.T) {
 			},
 			mockExecution: mockExecRemoveErrors,
 		},
+		"test_remove_timeout": {
+			args: testRemoveArgs{
+				ctx: testCtx,
+				request: &pbcontainers.RemoveContainerRequest{
+					Id:    containerID,
+					Force: true,
+					StopOptions: &pbcontainerstypes.StopOptions{
+						Timeout: 20,
+						Force:   true,
+					},
+				},
+			},
+			mockExecution: mockExecRemoveNoErrors,
+		},
 	}
 
 	// execute tests
@@ -807,8 +821,7 @@ func mockExecStopNoErrors(args testStopArgs) (*empty.Empty, error) {
 }
 
 func mockExecStopDefaultOpts(args testStopArgs) (*empty.Empty, error) {
-	stopOpts := &types.StopOpts{}
-	mockContainerManager.EXPECT().Stop(args.ctx, args.request.Id, gomock.Eq(stopOpts)).Times(1).Return(nil)
+	mockContainerManager.EXPECT().Stop(args.ctx, args.request.Id, nil).Times(1).Return(nil)
 	return &empty.Empty{}, nil
 }
 
@@ -844,18 +857,20 @@ func mockExecUnpauseErrors(args testUnpauseArgs) (*empty.Empty, error) {
 
 // Remove -------------------------------------------------------------
 func mockExecRemoveNoErrors(args testRemoveArgs) (*empty.Empty, error) {
-	mockContainerManager.EXPECT().Remove(args.ctx, args.request.Id, args.request.Force).Times(1).Return(nil)
+	mockContainerManager.EXPECT().Remove(args.ctx, args.request.Id, args.request.Force, gomock.Eq(protobuf.ToInternalStopOptions(args.request.StopOptions))).Times(1).Return(nil)
 	return &empty.Empty{}, nil
 }
 
 func mockExecRemoveForce(args testRemoveArgs) (*empty.Empty, error) {
-	mockContainerManager.EXPECT().Remove(args.ctx, args.request.Id, true).Times(1).Return(nil)
+	mockContainerManager.EXPECT().Remove(args.ctx, args.request.Id, true, gomock.Eq(protobuf.ToInternalStopOptions(args.request.StopOptions))).Times(1).Return(nil)
 	return &empty.Empty{}, nil
 }
 
+//TODO add tests for timeout
+
 func mockExecRemoveErrors(args testRemoveArgs) (*empty.Empty, error) {
 	err := errors.New("failed to remove container")
-	mockContainerManager.EXPECT().Remove(args.ctx, args.request.Id, args.request.Force).Times(1).Return(err)
+	mockContainerManager.EXPECT().Remove(args.ctx, args.request.Id, args.request.Force, gomock.Eq(protobuf.ToInternalStopOptions(args.request.StopOptions))).Times(1).Return(err)
 	return nil, err
 }
 

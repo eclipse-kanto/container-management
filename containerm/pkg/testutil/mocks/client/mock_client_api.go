@@ -160,17 +160,17 @@ func (mr *MockClientMockRecorder) ProjectInfo(arg0 interface{}) *gomock.Call {
 }
 
 // Remove mocks base method.
-func (m *MockClient) Remove(arg0 context.Context, arg1 string, arg2 bool) error {
+func (m *MockClient) Remove(arg0 context.Context, arg1 string, arg2 bool, arg3 *types.StopOpts) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Remove", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Remove", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Remove indicates an expected call of Remove.
-func (mr *MockClientMockRecorder) Remove(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) Remove(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Remove", reflect.TypeOf((*MockClient)(nil).Remove), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Remove", reflect.TypeOf((*MockClient)(nil).Remove), arg0, arg1, arg2, arg3)
 }
 
 // Rename mocks base method.

@@ -204,9 +204,7 @@ func TestConvertContainer(t *testing.T) {
 	util.SetContainerStatusCreated(ctr)
 
 	t.Run("test_convert_container", func(t *testing.T) {
-		protoCtr := ToProtoContainer(ctr)
-		internalCtr := ToInternalContainer(protoCtr)
-		testutil.AssertEqual(t, ctr, internalCtr)
+		testutil.AssertEqual(t, ctr, ToInternalContainer(ToProtoContainer(ctr)))
 	})
 }
 
@@ -215,9 +213,7 @@ func TestConvertContainerEmpty(t *testing.T) {
 		Image: internalImage,
 	}
 	t.Run("test_convert_container_empty", func(t *testing.T) {
-		protoCtr := ToProtoContainer(ctr)
-		internalCtr := ToInternalContainer(protoCtr)
-		testutil.AssertEqual(t, ctr, internalCtr)
+		testutil.AssertEqual(t, ctr, ToInternalContainer(ToProtoContainer(ctr)))
 	})
 }
 
@@ -330,12 +326,15 @@ func TestToInternalStopOpts(t *testing.T) {
 	stopOpts := &internaltypes.StopOpts{
 		Timeout: 20,
 		Force:   true,
+		Signal:  "SIGTERM",
 	}
 
 	t.Run("test_convert_stop_options", func(t *testing.T) {
-		protoStopOpts := ToProtoStopOptions(stopOpts)
-		internalStopOpts := ToInternalStopOptions(protoStopOpts)
-		testutil.AssertEqual(t, stopOpts, internalStopOpts)
+		testutil.AssertEqual(t, stopOpts, ToInternalStopOptions(ToProtoStopOptions(stopOpts)))
+	})
+
+	t.Run("test_convert_stop_options_nil", func(t *testing.T) {
+		testutil.AssertNil(t, ToInternalStopOptions(ToProtoStopOptions(nil)))
 	})
 }
 
@@ -348,9 +347,7 @@ func TestToInternalProjectInfo(t *testing.T) {
 	}
 
 	t.Run("test_convert_projet_info", func(t *testing.T) {
-		protoProjectInfo := ToProtoProjectInfo(projectInfo)
-		internalProjectInfo := ToInternalProjectInfo(protoProjectInfo)
-		testutil.AssertEqual(t, projectInfo, internalProjectInfo)
+		testutil.AssertEqual(t, projectInfo, ToInternalProjectInfo(ToProtoProjectInfo(projectInfo)))
 	})
 }
 
@@ -369,8 +366,10 @@ func TestToInternalUpdateOpts(t *testing.T) {
 	}
 
 	t.Run("test_convert_update_options", func(t *testing.T) {
-		protoUpdateOpts := ToProtoUpdateOptions(updateOpts)
-		internalUpdateOpts := ToInternalUpdateOptions(protoUpdateOpts)
-		testutil.AssertEqual(t, updateOpts, internalUpdateOpts)
+		testutil.AssertEqual(t, updateOpts, ToInternalUpdateOptions(ToProtoUpdateOptions(updateOpts)))
+	})
+
+	t.Run("test_convert_update_options_nil", func(t *testing.T) {
+		testutil.AssertEqual(t, &internaltypes.UpdateOpts{RestartPolicy: nil, Resources: nil}, ToInternalUpdateOptions(ToProtoUpdateOptions(nil)))
 	})
 }

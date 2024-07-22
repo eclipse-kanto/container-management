@@ -82,6 +82,13 @@ func TestDeployCommon(t *testing.T) {
 				return nil
 			},
 		},
+		"test_deploy_ignore_non_json_files": {
+			ctrPath: filepath.Join(baseCtrJSONPath, "non_json_files"),
+			mockExec: func(mockMgr *mocks.MockContainerManager) error {
+				mockMgr.EXPECT().List(testContext).Return(nil, nil).Times(2)
+				return nil
+			},
+		},
 	}
 
 	// execute tests
@@ -461,7 +468,7 @@ func TestUpdate(t *testing.T) {
 				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Return(newContainer, nil).Times(1)
 				mockMgr.EXPECT().Stop(testContext, oldID, testStopOpts).Return(nil).Times(1)
 				mockMgr.EXPECT().Start(testContext, newID).Return(nil).Times(1)
-				mockMgr.EXPECT().Remove(testContext, oldID, true).Do(func(ctx context.Context, ctrID string, force bool) {
+				mockMgr.EXPECT().Remove(testContext, oldID, true, nil).Do(func(ctx context.Context, ctrID string, force bool, stopOpts *types.StopOpts) {
 					testWaitGroup.Done()
 				}).Return(nil).Times(1)
 				return nil
@@ -482,7 +489,7 @@ func TestUpdate(t *testing.T) {
 				mockMgr.EXPECT().List(testContext).Return([]*types.Container{testCtr}, nil)
 				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Return(newContainer, nil).Times(1)
 				mockMgr.EXPECT().Start(testContext, newID).Return(nil).Times(1)
-				mockMgr.EXPECT().Remove(testContext, oldID, true).Do(func(ctx context.Context, ctrID string, force bool) {
+				mockMgr.EXPECT().Remove(testContext, oldID, true, nil).Do(func(ctx context.Context, ctrID string, force bool, stopOpts *types.StopOpts) {
 					testWaitGroup.Done()
 				}).Return(nil).Times(1)
 				return nil
@@ -519,7 +526,7 @@ func TestUpdate(t *testing.T) {
 				mockMgr.EXPECT().Stop(testContext, oldID, testStopOpts).Return(nil).Times(1)
 				mockMgr.EXPECT().Start(testContext, newID).Return(log.NewError("test error")).Times(1)
 				mockMgr.EXPECT().Start(testContext, oldID).Return(nil).Times(1)
-				mockMgr.EXPECT().Remove(testContext, newID, true).Do(func(ctx context.Context, ctrID string, force bool) {
+				mockMgr.EXPECT().Remove(testContext, newID, true, nil).Do(func(ctx context.Context, ctrID string, force bool, stopOpts *types.StopOpts) {
 					testWaitGroup.Done()
 				}).Return(nil).Times(1)
 				return nil
@@ -542,7 +549,7 @@ func TestUpdate(t *testing.T) {
 				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Return(newContainer, nil).Times(1)
 				mockMgr.EXPECT().Stop(testContext, oldID, testStopOpts).Return(log.NewError("test error")).Times(1)
 				mockMgr.EXPECT().Start(testContext, newID).Return(log.NewError("test error")).Times(1)
-				mockMgr.EXPECT().Remove(testContext, newID, true).Do(func(ctx context.Context, ctrID string, force bool) {
+				mockMgr.EXPECT().Remove(testContext, newID, true, nil).Do(func(ctx context.Context, ctrID string, force bool, stopOpts *types.StopOpts) {
 					testWaitGroup.Done()
 				}).Return(nil).Times(1)
 				return nil
@@ -565,7 +572,7 @@ func TestUpdate(t *testing.T) {
 				mockMgr.EXPECT().Create(testContext, testContainerMatcher).Return(newContainer, nil).Times(1)
 				mockMgr.EXPECT().Stop(testContext, oldID, testStopOpts).Return(nil).Times(1)
 				mockMgr.EXPECT().Start(testContext, newID).Return(nil).Times(1)
-				mockMgr.EXPECT().Remove(testContext, oldID, true).Do(func(ctx context.Context, ctrID string, force bool) {
+				mockMgr.EXPECT().Remove(testContext, oldID, true, nil).Do(func(ctx context.Context, ctrID string, force bool, stopOpts *types.StopOpts) {
 					testWaitGroup.Done()
 				}).Return(log.NewError("test error")).Times(1)
 				return nil

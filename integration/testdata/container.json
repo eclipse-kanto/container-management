@@ -1,0 +1,6 @@
+{
+  "container_name": "create_container_from_file",
+  "image": {
+    "name": "docker.io/library/influxdb:1.8.4"
+  }
+}

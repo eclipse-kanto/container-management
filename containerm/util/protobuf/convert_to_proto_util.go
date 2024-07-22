@@ -327,6 +327,9 @@ func ToProtoLogModeConfig(internalLogModeConfig *internaltypes.LogModeConfigurat
 
 // ToProtoStopOptions converts an internal StopOpts instance to a types.StopOpts one
 func ToProtoStopOptions(intenralStopOpts *internaltypes.StopOpts) *apitypescontainers.StopOptions {
+	if intenralStopOpts == nil {
+		return nil
+	}
 	return &apitypescontainers.StopOptions{
 		Timeout: intenralStopOpts.Timeout,
 		Force:   intenralStopOpts.Force,
@@ -336,6 +339,9 @@ func ToProtoStopOptions(intenralStopOpts *internaltypes.StopOpts) *apitypesconta
 
 // ToProtoUpdateOptions converts an internal UpdateOpts instance to a types.UpdateOpts one
 func ToProtoUpdateOptions(intenralUpdateOpts *internaltypes.UpdateOpts) *apitypescontainers.UpdateOptions {
+	if intenralUpdateOpts == nil {
+		return nil
+	}
 	return &apitypescontainers.UpdateOptions{
 		RestartPolicy: ToProtoRestartPolicy(intenralUpdateOpts.RestartPolicy),
 		Resources:     ToProtoResource(intenralUpdateOpts.Resources),

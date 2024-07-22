@@ -1,11 +1,9 @@
 {
-  "things": {
-    "connection": {
+  "connection": {
       "transport": {
         "root_ca": "ca.crt",
         "client_cert": "client.crt",
         "client_key": "client.key"
      }
-    }
   }
 }

@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/eclipse-kanto/container-management/containerm/containers/types"
@@ -48,6 +48,8 @@ func extractCtrClientConfigOptions(daemonConfig *config) []ctr.ContainerOpts {
 		ctr.WithCtrdImageExpiry(daemonConfig.ContainerClientConfig.CtrImageExpiry),
 		ctr.WithCtrdImageExpiryDisable(daemonConfig.ContainerClientConfig.CtrImageExpiryDisable),
 		ctr.WithCtrdLeaseID(daemonConfig.ContainerClientConfig.CtrLeaseID),
+		ctr.WithCtrImageVerifierType(daemonConfig.ContainerClientConfig.CtrImageVerifierType),
+		ctr.WithCtrImageVerifierConfig(daemonConfig.ContainerClientConfig.CtrImageVerifierConfig),
 	)
 	return ctrOpts
 }
@@ -76,12 +78,15 @@ func extractNetManagerConfigOptions(daemonConfig *config) []network.NetOpt {
 
 func extractContainerManagerOptions(daemonConfig *config) []mgr.ContainerManagerOpt {
 	mgrOpts := []mgr.ContainerManagerOpt{}
+	if _, err := strconv.Atoi(daemonConfig.ManagerConfig.MgrDefaultCtrsStopTimeout); err == nil {
+		daemonConfig.ManagerConfig.MgrDefaultCtrsStopTimeout = fmt.Sprintf("%ss", daemonConfig.ManagerConfig.MgrDefaultCtrsStopTimeout)
+	}
 	mgrOpts = append(mgrOpts,
 		mgr.WithMgrMetaPath(daemonConfig.ManagerConfig.MgrMetaPath),
 		mgr.WithMgrRootExec(daemonConfig.ManagerConfig.MgrExecPath),
 		mgr.WithMgrContainerClientServiceID(daemonConfig.ManagerConfig.MgrCtrClientServiceID),
 		mgr.WithMgrNetworkManagerServiceID(daemonConfig.ManagerConfig.MgrNetMgrServiceID),
-		mgr.WithMgrDefaultContainerStopTimeout(daemonConfig.ManagerConfig.MgrDefaultCtrsStopTimeout),
+		mgr.WithMgrDefaultContainerStopTimeout(parseDuration(daemonConfig.ManagerConfig.MgrDefaultCtrsStopTimeout, managerContainerStopTimeoutDefault)),
 	)
 	return mgrOpts
 }
@@ -97,42 +102,21 @@ func extractGrpcOptions(daemonConfig *config) []server.GrpcServerOpt {
 
 func extractThingsOptions(daemonConfig *config) []things.ContainerThingsManagerOpt {
 	thingsOpts := []things.ContainerThingsManagerOpt{}
-	// TODO Remove in M5
-	lcc := daemonConfig.LocalConnection
-	dtcc := getDefaultInstance().ThingsConfig.ThingsConnectionConfig
-	dtcc.Transport = &tlsConfig{}
-	if !reflect.DeepEqual(daemonConfig.ThingsConfig.ThingsConnectionConfig, dtcc) {
-		fmt.Println("DEPRECATED: Things connection settings are now deprecated and will be removed in future release. Use the global connection settings instead!")
-		log.Warn("DEPRECATED: Things connection settings are now deprecated and will be removed in future release. Use the global connection settings instead!")
-		lcc = &localConnectionConfig{
-			BrokerURL:          daemonConfig.ThingsConfig.ThingsConnectionConfig.BrokerURL,
-			KeepAlive:          fmt.Sprintf("%dms", daemonConfig.ThingsConfig.ThingsConnectionConfig.KeepAlive),
-			DisconnectTimeout:  fmt.Sprintf("%dms", daemonConfig.ThingsConfig.ThingsConnectionConfig.DisconnectTimeout),
-			ClientUsername:     daemonConfig.ThingsConfig.ThingsConnectionConfig.ClientUsername,
-			ClientPassword:     daemonConfig.ThingsConfig.ThingsConnectionConfig.ClientPassword,
-			ConnectTimeout:     fmt.Sprintf("%dms", daemonConfig.ThingsConfig.ThingsConnectionConfig.ConnectTimeout),
-			AcknowledgeTimeout: fmt.Sprintf("%dms", daemonConfig.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout),
-			SubscribeTimeout:   fmt.Sprintf("%dms", daemonConfig.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout),
-			UnsubscribeTimeout: fmt.Sprintf("%dms", daemonConfig.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout),
-			Transport:          daemonConfig.ThingsConfig.ThingsConnectionConfig.Transport,
-		}
-	}
-
 	thingsOpts = append(thingsOpts,
 		things.WithMetaPath(daemonConfig.ThingsConfig.ThingsMetaPath),
 		things.WithFeatures(daemonConfig.ThingsConfig.Features),
-		things.WithConnectionBroker(lcc.BrokerURL),
-		things.WithConnectionKeepAlive(parseDuration(lcc.KeepAlive, lcc.KeepAlive)),
-		things.WithConnectionDisconnectTimeout(parseDuration(lcc.DisconnectTimeout, lcc.DisconnectTimeout)),
-		things.WithConnectionClientUsername(lcc.ClientUsername),
-		things.WithConnectionClientPassword(lcc.ClientPassword),
-		things.WithConnectionConnectTimeout(parseDuration(lcc.ConnectTimeout, lcc.ConnectTimeout)),
-		things.WithConnectionAcknowledgeTimeout(parseDuration(lcc.AcknowledgeTimeout, lcc.AcknowledgeTimeout)),
-		things.WithConnectionSubscribeTimeout(parseDuration(lcc.SubscribeTimeout, lcc.SubscribeTimeout)),
-		things.WithConnectionUnsubscribeTimeout(parseDuration(lcc.UnsubscribeTimeout, lcc.UnsubscribeTimeout)),
+		things.WithConnectionBroker(daemonConfig.LocalConnection.BrokerURL),
+		things.WithConnectionKeepAlive(parseDuration(daemonConfig.LocalConnection.KeepAlive, daemonConfig.LocalConnection.KeepAlive)),
+		things.WithConnectionDisconnectTimeout(parseDuration(daemonConfig.LocalConnection.DisconnectTimeout, daemonConfig.LocalConnection.DisconnectTimeout)),
+		things.WithConnectionClientUsername(daemonConfig.LocalConnection.ClientUsername),
+		things.WithConnectionClientPassword(daemonConfig.LocalConnection.ClientPassword),
+		things.WithConnectionConnectTimeout(parseDuration(daemonConfig.LocalConnection.ConnectTimeout, daemonConfig.LocalConnection.ConnectTimeout)),
+		things.WithConnectionAcknowledgeTimeout(parseDuration(daemonConfig.LocalConnection.AcknowledgeTimeout, daemonConfig.LocalConnection.AcknowledgeTimeout)),
+		things.WithConnectionSubscribeTimeout(parseDuration(daemonConfig.LocalConnection.SubscribeTimeout, daemonConfig.LocalConnection.SubscribeTimeout)),
+		things.WithConnectionUnsubscribeTimeout(parseDuration(daemonConfig.LocalConnection.UnsubscribeTimeout, daemonConfig.LocalConnection.UnsubscribeTimeout)),
 	)
-	if lcc.Transport != nil {
-		thingsOpts = append(thingsOpts, things.WithTLSConfig(lcc.Transport.RootCA, lcc.Transport.ClientCert, lcc.Transport.ClientKey))
+	if daemonConfig.LocalConnection.Transport != nil {
+		thingsOpts = append(thingsOpts, things.WithTLSConfig(daemonConfig.LocalConnection.Transport.RootCA, daemonConfig.LocalConnection.Transport.ClientCert, daemonConfig.LocalConnection.Transport.ClientKey))
 	}
 	return thingsOpts
 }
@@ -263,7 +247,7 @@ func dumpContManager(configInstance *config) {
 		log.Debug("[daemon_cfg][cm-exec-root-dir] : %s", configInstance.ManagerConfig.MgrExecPath)
 		log.Debug("[daemon_cfg][cm-cc-sid] : %s", configInstance.ManagerConfig.MgrCtrClientServiceID)
 		log.Debug("[daemon_cfg][cm-net-sid] : %s", configInstance.ManagerConfig.MgrNetMgrServiceID)
-		log.Debug("[daemon_cfg][cm-deflt-ctrs-stop-timeout] : %d", configInstance.ManagerConfig.MgrDefaultCtrsStopTimeout)
+		log.Debug("[daemon_cfg][cm-deflt-ctrs-stop-timeout] : %s", configInstance.ManagerConfig.MgrDefaultCtrsStopTimeout)
 	}
 }
 
@@ -288,6 +272,8 @@ func dumpContClient(configInstance *config) {
 		log.Debug("[daemon_cfg][ccl-image-expiry] : %s", configInstance.ContainerClientConfig.CtrImageExpiry)
 		log.Debug("[daemon_cfg][ccl-image-expiry-disable] : %v", configInstance.ContainerClientConfig.CtrImageExpiryDisable)
 		log.Debug("[daemon_cfg][ccl-lease-id] : %s", configInstance.ContainerClientConfig.CtrLeaseID)
+		log.Debug("[daemon_cfg][ccl-image-verifier-type] : %v", configInstance.ContainerClientConfig.CtrImageVerifierType)
+		log.Debug("[daemon_cfg][ccl-image-verifier-config] : %v", configInstance.ContainerClientConfig.CtrImageVerifierConfig.String())
 	}
 }
 
@@ -336,20 +322,6 @@ func dumpThingsClient(configInstance *config) {
 		if configInstance.ThingsConfig.ThingsEnable {
 			log.Debug("[daemon_cfg][things-home-dir] : %s", configInstance.ThingsConfig.ThingsMetaPath)
 			log.Debug("[daemon_cfg][things-features] : %s", configInstance.ThingsConfig.Features)
-			if configInstance.ThingsConfig.ThingsConnectionConfig != nil {
-				log.Debug("[daemon_cfg][things-conn-broker] : %s", configInstance.ThingsConfig.ThingsConnectionConfig.BrokerURL)
-				log.Debug("[daemon_cfg][things-conn-keep-alive] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.KeepAlive)
-				log.Debug("[daemon_cfg][things-conn-disconnect-timeout] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.DisconnectTimeout)
-				log.Debug("[daemon_cfg][things-conn-connect-timeout] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.ConnectTimeout)
-				log.Debug("[daemon_cfg][things-conn-ack-timeout] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.AcknowledgeTimeout)
-				log.Debug("[daemon_cfg][things-conn-sub-timeout] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.SubscribeTimeout)
-				log.Debug("[daemon_cfg][things-conn-unsub-timeout] : %d", configInstance.ThingsConfig.ThingsConnectionConfig.UnsubscribeTimeout)
-				if configInstance.ThingsConfig.ThingsConnectionConfig.Transport != nil {
-					log.Debug("[daemon_cfg][things-conn-root-ca] : %s", configInstance.ThingsConfig.ThingsConnectionConfig.Transport.RootCA)
-					log.Debug("[daemon_cfg][things-conn-client-cert] : %s", configInstance.ThingsConfig.ThingsConnectionConfig.Transport.ClientCert)
-					log.Debug("[daemon_cfg][things-conn-client-key] : %s", configInstance.ThingsConfig.ThingsConnectionConfig.Transport.ClientKey)
-				}
-			}
 		}
 	}
 }
