@@ -29,7 +29,8 @@ const (
 
 // MountPoint specifies a mount point from the host to the container
 type MountPoint struct {
-	Destination     string `json:"destination"`      // path in container
-	Source          string `json:"source"`           // path in host
-	PropagationMode string `json:"propagation_mode"` // propagation mode to use in the spec
+	Source          string `json:"source,omitempty"`
+	Destination     string `json:"destination,omitempty"`
+	PropagationMode string `json:"propagation_mode,omitempty"`
+	Data            string `json:"data,omitempty"`
 }

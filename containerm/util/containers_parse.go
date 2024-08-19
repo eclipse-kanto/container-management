@@ -13,6 +13,8 @@
 package util
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"net"
 	"strconv"
 	"strings"
@@ -83,25 +85,32 @@ func ParseMountPoints(mps []string) ([]types.MountPoint, error) {
 }
 
 // ParseMountPoint converts a single string representation of a container's mount to a structured MountPoint instance.
-// Format: source:destination[:propagation_mode].
+// Format:
+// "Source":"mount_source",
+// "Destination":"mount_destination",
+// "Propagation_Mode": "propagation_mode",
+// "Data":"configuration_data"
 // If the propagation mode parameter is omitted, rprivate will be set by default.
 // Available propagation modes are: rprivate, private, rshared, shared, rslave, slave.
 func ParseMountPoint(mp string) (*types.MountPoint, error) {
-	mount := strings.Split(strings.TrimSpace(mp), ":")
-	if len(mount) < 2 || len(mount) > 3 {
-		return nil, log.NewErrorf("Incorrect number of parameters of the mount point %s", mp)
+	var config types.MountPoint
+	if err := json.Unmarshal([]byte(mp), &config); err != nil {
+		return nil, log.NewErrorf("error unmarshalling json:", err)
 	}
-	mountPoint := &types.MountPoint{
-		Destination: mount[1],
-		Source:      mount[0],
+	if config.Source == "" || config.Destination == "" {
+		return nil, log.NewErrorf("either mount source, %s or mount destination, %s is invalid", config.Source, config.Destination)
 	}
-	if len(mount) == 2 {
-		// if propagation mode is omitted, "rprivate" is set as default
-		mountPoint.PropagationMode = types.RPrivatePropagationMode
-	} else {
-		mountPoint.PropagationMode = mount[2]
+	if config.PropagationMode == "" {
+		config.PropagationMode = types.RPrivatePropagationMode
 	}
-	return mountPoint, nil
+	configInfo, err := base64.StdEncoding.DecodeString(config.Data)
+	if err != nil {
+		log.WarnErr(err, "error decoding bin64 string, ignoring configuration data", config.Data)
+		config.Data = ""
+		return &config, nil
+	}
+	config.Data = string(configInfo)
+	return &config, nil
 }
 
 // ParsePortMappings converts string representations of container's port mappings to structured PortMapping instances.

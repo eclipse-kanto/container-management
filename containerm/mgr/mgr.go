@@ -14,6 +14,7 @@ package mgr
 
 import (
 	"context"
+	"errors"
 	"os"
 	"reflect"
 	"strings"
@@ -478,6 +479,10 @@ func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool, stop
 
 	mgr.removeContainerRestartManager(container)
 	mgr.removeContainerFromCache(id)
+	//remove configuration files too when removing the container.
+	if _, err := os.Stat(container.Mounts[len(container.Mounts)-1].Source + "/" + container.Name + "_config.json"); !errors.Is(err, os.ErrNotExist) {
+		os.Remove(container.Mounts[len(container.Mounts)-1].Source + "/" + container.Name + "_config.json")
+	}
 
 	if err != nil {
 		log.WarnErr(err, "failed to Delete container file with id: %s", id)
