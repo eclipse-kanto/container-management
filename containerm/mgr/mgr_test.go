@@ -528,7 +528,7 @@ func TestDeleteContainerFromManager(t *testing.T) {
 	testutil.AssertEqual(t, 1, len(containerCheck))
 
 	// Act
-	unitUnderTest.Remove(context.Background(), containerCheck[0].ID, true, &types.StopOpts{Force: true})
+	unitUnderTest.Remove(context.Background(), containerCheck[0].ID, true, false, &types.StopOpts{Force: true})
 
 	containerCheckAfter, err := unitUnderTest.List(context.Background())
 	testutil.AssertNil(t, err)

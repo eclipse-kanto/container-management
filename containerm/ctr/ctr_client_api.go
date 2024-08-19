@@ -25,6 +25,10 @@ type ContainerExitHook func(*types.Container, int64, error, bool, func() error) 
 
 // ContainerAPIClient provides access to containerd container features
 type ContainerAPIClient interface {
+
+	// RemoveContainerImage remove image assoicated with container
+	RemoveContainerImage(ctx context.Context, image types.Image) error
+
 	// DestroyContainer kill container and delete it
 	DestroyContainer(ctx context.Context, container *types.Container, stopOpts *types.StopOpts, clearIOs bool) (int64, time.Time, error)
 

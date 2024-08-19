@@ -203,7 +203,7 @@ func (rmTc *removeCommandTest) generateRunExecutionConfigs() map[string]testRunE
 func (rmTc *removeCommandTest) mockExecRemoveIDAndName(args []string) error {
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(0)
 	rmTc.mockClient.EXPECT().List(context.Background(), gomock.Any()).Times(0)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false, nil).Times(0)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false, false, nil).Times(0)
 	return log.NewError("Container ID and --name (-n) cannot be provided at the same time - use only one of them")
 }
 
@@ -221,7 +221,7 @@ func (rmTc *removeCommandTest) mockExecRemoveNoErrors(args []string) error {
 		Name: removeContainerName,
 	}
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(ctr, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false, nil).Times(1).Return(nil)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false, false, nil).Times(1).Return(nil)
 	// no error expected
 	return nil
 }
@@ -238,8 +238,8 @@ func (rmTc *removeCommandTest) mockExecRemoveMultipleNoErrors(args []string) err
 	}
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(ctr1, nil)
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[1]).Times(1).Return(ctr2, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false, nil).Times(1).Return(nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), args[1], false, nil).Times(1).Return(nil)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false, false, nil).Times(1).Return(nil)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[1], false, false, nil).Times(1).Return(nil)
 	// no error expected
 	return nil
 }
@@ -255,7 +255,7 @@ func (rmTc *removeCommandTest) mockExecRemoveMultipleWithErrors(args []string) e
 	}
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(nil, err1)
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[1]).Times(1).Return(ctr, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), args[1], false, nil).Times(1).Return(err2)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[1], false, false, nil).Times(1).Return(err2)
 	errs.Append(err1, err2)
 
 	return errors.New(errs.ErrorWithMessage("containers couldn't be removed due to the following reasons: "))
@@ -269,7 +269,7 @@ func (rmTc *removeCommandTest) mockExecRemoveError(args []string) error {
 		Name: removeContainerName,
 	}
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(ctr, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false, nil).Times(1).Return(err)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false, false, nil).Times(1).Return(err)
 	return err
 }
 
@@ -277,7 +277,7 @@ func (rmTc *removeCommandTest) mockExecRemoveByNameNoErrors(args []string) error
 	// setup expected calls
 	ctrs := []*types.Container{{ID: removeContainerID, Name: removeContainerName}}
 	rmTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(removeContainerName))).Times(1).Return(ctrs, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), ctrs[0].ID, false, nil).Times(1).Return(nil)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), ctrs[0].ID, false, false, nil).Times(1).Return(nil)
 	// no error expected
 	return nil
 }
@@ -287,7 +287,7 @@ func (rmTc *removeCommandTest) mockExecRemoveByNameError(args []string) error {
 	err := errors.New("failed to remove container")
 	ctrs := []*types.Container{{ID: removeContainerID, Name: removeContainerName}}
 	rmTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(removeContainerName))).Times(1).Return(ctrs, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), ctrs[0].ID, false, nil).Times(1).Return(err)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), ctrs[0].ID, false, false, nil).Times(1).Return(err)
 	// no error expected
 	return err
 }
@@ -296,35 +296,35 @@ func (rmTc *removeCommandTest) mockExecRemoveByNameListError(args []string) erro
 	// setup expected calls
 	err := errors.New("failed to list containers")
 	rmTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(removeContainerName))).Times(1).Return(nil, err)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), gomock.Any(), false, nil).Times(0)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), gomock.Any(), false, false, nil).Times(0)
 	return err
 }
 
 func (rmTc *removeCommandTest) mockExecRemoveByNameListNilCtrs(args []string) error {
 	// setup expected calls
 	rmTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(removeContainerName))).Times(1).Return(nil, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), gomock.Any(), false, nil).Times(0)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), gomock.Any(), false, false, nil).Times(0)
 	return log.NewErrorf("The requested container with name = %s was not found. Try using an ID instead.", removeContainerName)
 }
 
 func (rmTc *removeCommandTest) mockExecRemoveByNameListZeroCtrs(args []string) error {
 	// setup expected calls
 	rmTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(removeContainerName))).Times(1).Return([]*types.Container{}, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), gomock.Any(), false, nil).Times(0)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), gomock.Any(), false, false, nil).Times(0)
 	return log.NewErrorf("The requested container with name = %s was not found. Try using an ID instead.", removeContainerName)
 }
 
 func (rmTc *removeCommandTest) mockExecRemoveByNameListMoreThanOneCtrs(args []string) error {
 	// setup expected calls
 	rmTc.mockClient.EXPECT().List(context.Background(), gomock.AssignableToTypeOf(client.WithName(removeContainerName))).Times(1).Return([]*types.Container{{}, {}}, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), gomock.Any(), false, nil).Times(0)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), gomock.Any(), false, false, nil).Times(0)
 	return log.NewErrorf("There are more than one containers with name = %s. Try using an ID instead.", removeContainerName)
 }
 
 func (rmTc *removeCommandTest) mockExecRemoveGetNilError(args []string) error {
 	// setup expected calls
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(nil, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false, nil).Times(0)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false, false, nil).Times(0)
 	return log.NewErrorf("The requested container with ID = %s was not found.", args[0])
 }
 
@@ -332,7 +332,7 @@ func (rmTc *removeCommandTest) mockExecRemoveGetError(args []string) error {
 	// setup expected calls
 	err := errors.New("failed to remove container")
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(nil, err)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false, nil).Times(0)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], false, false, nil).Times(0)
 	return err
 }
 
@@ -343,7 +343,7 @@ func (rmTc *removeCommandTest) mockExecForceRemoveNoErrors(args []string) error 
 		Name: removeContainerName,
 	}
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(ctr, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], true, nil).Times(1).Return(nil)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], true, false, nil).Times(1).Return(nil)
 	// no error expected
 	return nil
 }
@@ -356,7 +356,7 @@ func (rmTc *removeCommandTest) mockExecForceRemoveError(args []string) error {
 		Name: removeContainerName,
 	}
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(ctr, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], true, nil).Times(1).Return(err)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), args[0], true, false, nil).Times(1).Return(err)
 	// no error expected
 	return err
 }
@@ -366,6 +366,6 @@ func (rmTc *removeCommandTest) mockExecRemoveWithTimeout(args []string) error {
 		ID: args[0],
 	}
 	rmTc.mockClient.EXPECT().Get(context.Background(), args[0]).Times(1).Return(ctr, nil)
-	rmTc.mockClient.EXPECT().Remove(context.Background(), ctr.ID, true, &types.StopOpts{Timeout: 20, Force: true}).Times(1).Return(nil)
+	rmTc.mockClient.EXPECT().Remove(context.Background(), ctr.ID, true, false, &types.StopOpts{Timeout: 20, Force: true}).Times(1).Return(nil)
 	return nil
 }

@@ -14,6 +14,7 @@ package ctr
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -58,6 +59,26 @@ type containerdClient struct {
 	imageExpiryDisable bool
 	imagesExpiryLock   sync.Mutex
 	imagesWatcher      resourcesWatcher
+}
+
+func (ctrdClient *containerdClient) RemoveContainerImage(ctx context.Context, image types.Image) error {
+	log.Info("successfully removed container image")
+	Image, err := ctrdClient.spi.GetImage(ctx, image.Name)
+	if err != nil {
+		if errdefs.IsNotFound(err) {
+			log.Warn("image = %s has already been removed - no usage check or clean up will be performed", image.Name)
+		}
+		return err
+	}
+	rmErr := ctrdClient.removeUnusedImage(ctx, Image)
+	if rmErr == errImageIsInUse {
+		log.Debug("image = %s is in use - will not remove it", image.Name)
+		return nil
+	}
+	if rmErr == nil {
+		log.Info("successfully removed container image %s", image.Name)
+	}
+	return rmErr
 }
 
 // -------------------------------------- ContainerdAPIClient implementation with Containerd -------------------------------------
@@ -137,6 +158,8 @@ func (ctrdClient *containerdClient) DestroyContainer(ctx context.Context, contai
 		ctrInfo.ctrInfoLock.Lock()
 		ctrInfo.skipExitHooks = false
 		ctrInfo.ctrInfoLock.Unlock()
+
+		fmt.Printf("does it come here")
 	}()
 
 	if task := ctrInfo.getTask(); task != nil {

@@ -51,6 +51,22 @@ func (m *MockContainerAPIClient) EXPECT() *MockContainerAPIClientMockRecorder {
 }
 
 // DestroyContainer mocks base method
+func (m *MockContainerAPIClient) RemoveContainerImage(ctx context.Context, image types.Image) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveContainerImage", ctx, image)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DestroyContainer indicates an expected call of DestroyContainer
+func (mr *MockContainerAPIClientMockRecorder) RemoveContainerImage(ctx context.Context, image types.Image) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveContainerImage", reflect.TypeOf((*MockContainerAPIClient)(nil).RemoveContainerImage), ctx, image)
+}
+
+
+
+// DestroyContainer mocks base method
 func (m *MockContainerAPIClient) DestroyContainer(ctx context.Context, container *types.Container, stopOpts *types.StopOpts, clearIOs bool) (int64, time.Time, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DestroyContainer", ctx, container, stopOpts, clearIOs)

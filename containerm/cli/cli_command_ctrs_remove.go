@@ -28,9 +28,10 @@ type removeCmd struct {
 }
 
 type removeConfig struct {
-	force   bool
-	name    string
-	timeout string
+	force       bool
+	name        string
+	timeout     string
+	removecache bool
 }
 
 func (cc *removeCmd) init(cli *cli) {
@@ -61,16 +62,22 @@ func (cc *removeCmd) run(args []string) error {
 			return err
 		}
 	}
+	if cc.config.removecache && cc.config.timeout != "" {
+		stopOpts = &types.StopOpts{RemoveCache: true}
+		if stopOpts.Timeout, err = durationStringToSeconds(cc.config.timeout); err != nil {
+			return err
+		}
+	}
 	if len(args) == 0 {
 		if ctr, err = utilcli.ValidateContainerByNameArgsSingle(ctx, nil, cc.config.name, cc.cli.gwManClient); err != nil {
 			return err
 		}
-		return cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force, stopOpts)
+		return cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force, cc.config.removecache, stopOpts)
 	}
 	for _, arg := range args {
 		ctr, err = utilcli.ValidateContainerByNameArgsSingle(ctx, []string{arg}, cc.config.name, cc.cli.gwManClient)
 		if err == nil {
-			if err = cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force, stopOpts); err != nil {
+			if err = cc.cli.gwManClient.Remove(ctx, ctr.ID, cc.config.force, cc.config.removecache, stopOpts); err != nil {
 				errs.Append(err)
 			}
 		} else {
@@ -87,6 +94,7 @@ func (cc *removeCmd) run(args []string) error {
 func (cc *removeCmd) setupFlags() {
 	flagSet := cc.cmd.Flags()
 	// init terminal flags
+	flagSet.BoolVarP(&cc.config.removecache, "removecache", "r", false, "Remove cache associated with container when removing image")
 	flagSet.BoolVarP(&cc.config.force, "force", "f", false, "Force stopping before removing a container")
 	// init name flags
 	flagSet.StringVarP(&cc.config.name, "name", "n", "", "Remove a container with a specific name.")

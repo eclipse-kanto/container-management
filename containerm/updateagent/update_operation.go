@@ -612,7 +612,7 @@ func (o *operation) ensureRunningContainer(current *ctrtypes.Container) error {
 
 func (o *operation) removeContainer(container *ctrtypes.Container) error {
 	log.Debug("container [%s] is not desired - will be removed", container.Name)
-	if err := o.updateManager.mgr.Remove(o.ctx, container.ID, true, nil); err != nil {
+	if err := o.updateManager.mgr.Remove(o.ctx, container.ID, true, false, nil); err != nil {
 		log.ErrorErr(err, "could not remove undesired container [%s]", container.Name)
 		return err
 	}

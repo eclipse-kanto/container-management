@@ -605,10 +605,11 @@ func TestUpdate(t *testing.T) {
 }
 
 type testRemoveArgs struct {
-	ctx      context.Context
-	id       string
-	force    bool
-	stopOpts *types.StopOpts
+	ctx         context.Context
+	id          string
+	force       bool
+	removecache bool
+	stopOpts    *types.StopOpts
 }
 type mockExecRemove func(args testRemoveArgs) error
 
@@ -643,6 +644,15 @@ func TestRemove(t *testing.T) {
 			},
 			mockExecution: mockExecRemoveStopOpts,
 		},
+		"test_remove_removecache": {
+			args: testRemoveArgs{
+				ctx:         testCtx,
+				force:       true,
+				stopOpts:    &types.StopOpts{Timeout: 10},
+				removecache: true,
+			},
+			mockExecution: mockExecRemoveStopOpts,
+		},
 	}
 
 	// execute tests
@@ -652,7 +662,7 @@ func TestRemove(t *testing.T) {
 
 			expectedRunErr := testCase.mockExecution(testCase.args)
 
-			resultErr := testClient.Remove(testCase.args.ctx, testCase.args.id, testCase.args.force, testCase.args.stopOpts)
+			resultErr := testClient.Remove(testCase.args.ctx, testCase.args.id, testCase.args.force, testCase.args.removecache, testCase.args.stopOpts)
 
 			testutil.AssertError(t, expectedRunErr, resultErr)
 		})

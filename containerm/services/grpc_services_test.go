@@ -857,12 +857,12 @@ func mockExecUnpauseErrors(args testUnpauseArgs) (*empty.Empty, error) {
 
 // Remove -------------------------------------------------------------
 func mockExecRemoveNoErrors(args testRemoveArgs) (*empty.Empty, error) {
-	mockContainerManager.EXPECT().Remove(args.ctx, args.request.Id, args.request.Force, gomock.Eq(protobuf.ToInternalStopOptions(args.request.StopOptions))).Times(1).Return(nil)
+	mockContainerManager.EXPECT().Remove(args.ctx, args.request.Id, args.request.Force, args.request.Removecache, gomock.Eq(protobuf.ToInternalStopOptions(args.request.StopOptions))).Times(1).Return(nil)
 	return &empty.Empty{}, nil
 }
 
 func mockExecRemoveForce(args testRemoveArgs) (*empty.Empty, error) {
-	mockContainerManager.EXPECT().Remove(args.ctx, args.request.Id, true, gomock.Eq(protobuf.ToInternalStopOptions(args.request.StopOptions))).Times(1).Return(nil)
+	mockContainerManager.EXPECT().Remove(args.ctx, args.request.Id, true, false, gomock.Eq(protobuf.ToInternalStopOptions(args.request.StopOptions))).Times(1).Return(nil)
 	return &empty.Empty{}, nil
 }
 
@@ -870,7 +870,7 @@ func mockExecRemoveForce(args testRemoveArgs) (*empty.Empty, error) {
 
 func mockExecRemoveErrors(args testRemoveArgs) (*empty.Empty, error) {
 	err := errors.New("failed to remove container")
-	mockContainerManager.EXPECT().Remove(args.ctx, args.request.Id, args.request.Force, gomock.Eq(protobuf.ToInternalStopOptions(args.request.StopOptions))).Times(1).Return(err)
+	mockContainerManager.EXPECT().Remove(args.ctx, args.request.Id, args.request.Force, args.request.Removecache, gomock.Eq(protobuf.ToInternalStopOptions(args.request.StopOptions))).Times(1).Return(err)
 	return nil, err
 }
 

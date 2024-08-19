@@ -152,7 +152,7 @@ func (ctrFeature *containerFeature) stopWithOptions(ctx context.Context, opts *s
 	})
 }
 func (ctrFeature *containerFeature) remove(ctx context.Context, force bool) error {
-	return ctrFeature.mgr.Remove(ctx, extractContainerID(ctrFeature.id), force, nil)
+	return ctrFeature.mgr.Remove(ctx, extractContainerID(ctrFeature.id), force, false, nil)
 }
 
 func (ctrFeature *containerFeature) rename(ctx context.Context, name string) error {

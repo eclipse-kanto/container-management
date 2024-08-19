@@ -169,10 +169,11 @@ func (server *containers) Rename(ctx context.Context, request *pbcontainers.Rena
 }
 
 func (server *containers) Remove(ctx context.Context, request *pbcontainers.RemoveContainerRequest) (*empty.Empty, error) {
-	err := server.mgr.Remove(ctx, request.Id, request.Force, protobuf.ToInternalStopOptions(request.StopOptions))
+	err := server.mgr.Remove(ctx, request.Id, request.Force, request.Removecache, protobuf.ToInternalStopOptions(request.StopOptions))
 	if err != nil {
 		return nil, err
 	}
+
 	return &empty.Empty{}, nil
 }
 

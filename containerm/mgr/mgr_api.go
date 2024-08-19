@@ -62,7 +62,7 @@ type ContainerManager interface {
 	Rename(ctx context.Context, id string, name string) error
 
 	// Remove removes a container, it may be running or stopped and so on
-	Remove(ctx context.Context, id string, force bool, stopOpts *types.StopOpts) error
+	Remove(ctx context.Context, id string, force bool, removeCache bool, stopOpts *types.StopOpts) error
 
 	// Metrics retrieves metrics data about a container
 	Metrics(ctx context.Context, id string) (*types.Metrics, error)

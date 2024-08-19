@@ -23,4 +23,6 @@ type StopOpts struct {
 
 	// Signal to be send to the container's process. Signal could be specified by using their names or numbers, e.g. SIGINT or 2.
 	Signal string `json:"signal,omitempty"`
+
+	RemoveCache bool `json:"removecache,omitempty"`
 }

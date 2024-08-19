@@ -149,10 +149,15 @@ func (cl *client) Rename(ctx context.Context, id string, name string) error {
 }
 
 // Remove removes a container, it may be running or stopped and so on.
-func (cl *client) Remove(ctx context.Context, id string, force bool, stopOpts *types.StopOpts) error {
-	_, err := cl.grpcContainersClient.Remove(ctx, &pbcontainers.RemoveContainerRequest{Id: id, Force: force, StopOptions: protobuf.ToProtoStopOptions(stopOpts)})
+func (cl *client) Remove(ctx context.Context, id string, force bool, removecache bool, stopOpts *types.StopOpts) error {
+	_, err := cl.grpcContainersClient.Remove(ctx, &pbcontainers.RemoveContainerRequest{Id: id, Force: force, Removecache: removecache, StopOptions: protobuf.ToProtoStopOptions(stopOpts)})
 	return err
 }
+
+// func (cl *client) RemoveImage(ctx context.Context, image types.Image) error {
+// 	_, err := cl.grpcContainersClient.RemoveImage(ctx, &pbcontainers.RemoveContainerImageRequest{Image: image})
+// 	return err
+// }
 
 func (cl *client) Dispose() error {
 	return cl.connection.Close()

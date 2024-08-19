@@ -423,12 +423,11 @@ func (mgr *containerMgr) Rename(ctx context.Context, id string, name string) err
 }
 
 // Remove removes a container, it may be running or stopped and so on.
-func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool, stopOpts *types.StopOpts) error {
+func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool, removecache bool, stopOpts *types.StopOpts) error {
 	container := mgr.getContainerFromCache(id)
 	if container == nil {
 		return log.NewErrorf(noSuchContainerErrorMsg, id)
 	}
-
 	container.Lock()
 	defer container.Unlock()
 
@@ -437,7 +436,7 @@ func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool, stop
 	}
 
 	if container.State.Dead {
-		log.Warn("container with id = %s is already removed", container.ID)
+		log.Warn("container with id = %t is already removed", removecache)
 		return nil
 	}
 	// if the container is running and force is set to true - try to stop and remove it
@@ -453,7 +452,6 @@ func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool, stop
 			log.ErrorErr(err, "invalid stop options for container id = %s", container.ID)
 			return err
 		}
-
 		_, _, err := mgr.ctrClient.DestroyContainer(ctx, container, stopOpts, true)
 		if err != nil && !(strings.Contains(err.Error(), "does not exist") || strings.Contains(err.Error(), "not found")) {
 			mgr.resetContainerRestartManager(container, false)
@@ -462,6 +460,12 @@ func (mgr *containerMgr) Remove(ctx context.Context, id string, force bool, stop
 		}
 		if err := mgr.releaseContainerResources(container); err != nil {
 			log.ErrorErr(err, "removing error while trying to release resources for container id = %s", container.ID)
+		}
+		if removecache {
+			if err := mgr.ctrClient.RemoveContainerImage(ctx, container.Image); err != nil {
+				log.ErrorErr(err, "unable to remove container Image %s", container.Image)
+				return err
+			}
 		}
 	}
 
